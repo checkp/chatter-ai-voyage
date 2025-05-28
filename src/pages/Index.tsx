@@ -144,7 +144,19 @@ const Index = () => {
     }));
   };
 
-  const callOpenAI = async (message: string, apiKey: string): Promise<string> => {
+  const buildConversationHistory = (chatId: string): Array<{role: 'user' | 'assistant', content: string}> => {
+    const chat = chats.find(c => c.id === chatId);
+    if (!chat) return [];
+
+    return chat.messages.map(message => ({
+      role: message.sender === 'user' ? 'user' : 'assistant',
+      content: message.sender === 'ai' && message.platform 
+        ? `[${platforms.find(p => p.id === message.platform)?.name}]: ${message.content}`
+        : message.content
+    }));
+  };
+
+  const callOpenAI = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>, apiKey: string): Promise<string> => {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -153,7 +165,7 @@ const Index = () => {
       },
       body: JSON.stringify({
         model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: message }],
+        messages: conversationHistory,
         max_tokens: 1000
       })
     });
@@ -166,7 +178,7 @@ const Index = () => {
     return data.choices[0].message.content;
   };
 
-  const callAnthropic = async (message: string, apiKey: string): Promise<string> => {
+  const callAnthropic = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>, apiKey: string): Promise<string> => {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -177,7 +189,7 @@ const Index = () => {
       body: JSON.stringify({
         model: 'claude-3-haiku-20240307',
         max_tokens: 1000,
-        messages: [{ role: 'user', content: message }]
+        messages: conversationHistory
       })
     });
 
@@ -189,7 +201,7 @@ const Index = () => {
     return data.content[0].text;
   };
 
-  const callDeepSeek = async (message: string, apiKey: string): Promise<string> => {
+  const callDeepSeek = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>, apiKey: string): Promise<string> => {
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -198,7 +210,7 @@ const Index = () => {
       },
       body: JSON.stringify({
         model: 'deepseek-chat',
-        messages: [{ role: 'user', content: message }],
+        messages: conversationHistory,
         max_tokens: 1000
       })
     });
@@ -211,18 +223,18 @@ const Index = () => {
     return data.choices[0].message.content;
   };
 
-  const callAIAPI = async (platform: AIPlatform, message: string): Promise<string> => {
+  const callAIAPI = async (platform: AIPlatform, conversationHistory: Array<{role: 'user' | 'assistant', content: string}>): Promise<string> => {
     if (!platform.apiKey) {
       throw new Error(`No API key configured for ${platform.name}`);
     }
 
     switch (platform.id) {
       case 'openai':
-        return await callOpenAI(message, platform.apiKey);
+        return await callOpenAI(conversationHistory, platform.apiKey);
       case 'anthropic':
-        return await callAnthropic(message, platform.apiKey);
+        return await callAnthropic(conversationHistory, platform.apiKey);
       case 'deepseek':
-        return await callDeepSeek(message, platform.apiKey);
+        return await callDeepSeek(conversationHistory, platform.apiKey);
       default:
         throw new Error(`Unsupported platform: ${platform.id}`);
     }
@@ -260,10 +272,14 @@ const Index = () => {
     setIsLoading(true);
 
     try {
+      // Build conversation history including the new user message
+      const conversationHistory = buildConversationHistory(activeChat);
+      conversationHistory.push({ role: 'user', content: messageToSend });
+
       // Send to all enabled platforms with API keys
       const promises = enabledPlatforms.map(async (platform) => {
         try {
-          const response = await callAIAPI(platform, messageToSend);
+          const response = await callAIAPI(platform, conversationHistory);
           const aiMessage: Message = {
             id: `${platform.id}-${Date.now()}-${Math.random()}`,
             content: response,
