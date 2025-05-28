@@ -375,7 +375,7 @@ const Index = () => {
                     </Label>
                     <Input
                       id={platform.id}
-                      type="password"
+                      type="text"
                       placeholder={`Enter ${platform.name} API key`}
                       value={tempApiKeys[platform.id] || ''}
                       onChange={(e) => updateTempApiKey(platform.id, e.target.value)}
