@@ -57,7 +57,7 @@ const Index = () => {
     { 
       id: 'anthropic', 
       name: 'Claude', 
-      enabled: true, 
+      enabled: false, // Disabled by default due to CORS issues
       color: 'bg-purple-500', 
       icon: '🎭',
       endpoint: 'https://api.anthropic.com/v1/messages'
@@ -179,26 +179,35 @@ const Index = () => {
   };
 
   const callAnthropic = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>, apiKey: string): Promise<string> => {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 1000,
-        messages: conversationHistory
-      })
-    });
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: 'claude-3-haiku-20240307',
+          max_tokens: 1000,
+          messages: conversationHistory
+        })
+      });
 
-    if (!response.ok) {
-      throw new Error(`Anthropic API error: ${response.status}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Anthropic API error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      return data.content[0].text;
+    } catch (error) {
+      console.error('Anthropic API call failed:', error);
+      if (error instanceof TypeError && error.message === 'Load failed') {
+        throw new Error('Claude API cannot be called directly from the browser due to CORS restrictions. Please use a backend proxy or try other AI platforms.');
+      }
+      throw error;
     }
-
-    const data = await response.json();
-    return data.content[0].text;
   };
 
   const callDeepSeek = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>, apiKey: string): Promise<string> => {
@@ -310,6 +319,10 @@ const Index = () => {
   };
 
   const togglePlatform = (platformId: string) => {
+    if (platformId === 'anthropic') {
+      toast.error('Claude API cannot be used directly from the browser due to CORS restrictions. Consider using a backend proxy.');
+      return;
+    }
     setPlatforms(prev => prev.map(p => 
       p.id === platformId ? { ...p, enabled: !p.enabled } : p
     ));
