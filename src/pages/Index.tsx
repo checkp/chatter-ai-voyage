@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Plus, MessageSquare, Settings, History, Key, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -36,7 +37,7 @@ interface AIPlatform {
   enabled: boolean;
   color: string;
   icon: string;
-  apiKey?: string;
+  hasApiKey?: boolean;
   endpoint?: string;
 }
 
@@ -54,48 +55,53 @@ const Index = () => {
     { 
       id: 'openai', 
       name: 'ChatGPT', 
-      enabled: true, 
+      enabled: false, 
       color: 'bg-green-500', 
       icon: '🤖',
-      endpoint: 'https://api.openai.com/v1/chat/completions'
+      hasApiKey: false
     },
     { 
       id: 'anthropic', 
       name: 'Claude', 
-      enabled: false, // Disabled by default due to CORS issues
+      enabled: false,
       color: 'bg-purple-500', 
       icon: '🎭',
-      endpoint: 'https://api.anthropic.com/v1/messages'
+      hasApiKey: false
     },
     { 
       id: 'deepseek', 
       name: 'DeepSeek', 
-      enabled: true, 
+      enabled: false, 
       color: 'bg-blue-500', 
       icon: '🔍',
-      endpoint: 'https://api.deepseek.com/v1/chat/completions'
+      hasApiKey: false
     },
   ]);
 
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
-  const [tempApiKeys, setTempApiKeys] = useState<Record<string, string>>({});
 
-  // Load API keys from localStorage on mount
-  useEffect(() => {
-    const savedKeys: Record<string, string> = {};
-    platforms.forEach(platform => {
-      const savedKey = localStorage.getItem(`apiKey_${platform.id}`);
-      if (savedKey) {
-        savedKeys[platform.id] = savedKey;
-      }
-    });
-    setTempApiKeys(savedKeys);
-    
-    setPlatforms(prev => prev.map(platform => ({
-      ...platform,
-      apiKey: savedKeys[platform.id] || ''
-    })));
-  }, []);
+  // Load API keys status from Supabase
+  const loadApiKeysStatus = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_api_keys')
+        .select('platform')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      const availablePlatforms = data?.map(key => key.platform) || [];
+      
+      setPlatforms(prev => prev.map(platform => ({
+        ...platform,
+        hasApiKey: availablePlatforms.includes(platform.id)
+      })));
+    } catch (error: any) {
+      console.error('Failed to load API keys status:', error);
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -111,6 +117,13 @@ const Index = () => {
       createNewChat();
     }
   }, []);
+
+  // Load API keys status when user changes
+  useEffect(() => {
+    if (user) {
+      loadApiKeysStatus();
+    }
+  }, [user]);
 
   const createNewChat = () => {
     const newChat: Chat = {
@@ -161,15 +174,27 @@ const Index = () => {
     }));
   };
 
-  const callOpenAI = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>, apiKey: string): Promise<string> => {
+  const callOpenAI = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>): Promise<string> => {
+    // Get API key from Supabase
+    const { data: apiKeyData, error } = await supabase
+      .from('user_api_keys')
+      .select('encrypted_key')
+      .eq('user_id', user!.id)
+      .eq('platform', 'openai')
+      .single();
+
+    if (error || !apiKeyData) {
+      throw new Error('OpenAI API key not found. Please add your API key in settings.');
+    }
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${apiKeyData.encrypted_key}`
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4o-mini',
         messages: conversationHistory,
         max_tokens: 1000
       })
@@ -183,44 +208,24 @@ const Index = () => {
     return data.choices[0].message.content;
   };
 
-  const callAnthropic = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>, apiKey: string): Promise<string> => {
-    try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: 'claude-3-haiku-20240307',
-          max_tokens: 1000,
-          messages: conversationHistory
-        })
-      });
+  const callDeepSeek = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>): Promise<string> => {
+    // Get API key from Supabase
+    const { data: apiKeyData, error } = await supabase
+      .from('user_api_keys')
+      .select('encrypted_key')
+      .eq('user_id', user!.id)
+      .eq('platform', 'deepseek')
+      .single();
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Anthropic API error: ${response.status} - ${errorText}`);
-      }
-
-      const data = await response.json();
-      return data.content[0].text;
-    } catch (error) {
-      console.error('Anthropic API call failed:', error);
-      if (error instanceof TypeError && error.message === 'Load failed') {
-        throw new Error('Claude API cannot be called directly from the browser due to CORS restrictions. Please use a backend proxy or try other AI platforms.');
-      }
-      throw error;
+    if (error || !apiKeyData) {
+      throw new Error('DeepSeek API key not found. Please add your API key in settings.');
     }
-  };
 
-  const callDeepSeek = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>, apiKey: string): Promise<string> => {
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${apiKeyData.encrypted_key}`
       },
       body: JSON.stringify({
         model: 'deepseek-chat',
@@ -262,9 +267,9 @@ const Index = () => {
       case 'anthropic':
         return await callClaudeAPI(conversationHistory);
       case 'openai':
-        return await callOpenAI(conversationHistory, platform.apiKey || '');
+        return await callOpenAI(conversationHistory);
       case 'deepseek':
-        return await callDeepSeek(conversationHistory, platform.apiKey || '');
+        return await callDeepSeek(conversationHistory);
       default:
         throw new Error(`Unsupported platform: ${platform.id}`);
     }
@@ -276,7 +281,7 @@ const Index = () => {
     const currentChat = getCurrentChat();
     if (!currentChat) return;
 
-    const enabledPlatforms = platforms.filter(p => p.enabled && (p.id === 'anthropic' || p.apiKey));
+    const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
     if (enabledPlatforms.length === 0) {
       toast.error('Please enable at least one AI platform with a valid API key');
       return;
@@ -322,7 +327,7 @@ const Index = () => {
           console.error(`Error calling ${platform.name}:`, error);
           const errorMessage: Message = {
             id: `${platform.id}-error-${Date.now()}-${Math.random()}`,
-            content: `Error: Failed to get response from ${platform.name}. Please check your API key.`,
+            content: `Error: ${error instanceof Error ? error.message : 'Failed to get response from ' + platform.name}`,
             sender: 'ai',
             platform: platform.id,
             timestamp: new Date(),
@@ -355,30 +360,12 @@ const Index = () => {
     ));
   };
 
-  const saveApiKeys = () => {
-    platforms.forEach(platform => {
-      const key = tempApiKeys[platform.id];
-      if (key) {
-        localStorage.setItem(`apiKey_${platform.id}`, key);
-      } else {
-        localStorage.removeItem(`apiKey_${platform.id}`);
-      }
-    });
-
-    setPlatforms(prev => prev.map(platform => ({
-      ...platform,
-      apiKey: tempApiKeys[platform.id] || ''
-    })));
-
-    setShowApiKeyDialog(false);
-    toast.success('API keys saved successfully');
-  };
-
-  const updateTempApiKey = (platformId: string, key: string) => {
-    setTempApiKeys(prev => ({
-      ...prev,
-      [platformId]: key
-    }));
+  const handleApiKeyDialogClose = (open: boolean) => {
+    setShowApiKeyDialog(open);
+    if (!open) {
+      // Reload API keys status when dialog closes
+      loadApiKeysStatus();
+    }
   };
 
   const currentChat = getCurrentChat();
@@ -444,7 +431,7 @@ const Index = () => {
             New Chat
           </Button>
           
-          <Dialog open={showApiKeyDialog} onOpenChange={setShowApiKeyDialog}>
+          <Dialog open={showApiKeyDialog} onOpenChange={handleApiKeyDialogClose}>
             <DialogTrigger asChild>
               <Button variant="outline" className="w-full justify-start gap-2 mb-2">
                 <Key className="w-4 h-4" />
@@ -534,11 +521,11 @@ const Index = () => {
                   <span className="text-sm font-medium">{platform.icon}</span>
                   <span className="text-sm">{platform.name}</span>
                   <Switch
-                    checked={platform.enabled && (platform.id === 'anthropic' || !!platform.apiKey)}
+                    checked={platform.enabled && platform.hasApiKey}
                     onCheckedChange={() => togglePlatform(platform.id)}
-                    disabled={platform.id !== 'anthropic' && !platform.apiKey}
+                    disabled={!platform.hasApiKey}
                   />
-                  {platform.id !== 'anthropic' && !platform.apiKey && (
+                  {!platform.hasApiKey && (
                     <Badge variant="destructive" className="text-xs">No Key</Badge>
                   )}
                 </div>
@@ -625,7 +612,7 @@ const Index = () => {
             </div>
             
             <div className="mt-2 text-xs text-gray-500 text-center">
-              {platforms.filter(p => p.enabled && (p.id === 'anthropic' || p.apiKey)).length} AI platform(s) enabled
+              {platforms.filter(p => p.enabled && p.hasApiKey).length} AI platform(s) enabled
             </div>
           </div>
         </div>
