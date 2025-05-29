@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Plus, MessageSquare, Settings, History, Key } from 'lucide-react';
+import { Send, Plus, MessageSquare, Settings, History, Key, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -8,8 +8,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import ApiKeySettings from '@/components/ApiKeySettings';
+import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 interface Message {
   id: string;
@@ -38,6 +41,8 @@ interface AIPlatform {
 }
 
 const Index = () => {
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [chats, setChats] = useState<Chat[]>([]);
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [inputMessage, setInputMessage] = useState('');
@@ -232,18 +237,34 @@ const Index = () => {
     return data.choices[0].message.content;
   };
 
-  const callAIAPI = async (platform: AIPlatform, conversationHistory: Array<{role: 'user' | 'assistant', content: string}>): Promise<string> => {
-    if (!platform.apiKey) {
-      throw new Error(`No API key configured for ${platform.name}`);
+  const callClaudeAPI = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>): Promise<string> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      throw new Error('Not authenticated');
     }
 
+    const response = await supabase.functions.invoke('claude-chat', {
+      body: { messages: conversationHistory },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (response.error) {
+      throw new Error(response.error.message);
+    }
+
+    return response.data.content;
+  };
+
+  const callAIAPI = async (platform: AIPlatform, conversationHistory: Array<{role: 'user' | 'assistant', content: string}>): Promise<string> => {
     switch (platform.id) {
-      case 'openai':
-        return await callOpenAI(conversationHistory, platform.apiKey);
       case 'anthropic':
-        return await callAnthropic(conversationHistory, platform.apiKey);
+        return await callClaudeAPI(conversationHistory);
+      case 'openai':
+        return await callOpenAI(conversationHistory, platform.apiKey || '');
       case 'deepseek':
-        return await callDeepSeek(conversationHistory, platform.apiKey);
+        return await callDeepSeek(conversationHistory, platform.apiKey || '');
       default:
         throw new Error(`Unsupported platform: ${platform.id}`);
     }
@@ -255,7 +276,7 @@ const Index = () => {
     const currentChat = getCurrentChat();
     if (!currentChat) return;
 
-    const enabledPlatforms = platforms.filter(p => p.enabled && p.apiKey);
+    const enabledPlatforms = platforms.filter(p => p.enabled && (p.id === 'anthropic' || p.apiKey));
     if (enabledPlatforms.length === 0) {
       toast.error('Please enable at least one AI platform with a valid API key');
       return;
@@ -318,11 +339,17 @@ const Index = () => {
     }
   };
 
-  const togglePlatform = (platformId: string) => {
-    if (platformId === 'anthropic') {
-      toast.error('Claude API cannot be used directly from the browser due to CORS restrictions. Consider using a backend proxy.');
-      return;
+  const handleSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      window.location.href = '/auth';
+    } catch (error: any) {
+      toast.error('Error signing out: ' + error.message);
     }
+  };
+
+  const togglePlatform = (platformId: string) => {
     setPlatforms(prev => prev.map(p => 
       p.id === platformId ? { ...p, enabled: !p.enabled } : p
     ));
@@ -356,6 +383,54 @@ const Index = () => {
 
   const currentChat = getCurrentChat();
 
+  // Authentication state management
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (event === 'SIGNED_IN') {
+          setTimeout(() => {
+            // Load user data after sign in
+            console.log('User signed in:', session?.user);
+          }, 0);
+        }
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (user === null && session === null) {
+      // Check if we've finished loading auth state
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) {
+          window.location.href = '/auth';
+        }
+      });
+    }
+  }, [user, session]);
+
+  // Show loading while checking auth
+  if (user === null && session === null) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen flex bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       {/* Sidebar */}
@@ -371,41 +446,42 @@ const Index = () => {
           
           <Dialog open={showApiKeyDialog} onOpenChange={setShowApiKeyDialog}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="w-full justify-start gap-2">
+              <Button variant="outline" className="w-full justify-start gap-2 mb-2">
                 <Key className="w-4 h-4" />
                 API Keys
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Configure API Keys</DialogTitle>
+                <DialogTitle>API Key Settings</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
-                {platforms.map((platform) => (
-                  <div key={platform.id} className="space-y-2">
-                    <Label htmlFor={platform.id}>
-                      {platform.icon} {platform.name} API Key
-                    </Label>
-                    <Input
-                      id={platform.id}
-                      type="text"
-                      placeholder={`Enter ${platform.name} API key`}
-                      value={tempApiKeys[platform.id] || ''}
-                      onChange={(e) => updateTempApiKey(platform.id, e.target.value)}
-                    />
-                  </div>
-                ))}
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={() => setShowApiKeyDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={saveApiKeys}>
-                    Save Keys
-                  </Button>
-                </div>
-              </div>
+              <ApiKeySettings />
             </DialogContent>
           </Dialog>
+
+          {user && (
+            <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+              <Avatar className="w-8 h-8">
+                <AvatarImage src={user.user_metadata?.avatar_url} />
+                <AvatarFallback>
+                  {user.email?.charAt(0).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium truncate">
+                  {user.user_metadata?.full_name || user.email}
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSignOut}
+                className="h-8 w-8 p-0"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
         </div>
         
         <ScrollArea className="flex-1 p-4">
@@ -458,11 +534,11 @@ const Index = () => {
                   <span className="text-sm font-medium">{platform.icon}</span>
                   <span className="text-sm">{platform.name}</span>
                   <Switch
-                    checked={platform.enabled && !!platform.apiKey}
+                    checked={platform.enabled && (platform.id === 'anthropic' || !!platform.apiKey)}
                     onCheckedChange={() => togglePlatform(platform.id)}
-                    disabled={!platform.apiKey}
+                    disabled={platform.id !== 'anthropic' && !platform.apiKey}
                   />
-                  {!platform.apiKey && (
+                  {platform.id !== 'anthropic' && !platform.apiKey && (
                     <Badge variant="destructive" className="text-xs">No Key</Badge>
                   )}
                 </div>
@@ -549,7 +625,7 @@ const Index = () => {
             </div>
             
             <div className="mt-2 text-xs text-gray-500 text-center">
-              {platforms.filter(p => p.enabled && p.apiKey).length} AI platform(s) enabled with API keys
+              {platforms.filter(p => p.enabled && (p.id === 'anthropic' || p.apiKey)).length} AI platform(s) enabled
             </div>
           </div>
         </div>
