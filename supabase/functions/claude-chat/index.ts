@@ -16,15 +16,23 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', // Use service role key for edge functions
     )
 
     // Get the authorization header
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       console.error('No authorization header provided')
-      throw new Error('No authorization header')
+      return new Response(
+        JSON.stringify({ error: 'No authorization header provided' }), 
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
     }
+
+    console.log('Authorization header received:', authHeader.substring(0, 20) + '...')
 
     // Get the user from the JWT token
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
@@ -33,49 +41,42 @@ serve(async (req) => {
 
     if (authError || !user) {
       console.error('Authentication failed:', authError)
-      throw new Error('Authentication failed')
+      return new Response(
+        JSON.stringify({ error: 'Authentication failed: ' + (authError?.message || 'User not found') }), 
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
     }
 
-    console.log('User authenticated:', user.id)
+    console.log('User authenticated successfully:', user.id)
 
     const { messages } = await req.json()
     console.log('Received messages:', messages?.length || 0, 'messages')
 
-    // First, let's see what API keys exist for this user
-    console.log('Checking all API keys for user:', user.id)
-    const { data: allKeys, error: allKeysError } = await supabaseClient
-      .from('user_api_keys')
-      .select('platform, encrypted_key')
-      .eq('user_id', user.id)
-
-    if (allKeysError) {
-      console.error('Error fetching all API keys:', allKeysError)
-    } else {
-      console.log('All API keys for user:', allKeys)
-    }
-
-    // Get user's Claude API key from the database
-    console.log('Looking for anthropic platform key...')
+    // Get user's Claude API key from the database using service role
+    console.log('Fetching Claude API key for user:', user.id)
     const { data: apiKeyData, error: keyError } = await supabaseClient
       .from('user_api_keys')
       .select('encrypted_key')
       .eq('user_id', user.id)
       .eq('platform', 'anthropic')
-      .single()
+      .maybeSingle() // Use maybeSingle instead of single to avoid errors when no rows
 
     if (keyError) {
       console.error('Database error fetching API key:', keyError)
       return new Response(
-        JSON.stringify({ error: 'Claude API key not found. Please add your API key in settings.' }), 
+        JSON.stringify({ error: 'Database error: ' + keyError.message }), 
         { 
-          status: 400, 
+          status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
     }
 
     if (!apiKeyData?.encrypted_key) {
-      console.error('No API key found for user')
+      console.error('No Claude API key found for user:', user.id)
       return new Response(
         JSON.stringify({ error: 'Claude API key not found. Please add your API key in settings.' }), 
         { 
@@ -108,7 +109,13 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text()
       console.error('Claude API error:', response.status, errorText)
-      throw new Error(`Claude API error: ${response.status} - ${errorText}`)
+      return new Response(
+        JSON.stringify({ error: `Claude API error: ${response.status} - ${errorText}` }), 
+        { 
+          status: response.status, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
     }
 
     const data = await response.json()
