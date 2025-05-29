@@ -365,7 +365,7 @@ const Index = () => {
           console.error(`Error calling ${platform.name}:`, error);
           const errorMessage: Message = {
             id: `${platform.id}-error-${Date.now()}-${Math.random()}`,
-            content: `Error: ${error instanceof Error ? error.message : 'Failed to get response from ' + platform.name}`,
+            content: `[${platform.name}]: Error - ${error instanceof Error ? error.message : 'Failed to get response from ' + platform.name}`,
             sender: 'ai',
             platform: platform.id,
             timestamp: new Date(),
