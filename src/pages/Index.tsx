@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Plus, MessageSquare, Settings, History, Key, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -87,10 +86,13 @@ const Index = () => {
     try {
       const { data, error } = await supabase
         .from('user_api_keys')
-        .select('platform')
+        .select('platform, encrypted_key')
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading API keys:', error);
+        return;
+      }
 
       const availablePlatforms = data?.map(key => key.platform) || [];
       
@@ -175,17 +177,27 @@ const Index = () => {
   };
 
   const callOpenAI = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>): Promise<string> => {
-    // Get API key from Supabase
+    if (!user) throw new Error('User not authenticated');
+
+    console.log('Calling OpenAI API...');
+    
     const { data: apiKeyData, error } = await supabase
       .from('user_api_keys')
       .select('encrypted_key')
-      .eq('user_id', user!.id)
+      .eq('user_id', user.id)
       .eq('platform', 'openai')
       .single();
 
-    if (error || !apiKeyData) {
+    if (error) {
+      console.error('OpenAI API key error:', error);
       throw new Error('OpenAI API key not found. Please add your API key in settings.');
     }
+
+    if (!apiKeyData?.encrypted_key) {
+      throw new Error('OpenAI API key is empty. Please add your API key in settings.');
+    }
+
+    console.log('Making OpenAI request with key:', apiKeyData.encrypted_key.substring(0, 10) + '...');
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -201,7 +213,9 @@ const Index = () => {
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('OpenAI API response error:', response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
@@ -209,17 +223,27 @@ const Index = () => {
   };
 
   const callDeepSeek = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>): Promise<string> => {
-    // Get API key from Supabase
+    if (!user) throw new Error('User not authenticated');
+
+    console.log('Calling DeepSeek API...');
+    
     const { data: apiKeyData, error } = await supabase
       .from('user_api_keys')
       .select('encrypted_key')
-      .eq('user_id', user!.id)
+      .eq('user_id', user.id)
       .eq('platform', 'deepseek')
       .single();
 
-    if (error || !apiKeyData) {
+    if (error) {
+      console.error('DeepSeek API key error:', error);
       throw new Error('DeepSeek API key not found. Please add your API key in settings.');
     }
+
+    if (!apiKeyData?.encrypted_key) {
+      throw new Error('DeepSeek API key is empty. Please add your API key in settings.');
+    }
+
+    console.log('Making DeepSeek request with key:', apiKeyData.encrypted_key.substring(0, 10) + '...');
 
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
@@ -235,7 +259,9 @@ const Index = () => {
     });
 
     if (!response.ok) {
-      throw new Error(`DeepSeek API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('DeepSeek API response error:', response.status, errorText);
+      throw new Error(`DeepSeek API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
@@ -243,10 +269,14 @@ const Index = () => {
   };
 
   const callClaudeAPI = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>): Promise<string> => {
+    console.log('Calling Claude API via edge function...');
+    
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       throw new Error('Not authenticated');
     }
+
+    console.log('Invoking claude-chat function...');
 
     const response = await supabase.functions.invoke('claude-chat', {
       body: { messages: conversationHistory },
@@ -255,8 +285,16 @@ const Index = () => {
       },
     });
 
+    console.log('Claude function response:', response);
+
     if (response.error) {
-      throw new Error(response.error.message);
+      console.error('Claude function error:', response.error);
+      throw new Error(response.error.message || 'Claude API call failed');
+    }
+
+    if (!response.data?.content) {
+      console.error('Claude function missing content:', response.data);
+      throw new Error('Claude API returned empty response');
     }
 
     return response.data.content;
