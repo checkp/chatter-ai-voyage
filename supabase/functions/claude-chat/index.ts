@@ -41,7 +41,21 @@ serve(async (req) => {
     const { messages } = await req.json()
     console.log('Received messages:', messages?.length || 0, 'messages')
 
+    // First, let's see what API keys exist for this user
+    console.log('Checking all API keys for user:', user.id)
+    const { data: allKeys, error: allKeysError } = await supabaseClient
+      .from('user_api_keys')
+      .select('platform, encrypted_key')
+      .eq('user_id', user.id)
+
+    if (allKeysError) {
+      console.error('Error fetching all API keys:', allKeysError)
+    } else {
+      console.log('All API keys for user:', allKeys)
+    }
+
     // Get user's Claude API key from the database
+    console.log('Looking for anthropic platform key...')
     const { data: apiKeyData, error: keyError } = await supabaseClient
       .from('user_api_keys')
       .select('encrypted_key')
