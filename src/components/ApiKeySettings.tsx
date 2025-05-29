@@ -31,14 +31,24 @@ const ApiKeySettings = () => {
   const loadApiKeys = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        console.log('No user found when loading API keys');
+        return;
+      }
+
+      console.log('Loading API keys for user:', user.id);
 
       const { data, error } = await supabase
         .from('user_api_keys')
         .select('platform, encrypted_key')
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading API keys:', error);
+        throw error;
+      }
+
+      console.log('Loaded API keys from database:', data);
 
       const keysMap: Record<string, string> = {};
       data?.forEach((key: ApiKey) => {
@@ -46,6 +56,7 @@ const ApiKeySettings = () => {
       });
       setApiKeys(keysMap);
     } catch (error: any) {
+      console.error('Failed to load API keys:', error);
       toast.error('Failed to load API keys: ' + error.message);
     }
   };
@@ -54,9 +65,15 @@ const ApiKeySettings = () => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {
+        console.error('No user found when saving API key');
+        throw new Error('User not authenticated');
+      }
+
+      console.log('Saving API key for platform:', platform, 'user:', user.id);
 
       if (!key.trim()) {
+        console.log('Deleting API key for platform:', platform);
         // Delete the key if it's empty
         const { error } = await supabase
           .from('user_api_keys')
@@ -64,7 +81,10 @@ const ApiKeySettings = () => {
           .eq('user_id', user.id)
           .eq('platform', platform);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error deleting API key:', error);
+          throw error;
+        }
         
         setApiKeys(prev => {
           const updated = { ...prev };
@@ -72,22 +92,34 @@ const ApiKeySettings = () => {
           return updated;
         });
       } else {
+        console.log('Upserting API key for platform:', platform);
         // Upsert the key
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('user_api_keys')
           .upsert({
             user_id: user.id,
             platform,
             encrypted_key: key, // In production, encrypt this
+          }, {
+            onConflict: 'user_id,platform'
           });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error upserting API key:', error);
+          throw error;
+        }
+
+        console.log('Successfully saved API key, result:', data);
         
         setApiKeys(prev => ({ ...prev, [platform]: key }));
       }
 
       toast.success(`${platforms.find(p => p.id === platform)?.name} API key saved successfully`);
+      
+      // Reload keys to verify they were saved
+      await loadApiKeys();
     } catch (error: any) {
+      console.error('Failed to save API key:', error);
       toast.error('Failed to save API key: ' + error.message);
     } finally {
       setLoading(false);
