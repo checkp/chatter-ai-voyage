@@ -168,21 +168,12 @@ const Index = () => {
     const chat = chats.find(c => c.id === chatId);
     if (!chat) return [];
 
-    // Add system message about agent statuses at the beginning
-    const enabledAgents = platforms.filter(p => p.enabled && p.hasApiKey).map(p => p.name);
-    const disabledAgents = platforms.filter(p => !p.enabled || !p.hasApiKey).map(p => p.name);
-    
-    const systemMessage = {
-      role: 'assistant' as const,
-      content: `[System]: Current agent status - Enabled: ${enabledAgents.join(', ') || 'None'} | Disabled: ${disabledAgents.join(', ') || 'None'}`
-    };
-
-    const messageHistory = chat.messages.map(message => ({
+    return chat.messages.map(message => ({
       role: message.sender === 'user' ? 'user' : 'assistant',
-      content: message.content
+      content: message.sender === 'ai' && message.platform 
+        ? `[${platforms.find(p => p.id === message.platform)?.name}]: ${message.content}`
+        : message.content
     }));
-
-    return [systemMessage, ...messageHistory];
   };
 
   const callOpenAI = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>): Promise<string> => {
@@ -364,7 +355,7 @@ const Index = () => {
           const response = await callAIAPI(platform, conversationHistory);
           const aiMessage: Message = {
             id: `${platform.id}-${Date.now()}-${Math.random()}`,
-            content: `[${platform.name}]: ${response}`,
+            content: response,
             sender: 'ai',
             platform: platform.id,
             timestamp: new Date(),
