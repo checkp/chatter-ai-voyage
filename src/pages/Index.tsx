@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Plus, MessageSquare, Settings, History, Key, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -349,32 +350,68 @@ const Index = () => {
       const conversationHistory = buildConversationHistory(activeChat);
       conversationHistory.push({ role: 'user', content: messageToSend });
 
+      // Add context about enabled agents to the conversation
+      const enabledAgentNames = enabledPlatforms.map(p => p.name).join(', ');
+      const contextMessage = `Note: You are responding alongside these other AI agents: ${enabledAgentNames}. Please provide a unique perspective while being aware that users will see all responses together.`;
+      
+      const contextualHistory = [
+        ...conversationHistory,
+        { role: 'user' as const, content: contextMessage }
+      ];
+
+      // Collect all AI responses
+      const aiResponses: Array<{platform: AIPlatform, content: string, error?: string}> = [];
+
       // Send to all enabled platforms with API keys
       const promises = enabledPlatforms.map(async (platform) => {
         try {
-          const response = await callAIAPI(platform, conversationHistory);
-          const aiMessage: Message = {
-            id: `${platform.id}-${Date.now()}-${Math.random()}`,
-            content: response,
-            sender: 'ai',
-            platform: platform.id,
-            timestamp: new Date(),
-          };
-          addMessage(activeChat, aiMessage);
+          const response = await callAIAPI(platform, contextualHistory);
+          aiResponses.push({
+            platform,
+            content: response
+          });
         } catch (error) {
           console.error(`Error calling ${platform.name}:`, error);
-          const errorMessage: Message = {
-            id: `${platform.id}-error-${Date.now()}-${Math.random()}`,
-            content: `[${platform.name}]: Error - ${error instanceof Error ? error.message : 'Failed to get response from ' + platform.name}`,
-            sender: 'ai',
-            platform: platform.id,
-            timestamp: new Date(),
-          };
-          addMessage(activeChat, errorMessage);
+          aiResponses.push({
+            platform,
+            content: '',
+            error: error instanceof Error ? error.message : 'Failed to get response from ' + platform.name
+          });
         }
       });
 
       await Promise.allSettled(promises);
+
+      // Create consolidated response message
+      let consolidatedContent = '';
+      
+      aiResponses.forEach((response, index) => {
+        const platformIcon = response.platform.icon;
+        const platformName = response.platform.name;
+        
+        if (index > 0) {
+          consolidatedContent += '\n\n---\n\n';
+        }
+        
+        consolidatedContent += `**${platformIcon} ${platformName}:**\n\n`;
+        
+        if (response.error) {
+          consolidatedContent += `❌ Error: ${response.error}`;
+        } else {
+          consolidatedContent += response.content;
+        }
+      });
+
+      // Add single consolidated message
+      const consolidatedMessage: Message = {
+        id: `consolidated-${Date.now()}`,
+        content: consolidatedContent,
+        sender: 'ai',
+        timestamp: new Date(),
+      };
+      
+      addMessage(activeChat, consolidatedMessage);
+
     } catch (error) {
       toast.error('Failed to get responses from AI platforms');
     } finally {
@@ -581,21 +618,17 @@ const Index = () => {
                 className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div className={`max-w-[80%] ${message.sender === 'user' ? 'order-2' : 'order-1'}`}>
-                  {message.sender === 'ai' && message.platform && (
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant="secondary" className={`${platforms.find(p => p.id === message.platform)?.color} text-white`}>
-                        {platforms.find(p => p.id === message.platform)?.icon}
-                        {platforms.find(p => p.id === message.platform)?.name}
-                      </Badge>
-                    </div>
-                  )}
                   <Card className={`${
                     message.sender === 'user' 
                       ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white' 
                       : 'bg-white shadow-sm border'
                   }`}>
                     <CardContent className="p-3">
-                      <p className="text-sm leading-relaxed">{message.content}</p>
+                      <div className={`text-sm leading-relaxed whitespace-pre-wrap ${
+                        message.sender === 'ai' ? 'prose prose-sm max-w-none' : ''
+                      }`}>
+                        {message.content}
+                      </div>
                       <div className={`text-xs mt-2 ${
                         message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
                       }`}>
