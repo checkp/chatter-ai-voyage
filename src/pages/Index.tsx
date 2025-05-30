@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Plus, MessageSquare, Settings, History, Key, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -484,16 +485,26 @@ const Index = () => {
       return;
     }
     
-    if (!activeChat) {
+    let chatId = activeChat;
+    
+    // If no active chat, create one first
+    if (!chatId) {
       console.log('No active chat, creating new one');
-      createNewChat();
-      // Wait for state to update
-      setTimeout(() => handleSendMessage(), 100);
-      return;
+      const newChat: Chat = {
+        id: `chat-${Date.now()}`,
+        title: 'New Chat',
+        messages: [],
+        createdAt: new Date(),
+        lastUpdated: new Date()
+      };
+
+      setChats(prev => [newChat, ...prev]);
+      setActiveChat(newChat.id);
+      chatId = newChat.id;
     }
 
-    const currentChat = getCurrentChat();
-    if (!currentChat) {
+    const currentChat = chats.find(chat => chat.id === chatId);
+    if (!currentChat && !chatId.startsWith('chat-')) {
       console.log('Current chat not found');
       return;
     }
@@ -518,11 +529,12 @@ const Index = () => {
       timestamp: new Date(),
     };
 
-    addMessage(activeChat, userMessage);
+    addMessage(chatId, userMessage);
 
     // Update chat title if it's the first message
-    if (currentChat.messages.length === 0) {
-      updateChatTitle(activeChat, inputMessage);
+    const targetChat = currentChat || chats.find(chat => chat.id === chatId);
+    if (!targetChat || targetChat.messages.length === 0) {
+      updateChatTitle(chatId, inputMessage);
     }
 
     const messageToSend = inputMessage;
@@ -531,7 +543,7 @@ const Index = () => {
 
     try {
       // Build conversation history including the new user message
-      const conversationHistory = buildConversationHistory(activeChat);
+      const conversationHistory = buildConversationHistory(chatId);
       conversationHistory.push({ role: 'user', content: messageToSend });
 
       // Add context about enabled agents to the conversation
@@ -594,7 +606,7 @@ const Index = () => {
         timestamp: new Date(),
       };
       
-      addMessage(activeChat, consolidatedMessage);
+      addMessage(chatId, consolidatedMessage);
 
     } catch (error) {
       console.error('Error in handleSendMessage:', error);
