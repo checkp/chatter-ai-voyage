@@ -82,101 +82,169 @@ const Index = () => {
   const [showBotHistoryDialog, setShowBotHistoryDialog] = useState(false);
   const [selectedPlatformForHistory, setSelectedPlatformForHistory] = useState<AIPlatform | null>(null);
 
-  // Load API keys status from Supabase
-  const loadApiKeysStatus = async () => {
+  // Load conversations from database
+  const loadConversations = async () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('user_api_keys')
-        .select('platform, encrypted_key')
-        .eq('user_id', user.id);
+      const { data: conversations, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading API keys:', error);
+        console.error('Error loading conversations:', error);
         return;
       }
 
-      const availablePlatforms = data?.map(key => key.platform) || [];
+      const conversationsWithMessages = await Promise.all(
+        (conversations || []).map(async (conv) => {
+          const { data: messages, error: messagesError } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('conversation_id', conv.id)
+            .order('created_at', { ascending: true });
+
+          if (messagesError) {
+            console.error('Error loading messages for conversation:', conv.id, messagesError);
+            return null;
+          }
+
+          return {
+            id: conv.id,
+            title: conv.title,
+            messages: (messages || []).map(msg => ({
+              id: msg.id,
+              content: msg.content,
+              sender: msg.sender as 'user' | 'ai',
+              platform: msg.platform,
+              timestamp: new Date(msg.created_at)
+            })),
+            createdAt: new Date(conv.created_at),
+            lastUpdated: new Date(conv.updated_at)
+          };
+        })
+      );
+
+      const validConversations = conversationsWithMessages.filter(conv => conv !== null) as Chat[];
+      setChats(validConversations);
+
+      if (validConversations.length > 0 && !activeChat) {
+        setActiveChat(validConversations[0].id);
+      }
+    } catch (error: any) {
+      console.error('Failed to load conversations:', error);
+      toast.error('Failed to load conversations');
+    }
+  };
+
+  // Load agent settings from database
+  const loadAgentSettings = async () => {
+    if (!user) return;
+
+    try {
+      const { data: settings, error } = await supabase
+        .from('user_agent_settings')
+        .select('platform, enabled')
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error loading agent settings:', error);
+        return;
+      }
+
+      const settingsMap = new Map((settings || []).map(setting => [setting.platform, setting.enabled]));
       
       setPlatforms(prev => prev.map(platform => ({
         ...platform,
-        hasApiKey: availablePlatforms.includes(platform.id)
+        enabled: settingsMap.get(platform.id) || false
       })));
     } catch (error: any) {
-      console.error('Failed to load API keys status:', error);
+      console.error('Failed to load agent settings:', error);
     }
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  // Save agent setting to database
+  const saveAgentSetting = async (platformId: string, enabled: boolean) => {
+    if (!user) return;
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [chats, activeChat]);
+    try {
+      const { error } = await supabase
+        .from('user_agent_settings')
+        .upsert({
+          user_id: user.id,
+          platform: platformId,
+          enabled: enabled,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,platform'
+        });
 
-  useEffect(() => {
-    // Create initial chat if none exists
-    if (chats.length === 0) {
-      createNewChat();
-    }
-  }, []);
-
-  // Load API keys status when user changes
-  useEffect(() => {
-    if (user) {
-      loadApiKeysStatus();
-    }
-  }, [user]);
-
-  const createNewChat = () => {
-    const newChat: Chat = {
-      id: Date.now().toString(),
-      title: 'New Chat',
-      messages: [],
-      createdAt: new Date(),
-      lastUpdated: new Date(),
-    };
-    setChats(prev => [newChat, ...prev]);
-    setActiveChat(newChat.id);
-  };
-
-  const getCurrentChat = () => {
-    return chats.find(chat => chat.id === activeChat);
-  };
-
-  const updateChatTitle = (chatId: string, firstMessage: string) => {
-    const title = firstMessage.length > 30 ? firstMessage.substring(0, 30) + '...' : firstMessage;
-    setChats(prev => prev.map(chat => 
-      chat.id === chatId ? { ...chat, title } : chat
-    ));
-  };
-
-  const addMessage = (chatId: string, message: Message) => {
-    setChats(prev => prev.map(chat => {
-      if (chat.id === chatId) {
-        const updatedMessages = [...chat.messages, message];
-        return {
-          ...chat,
-          messages: updatedMessages,
-          lastUpdated: new Date(),
-        };
+      if (error) {
+        console.error('Error saving agent setting:', error);
+        toast.error('Failed to save agent setting');
       }
-      return chat;
-    }));
+    } catch (error: any) {
+      console.error('Failed to save agent setting:', error);
+      toast.error('Failed to save agent setting');
+    }
   };
 
-  const buildConversationHistory = (chatId: string): Array<{role: 'user' | 'assistant', content: string}> => {
-    const chat = chats.find(c => c.id === chatId);
-    if (!chat) return [];
+  // Save conversation to database
+  const saveConversation = async (chat: Chat) => {
+    if (!user) return;
 
-    return chat.messages.map(message => ({
-      role: message.sender === 'user' ? 'user' : 'assistant',
-      content: message.sender === 'ai' && message.platform 
-        ? `[${platforms.find(p => p.id === message.platform)?.name}]: ${message.content}`
-        : message.content
-    }));
+    try {
+      // First save/update the conversation
+      const { error: convError } = await supabase
+        .from('conversations')
+        .upsert({
+          id: chat.id,
+          user_id: user.id,
+          title: chat.title,
+          updated_at: new Date().toISOString()
+        });
+
+      if (convError) {
+        console.error('Error saving conversation:', convError);
+        return;
+      }
+
+      // Then save any new messages
+      const existingMessageIds = new Set();
+      const { data: existingMessages } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('conversation_id', chat.id);
+
+      if (existingMessages) {
+        existingMessages.forEach(msg => existingMessageIds.add(msg.id));
+      }
+
+      const newMessages = chat.messages.filter(msg => !existingMessageIds.has(msg.id));
+
+      if (newMessages.length > 0) {
+        const messagesToInsert = newMessages.map(msg => ({
+          id: msg.id,
+          conversation_id: chat.id,
+          content: msg.content,
+          sender: msg.sender,
+          platform: msg.platform,
+          created_at: msg.timestamp.toISOString()
+        }));
+
+        const { error: msgError } = await supabase
+          .from('messages')
+          .insert(messagesToInsert);
+
+        if (msgError) {
+          console.error('Error saving messages:', msgError);
+        }
+      }
+    } catch (error: any) {
+      console.error('Failed to save conversation:', error);
+    }
   };
 
   const callOpenAI = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>): Promise<string> => {
@@ -431,10 +499,20 @@ const Index = () => {
     }
   };
 
-  const togglePlatform = (platformId: string) => {
+  const togglePlatform = async (platformId: string) => {
+    const platform = platforms.find(p => p.id === platformId);
+    if (!platform || !platform.hasApiKey) {
+      toast.error('Please add an API key for this platform first');
+      return;
+    }
+
+    const newEnabled = !platform.enabled;
     setPlatforms(prev => prev.map(p => 
-      p.id === platformId ? { ...p, enabled: !p.enabled } : p
+      p.id === platformId ? { ...p, enabled: newEnabled } : p
     ));
+
+    // Save to database
+    await saveAgentSetting(platformId, newEnabled);
   };
 
   const handleApiKeyDialogClose = (open: boolean) => {
