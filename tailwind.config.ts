@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -18,7 +19,30 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				'cyber': ['Orbitron', 'monospace'],
+				'sans': ['Orbitron', 'system-ui', 'sans-serif'],
+			},
 			colors: {
+				// Cyberpunk color palette
+				cyber: {
+					bg: '#0a0a0f',
+					surface: '#1a1a2e',
+					primary: '#00d4ff',
+					secondary: '#ff006e',
+					accent: '#8338ec',
+					success: '#06ffa5',
+					warning: '#ffbe0b',
+					danger: '#fb5607',
+					text: '#e0e1dd',
+					muted: '#8d99ae',
+				},
+				// Agent-specific colors
+				agent: {
+					openai: '#00d4ff',     // Cyan
+					anthropic: '#8338ec',  // Purple
+					deepseek: '#ff006e',   // Magenta
+				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -84,11 +108,20 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'cyber-glow': {
+					'0%, 100%': { 
+						boxShadow: '0 0 5px currentColor, 0 0 10px currentColor, 0 0 15px currentColor'
+					},
+					'50%': { 
+						boxShadow: '0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'cyber-glow': 'cyber-glow 2s ease-in-out infinite'
 			}
 		}
 	},

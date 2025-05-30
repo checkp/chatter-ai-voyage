@@ -56,7 +56,7 @@ const Index = () => {
       id: 'openai', 
       name: 'ChatGPT', 
       enabled: false, 
-      color: 'bg-green-500', 
+      color: 'bg-agent-openai border-agent-openai text-cyber-bg', 
       icon: '🤖',
       hasApiKey: false
     },
@@ -64,7 +64,7 @@ const Index = () => {
       id: 'anthropic', 
       name: 'Claude', 
       enabled: false,
-      color: 'bg-purple-500', 
+      color: 'bg-agent-anthropic border-agent-anthropic text-cyber-bg', 
       icon: '🎭',
       hasApiKey: false
     },
@@ -72,7 +72,7 @@ const Index = () => {
       id: 'deepseek', 
       name: 'DeepSeek', 
       enabled: false, 
-      color: 'bg-blue-500', 
+      color: 'bg-agent-deepseek border-agent-deepseek text-cyber-bg', 
       icon: '🔍',
       hasApiKey: false
     },
@@ -561,43 +561,43 @@ const Index = () => {
   }
 
   return (
-    <div className="h-screen flex bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="h-screen flex bg-cyber-bg font-cyber text-cyber-text">
       {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-gray-200 bg-white/80 backdrop-blur-sm`}>
-        <div className="p-4 border-b border-gray-200">
+      <div className={`${sidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-cyber-primary/30 bg-cyber-surface/50 backdrop-blur-sm`}>
+        <div className="p-4 border-b border-cyber-primary/30">
           <Button 
             onClick={createNewChat}
-            className="w-full justify-start gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 mb-2"
+            className="w-full justify-start gap-2 bg-gradient-to-r from-cyber-primary to-cyber-accent hover:from-cyber-primary/80 hover:to-cyber-accent/80 text-cyber-bg font-semibold text-base mb-2 cyber-glow"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-5 h-5" />
             New Chat
           </Button>
           
           <Dialog open={showApiKeyDialog} onOpenChange={handleApiKeyDialogClose}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="w-full justify-start gap-2 mb-2">
-                <Key className="w-4 h-4" />
+              <Button variant="outline" className="w-full justify-start gap-2 mb-2 border-cyber-secondary/50 text-cyber-text hover:bg-cyber-secondary/20 text-base">
+                <Key className="w-5 h-5" />
                 API Keys
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto bg-cyber-surface border-cyber-primary/30">
               <DialogHeader>
-                <DialogTitle>API Key Settings</DialogTitle>
+                <DialogTitle className="text-cyber-text text-xl font-bold">API Key Settings</DialogTitle>
               </DialogHeader>
               <ApiKeySettings />
             </DialogContent>
           </Dialog>
 
           {user && (
-            <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-              <Avatar className="w-8 h-8">
+            <div className="flex items-center gap-2 p-3 bg-cyber-surface/50 rounded-lg border border-cyber-primary/20">
+              <Avatar className="w-9 h-9 border border-cyber-primary/30">
                 <AvatarImage src={user.user_metadata?.avatar_url} />
-                <AvatarFallback>
+                <AvatarFallback className="bg-cyber-primary text-cyber-bg font-bold">
                   {user.email?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">
+                <div className="text-sm font-medium truncate text-cyber-text">
                   {user.user_metadata?.full_name || user.email}
                 </div>
               </div>
@@ -605,7 +605,7 @@ const Index = () => {
                 variant="ghost"
                 size="sm"
                 onClick={handleSignOut}
-                className="h-8 w-8 p-0"
+                className="h-8 w-8 p-0 hover:bg-cyber-danger/20 text-cyber-danger"
               >
                 <LogOut className="w-4 h-4" />
               </Button>
@@ -618,17 +618,19 @@ const Index = () => {
             {chats.map((chat) => (
               <Card 
                 key={chat.id} 
-                className={`cursor-pointer transition-all hover:shadow-md ${
-                  activeChat === chat.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
+                className={`cursor-pointer transition-all hover:shadow-lg border ${
+                  activeChat === chat.id 
+                    ? 'border-cyber-primary bg-cyber-primary/10 cyber-glow' 
+                    : 'border-cyber-surface hover:border-cyber-primary/50 bg-cyber-surface/30'
                 }`}
                 onClick={() => setActiveChat(chat.id)}
               >
                 <CardContent className="p-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <MessageSquare className="w-4 h-4 text-gray-500" />
-                    <span className="font-medium text-sm truncate">{chat.title}</span>
+                    <MessageSquare className="w-4 h-4 text-cyber-primary" />
+                    <span className="font-medium text-sm truncate text-cyber-text">{chat.title}</span>
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-cyber-muted">
                     {chat.messages.length} messages
                   </div>
                 </CardContent>
@@ -641,41 +643,47 @@ const Index = () => {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="border-b border-gray-200 bg-white/80 backdrop-blur-sm p-4">
+        <div className="border-b border-cyber-primary/30 bg-cyber-surface/50 backdrop-blur-sm p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="text-cyber-primary hover:bg-cyber-primary/20"
               >
-                <History className="w-4 h-4" />
+                <History className="w-5 h-5" />
               </Button>
-              <h1 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-cyber-primary via-cyber-accent to-cyber-secondary bg-clip-text text-transparent text-glow">
                 Multi-AI Chat
               </h1>
             </div>
             
             {/* Platform Toggles with Chat Buttons */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
               {platforms.map((platform) => (
-                <div key={platform.id} className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{platform.icon}</span>
-                  <span className="text-sm">{platform.name}</span>
+                <div key={platform.id} className="flex items-center gap-3">
+                  <span className="text-lg">{platform.icon}</span>
+                  <span className="text-base font-medium text-cyber-text">{platform.name}</span>
                   <Switch
                     checked={platform.enabled && platform.hasApiKey}
                     onCheckedChange={() => togglePlatform(platform.id)}
                     disabled={!platform.hasApiKey}
+                    className="data-[state=checked]:bg-cyber-primary"
                   />
                   {!platform.hasApiKey && (
-                    <Badge variant="destructive" className="text-xs">No Key</Badge>
+                    <Badge variant="destructive" className="text-xs bg-cyber-danger text-cyber-text">No Key</Badge>
                   )}
                   {platform.hasApiKey && (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleViewBotHistory(platform)}
-                      className="h-6 px-2 text-xs"
+                      className={`h-7 px-3 text-xs font-medium border ${
+                        platform.id === 'openai' ? 'border-agent-openai text-agent-openai hover:bg-agent-openai/20' :
+                        platform.id === 'anthropic' ? 'border-agent-anthropic text-agent-anthropic hover:bg-agent-anthropic/20' :
+                        'border-agent-deepseek text-agent-deepseek hover:bg-agent-deepseek/20'
+                      }`}
                     >
                       Chat
                     </Button>
@@ -695,19 +703,19 @@ const Index = () => {
                 className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div className={`max-w-[80%] ${message.sender === 'user' ? 'order-2' : 'order-1'}`}>
-                  <Card className={`${
+                  <Card className={`border ${
                     message.sender === 'user' 
-                      ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white' 
-                      : 'bg-white shadow-sm border'
+                      ? 'bg-gradient-to-r from-cyber-primary to-cyber-accent text-cyber-bg border-cyber-primary cyber-glow' 
+                      : 'bg-cyber-surface/70 border-cyber-primary/30 text-cyber-text'
                   }`}>
-                    <CardContent className="p-3">
-                      <div className={`text-sm leading-relaxed whitespace-pre-wrap ${
-                        message.sender === 'ai' ? 'prose prose-sm max-w-none' : ''
+                    <CardContent className="p-4">
+                      <div className={`text-base leading-relaxed whitespace-pre-wrap font-medium ${
+                        message.sender === 'ai' ? 'prose prose-sm max-w-none text-cyber-text' : ''
                       }`}>
                         {message.content}
                       </div>
-                      <div className={`text-xs mt-2 ${
-                        message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
+                      <div className={`text-sm mt-3 font-medium ${
+                        message.sender === 'user' ? 'text-cyber-bg/80' : 'text-cyber-muted'
                       }`}>
                         {message.timestamp.toLocaleTimeString()}
                       </div>
@@ -719,15 +727,15 @@ const Index = () => {
             
             {isLoading && (
               <div className="flex justify-start">
-                <Card className="bg-white shadow-sm border">
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2">
+                <Card className="bg-cyber-surface/70 border-cyber-primary/30">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
                       <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        <div className="w-3 h-3 bg-cyber-primary rounded-full animate-bounce cyber-glow"></div>
+                        <div className="w-3 h-3 bg-cyber-accent rounded-full animate-bounce cyber-glow" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-3 h-3 bg-cyber-secondary rounded-full animate-bounce cyber-glow" style={{ animationDelay: '0.2s' }}></div>
                       </div>
-                      <span className="text-sm text-gray-500">AI platforms are thinking...</span>
+                      <span className="text-base text-cyber-muted font-medium">AI platforms are thinking...</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -739,27 +747,27 @@ const Index = () => {
         </ScrollArea>
 
         {/* Input Area */}
-        <div className="border-t border-gray-200 bg-white/80 backdrop-blur-sm p-4">
+        <div className="border-t border-cyber-primary/30 bg-cyber-surface/50 backdrop-blur-sm p-4">
           <div className="max-w-4xl mx-auto">
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <Input
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 placeholder="Ask all enabled AI platforms..."
                 onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
                 disabled={isLoading}
-                className="flex-1 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="flex-1 bg-cyber-surface/70 border-cyber-primary/30 focus:border-cyber-primary text-cyber-text placeholder:text-cyber-muted text-base font-medium"
               />
               <Button 
                 onClick={handleSendMessage}
                 disabled={!inputMessage.trim() || isLoading}
-                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+                className="bg-gradient-to-r from-cyber-primary to-cyber-accent hover:from-cyber-primary/80 hover:to-cyber-accent/80 text-cyber-bg font-semibold cyber-glow"
               >
-                <Send className="w-4 h-4" />
+                <Send className="w-5 h-5" />
               </Button>
             </div>
             
-            <div className="mt-2 text-xs text-gray-500 text-center">
+            <div className="mt-3 text-sm text-cyber-muted text-center font-medium">
               {platforms.filter(p => p.enabled && p.hasApiKey).length} AI platform(s) enabled
             </div>
           </div>

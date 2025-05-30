@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -102,6 +101,19 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
     return botMessages;
   };
 
+  const getAgentColor = (platformId: string) => {
+    switch (platformId) {
+      case 'openai':
+        return 'agent-openai';
+      case 'anthropic':
+        return 'agent-anthropic';
+      case 'deepseek':
+        return 'agent-deepseek';
+      default:
+        return 'cyber-primary';
+    }
+  };
+
   const handleSendMessage = () => {
     if (!inputMessage.trim() || !onSendMessage) return;
     
@@ -116,21 +128,24 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
+      <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col bg-cyber-surface border-cyber-primary/30">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <span className="text-lg">{platform.icon}</span>
-            <span>Chat with {platform.name}</span>
-            <Badge className={platform.color}>{platform.name}</Badge>
+          <DialogTitle className="flex items-center gap-3 text-cyber-text">
+            <span className="text-2xl">{platform?.icon}</span>
+            <span className="text-xl font-bold">Chat with {platform?.name}</span>
+            <Badge className={`${platform?.color} font-semibold text-base px-3 py-1 cyber-glow`}>
+              {platform?.name}
+            </Badge>
           </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 max-h-[50vh] p-4" ref={scrollAreaRef}>
+        <ScrollArea className="flex-1 max-h-[55vh] p-4" ref={scrollAreaRef}>
           <div className="space-y-4">
             {botMessages.length === 0 ? (
-              <div className="text-center text-gray-500 py-8">
-                <p>No conversation with {platform.name} yet.</p>
-                <p className="text-sm mt-2">Start chatting to see the conversation here.</p>
+              <div className="text-center text-cyber-muted py-12">
+                <div className="text-4xl mb-4">{platform?.icon}</div>
+                <p className="text-lg font-medium mb-2">No conversation with {platform?.name} yet.</p>
+                <p className="text-base">Start chatting to see the conversation here.</p>
               </div>
             ) : (
               botMessages.map((message, index) => (
@@ -138,20 +153,20 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
                   key={index}
                   className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className={`max-w-[80%] ${message.isUser ? 'order-2' : 'order-1'}`}>
-                    <Card className={`${
+                  <div className={`max-w-[85%] ${message.isUser ? 'order-2' : 'order-1'}`}>
+                    <Card className={`border ${
                       message.isUser 
-                        ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white' 
-                        : 'bg-white shadow-sm border'
+                        ? `bg-${getAgentColor(platform!.id)} text-cyber-bg border-${getAgentColor(platform!.id)} cyber-glow` 
+                        : 'bg-cyber-surface/70 border-cyber-primary/30 text-cyber-text'
                     }`}>
-                      <CardContent className="p-3">
-                        <div className={`text-sm leading-relaxed whitespace-pre-wrap ${
-                          !message.isUser ? 'prose prose-sm max-w-none' : ''
+                      <CardContent className="p-4">
+                        <div className={`text-base leading-relaxed whitespace-pre-wrap font-medium ${
+                          !message.isUser ? 'prose prose-sm max-w-none text-cyber-text' : ''
                         }`}>
                           {message.content}
                         </div>
-                        <div className={`text-xs mt-2 ${
-                          message.isUser ? 'text-blue-100' : 'text-gray-500'
+                        <div className={`text-sm mt-3 font-medium ${
+                          message.isUser ? 'text-cyber-bg/70' : 'text-cyber-muted'
                         }`}>
                           {message.timestamp.toLocaleTimeString()}
                         </div>
@@ -166,25 +181,25 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
         </ScrollArea>
 
         {/* Input Area */}
-        <div className="border-t pt-4">
-          <div className="flex gap-2">
+        <div className="border-t border-cyber-primary/30 pt-4">
+          <div className="flex gap-3">
             <Input
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              placeholder={`Chat with ${platform.name}...`}
+              placeholder={`Chat with ${platform?.name}...`}
               onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-              className="flex-1"
+              className="flex-1 bg-cyber-surface/70 border-cyber-primary/30 focus:border-cyber-primary text-cyber-text placeholder:text-cyber-muted text-base font-medium"
             />
             <Button 
               onClick={handleSendMessage}
               disabled={!inputMessage.trim()}
-              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+              className={`bg-${getAgentColor(platform!.id)} hover:bg-${getAgentColor(platform!.id)}/80 text-cyber-bg font-semibold cyber-glow`}
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-5 h-5" />
             </Button>
           </div>
-          <div className="text-xs text-gray-500 mt-2 text-center">
-            This will send a message only to {platform.name}
+          <div className="text-sm text-cyber-muted mt-3 text-center font-medium">
+            This will send a message only to {platform?.name}
           </div>
         </div>
       </DialogContent>
