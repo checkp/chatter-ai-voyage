@@ -87,6 +87,11 @@ const Index = () => {
     return chats.find(chat => chat.id === activeChat) || null;
   };
 
+  const generateChatId = (): string => {
+    // Generate a proper UUID format instead of timestamp
+    return crypto.randomUUID();
+  };
+
   const addMessage = (chatId: string, message: Message) => {
     setChats(prev => prev.map(chat => 
       chat.id === chatId 
@@ -103,16 +108,18 @@ const Index = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
 
-    // Save to database
-    const updatedChat = chats.find(chat => chat.id === chatId);
-    if (updatedChat) {
-      const chatToSave = {
-        ...updatedChat,
-        messages: [...updatedChat.messages, message],
-        lastUpdated: new Date()
-      };
-      saveConversation(chatToSave);
-    }
+    // Save to database immediately
+    setTimeout(() => {
+      const updatedChat = chats.find(chat => chat.id === chatId);
+      if (updatedChat) {
+        const chatToSave = {
+          ...updatedChat,
+          messages: [...updatedChat.messages, message],
+          lastUpdated: new Date()
+        };
+        saveConversation(chatToSave);
+      }
+    }, 0);
   };
 
   const updateChatTitle = (chatId: string, title: string) => {
@@ -169,9 +176,9 @@ const Index = () => {
     return history;
   };
 
-  const createNewChat = () => {
+  const createNewChat = async () => {
     const newChat: Chat = {
-      id: `chat-${Date.now()}`,
+      id: generateChatId(),
       title: 'New Chat',
       messages: [],
       createdAt: new Date(),
@@ -180,6 +187,19 @@ const Index = () => {
 
     setChats(prev => [newChat, ...prev]);
     setActiveChat(newChat.id);
+    
+    // Immediately save the new chat to database
+    if (user) {
+      try {
+        await saveConversation(newChat);
+        console.log('New chat saved to database with ID:', newChat.id);
+      } catch (error) {
+        console.error('Failed to save new chat:', error);
+        toast.error('Failed to create new chat');
+      }
+    }
+
+    return newChat.id;
   };
 
   const loadApiKeysStatus = async () => {
@@ -321,6 +341,8 @@ const Index = () => {
     if (!user) return;
 
     try {
+      console.log('Saving conversation:', chat.id, 'with', chat.messages.length, 'messages');
+      
       // First save/update the conversation
       const { error: convError } = await supabase
         .from('conversations')
@@ -328,25 +350,24 @@ const Index = () => {
           id: chat.id,
           user_id: user.id,
           title: chat.title,
-          updated_at: new Date().toISOString()
+          created_at: chat.createdAt.toISOString(),
+          updated_at: chat.lastUpdated.toISOString()
+        }, {
+          onConflict: 'id'
         });
 
       if (convError) {
         console.error('Error saving conversation:', convError);
-        return;
+        throw convError;
       }
 
       // Then save any new messages
-      const existingMessageIds = new Set();
       const { data: existingMessages } = await supabase
         .from('messages')
         .select('id')
         .eq('conversation_id', chat.id);
 
-      if (existingMessages) {
-        existingMessages.forEach(msg => existingMessageIds.add(msg.id));
-      }
-
+      const existingMessageIds = new Set((existingMessages || []).map(msg => msg.id));
       const newMessages = chat.messages.filter(msg => !existingMessageIds.has(msg.id));
 
       if (newMessages.length > 0) {
@@ -365,10 +386,14 @@ const Index = () => {
 
         if (msgError) {
           console.error('Error saving messages:', msgError);
+          throw msgError;
         }
       }
+      
+      console.log('Conversation saved successfully');
     } catch (error: any) {
       console.error('Failed to save conversation:', error);
+      throw error;
     }
   };
 
@@ -524,23 +549,7 @@ const Index = () => {
     // If no active chat, create one first
     if (!chatId) {
       console.log('No active chat, creating new one');
-      const newChat: Chat = {
-        id: `chat-${Date.now()}`,
-        title: 'New Chat',
-        messages: [],
-        createdAt: new Date(),
-        lastUpdated: new Date()
-      };
-
-      setChats(prev => [newChat, ...prev]);
-      setActiveChat(newChat.id);
-      chatId = newChat.id;
-    }
-
-    const currentChat = chats.find(chat => chat.id === chatId);
-    if (!currentChat && !chatId.startsWith('chat-')) {
-      console.log('Current chat not found');
-      return;
+      chatId = await createNewChat();
     }
 
     const enabledPlatforms = platforms.filter(p => {
@@ -557,7 +566,7 @@ const Index = () => {
 
     // Add user message
     const userMessage: Message = {
-      id: `user-${Date.now()}`,
+      id: crypto.randomUUID(),
       content: inputMessage,
       sender: 'user',
       timestamp: new Date(),
@@ -566,7 +575,7 @@ const Index = () => {
     addMessage(chatId, userMessage);
 
     // Update chat title if it's the first message
-    const targetChat = currentChat || chats.find(chat => chat.id === chatId);
+    const targetChat = chats.find(chat => chat.id === chatId);
     if (!targetChat || targetChat.messages.length === 0) {
       updateChatTitle(chatId, inputMessage);
     }
@@ -594,7 +603,7 @@ const Index = () => {
           
           // Create individual message for this agent
           const agentMessage: Message = {
-            id: `${platform.id}-${Date.now()}-${Math.random()}`,
+            id: crypto.randomUUID(),
             content: response,
             sender: 'ai',
             platform: platform.id,
@@ -609,7 +618,7 @@ const Index = () => {
           
           // Create error message for this agent
           const errorMessage: Message = {
-            id: `${platform.id}-error-${Date.now()}-${Math.random()}`,
+            id: crypto.randomUUID(),
             content: `❌ Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
             sender: 'ai',
             platform: platform.id,
@@ -693,7 +702,7 @@ const Index = () => {
 
     // Add user message to the main chat
     const userMessage: Message = {
-      id: `user-${Date.now()}`,
+      id: crypto.randomUUID(),
       content: message,
       sender: 'user',
       timestamp: new Date(),
@@ -719,7 +728,7 @@ const Index = () => {
 
       // Create a message with this platform's response
       const platformMessage: Message = {
-        id: `${platform.id}-${Date.now()}-${Math.random()}`,
+        id: crypto.randomUUID(),
         content: response,
         sender: 'ai',
         platform: platform.id,
@@ -730,7 +739,7 @@ const Index = () => {
 
     } catch (error) {
       const errorMessage: Message = {
-        id: `error-${Date.now()}`,
+        id: crypto.randomUUID(),
         content: `❌ Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
         sender: 'ai',
         platform: platform.id,
