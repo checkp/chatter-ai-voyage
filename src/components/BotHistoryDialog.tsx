@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
@@ -49,6 +49,19 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
   onSendMessage
 }) => {
   const [inputMessage, setInputMessage] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    if (open && currentChat && platform) {
+      // Scroll to bottom when dialog opens or messages update
+      setTimeout(scrollToBottom, 100);
+    }
+  }, [open, currentChat?.messages, platform]);
 
   if (!platform || !currentChat) return null;
 
@@ -94,6 +107,9 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
     
     onSendMessage(inputMessage, platform.id);
     setInputMessage('');
+    
+    // Auto-scroll after sending message
+    setTimeout(scrollToBottom, 100);
   };
 
   const botMessages = getBotMessages();
@@ -109,7 +125,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
           </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 max-h-[50vh] p-4">
+        <ScrollArea className="flex-1 max-h-[50vh] p-4" ref={scrollAreaRef}>
           <div className="space-y-4">
             {botMessages.length === 0 ? (
               <div className="text-center text-gray-500 py-8">
@@ -145,6 +161,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
                 </div>
               ))
             )}
+            <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
 
