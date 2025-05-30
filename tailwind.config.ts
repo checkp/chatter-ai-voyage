@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -19,9 +18,6 @@ export default {
 			}
 		},
 		extend: {
-			fontFamily: {
-				'orbitron': ['Orbitron', 'monospace'],
-			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -65,17 +61,6 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				},
-				cyber: {
-					bg: '#0a0a0f',
-					surface: '#1a1a2e',
-					accent: '#16213e',
-					primary: '#00d4ff',
-					secondary: '#ff0080',
-					success: '#00ff88',
-					warning: '#ffaa00',
-					text: '#e0e6ed',
-					'text-dim': '#9ca3af'
 				}
 			},
 			borderRadius: {
@@ -99,20 +84,11 @@ export default {
 					to: {
 						height: '0'
 					}
-				},
-				'glow-pulse': {
-					'0%, 100%': {
-						boxShadow: '0 0 5px #00d4ff, 0 0 10px #00d4ff, 0 0 15px #00d4ff'
-					},
-					'50%': {
-						boxShadow: '0 0 10px #00d4ff, 0 0 20px #00d4ff, 0 0 30px #00d4ff'
-					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out',
-				'glow-pulse': 'glow-pulse 2s ease-in-out infinite'
+				'accordion-up': 'accordion-up 0.2s ease-out'
 			}
 		}
 	},
