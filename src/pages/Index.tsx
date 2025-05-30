@@ -475,12 +475,36 @@ const Index = () => {
   };
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || !activeChat) return;
+    console.log('handleSendMessage called');
+    console.log('inputMessage:', inputMessage);
+    console.log('activeChat:', activeChat);
+    
+    if (!inputMessage.trim()) {
+      console.log('No input message');
+      return;
+    }
+    
+    if (!activeChat) {
+      console.log('No active chat, creating new one');
+      createNewChat();
+      // Wait for state to update
+      setTimeout(() => handleSendMessage(), 100);
+      return;
+    }
 
     const currentChat = getCurrentChat();
-    if (!currentChat) return;
+    if (!currentChat) {
+      console.log('Current chat not found');
+      return;
+    }
 
-    const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
+    const enabledPlatforms = platforms.filter(p => {
+      console.log(`Platform ${p.name}: enabled=${p.enabled}, hasApiKey=${p.hasApiKey}`);
+      return p.enabled && p.hasApiKey;
+    });
+    
+    console.log('Enabled platforms:', enabledPlatforms);
+    
     if (enabledPlatforms.length === 0) {
       toast.error('Please enable at least one AI platform with a valid API key');
       return;
@@ -573,6 +597,7 @@ const Index = () => {
       addMessage(activeChat, consolidatedMessage);
 
     } catch (error) {
+      console.error('Error in handleSendMessage:', error);
       toast.error('Failed to get responses from AI platforms');
     } finally {
       setIsLoading(false);
@@ -590,19 +615,30 @@ const Index = () => {
   };
 
   const togglePlatform = async (platformId: string) => {
+    console.log('togglePlatform called for:', platformId);
     const platform = platforms.find(p => p.id === platformId);
-    if (!platform || !platform.hasApiKey) {
+    console.log('Platform found:', platform);
+    
+    if (!platform) {
+      console.log('Platform not found');
+      return;
+    }
+    
+    if (!platform.hasApiKey) {
       toast.error('Please add an API key for this platform first');
       return;
     }
 
     const newEnabled = !platform.enabled;
+    console.log('Setting enabled to:', newEnabled);
+    
     setPlatforms(prev => prev.map(p => 
       p.id === platformId ? { ...p, enabled: newEnabled } : p
     ));
 
     // Save to database
     await saveAgentSetting(platformId, newEnabled);
+    console.log('Platform toggle saved to database');
   };
 
   const handleApiKeyDialogClose = (open: boolean) => {
