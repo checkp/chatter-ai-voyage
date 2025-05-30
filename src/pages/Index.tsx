@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Plus, MessageSquare, Settings, History, Key, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import ApiKeySettings from '@/components/ApiKeySettings';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import BotHistoryDialog from '@/components/BotHistoryDialog';
 
 interface Message {
   id: string;
@@ -79,6 +79,8 @@ const Index = () => {
   ]);
 
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
+  const [showBotHistoryDialog, setShowBotHistoryDialog] = useState(false);
+  const [selectedPlatformForHistory, setSelectedPlatformForHistory] = useState<AIPlatform | null>(null);
 
   // Load API keys status from Supabase
   const loadApiKeysStatus = async () => {
@@ -443,6 +445,11 @@ const Index = () => {
     }
   };
 
+  const handleViewBotHistory = (platform: AIPlatform) => {
+    setSelectedPlatformForHistory(platform);
+    setShowBotHistoryDialog(true);
+  };
+
   const currentChat = getCurrentChat();
 
   // Authentication state management
@@ -589,7 +596,7 @@ const Index = () => {
               </h1>
             </div>
             
-            {/* Platform Toggles */}
+            {/* Platform Toggles with History Buttons */}
             <div className="flex items-center gap-4">
               {platforms.map((platform) => (
                 <div key={platform.id} className="flex items-center gap-2">
@@ -602,6 +609,16 @@ const Index = () => {
                   />
                   {!platform.hasApiKey && (
                     <Badge variant="destructive" className="text-xs">No Key</Badge>
+                  )}
+                  {platform.hasApiKey && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleViewBotHistory(platform)}
+                      className="h-6 px-2 text-xs"
+                    >
+                      History
+                    </Button>
                   )}
                 </div>
               ))}
@@ -688,6 +705,14 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      {/* Bot History Dialog */}
+      <BotHistoryDialog
+        open={showBotHistoryDialog}
+        onOpenChange={setShowBotHistoryDialog}
+        platform={selectedPlatformForHistory}
+        currentChat={getCurrentChat()}
+      />
     </div>
   );
 };
