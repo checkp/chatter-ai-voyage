@@ -82,6 +82,96 @@ const Index = () => {
   const [showBotHistoryDialog, setShowBotHistoryDialog] = useState(false);
   const [selectedPlatformForHistory, setSelectedPlatformForHistory] = useState<AIPlatform | null>(null);
 
+  // Utility functions
+  const getCurrentChat = (): Chat | null => {
+    return chats.find(chat => chat.id === activeChat) || null;
+  };
+
+  const addMessage = (chatId: string, message: Message) => {
+    setChats(prev => prev.map(chat => 
+      chat.id === chatId 
+        ? { 
+            ...chat, 
+            messages: [...chat.messages, message],
+            lastUpdated: new Date()
+          }
+        : chat
+    ));
+    
+    // Auto-scroll to bottom
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+
+    // Save to database
+    const updatedChat = chats.find(chat => chat.id === chatId);
+    if (updatedChat) {
+      const chatToSave = {
+        ...updatedChat,
+        messages: [...updatedChat.messages, message],
+        lastUpdated: new Date()
+      };
+      saveConversation(chatToSave);
+    }
+  };
+
+  const updateChatTitle = (chatId: string, title: string) => {
+    const truncatedTitle = title.length > 50 ? title.substring(0, 50) + '...' : title;
+    setChats(prev => prev.map(chat => 
+      chat.id === chatId 
+        ? { ...chat, title: truncatedTitle }
+        : chat
+    ));
+  };
+
+  const buildConversationHistory = (chatId: string): Array<{role: 'user' | 'assistant', content: string}> => {
+    const chat = chats.find(c => c.id === chatId);
+    if (!chat) return [];
+
+    return chat.messages.map(msg => ({
+      role: msg.sender === 'user' ? 'user' as const : 'assistant' as const,
+      content: msg.content
+    }));
+  };
+
+  const createNewChat = () => {
+    const newChat: Chat = {
+      id: `chat-${Date.now()}`,
+      title: 'New Chat',
+      messages: [],
+      createdAt: new Date(),
+      lastUpdated: new Date()
+    };
+
+    setChats(prev => [newChat, ...prev]);
+    setActiveChat(newChat.id);
+  };
+
+  const loadApiKeysStatus = async () => {
+    if (!user) return;
+
+    try {
+      const { data: apiKeys, error } = await supabase
+        .from('user_api_keys')
+        .select('platform')
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error loading API keys:', error);
+        return;
+      }
+
+      const platformsWithKeys = new Set((apiKeys || []).map(key => key.platform));
+      
+      setPlatforms(prev => prev.map(platform => ({
+        ...platform,
+        hasApiKey: platformsWithKeys.has(platform.id)
+      })));
+    } catch (error: any) {
+      console.error('Failed to load API keys status:', error);
+    }
+  };
+
   // Load conversations from database
   const loadConversations = async () => {
     if (!user) return;
@@ -613,6 +703,15 @@ const Index = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Load data when user is available
+  useEffect(() => {
+    if (user) {
+      loadConversations();
+      loadAgentSettings();
+      loadApiKeysStatus();
+    }
+  }, [user]);
 
   // Redirect to auth if not logged in
   useEffect(() => {
