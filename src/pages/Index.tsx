@@ -928,7 +928,7 @@ const Index = () => {
             {chats.map((chat) => (
               <Card 
                 key={chat.id} 
-                className={`cursor-pointer transition-all hover:shadow-lg border ${
+                className={`cursor-pointer transition-all hover:shadow-lg border group ${
                   activeChat === chat.id 
                     ? 'border-cyber-primary bg-cyber-primary/10 cyber-glow' 
                     : 'border-cyber-surface hover:border-cyber-primary/50 bg-cyber-surface/30'
@@ -948,7 +948,7 @@ const Index = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 hover:bg-cyber-danger/20 text-cyber-danger opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="h-8 w-8 p-0 hover:bg-cyber-danger/20 text-cyber-danger opacity-70 group-hover:opacity-100 transition-opacity ml-2"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <Trash2 className="w-4 h-4" />
