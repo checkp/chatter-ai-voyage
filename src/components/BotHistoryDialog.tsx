@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -49,7 +50,6 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
 }) => {
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -66,9 +66,18 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
 
   // Extract messages relevant to this platform
   const getBotMessages = () => {
+    console.log('getBotMessages called for platform:', platform.name);
+    console.log('Total messages in chat:', currentChat.messages.length);
+    
     const botMessages: Array<{content: string, timestamp: Date, isUser: boolean}> = [];
     
-    currentChat.messages.forEach(message => {
+    currentChat.messages.forEach((message, index) => {
+      console.log(`Message ${index}:`, { 
+        sender: message.sender, 
+        platform: message.platform, 
+        content: message.content.substring(0, 100) + '...'
+      });
+      
       if (message.sender === 'user') {
         botMessages.push({
           content: message.content,
@@ -76,28 +85,58 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
           isUser: true
         });
       } else if (message.sender === 'ai') {
-        // Parse consolidated message to extract this bot's response
-        const content = message.content;
-        const botIcon = platform.icon;
-        const botName = platform.name;
+        // Try two approaches: platform-specific messages or consolidated messages
         
-        // Look for this bot's section in the consolidated message
-        const botPattern = new RegExp(`\\*\\*${botIcon}\\s+${botName}:\\*\\*\\s*\\n\\n([\\s\\S]*?)(?=\\n\\n---\\n\\n|$)`, 'i');
-        const match = content.match(botPattern);
-        
-        if (match) {
-          const botResponse = match[1].trim();
+        // Approach 1: Check if this is a platform-specific message
+        if (message.platform === platform.id) {
+          console.log('Found platform-specific message for', platform.name);
+          botMessages.push({
+            content: message.content,
+            timestamp: message.timestamp,
+            isUser: false
+          });
+        } 
+        // Approach 2: Parse consolidated message format
+        else if (!message.platform) {
+          console.log('Parsing consolidated message for', platform.name);
+          const content = message.content;
+          const botIcon = platform.icon;
+          const botName = platform.name;
+          
+          // Try multiple patterns to match different formats
+          const patterns = [
+            // Pattern 1: **🤖 OpenAI:** format
+            new RegExp(`\\*\\*${botIcon}\\s+${botName}:\\*\\*\\s*\\n\\n([\\s\\S]*?)(?=\\n\\n---\\n\\n|\\n\\n\\*\\*|$)`, 'i'),
+            // Pattern 2: **OpenAI:** format (without icon)
+            new RegExp(`\\*\\*${botName}:\\*\\*\\s*\\n\\n([\\s\\S]*?)(?=\\n\\n---\\n\\n|\\n\\n\\*\\*|$)`, 'i'),
+            // Pattern 3: Simple format with just the name
+            new RegExp(`${botName}:\\s*([\\s\\S]*?)(?=\\n\\n${botName}:|\\n\\n---\\n\\n|$)`, 'i')
+          ];
+          
+          let botResponse = null;
+          for (const pattern of patterns) {
+            const match = content.match(pattern);
+            if (match) {
+              botResponse = match[1].trim();
+              console.log('Matched pattern for', platform.name, ':', botResponse.substring(0, 50) + '...');
+              break;
+            }
+          }
+          
           if (botResponse && !botResponse.startsWith('❌ Error:')) {
             botMessages.push({
               content: botResponse,
               timestamp: message.timestamp,
               isUser: false
             });
+          } else {
+            console.log('No valid response found for', platform.name, 'in consolidated message');
           }
         }
       }
     });
     
+    console.log('Final bot messages for', platform.name, ':', botMessages.length);
     return botMessages;
   };
 
@@ -128,8 +167,8 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col bg-cyber-surface border-cyber-primary/30">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-3xl h-[85vh] flex flex-col bg-cyber-surface border-cyber-primary/30">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-3 text-cyber-text">
             <span className="text-2xl">{platform?.icon}</span>
             <span className="text-xl font-bold">Chat with {platform?.name}</span>
@@ -139,8 +178,8 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
           </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 max-h-[55vh] p-4" ref={scrollAreaRef}>
-          <div className="space-y-4">
+        <ScrollArea className="flex-1 p-4">
+          <div className="space-y-4 min-h-0">
             {botMessages.length === 0 ? (
               <div className="text-center text-cyber-muted py-12">
                 <div className="text-4xl mb-4">{platform?.icon}</div>
@@ -181,7 +220,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
         </ScrollArea>
 
         {/* Input Area */}
-        <div className="border-t border-cyber-primary/30 pt-4">
+        <div className="border-t border-cyber-primary/30 pt-4 flex-shrink-0">
           <div className="flex gap-3">
             <Input
               value={inputMessage}
