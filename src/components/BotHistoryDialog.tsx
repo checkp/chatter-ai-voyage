@@ -1,9 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Send } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -35,14 +38,18 @@ interface BotHistoryDialogProps {
   onOpenChange: (open: boolean) => void;
   platform: AIPlatform | null;
   currentChat: Chat | null;
+  onSendMessage?: (message: string, platformId: string) => void;
 }
 
 const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
   open,
   onOpenChange,
   platform,
-  currentChat
+  currentChat,
+  onSendMessage
 }) => {
+  const [inputMessage, setInputMessage] = useState('');
+
   if (!platform || !currentChat) return null;
 
   // Extract messages relevant to this platform
@@ -82,25 +89,32 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
     return botMessages;
   };
 
+  const handleSendMessage = () => {
+    if (!inputMessage.trim() || !onSendMessage) return;
+    
+    onSendMessage(inputMessage, platform.id);
+    setInputMessage('');
+  };
+
   const botMessages = getBotMessages();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh]">
+      <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span className="text-lg">{platform.icon}</span>
-            <span>Conversation with {platform.name}</span>
+            <span>Chat with {platform.name}</span>
             <Badge className={platform.color}>{platform.name}</Badge>
           </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 max-h-[60vh] p-4">
+        <ScrollArea className="flex-1 max-h-[50vh] p-4">
           <div className="space-y-4">
             {botMessages.length === 0 ? (
               <div className="text-center text-gray-500 py-8">
-                <p>No conversation history with {platform.name} yet.</p>
-                <p className="text-sm mt-2">Start chatting to see the conversation history here.</p>
+                <p>No conversation with {platform.name} yet.</p>
+                <p className="text-sm mt-2">Start chatting to see the conversation here.</p>
               </div>
             ) : (
               botMessages.map((message, index) => (
@@ -133,6 +147,29 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
             )}
           </div>
         </ScrollArea>
+
+        {/* Input Area */}
+        <div className="border-t pt-4">
+          <div className="flex gap-2">
+            <Input
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              placeholder={`Chat with ${platform.name}...`}
+              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+              className="flex-1"
+            />
+            <Button 
+              onClick={handleSendMessage}
+              disabled={!inputMessage.trim()}
+              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+          <div className="text-xs text-gray-500 mt-2 text-center">
+            This will send a message only to {platform.name}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -450,6 +450,66 @@ const Index = () => {
     setShowBotHistoryDialog(true);
   };
 
+  const handleSendMessageToSpecificBot = async (message: string, platformId: string) => {
+    if (!activeChat) return;
+
+    const platform = platforms.find(p => p.id === platformId);
+    if (!platform || !platform.hasApiKey) {
+      toast.error(`${platform?.name || 'Platform'} is not available or missing API key`);
+      return;
+    }
+
+    // Add user message to the main chat
+    const userMessage: Message = {
+      id: `user-${Date.now()}`,
+      content: message,
+      sender: 'user',
+      timestamp: new Date(),
+    };
+
+    addMessage(activeChat, userMessage);
+
+    // Update chat title if it's the first message
+    const currentChat = getCurrentChat();
+    if (currentChat && currentChat.messages.length === 0) {
+      updateChatTitle(activeChat, message);
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Build conversation history including the new user message
+      const conversationHistory = buildConversationHistory(activeChat);
+      conversationHistory.push({ role: 'user', content: message });
+
+      // Call the specific AI platform
+      const response = await callAIAPI(platform, conversationHistory);
+
+      // Create a message with just this platform's response
+      const platformMessage: Message = {
+        id: `${platform.id}-${Date.now()}`,
+        content: `**${platform.icon} ${platform.name}:**\n\n${response}`,
+        sender: 'ai',
+        timestamp: new Date(),
+      };
+      
+      addMessage(activeChat, platformMessage);
+
+    } catch (error) {
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        content: `**${platform.icon} ${platform.name}:**\n\n❌ Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
+        sender: 'ai',
+        timestamp: new Date(),
+      };
+      
+      addMessage(activeChat, errorMessage);
+      toast.error(`Failed to get response from ${platform.name}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const currentChat = getCurrentChat();
 
   // Authentication state management
@@ -596,7 +656,7 @@ const Index = () => {
               </h1>
             </div>
             
-            {/* Platform Toggles with History Buttons */}
+            {/* Platform Toggles with Chat Buttons */}
             <div className="flex items-center gap-4">
               {platforms.map((platform) => (
                 <div key={platform.id} className="flex items-center gap-2">
@@ -617,7 +677,7 @@ const Index = () => {
                       onClick={() => handleViewBotHistory(platform)}
                       className="h-6 px-2 text-xs"
                     >
-                      History
+                      Chat
                     </Button>
                   )}
                 </div>
@@ -706,12 +766,13 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Bot History Dialog */}
+      {/* Bot Chat Dialog */}
       <BotHistoryDialog
         open={showBotHistoryDialog}
         onOpenChange={setShowBotHistoryDialog}
         platform={selectedPlatformForHistory}
         currentChat={getCurrentChat()}
+        onSendMessage={handleSendMessageToSpecificBot}
       />
     </div>
   );
