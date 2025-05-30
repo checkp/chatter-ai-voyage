@@ -49,17 +49,28 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
 }) => {
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
+  // Auto-scroll when dialog opens, messages change, or platform changes
   useEffect(() => {
     if (open && currentChat && platform) {
-      // Scroll to bottom when dialog opens or messages update
+      // Use a longer timeout to ensure the dialog has fully rendered
+      setTimeout(scrollToBottom, 200);
+    }
+  }, [open, currentChat?.messages?.length, platform]);
+
+  // Auto-scroll when new messages are added
+  useEffect(() => {
+    if (open && currentChat?.messages) {
       setTimeout(scrollToBottom, 100);
     }
-  }, [open, currentChat?.messages, platform]);
+  }, [currentChat?.messages, open]);
 
   if (!platform || !currentChat) return null;
 
@@ -136,7 +147,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
           </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 p-4">
+        <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
           <div className="space-y-4 min-h-0">
             {botMessages.length === 0 ? (
               <div className="text-center text-cyber-muted py-12">

@@ -93,6 +93,28 @@ const Index = () => {
   const [showBotHistoryDialog, setShowBotHistoryDialog] = useState(false);
   const [selectedPlatformForHistory, setSelectedPlatformForHistory] = useState<AIPlatform | null>(null);
 
+  // Enhanced auto-scroll function
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Auto-scroll when messages change or chat becomes active
+  useEffect(() => {
+    if (activeChat) {
+      // Small delay to ensure DOM has updated
+      setTimeout(scrollToBottom, 100);
+    }
+  }, [activeChat, chats.find(chat => chat.id === activeChat)?.messages?.length]);
+
+  // Auto-scroll when switching to a different chat
+  useEffect(() => {
+    if (activeChat) {
+      setTimeout(scrollToBottom, 150);
+    }
+  }, [activeChat]);
+
   // Utility functions
   const getCurrentChat = (): Chat | null => {
     return chats.find(chat => chat.id === activeChat) || null;
@@ -114,10 +136,8 @@ const Index = () => {
         : chat
     ));
     
-    // Auto-scroll to bottom
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+    // Auto-scroll to bottom when new message is added
+    setTimeout(scrollToBottom, 100);
 
     // Save to database immediately
     setTimeout(() => {
