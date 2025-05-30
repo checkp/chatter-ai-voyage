@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Plus, MessageSquare, Settings, History, Key, LogOut, User } from 'lucide-react';
+import { Send, Plus, MessageSquare, Settings, History, Key, LogOut, User, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -8,6 +8,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -753,6 +764,53 @@ const Index = () => {
     }
   };
 
+  const deleteChat = async (chatIdToDelete: string) => {
+    if (!user) return;
+
+    try {
+      // Delete messages first (foreign key constraint)
+      const { error: messagesError } = await supabase
+        .from('messages')
+        .delete()
+        .eq('conversation_id', chatIdToDelete);
+
+      if (messagesError) {
+        console.error('Error deleting messages:', messagesError);
+        throw messagesError;
+      }
+
+      // Delete the conversation
+      const { error: conversationError } = await supabase
+        .from('conversations')
+        .delete()
+        .eq('id', chatIdToDelete)
+        .eq('user_id', user.id);
+
+      if (conversationError) {
+        console.error('Error deleting conversation:', conversationError);
+        throw conversationError;
+      }
+
+      // Update local state
+      setChats(prev => prev.filter(chat => chat.id !== chatIdToDelete));
+      
+      // If this was the active chat, switch to another chat or clear active chat
+      if (activeChat === chatIdToDelete) {
+        const remainingChats = chats.filter(chat => chat.id !== chatIdToDelete);
+        if (remainingChats.length > 0) {
+          setActiveChat(remainingChats[0].id);
+        } else {
+          setActiveChat(null);
+        }
+      }
+
+      toast.success('Chat deleted successfully');
+    } catch (error: any) {
+      console.error('Failed to delete chat:', error);
+      toast.error('Failed to delete chat');
+    }
+  };
+
   const currentChat = getCurrentChat();
 
   // Authentication state management
@@ -875,12 +933,47 @@ const Index = () => {
                     ? 'border-cyber-primary bg-cyber-primary/10 cyber-glow' 
                     : 'border-cyber-surface hover:border-cyber-primary/50 bg-cyber-surface/30'
                 }`}
-                onClick={() => setActiveChat(chat.id)}
               >
                 <CardContent className="p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <MessageSquare className="w-4 h-4 text-cyber-primary" />
-                    <span className="font-medium text-sm truncate text-cyber-text">{chat.title}</span>
+                  <div className="flex items-center justify-between">
+                    <div 
+                      className="flex items-center gap-2 mb-1 flex-1 min-w-0"
+                      onClick={() => setActiveChat(chat.id)}
+                    >
+                      <MessageSquare className="w-4 h-4 text-cyber-primary flex-shrink-0" />
+                      <span className="font-medium text-sm truncate text-cyber-text">{chat.title}</span>
+                    </div>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 hover:bg-cyber-danger/20 text-cyber-danger opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="bg-cyber-surface border-cyber-primary/30">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="text-cyber-text">Delete Chat</AlertDialogTitle>
+                          <AlertDialogDescription className="text-cyber-muted">
+                            Are you sure you want to delete "{chat.title}"? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel className="border-cyber-primary/30 text-cyber-text hover:bg-cyber-surface/80">
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => deleteChat(chat.id)}
+                            className="bg-cyber-danger hover:bg-cyber-danger/80 text-cyber-text"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                   <div className="text-xs text-cyber-muted">
                     {chat.messages.length} messages
