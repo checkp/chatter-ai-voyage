@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -64,7 +63,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
 
   if (!platform || !currentChat) return null;
 
-  // Extract messages relevant to this platform
+  // Extract messages relevant to this platform with the new structure
   const getBotMessages = () => {
     console.log('getBotMessages called for platform:', platform.name);
     console.log('Total messages in chat:', currentChat.messages.length);
@@ -84,55 +83,14 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
           timestamp: message.timestamp,
           isUser: true
         });
-      } else if (message.sender === 'ai') {
-        // Try two approaches: platform-specific messages or consolidated messages
-        
-        // Approach 1: Check if this is a platform-specific message
-        if (message.platform === platform.id) {
-          console.log('Found platform-specific message for', platform.name);
-          botMessages.push({
-            content: message.content,
-            timestamp: message.timestamp,
-            isUser: false
-          });
-        } 
-        // Approach 2: Parse consolidated message format
-        else if (!message.platform) {
-          console.log('Parsing consolidated message for', platform.name);
-          const content = message.content;
-          const botIcon = platform.icon;
-          const botName = platform.name;
-          
-          // Try multiple patterns to match different formats
-          const patterns = [
-            // Pattern 1: **🤖 OpenAI:** format
-            new RegExp(`\\*\\*${botIcon}\\s+${botName}:\\*\\*\\s*\\n\\n([\\s\\S]*?)(?=\\n\\n---\\n\\n|\\n\\n\\*\\*|$)`, 'i'),
-            // Pattern 2: **OpenAI:** format (without icon)
-            new RegExp(`\\*\\*${botName}:\\*\\*\\s*\\n\\n([\\s\\S]*?)(?=\\n\\n---\\n\\n|\\n\\n\\*\\*|$)`, 'i'),
-            // Pattern 3: Simple format with just the name
-            new RegExp(`${botName}:\\s*([\\s\\S]*?)(?=\\n\\n${botName}:|\\n\\n---\\n\\n|$)`, 'i')
-          ];
-          
-          let botResponse = null;
-          for (const pattern of patterns) {
-            const match = content.match(pattern);
-            if (match) {
-              botResponse = match[1].trim();
-              console.log('Matched pattern for', platform.name, ':', botResponse.substring(0, 50) + '...');
-              break;
-            }
-          }
-          
-          if (botResponse && !botResponse.startsWith('❌ Error:')) {
-            botMessages.push({
-              content: botResponse,
-              timestamp: message.timestamp,
-              isUser: false
-            });
-          } else {
-            console.log('No valid response found for', platform.name, 'in consolidated message');
-          }
-        }
+      } else if (message.sender === 'ai' && message.platform === platform.id) {
+        // This is a platform-specific message
+        console.log('Found platform-specific message for', platform.name);
+        botMessages.push({
+          content: message.content,
+          timestamp: message.timestamp,
+          isUser: false
+        });
       }
     });
     

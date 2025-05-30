@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Plus, MessageSquare, Settings, History, Key, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -133,6 +132,41 @@ const Index = () => {
       role: msg.sender === 'user' ? 'user' as const : 'assistant' as const,
       content: msg.content
     }));
+  };
+
+  const buildConversationHistoryForAgent = (chatId: string, agentPlatform: string): Array<{role: 'user' | 'assistant', content: string}> => {
+    const chat = chats.find(c => c.id === chatId);
+    if (!chat) return [];
+
+    const history: Array<{role: 'user' | 'assistant', content: string}> = [];
+    
+    chat.messages.forEach(msg => {
+      if (msg.sender === 'user') {
+        history.push({
+          role: 'user' as const,
+          content: msg.content
+        });
+      } else if (msg.sender === 'ai') {
+        // Include all AI responses with platform context
+        if (msg.platform === agentPlatform) {
+          // This agent's own response
+          history.push({
+            role: 'assistant' as const,
+            content: msg.content
+          });
+        } else if (msg.platform && msg.platform !== agentPlatform) {
+          // Other agent's response - include with platform identifier
+          const platform = platforms.find(p => p.id === msg.platform);
+          const platformName = platform ? platform.name : msg.platform;
+          history.push({
+            role: 'assistant' as const,
+            content: `[Response from ${platformName}]: ${msg.content}`
+          });
+        }
+      }
+    });
+
+    return history;
   };
 
   const createNewChat = () => {
@@ -542,71 +576,53 @@ const Index = () => {
     setIsLoading(true);
 
     try {
-      // Build conversation history including the new user message
-      const conversationHistory = buildConversationHistory(chatId);
-      conversationHistory.push({ role: 'user', content: messageToSend });
-
-      // Add context about enabled agents to the conversation
-      const enabledAgentNames = enabledPlatforms.map(p => p.name).join(', ');
-      const contextMessage = `Note: You are responding alongside these other AI agents: ${enabledAgentNames}. Please provide a unique perspective while being aware that users will see all responses together.`;
-      
-      const contextualHistory = [
-        ...conversationHistory,
-        { role: 'user' as const, content: contextMessage }
-      ];
-
-      // Collect all AI responses
-      const aiResponses: Array<{platform: AIPlatform, content: string, error?: string}> = [];
-
-      // Send to all enabled platforms with API keys
-      const promises = enabledPlatforms.map(async (platform) => {
+      // Send to all enabled platforms with individual context
+      const aiResponsePromises = enabledPlatforms.map(async (platform) => {
         try {
-          const response = await callAIAPI(platform, contextualHistory);
-          aiResponses.push({
-            platform,
-            content: response
-          });
+          // Build agent-specific conversation history
+          const conversationHistory = buildConversationHistoryForAgent(chatId, platform.id);
+          conversationHistory.push({ role: 'user', content: messageToSend });
+
+          // Add context about other enabled agents
+          const otherAgents = enabledPlatforms.filter(p => p.id !== platform.id).map(p => p.name);
+          if (otherAgents.length > 0) {
+            const contextMessage = `Note: You are responding alongside these other AI agents: ${otherAgents.join(', ')}. You can reference their previous responses if relevant, and provide your unique perspective.`;
+            conversationHistory.push({ role: 'user' as const, content: contextMessage });
+          }
+
+          const response = await callAIAPI(platform, conversationHistory);
+          
+          // Create individual message for this agent
+          const agentMessage: Message = {
+            id: `${platform.id}-${Date.now()}-${Math.random()}`,
+            content: response,
+            sender: 'ai',
+            platform: platform.id,
+            timestamp: new Date(),
+          };
+          
+          addMessage(chatId, agentMessage);
+          
+          return { platform, content: response, success: true };
         } catch (error) {
           console.error(`Error calling ${platform.name}:`, error);
-          aiResponses.push({
-            platform,
-            content: '',
-            error: error instanceof Error ? error.message : 'Failed to get response from ' + platform.name
-          });
+          
+          // Create error message for this agent
+          const errorMessage: Message = {
+            id: `${platform.id}-error-${Date.now()}-${Math.random()}`,
+            content: `❌ Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
+            sender: 'ai',
+            platform: platform.id,
+            timestamp: new Date(),
+          };
+          
+          addMessage(chatId, errorMessage);
+          
+          return { platform, content: '', success: false, error: error instanceof Error ? error.message : 'Unknown error' };
         }
       });
 
-      await Promise.allSettled(promises);
-
-      // Create consolidated response message
-      let consolidatedContent = '';
-      
-      aiResponses.forEach((response, index) => {
-        const platformIcon = response.platform.icon;
-        const platformName = response.platform.name;
-        
-        if (index > 0) {
-          consolidatedContent += '\n\n---\n\n';
-        }
-        
-        consolidatedContent += `**${platformIcon} ${platformName}:**\n\n`;
-        
-        if (response.error) {
-          consolidatedContent += `❌ Error: ${response.error}`;
-        } else {
-          consolidatedContent += response.content;
-        }
-      });
-
-      // Add single consolidated message
-      const consolidatedMessage: Message = {
-        id: `consolidated-${Date.now()}`,
-        content: consolidatedContent,
-        sender: 'ai',
-        timestamp: new Date(),
-      };
-      
-      addMessage(chatId, consolidatedMessage);
+      await Promise.allSettled(aiResponsePromises);
 
     } catch (error) {
       console.error('Error in handleSendMessage:', error);
@@ -694,18 +710,19 @@ const Index = () => {
     setIsLoading(true);
 
     try {
-      // Build conversation history including the new user message
-      const conversationHistory = buildConversationHistory(activeChat);
+      // Build agent-specific conversation history
+      const conversationHistory = buildConversationHistoryForAgent(activeChat, platformId);
       conversationHistory.push({ role: 'user', content: message });
 
       // Call the specific AI platform
       const response = await callAIAPI(platform, conversationHistory);
 
-      // Create a message with just this platform's response
+      // Create a message with this platform's response
       const platformMessage: Message = {
-        id: `${platform.id}-${Date.now()}`,
-        content: `**${platform.icon} ${platform.name}:**\n\n${response}`,
+        id: `${platform.id}-${Date.now()}-${Math.random()}`,
+        content: response,
         sender: 'ai',
+        platform: platform.id,
         timestamp: new Date(),
       };
       
@@ -714,8 +731,9 @@ const Index = () => {
     } catch (error) {
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
-        content: `**${platform.icon} ${platform.name}:**\n\n❌ Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
+        content: `❌ Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
         sender: 'ai',
+        platform: platform.id,
         timestamp: new Date(),
       };
       
@@ -934,6 +952,18 @@ const Index = () => {
                       : 'bg-cyber-surface/70 border-cyber-primary/30 text-cyber-text'
                   }`}>
                     <CardContent className="p-4">
+                      {message.sender === 'ai' && message.platform && (
+                        <div className="mb-2 flex items-center gap-2">
+                          <Badge className={`${
+                            message.platform === 'openai' ? 'bg-agent-openai border-agent-openai text-cyber-bg' :
+                            message.platform === 'anthropic' ? 'bg-agent-anthropic border-agent-anthropic text-cyber-bg' :
+                            message.platform === 'deepseek' ? 'bg-agent-deepseek border-agent-deepseek text-cyber-bg' :
+                            'bg-cyber-primary border-cyber-primary text-cyber-bg'
+                          } font-semibold cyber-glow`}>
+                            {platforms.find(p => p.id === message.platform)?.icon} {platforms.find(p => p.id === message.platform)?.name}
+                          </Badge>
+                        </div>
+                      )}
                       <div className={`text-base leading-relaxed whitespace-pre-wrap font-medium ${
                         message.sender === 'ai' ? 'prose prose-sm max-w-none text-cyber-text' : ''
                       }`}>
