@@ -127,7 +127,7 @@ export const callGrokAPI = async (
       'Authorization': `Bearer ${apiKeyData.encrypted_key}`
     },
     body: JSON.stringify({
-      model: 'grok-3',
+      model: 'grok-beta',
       messages: conversationHistory,
       max_tokens: 1000
     })
