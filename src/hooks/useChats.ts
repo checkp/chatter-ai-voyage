@@ -18,23 +18,27 @@ export const useChats = (user: SupabaseUser | null) => {
   const addMessage = (chatId: string, message: Message) => {
     console.log('=== ADD MESSAGE CALLED ===');
     console.log('Chat ID:', chatId);
-    console.log('Message:', {
+    console.log('Message details:', {
       id: message.id,
       sender: message.sender,
       platform: message.platform,
       contentLength: message.content.length,
+      contentPreview: message.content.substring(0, 100) + '...',
       timestamp: message.timestamp
     });
     
     setChats(prev => {
-      console.log('Previous chats count:', prev.length);
+      console.log('addMessage - Previous chats count:', prev.length);
       const targetChat = prev.find(chat => chat.id === chatId);
-      console.log('Target chat found:', !!targetChat, 'Current messages:', targetChat?.messages.length || 0);
+      console.log('addMessage - Target chat found:', !!targetChat);
       
       if (!targetChat) {
-        console.error('Target chat not found!', chatId);
+        console.error('addMessage - Target chat not found!', chatId);
+        console.error('addMessage - Available chat IDs:', prev.map(c => c.id));
         return prev;
       }
+      
+      console.log('addMessage - Target chat current messages:', targetChat.messages.length);
       
       const updatedChats = prev.map(chat => 
         chat.id === chatId 
@@ -47,19 +51,25 @@ export const useChats = (user: SupabaseUser | null) => {
       );
       
       const updatedChat = updatedChats.find(c => c.id === chatId);
-      console.log('Updated chat messages count:', updatedChat?.messages.length || 0);
-      console.log('Message added successfully to UI');
+      console.log('addMessage - Updated chat messages count:', updatedChat?.messages.length || 0);
+      console.log('addMessage - Message added successfully to UI state');
       
-      // Save to database immediately with the updated chat data
+      // Save to database immediately
       if (user && updatedChat) {
-        console.log('Starting immediate database save for message:', message.id);
-        saveConversation(updatedChat).catch(error => {
-          console.error('Failed to save message to database:', error);
+        console.log('addMessage - Starting database save for message:', message.id);
+        saveConversation(updatedChat).then(() => {
+          console.log('addMessage - Database save completed for message:', message.id);
+        }).catch(error => {
+          console.error('addMessage - Database save failed for message:', message.id, error);
         });
+      } else {
+        console.log('addMessage - Skipping database save - user:', !!user, 'updatedChat:', !!updatedChat);
       }
       
       return updatedChats;
     });
+    
+    console.log('=== ADD MESSAGE COMPLETED ===');
   };
 
   const updateMessageStatus = (chatId: string, messageId: string, status: 'sending' | 'sent' | 'seen', seenBy?: string[]) => {
@@ -155,10 +165,13 @@ export const useChats = (user: SupabaseUser | null) => {
   };
 
   const saveConversation = async (chat: Chat) => {
-    if (!user) return;
+    if (!user) {
+      console.log('saveConversation - No user, skipping save');
+      return;
+    }
 
     try {
-      console.log('Saving conversation:', chat.id, 'with', chat.messages.length, 'messages');
+      console.log('saveConversation - Starting save for chat:', chat.id, 'with', chat.messages.length, 'messages');
       
       const { error: convError } = await supabase
         .from('conversations')
@@ -173,9 +186,10 @@ export const useChats = (user: SupabaseUser | null) => {
         });
 
       if (convError) {
-        console.error('Error saving conversation:', convError);
+        console.error('saveConversation - Error saving conversation:', convError);
         throw convError;
       }
+      console.log('saveConversation - Conversation saved successfully');
 
       const { data: existingMessages } = await supabase
         .from('messages')
@@ -184,6 +198,8 @@ export const useChats = (user: SupabaseUser | null) => {
 
       const existingMessageIds = new Set((existingMessages || []).map(msg => msg.id));
       const newMessages = chat.messages.filter(msg => !existingMessageIds.has(msg.id));
+
+      console.log('saveConversation - Existing messages:', existingMessageIds.size, 'New messages:', newMessages.length);
 
       if (newMessages.length > 0) {
         const messagesToInsert = newMessages.map(msg => ({
@@ -195,19 +211,22 @@ export const useChats = (user: SupabaseUser | null) => {
           created_at: msg.timestamp.toISOString()
         }));
 
+        console.log('saveConversation - Inserting messages:', messagesToInsert.map(m => ({ id: m.id, sender: m.sender, platform: m.platform })));
+
         const { error: msgError } = await supabase
           .from('messages')
           .insert(messagesToInsert);
 
         if (msgError) {
-          console.error('Error saving messages:', msgError);
+          console.error('saveConversation - Error saving messages:', msgError);
           throw msgError;
         }
+        console.log('saveConversation - Messages saved successfully');
       }
       
-      console.log('Conversation saved successfully');
+      console.log('saveConversation - All data saved successfully');
     } catch (error: any) {
-      console.error('Failed to save conversation:', error);
+      console.error('saveConversation - Failed to save conversation:', error);
       throw error;
     }
   };

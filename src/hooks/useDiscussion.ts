@@ -35,42 +35,72 @@ export const useDiscussion = (
   ) => {
     console.log('=== STARTING DISCUSSION ===');
     console.log('Chat ID:', chatId);
-    console.log('User message:', userMessage.content.substring(0, 50) + '...');
-    console.log('Enabled platforms:', enabledPlatforms.map(p => p.name));
+    console.log('User message content:', userMessage.content);
+    console.log('Enabled platforms count:', enabledPlatforms.length);
+    console.log('Enabled platforms details:', enabledPlatforms.map(p => ({ 
+      id: p.id, 
+      name: p.name, 
+      enabled: p.enabled, 
+      hasApiKey: p.hasApiKey 
+    })));
 
     if (enabledPlatforms.length === 0) {
-      console.log('ERROR: No enabled platforms');
+      console.error('ERROR: No enabled platforms available');
       toast.error('Please enable at least one AI platform with a valid API key');
+      return;
+    }
+
+    // Verify current chat exists and has messages
+    const currentChat = getCurrentChat();
+    console.log('Current chat verification:', {
+      exists: !!currentChat,
+      id: currentChat?.id,
+      messagesCount: currentChat?.messages.length,
+      lastMessage: currentChat?.messages[currentChat.messages.length - 1]?.content.substring(0, 50)
+    });
+
+    if (!currentChat) {
+      console.error('ERROR: No current chat found');
+      toast.error('No active chat found');
       return;
     }
 
     console.log('Setting discussion state to active...');
     setDiscussionState(prev => {
-      console.log('Previous discussion state:', prev);
       const newState = {
         ...prev,
         isActive: true,
         activeResponders: new Set(enabledPlatforms.map(p => p.id)),
         roundCount: 1
       };
-      console.log('New discussion state:', newState);
+      console.log('Discussion state updated:', {
+        isActive: newState.isActive,
+        activeResponders: Array.from(newState.activeResponders),
+        roundCount: newState.roundCount
+      });
       return newState;
     });
 
-    // Start parallel AI responses immediately
-    console.log('Starting parallel AI responses...');
-    enabledPlatforms.forEach((platform, index) => {
-      console.log(`[${index + 1}/${enabledPlatforms.length}] Scheduling response from ${platform.name}...`);
+    // Start AI responses with detailed logging
+    console.log('Starting AI responses for platforms:', enabledPlatforms.map(p => p.name));
+    
+    for (let i = 0; i < enabledPlatforms.length; i++) {
+      const platform = enabledPlatforms[i];
+      const delay = i * 500; // 500ms delay between each request
       
-      // Add a small delay to stagger the requests
-      setTimeout(() => {
-        console.log(`[${platform.name}] Starting processAIResponse...`);
-        processAIResponse(chatId, platform, enabledPlatforms).catch(error => {
-          console.error(`[${platform.name}] FAILED to process response:`, error);
+      console.log(`[${i + 1}/${enabledPlatforms.length}] Scheduling ${platform.name} response in ${delay}ms`);
+      
+      setTimeout(async () => {
+        console.log(`[${platform.name}] ⏰ Starting processAIResponse NOW`);
+        try {
+          await processAIResponse(chatId, platform, enabledPlatforms);
+          console.log(`[${platform.name}] ✅ processAIResponse completed successfully`);
+        } catch (error) {
+          console.error(`[${platform.name}] ❌ processAIResponse failed:`, error);
           // Show error message in chat
           const errorMessage: Message = {
             id: crypto.randomUUID(),
-            content: `❌ ${platform.name} encountered an error: ${error.message}`,
+            content: `❌ ${platform.name} encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}`,
             sender: 'ai',
             platform: platform.id,
             timestamp: new Date(),
@@ -78,9 +108,20 @@ export const useDiscussion = (
             seenBy: []
           };
           addMessage(chatId, errorMessage);
-        });
-      }, index * 500); // 500ms delay between each request
-    });
+          
+          // Remove from active responders on error
+          setDiscussionState(prev => {
+            const newActiveResponders = new Set(prev.activeResponders);
+            newActiveResponders.delete(platform.id);
+            console.log(`[${platform.name}] Removed from active responders due to error. Remaining:`, Array.from(newActiveResponders));
+            return {
+              ...prev,
+              activeResponders: newActiveResponders
+            };
+          });
+        }
+      }, delay);
+    }
 
     // Set overall discussion timeout
     if (discussionTimeoutRef.current) {
@@ -93,30 +134,37 @@ export const useDiscussion = (
       toast.info('Discussion timeout reached');
     }, discussionState.responseTimeout * discussionState.maxRounds);
 
-  }, [discussionState.responseTimeout, discussionState.maxRounds]);
+  }, [discussionState.responseTimeout, discussionState.maxRounds, addMessage, getCurrentChat]);
 
   const processAIResponse = useCallback(async (
     chatId: string,
     platform: AIPlatform,
     enabledPlatforms: AIPlatform[]
   ) => {
-    console.log(`=== [${platform.name}] PROCESSING AI RESPONSE ===`);
+    console.log(`=== [${platform.name}] PROCESSING AI RESPONSE START ===`);
     
     try {
+      // Get fresh chat data
       const currentChat = getCurrentChat();
       if (!currentChat) {
-        console.error(`[${platform.name}] ERROR: No current chat found`);
-        return;
+        console.error(`[${platform.name}] ERROR: No current chat found during processing`);
+        throw new Error('No current chat found');
       }
 
-      console.log(`[${platform.name}] Chat has ${currentChat.messages.length} messages`);
-      console.log(`[${platform.name}] Making API call...`);
+      console.log(`[${platform.name}] Current chat has ${currentChat.messages.length} messages`);
+      console.log(`[${platform.name}] Last 3 messages:`, currentChat.messages.slice(-3).map(m => ({
+        sender: m.sender,
+        platform: m.platform,
+        contentPreview: m.content.substring(0, 50) + '...'
+      })));
+
+      console.log(`[${platform.name}] 🔄 Making callAIAPI call...`);
+      const apiStartTime = Date.now();
       
-      const startTime = Date.now();
       const response = await callAIAPI(platform, currentChat.messages, enabledPlatforms);
-      const endTime = Date.now();
       
-      console.log(`[${platform.name}] ✅ Got response in ${endTime - startTime}ms`);
+      const apiEndTime = Date.now();
+      console.log(`[${platform.name}] ✅ API call completed in ${apiEndTime - apiStartTime}ms`);
       console.log(`[${platform.name}] Response length: ${response.length} characters`);
       console.log(`[${platform.name}] Response preview: "${response.substring(0, 100)}..."`);
       
@@ -131,8 +179,10 @@ export const useDiscussion = (
       };
       
       console.log(`[${platform.name}] 📨 Adding message to chat with ID: ${agentMessage.id}`);
+      console.log(`[${platform.name}] Chat ID for addMessage: ${chatId}`);
+      
       addMessage(chatId, agentMessage);
-      console.log(`[${platform.name}] ✅ Message added to UI successfully`);
+      console.log(`[${platform.name}] ✅ addMessage call completed`);
 
       // Remove from active responders
       setDiscussionState(prev => {
@@ -156,33 +206,13 @@ export const useDiscussion = (
       }, 2000);
       
     } catch (error) {
-      console.error(`=== [${platform.name}] ERROR ===`, error);
-      
-      const errorMessage: Message = {
-        id: crypto.randomUUID(),
-        content: `❌ Error from ${platform.name}: ${error instanceof Error ? error.message : 'Failed to get response'}`,
-        sender: 'ai',
-        platform: platform.id,
-        timestamp: new Date(),
-        status: 'sent',
-        seenBy: []
-      };
-      
-      console.log(`[${platform.name}] Adding error message to chat`);
-      addMessage(chatId, errorMessage);
-
-      // Remove from active responders even on error
-      setDiscussionState(prev => {
-        const newActiveResponders = new Set(prev.activeResponders);
-        newActiveResponders.delete(platform.id);
-        console.log(`[${platform.name}] Removed due to error. Remaining: [${Array.from(newActiveResponders).join(', ')}]`);
-        return {
-          ...prev,
-          activeResponders: newActiveResponders
-        };
+      console.error(`=== [${platform.name}] PROCESSING ERROR ===`, error);
+      console.error(`[${platform.name}] Error details:`, {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace'
       });
-
-      toast.error(`${platform.name} encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      throw error; // Re-throw so the outer catch can handle it
     }
   }, [callAIAPI, addMessage, getCurrentChat]);
 
@@ -306,7 +336,7 @@ export const useDiscussion = (
   const isDiscussionActive = discussionState.isActive;
   const activeResponders = Array.from(discussionState.activeResponders);
 
-  console.log('Discussion hook current state:', {
+  console.log('useDiscussion render - Current state:', {
     isActive: isDiscussionActive,
     activeResponders,
     roundCount: discussionState.roundCount
