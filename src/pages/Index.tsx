@@ -32,7 +32,7 @@ import MessageStatus from '@/components/chat/MessageStatus';
 
 const Index = () => {
   const { user, session, handleSignOut } = useAuth();
-  const { chats, activeChat, setActiveChat, getCurrentChat, addMessage, updateChatTitle, createNewChat, deleteChat } = useChats(user);
+  const { chats, activeChat, setActiveChat, getCurrentChat, addMessage, updateChatTitle, createNewChat, deleteChat, updateMessageStatus } = useChats(user);
   const { platforms, togglePlatform, callAIAPI, loadApiKeysStatus } = usePlatforms(user);
   const { messagesEndRef } = useScrollToBottom([activeChat, getCurrentChat()?.messages?.length]);
 
@@ -42,21 +42,6 @@ const Index = () => {
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const [showBotHistoryDialog, setShowBotHistoryDialog] = useState(false);
   const [selectedPlatformForHistory, setSelectedPlatformForHistory] = useState<AIPlatform | null>(null);
-
-  const updateMessageStatus = (chatId: string, messageId: string, status: 'sending' | 'sent' | 'seen', seenBy?: string[]) => {
-    setChats(prev => prev.map(chat => 
-      chat.id === chatId 
-        ? { 
-            ...chat, 
-            messages: chat.messages.map(msg => 
-              msg.id === messageId 
-                ? { ...msg, status, seenBy: seenBy || msg.seenBy }
-                : msg
-            )
-          }
-        : chat
-    ));
-  };
 
   const processAIResponses = async (chatId: string, userMessage: Message, enabledPlatforms: AIPlatform[]) => {
     const currentChat = getCurrentChat();

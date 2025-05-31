@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -36,6 +35,21 @@ export const useChats = (user: SupabaseUser | null) => {
         saveConversation(chatToSave);
       }
     }, 0);
+  };
+
+  const updateMessageStatus = (chatId: string, messageId: string, status: 'sending' | 'sent' | 'seen', seenBy?: string[]) => {
+    setChats(prev => prev.map(chat => 
+      chat.id === chatId 
+        ? { 
+            ...chat, 
+            messages: chat.messages.map(msg => 
+              msg.id === messageId 
+                ? { ...msg, status, seenBy: seenBy || msg.seenBy }
+                : msg
+            )
+          }
+        : chat
+    ));
   };
 
   const updateChatTitle = (chatId: string, title: string) => {
@@ -237,11 +251,11 @@ export const useChats = (user: SupabaseUser | null) => {
 
   return {
     chats,
-    setChats,
     activeChat,
     setActiveChat,
     getCurrentChat,
     addMessage,
+    updateMessageStatus,
     updateChatTitle,
     createNewChat,
     deleteChat,
