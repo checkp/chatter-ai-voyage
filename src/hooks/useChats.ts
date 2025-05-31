@@ -10,13 +10,32 @@ export const useChats = (user: SupabaseUser | null) => {
   const [activeChat, setActiveChat] = useState<string | null>(null);
 
   const getCurrentChat = (): Chat | null => {
-    return chats.find(chat => chat.id === activeChat) || null;
+    const chat = chats.find(chat => chat.id === activeChat) || null;
+    console.log('getCurrentChat called - Active chat:', activeChat, 'Found chat:', !!chat, 'Messages count:', chat?.messages.length || 0);
+    return chat;
   };
 
   const addMessage = (chatId: string, message: Message) => {
-    console.log('Adding message to chat:', chatId, 'from:', message.sender, message.platform || 'user');
+    console.log('=== ADD MESSAGE CALLED ===');
+    console.log('Chat ID:', chatId);
+    console.log('Message:', {
+      id: message.id,
+      sender: message.sender,
+      platform: message.platform,
+      contentLength: message.content.length,
+      timestamp: message.timestamp
+    });
     
     setChats(prev => {
+      console.log('Previous chats count:', prev.length);
+      const targetChat = prev.find(chat => chat.id === chatId);
+      console.log('Target chat found:', !!targetChat, 'Current messages:', targetChat?.messages.length || 0);
+      
+      if (!targetChat) {
+        console.error('Target chat not found!', chatId);
+        return prev;
+      }
+      
       const updatedChats = prev.map(chat => 
         chat.id === chatId 
           ? { 
@@ -27,24 +46,28 @@ export const useChats = (user: SupabaseUser | null) => {
           : chat
       );
       
-      console.log('Chat state updated. Total messages in active chat:', 
-        updatedChats.find(c => c.id === chatId)?.messages.length || 0);
+      const updatedChat = updatedChats.find(c => c.id === chatId);
+      console.log('Updated chat messages count:', updatedChat?.messages.length || 0);
+      console.log('Message added successfully to UI');
       
       return updatedChats;
     });
 
-    // Save to database asynchronously
+    // Save to database asynchronously (don't block UI updates)
     setTimeout(() => {
-      const updatedChat = chats.find(chat => chat.id === chatId);
-      if (updatedChat) {
-        const chatToSave = {
-          ...updatedChat,
-          messages: [...updatedChat.messages, message],
+      console.log('Starting async database save for message:', message.id);
+      const chatToSave = chats.find(chat => chat.id === chatId);
+      if (chatToSave) {
+        const updatedChatData = {
+          ...chatToSave,
+          messages: [...chatToSave.messages, message],
           lastUpdated: new Date()
         };
-        saveConversation(chatToSave);
+        saveConversation(updatedChatData).catch(error => {
+          console.error('Failed to save message to database:', error);
+        });
       }
-    }, 0);
+    }, 100); // Small delay to ensure state is updated
   };
 
   const updateMessageStatus = (chatId: string, messageId: string, status: 'sending' | 'sent' | 'seen', seenBy?: string[]) => {
