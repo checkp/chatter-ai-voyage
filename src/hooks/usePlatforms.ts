@@ -177,10 +177,18 @@ export const usePlatforms = (user: SupabaseUser | null) => {
 
     const conversationHistory = buildConversationForPlatform(messages, platform.id, enabledPlatforms);
     
-    // Add platform-specific context
+    // Add platform-specific context for multi-agent discussion
     const otherAIs = enabledPlatforms.filter(p => p.id !== platform.id && p.enabled && p.hasApiKey);
     if (otherAIs.length > 0) {
-      const contextMessage = `You are ${platform.name}. You are participating in a multi-AI conversation with: ${otherAIs.map(p => p.name).join(', ')}. Respond as ${platform.name} and feel free to reference what other AIs have said. Keep your responses concise and engaging. Do not pretend to be any other AI.`;
+      const contextMessage = `You are ${platform.name}. You are participating in a multi-AI discussion with: ${otherAIs.map(p => p.name).join(', ')}. 
+
+The conversation flows naturally - you can:
+- Respond to the user's questions
+- Build upon or challenge what other AIs have said
+- Ask questions or make observations
+- Share your unique perspective as ${platform.name}
+
+Keep responses conversational and engaging. Feel free to reference other AIs' responses naturally. Do not pretend to be any other AI.`;
       conversationHistory.unshift({ role: 'user', content: contextMessage });
     } else {
       // Single AI context
