@@ -1,11 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { Send, Plus, MessageSquare, Settings, History, Key, LogOut, User, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
@@ -21,549 +21,27 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import ApiKeySettings from '@/components/ApiKeySettings';
-import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import BotHistoryDialog from '@/components/BotHistoryDialog';
-
-interface Message {
-  id: string;
-  content: string;
-  sender: 'user' | 'ai';
-  platform?: string;
-  timestamp: Date;
-}
-
-interface Chat {
-  id: string;
-  title: string;
-  messages: Message[];
-  createdAt: Date;
-  lastUpdated: Date;
-}
-
-interface AIPlatform {
-  id: string;
-  name: string;
-  enabled: boolean;
-  color: string;
-  icon: string;
-  hasApiKey?: boolean;
-  endpoint?: string;
-}
+import { useAuth } from '@/hooks/useAuth';
+import { useChats } from '@/hooks/useChats';
+import { usePlatforms } from '@/hooks/usePlatforms';
+import { useScrollToBottom } from '@/hooks/useScrollToBottom';
+import { buildConversationHistoryForAgent } from '@/utils/chatUtils';
+import type { Message, AIPlatform } from '@/types/chat';
 
 const Index = () => {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [activeChat, setActiveChat] = useState<string | null>(null);
+  const { user, session, handleSignOut } = useAuth();
+  const { chats, activeChat, setActiveChat, getCurrentChat, addMessage, updateChatTitle, createNewChat, deleteChat } = useChats(user);
+  const { platforms, togglePlatform, callAIAPI, loadApiKeysStatus } = usePlatforms(user);
+  const { messagesEndRef } = useScrollToBottom([activeChat, getCurrentChat()?.messages?.length]);
+
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const [platforms, setPlatforms] = useState<AIPlatform[]>([
-    { 
-      id: 'openai', 
-      name: 'ChatGPT', 
-      enabled: false, 
-      color: 'bg-agent-openai border-agent-openai text-cyber-bg', 
-      icon: '🤖',
-      hasApiKey: false
-    },
-    { 
-      id: 'anthropic', 
-      name: 'Claude', 
-      enabled: false,
-      color: 'bg-agent-anthropic border-agent-anthropic text-cyber-bg', 
-      icon: '🎭',
-      hasApiKey: false
-    },
-    { 
-      id: 'deepseek', 
-      name: 'DeepSeek', 
-      enabled: false, 
-      color: 'bg-agent-deepseek border-agent-deepseek text-cyber-bg', 
-      icon: '🔍',
-      hasApiKey: false
-    },
-  ]);
-
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const [showBotHistoryDialog, setShowBotHistoryDialog] = useState(false);
   const [selectedPlatformForHistory, setSelectedPlatformForHistory] = useState<AIPlatform | null>(null);
-
-  // Enhanced auto-scroll function
-  const scrollToBottom = () => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  // Auto-scroll when messages change or chat becomes active
-  useEffect(() => {
-    if (activeChat) {
-      // Small delay to ensure DOM has updated
-      setTimeout(scrollToBottom, 100);
-    }
-  }, [activeChat, chats.find(chat => chat.id === activeChat)?.messages?.length]);
-
-  // Auto-scroll when switching to a different chat
-  useEffect(() => {
-    if (activeChat) {
-      setTimeout(scrollToBottom, 150);
-    }
-  }, [activeChat]);
-
-  // Utility functions
-  const getCurrentChat = (): Chat | null => {
-    return chats.find(chat => chat.id === activeChat) || null;
-  };
-
-  const generateChatId = (): string => {
-    // Generate a proper UUID format instead of timestamp
-    return crypto.randomUUID();
-  };
-
-  const addMessage = (chatId: string, message: Message) => {
-    setChats(prev => prev.map(chat => 
-      chat.id === chatId 
-        ? { 
-            ...chat, 
-            messages: [...chat.messages, message],
-            lastUpdated: new Date()
-          }
-        : chat
-    ));
-    
-    // Auto-scroll to bottom when new message is added
-    setTimeout(scrollToBottom, 100);
-
-    // Save to database immediately
-    setTimeout(() => {
-      const updatedChat = chats.find(chat => chat.id === chatId);
-      if (updatedChat) {
-        const chatToSave = {
-          ...updatedChat,
-          messages: [...updatedChat.messages, message],
-          lastUpdated: new Date()
-        };
-        saveConversation(chatToSave);
-      }
-    }, 0);
-  };
-
-  const updateChatTitle = (chatId: string, title: string) => {
-    const truncatedTitle = title.length > 50 ? title.substring(0, 50) + '...' : title;
-    setChats(prev => prev.map(chat => 
-      chat.id === chatId 
-        ? { ...chat, title: truncatedTitle }
-        : chat
-    ));
-  };
-
-  const buildConversationHistory = (chatId: string): Array<{role: 'user' | 'assistant', content: string}> => {
-    const chat = chats.find(c => c.id === chatId);
-    if (!chat) return [];
-
-    return chat.messages.map(msg => ({
-      role: msg.sender === 'user' ? 'user' as const : 'assistant' as const,
-      content: msg.content
-    }));
-  };
-
-  const buildConversationHistoryForAgent = (chatId: string, agentPlatform: string): Array<{role: 'user' | 'assistant', content: string}> => {
-    const chat = chats.find(c => c.id === chatId);
-    if (!chat) return [];
-
-    const history: Array<{role: 'user' | 'assistant', content: string}> = [];
-    
-    chat.messages.forEach(msg => {
-      if (msg.sender === 'user') {
-        history.push({
-          role: 'user' as const,
-          content: msg.content
-        });
-      } else if (msg.sender === 'ai') {
-        // Include all AI responses with platform context
-        if (msg.platform === agentPlatform) {
-          // This agent's own response
-          history.push({
-            role: 'assistant' as const,
-            content: msg.content
-          });
-        } else if (msg.platform && msg.platform !== agentPlatform) {
-          // Other agent's response - include with platform identifier
-          const platform = platforms.find(p => p.id === msg.platform);
-          const platformName = platform ? platform.name : msg.platform;
-          history.push({
-            role: 'assistant' as const,
-            content: `[Response from ${platformName}]: ${msg.content}`
-          });
-        }
-      }
-    });
-
-    return history;
-  };
-
-  const createNewChat = async () => {
-    const newChat: Chat = {
-      id: generateChatId(),
-      title: 'New Chat',
-      messages: [],
-      createdAt: new Date(),
-      lastUpdated: new Date()
-    };
-
-    setChats(prev => [newChat, ...prev]);
-    setActiveChat(newChat.id);
-    
-    // Immediately save the new chat to database
-    if (user) {
-      try {
-        await saveConversation(newChat);
-        console.log('New chat saved to database with ID:', newChat.id);
-      } catch (error) {
-        console.error('Failed to save new chat:', error);
-        toast.error('Failed to create new chat');
-      }
-    }
-
-    return newChat.id;
-  };
-
-  const loadApiKeysStatus = async () => {
-    if (!user) return;
-
-    try {
-      const { data: apiKeys, error } = await supabase
-        .from('user_api_keys')
-        .select('platform')
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('Error loading API keys:', error);
-        return;
-      }
-
-      const platformsWithKeys = new Set((apiKeys || []).map(key => key.platform));
-      
-      setPlatforms(prev => prev.map(platform => ({
-        ...platform,
-        hasApiKey: platformsWithKeys.has(platform.id)
-      })));
-    } catch (error: any) {
-      console.error('Failed to load API keys status:', error);
-    }
-  };
-
-  // Load conversations from database
-  const loadConversations = async () => {
-    if (!user) return;
-
-    try {
-      const { data: conversations, error } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false });
-
-      if (error) {
-        console.error('Error loading conversations:', error);
-        return;
-      }
-
-      const conversationsWithMessages = await Promise.all(
-        (conversations || []).map(async (conv) => {
-          const { data: messages, error: messagesError } = await supabase
-            .from('messages')
-            .select('*')
-            .eq('conversation_id', conv.id)
-            .order('created_at', { ascending: true });
-
-          if (messagesError) {
-            console.error('Error loading messages for conversation:', conv.id, messagesError);
-            return null;
-          }
-
-          return {
-            id: conv.id,
-            title: conv.title,
-            messages: (messages || []).map(msg => ({
-              id: msg.id,
-              content: msg.content,
-              sender: msg.sender as 'user' | 'ai',
-              platform: msg.platform,
-              timestamp: new Date(msg.created_at)
-            })),
-            createdAt: new Date(conv.created_at),
-            lastUpdated: new Date(conv.updated_at)
-          };
-        })
-      );
-
-      const validConversations = conversationsWithMessages.filter(conv => conv !== null) as Chat[];
-      setChats(validConversations);
-
-      if (validConversations.length > 0 && !activeChat) {
-        setActiveChat(validConversations[0].id);
-      }
-    } catch (error: any) {
-      console.error('Failed to load conversations:', error);
-      toast.error('Failed to load conversations');
-    }
-  };
-
-  // Load agent settings from database
-  const loadAgentSettings = async () => {
-    if (!user) return;
-
-    try {
-      const { data: settings, error } = await supabase
-        .from('user_agent_settings')
-        .select('platform, enabled')
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('Error loading agent settings:', error);
-        return;
-      }
-
-      const settingsMap = new Map((settings || []).map(setting => [setting.platform, setting.enabled]));
-      
-      setPlatforms(prev => prev.map(platform => ({
-        ...platform,
-        enabled: settingsMap.get(platform.id) || false
-      })));
-    } catch (error: any) {
-      console.error('Failed to load agent settings:', error);
-    }
-  };
-
-  // Save agent setting to database
-  const saveAgentSetting = async (platformId: string, enabled: boolean) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('user_agent_settings')
-        .upsert({
-          user_id: user.id,
-          platform: platformId,
-          enabled: enabled,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id,platform'
-        });
-
-      if (error) {
-        console.error('Error saving agent setting:', error);
-        toast.error('Failed to save agent setting');
-      }
-    } catch (error: any) {
-      console.error('Failed to save agent setting:', error);
-      toast.error('Failed to save agent setting');
-    }
-  };
-
-  // Save conversation to database
-  const saveConversation = async (chat: Chat) => {
-    if (!user) return;
-
-    try {
-      console.log('Saving conversation:', chat.id, 'with', chat.messages.length, 'messages');
-      
-      // First save/update the conversation
-      const { error: convError } = await supabase
-        .from('conversations')
-        .upsert({
-          id: chat.id,
-          user_id: user.id,
-          title: chat.title,
-          created_at: chat.createdAt.toISOString(),
-          updated_at: chat.lastUpdated.toISOString()
-        }, {
-          onConflict: 'id'
-        });
-
-      if (convError) {
-        console.error('Error saving conversation:', convError);
-        throw convError;
-      }
-
-      // Then save any new messages
-      const { data: existingMessages } = await supabase
-        .from('messages')
-        .select('id')
-        .eq('conversation_id', chat.id);
-
-      const existingMessageIds = new Set((existingMessages || []).map(msg => msg.id));
-      const newMessages = chat.messages.filter(msg => !existingMessageIds.has(msg.id));
-
-      if (newMessages.length > 0) {
-        const messagesToInsert = newMessages.map(msg => ({
-          id: msg.id,
-          conversation_id: chat.id,
-          content: msg.content,
-          sender: msg.sender,
-          platform: msg.platform,
-          created_at: msg.timestamp.toISOString()
-        }));
-
-        const { error: msgError } = await supabase
-          .from('messages')
-          .insert(messagesToInsert);
-
-        if (msgError) {
-          console.error('Error saving messages:', msgError);
-          throw msgError;
-        }
-      }
-      
-      console.log('Conversation saved successfully');
-    } catch (error: any) {
-      console.error('Failed to save conversation:', error);
-      throw error;
-    }
-  };
-
-  const callOpenAI = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>): Promise<string> => {
-    if (!user) throw new Error('User not authenticated');
-
-    console.log('Calling OpenAI API...');
-    
-    const { data: apiKeyData, error } = await supabase
-      .from('user_api_keys')
-      .select('encrypted_key')
-      .eq('user_id', user.id)
-      .eq('platform', 'openai')
-      .single();
-
-    if (error) {
-      console.error('OpenAI API key error:', error);
-      throw new Error('OpenAI API key not found. Please add your API key in settings.');
-    }
-
-    if (!apiKeyData?.encrypted_key) {
-      throw new Error('OpenAI API key is empty. Please add your API key in settings.');
-    }
-
-    console.log('Making OpenAI request with key:', apiKeyData.encrypted_key.substring(0, 10) + '...');
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKeyData.encrypted_key}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: conversationHistory,
-        max_tokens: 1000
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI API response error:', response.status, errorText);
-      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
-    }
-
-    const data = await response.json();
-    return data.choices[0].message.content;
-  };
-
-  const callDeepSeek = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>): Promise<string> => {
-    if (!user) throw new Error('User not authenticated');
-
-    console.log('Calling DeepSeek API...');
-    
-    const { data: apiKeyData, error } = await supabase
-      .from('user_api_keys')
-      .select('encrypted_key')
-      .eq('user_id', user.id)
-      .eq('platform', 'deepseek')
-      .single();
-
-    if (error) {
-      console.error('DeepSeek API key error:', error);
-      throw new Error('DeepSeek API key not found. Please add your API key in settings.');
-    }
-
-    if (!apiKeyData?.encrypted_key) {
-      throw new Error('DeepSeek API key is empty. Please add your API key in settings.');
-    }
-
-    console.log('Making DeepSeek request with key:', apiKeyData.encrypted_key.substring(0, 10) + '...');
-
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKeyData.encrypted_key}`
-      },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: conversationHistory,
-        max_tokens: 1000
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('DeepSeek API response error:', response.status, errorText);
-      throw new Error(`DeepSeek API error: ${response.status} - ${errorText}`);
-    }
-
-    const data = await response.json();
-    return data.choices[0].message.content;
-  };
-
-  const callClaudeAPI = async (conversationHistory: Array<{role: 'user' | 'assistant', content: string}>): Promise<string> => {
-    console.log('Calling Claude API via edge function...');
-    
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      throw new Error('Not authenticated');
-    }
-
-    console.log('Invoking claude-chat function...');
-
-    const response = await supabase.functions.invoke('claude-chat', {
-      body: { messages: conversationHistory },
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-      },
-    });
-
-    console.log('Claude function response:', response);
-
-    if (response.error) {
-      console.error('Claude function error:', response.error);
-      throw new Error(response.error.message || 'Claude API call failed');
-    }
-
-    if (!response.data?.content) {
-      console.error('Claude function missing content:', response.data);
-      throw new Error('Claude API returned empty response');
-    }
-
-    return response.data.content;
-  };
-
-  const callAIAPI = async (platform: AIPlatform, conversationHistory: Array<{role: 'user' | 'assistant', content: string}>): Promise<string> => {
-    switch (platform.id) {
-      case 'anthropic':
-        return await callClaudeAPI(conversationHistory);
-      case 'openai':
-        return await callOpenAI(conversationHistory);
-      case 'deepseek':
-        return await callDeepSeek(conversationHistory);
-      default:
-        throw new Error(`Unsupported platform: ${platform.id}`);
-    }
-  };
 
   const handleSendMessage = async () => {
     console.log('handleSendMessage called');
@@ -577,7 +55,6 @@ const Index = () => {
     
     let chatId = activeChat;
     
-    // If no active chat, create one first
     if (!chatId) {
       console.log('No active chat, creating new one');
       chatId = await createNewChat();
@@ -595,7 +72,6 @@ const Index = () => {
       return;
     }
 
-    // Add user message
     const userMessage: Message = {
       id: crypto.randomUUID(),
       content: inputMessage,
@@ -605,7 +81,6 @@ const Index = () => {
 
     addMessage(chatId, userMessage);
 
-    // Update chat title if it's the first message
     const targetChat = chats.find(chat => chat.id === chatId);
     if (!targetChat || targetChat.messages.length === 0) {
       updateChatTitle(chatId, inputMessage);
@@ -616,14 +91,15 @@ const Index = () => {
     setIsLoading(true);
 
     try {
-      // Send to all enabled platforms with individual context
       const aiResponsePromises = enabledPlatforms.map(async (platform) => {
         try {
-          // Build agent-specific conversation history
-          const conversationHistory = buildConversationHistoryForAgent(chatId, platform.id);
+          const conversationHistory = buildConversationHistoryForAgent(
+            { ...getCurrentChat()!, messages: [...getCurrentChat()!.messages, userMessage] }, 
+            platform.id, 
+            platforms
+          );
           conversationHistory.push({ role: 'user', content: messageToSend });
 
-          // Add context about other enabled agents
           const otherAgents = enabledPlatforms.filter(p => p.id !== platform.id).map(p => p.name);
           if (otherAgents.length > 0) {
             const contextMessage = `Note: You are responding alongside these other AI agents: ${otherAgents.join(', ')}. You can reference their previous responses if relevant, and provide your unique perspective.`;
@@ -632,7 +108,6 @@ const Index = () => {
 
           const response = await callAIAPI(platform, conversationHistory);
           
-          // Create individual message for this agent
           const agentMessage: Message = {
             id: crypto.randomUUID(),
             content: response,
@@ -647,7 +122,6 @@ const Index = () => {
         } catch (error) {
           console.error(`Error calling ${platform.name}:`, error);
           
-          // Create error message for this agent
           const errorMessage: Message = {
             id: crypto.randomUUID(),
             content: `❌ Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
@@ -672,47 +146,9 @@ const Index = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      window.location.href = '/auth';
-    } catch (error: any) {
-      toast.error('Error signing out: ' + error.message);
-    }
-  };
-
-  const togglePlatform = async (platformId: string) => {
-    console.log('togglePlatform called for:', platformId);
-    const platform = platforms.find(p => p.id === platformId);
-    console.log('Platform found:', platform);
-    
-    if (!platform) {
-      console.log('Platform not found');
-      return;
-    }
-    
-    if (!platform.hasApiKey) {
-      toast.error('Please add an API key for this platform first');
-      return;
-    }
-
-    const newEnabled = !platform.enabled;
-    console.log('Setting enabled to:', newEnabled);
-    
-    setPlatforms(prev => prev.map(p => 
-      p.id === platformId ? { ...p, enabled: newEnabled } : p
-    ));
-
-    // Save to database
-    await saveAgentSetting(platformId, newEnabled);
-    console.log('Platform toggle saved to database');
-  };
-
   const handleApiKeyDialogClose = (open: boolean) => {
     setShowApiKeyDialog(open);
     if (!open) {
-      // Reload API keys status when dialog closes
       loadApiKeysStatus();
     }
   };
@@ -731,7 +167,6 @@ const Index = () => {
       return;
     }
 
-    // Add user message to the main chat
     const userMessage: Message = {
       id: crypto.randomUUID(),
       content: message,
@@ -741,7 +176,6 @@ const Index = () => {
 
     addMessage(activeChat, userMessage);
 
-    // Update chat title if it's the first message
     const currentChat = getCurrentChat();
     if (currentChat && currentChat.messages.length === 0) {
       updateChatTitle(activeChat, message);
@@ -750,11 +184,13 @@ const Index = () => {
     setIsLoading(true);
 
     try {
-      // Build agent-specific conversation history that includes other agents' responses
-      const conversationHistory = buildConversationHistoryForAgent(activeChat, platformId);
+      const conversationHistory = buildConversationHistoryForAgent(
+        { ...getCurrentChat()!, messages: [...getCurrentChat()!.messages, userMessage] }, 
+        platformId, 
+        platforms
+      );
       conversationHistory.push({ role: 'user', content: message });
 
-      // Add context about other agents that have participated
       const otherAgentsInChat = new Set<string>();
       const currentChatData = getCurrentChat();
       currentChatData?.messages.forEach(msg => {
@@ -772,10 +208,8 @@ const Index = () => {
         conversationHistory.push({ role: 'user' as const, content: contextMessage });
       }
 
-      // Call the specific AI platform
       const response = await callAIAPI(platform, conversationHistory);
 
-      // Create a message with this platform's response
       const platformMessage: Message = {
         id: crypto.randomUUID(),
         content: response,
@@ -802,101 +236,8 @@ const Index = () => {
     }
   };
 
-  const deleteChat = async (chatIdToDelete: string) => {
-    if (!user) return;
-
-    try {
-      // Delete messages first (foreign key constraint)
-      const { error: messagesError } = await supabase
-        .from('messages')
-        .delete()
-        .eq('conversation_id', chatIdToDelete);
-
-      if (messagesError) {
-        console.error('Error deleting messages:', messagesError);
-        throw messagesError;
-      }
-
-      // Delete the conversation
-      const { error: conversationError } = await supabase
-        .from('conversations')
-        .delete()
-        .eq('id', chatIdToDelete)
-        .eq('user_id', user.id);
-
-      if (conversationError) {
-        console.error('Error deleting conversation:', conversationError);
-        throw conversationError;
-      }
-
-      // Update local state
-      setChats(prev => prev.filter(chat => chat.id !== chatIdToDelete));
-      
-      // If this was the active chat, switch to another chat or clear active chat
-      if (activeChat === chatIdToDelete) {
-        const remainingChats = chats.filter(chat => chat.id !== chatIdToDelete);
-        if (remainingChats.length > 0) {
-          setActiveChat(remainingChats[0].id);
-        } else {
-          setActiveChat(null);
-        }
-      }
-
-      toast.success('Chat deleted successfully');
-    } catch (error: any) {
-      console.error('Failed to delete chat:', error);
-      toast.error('Failed to delete chat');
-    }
-  };
-
   const currentChat = getCurrentChat();
 
-  // Authentication state management
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (event === 'SIGNED_IN') {
-          setTimeout(() => {
-            // Load user data after sign in
-            console.log('User signed in:', session?.user);
-          }, 0);
-        }
-      }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Load data when user is available
-  useEffect(() => {
-    if (user) {
-      loadConversations();
-      loadAgentSettings();
-      loadApiKeysStatus();
-    }
-  }, [user]);
-
-  // Redirect to auth if not logged in
-  useEffect(() => {
-    if (user === null && session === null) {
-      // Check if we've finished loading auth state
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (!session) {
-          window.location.href = '/auth';
-        }
-      });
-    }
-  }, [user, session]);
-
-  // Show loading while checking auth
   if (user === null && session === null) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -1042,7 +383,6 @@ const Index = () => {
               </h1>
             </div>
             
-            {/* Platform Toggles with Chat Buttons */}
             <div className="flex items-center gap-6">
               {platforms.map((platform) => (
                 <div key={platform.id} className="flex items-center gap-3">
@@ -1174,7 +514,6 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Bot Chat Dialog */}
       <BotHistoryDialog
         open={showBotHistoryDialog}
         onOpenChange={setShowBotHistoryDialog}
