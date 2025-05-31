@@ -1,10 +1,12 @@
-
 export interface Message {
   id: string;
   content: string;
   sender: 'user' | 'ai';
   platform?: string;
   timestamp: Date;
+  status?: 'sending' | 'sent' | 'seen';
+  seenBy?: string[]; // platform IDs that have seen this message
+  responses?: string[]; // message IDs of responses to this message
 }
 
 export interface Chat {

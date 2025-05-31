@@ -28,6 +28,7 @@ import { usePlatforms } from '@/hooks/usePlatforms';
 import { useScrollToBottom } from '@/hooks/useScrollToBottom';
 import { buildConversationHistoryForAgent } from '@/utils/chatUtils';
 import type { Message, AIPlatform } from '@/types/chat';
+import MessageStatus from '@/components/chat/MessageStatus';
 
 const Index = () => {
   const { user, session, handleSignOut } = useAuth();
@@ -42,10 +43,83 @@ const Index = () => {
   const [showBotHistoryDialog, setShowBotHistoryDialog] = useState(false);
   const [selectedPlatformForHistory, setSelectedPlatformForHistory] = useState<AIPlatform | null>(null);
 
+  const updateMessageStatus = (chatId: string, messageId: string, status: 'sending' | 'sent' | 'seen', seenBy?: string[]) => {
+    setChats(prev => prev.map(chat => 
+      chat.id === chatId 
+        ? { 
+            ...chat, 
+            messages: chat.messages.map(msg => 
+              msg.id === messageId 
+                ? { ...msg, status, seenBy: seenBy || msg.seenBy }
+                : msg
+            )
+          }
+        : chat
+    ));
+  };
+
+  const processAIResponses = async (chatId: string, userMessage: Message, enabledPlatforms: AIPlatform[]) => {
+    const currentChat = getCurrentChat();
+    if (!currentChat) return;
+
+    // Process each AI platform sequentially to allow them to see each other's responses
+    for (const platform of enabledPlatforms) {
+      try {
+        console.log(`Getting response from ${platform.name}...`);
+        
+        // Get the latest messages including any responses from previous AIs in this round
+        const latestChat = getCurrentChat();
+        if (!latestChat) continue;
+
+        const allMessages = [...latestChat.messages, userMessage];
+        
+        // Mark as seen by this platform
+        const messageIdsToMarkAsSeen = allMessages
+          .filter(msg => msg.sender === 'ai' && msg.platform !== platform.id)
+          .map(msg => msg.id);
+        
+        messageIdsToMarkAsSeen.forEach(msgId => {
+          updateMessageStatus(chatId, msgId, 'seen', [platform.id]);
+        });
+
+        const response = await callAIAPI(platform, allMessages, enabledPlatforms);
+        
+        const agentMessage: Message = {
+          id: crypto.randomUUID(),
+          content: response,
+          sender: 'ai',
+          platform: platform.id,
+          timestamp: new Date(),
+          status: 'sent',
+          seenBy: []
+        };
+        
+        addMessage(chatId, agentMessage);
+        console.log(`${platform.name} responded successfully`);
+        
+        // Small delay to allow UI to update and make conversation feel more natural
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+      } catch (error) {
+        console.error(`Error calling ${platform.name}:`, error);
+        
+        const errorMessage: Message = {
+          id: crypto.randomUUID(),
+          content: `❌ Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
+          sender: 'ai',
+          platform: platform.id,
+          timestamp: new Date(),
+          status: 'sent',
+          seenBy: []
+        };
+        
+        addMessage(chatId, errorMessage);
+      }
+    }
+  };
+
   const handleSendMessage = async () => {
     console.log('handleSendMessage called');
-    console.log('inputMessage:', inputMessage);
-    console.log('activeChat:', activeChat);
     
     if (!inputMessage.trim()) {
       console.log('No input message');
@@ -76,6 +150,7 @@ const Index = () => {
       content: inputMessage,
       sender: 'user',
       timestamp: new Date(),
+      status: 'sent'
     };
 
     addMessage(chatId, userMessage);
@@ -85,58 +160,11 @@ const Index = () => {
       updateChatTitle(chatId, inputMessage);
     }
 
-    const messageToSend = inputMessage;
     setInputMessage('');
     setIsLoading(true);
 
     try {
-      const aiResponsePromises = enabledPlatforms.map(async (platform) => {
-        try {
-          const conversationHistory = buildConversationHistoryForAgent(
-            { ...getCurrentChat()!, messages: [...getCurrentChat()!.messages, userMessage] }, 
-            platform.id, 
-            platforms
-          );
-          conversationHistory.push({ role: 'user', content: messageToSend });
-
-          const otherAgents = enabledPlatforms.filter(p => p.id !== platform.id).map(p => p.name);
-          if (otherAgents.length > 0) {
-            const contextMessage = `Note: You are responding alongside these other AI agents: ${otherAgents.join(', ')}. You can reference their previous responses if relevant, and provide your unique perspective.`;
-            conversationHistory.push({ role: 'user' as const, content: contextMessage });
-          }
-
-          const response = await callAIAPI(platform, conversationHistory);
-          
-          const agentMessage: Message = {
-            id: crypto.randomUUID(),
-            content: response,
-            sender: 'ai',
-            platform: platform.id,
-            timestamp: new Date(),
-          };
-          
-          addMessage(chatId, agentMessage);
-          
-          return { platform, content: response, success: true };
-        } catch (error) {
-          console.error(`Error calling ${platform.name}:`, error);
-          
-          const errorMessage: Message = {
-            id: crypto.randomUUID(),
-            content: `❌ Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
-            sender: 'ai',
-            platform: platform.id,
-            timestamp: new Date(),
-          };
-          
-          addMessage(chatId, errorMessage);
-          
-          return { platform, content: '', success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-        }
-      });
-
-      await Promise.allSettled(aiResponsePromises);
-
+      await processAIResponses(chatId, userMessage, enabledPlatforms);
     } catch (error) {
       console.error('Error in handleSendMessage:', error);
       toast.error('Failed to get responses from AI platforms');
@@ -171,6 +199,7 @@ const Index = () => {
       content: message,
       sender: 'user',
       timestamp: new Date(),
+      status: 'sent'
     };
 
     addMessage(activeChat, userMessage);
@@ -183,31 +212,13 @@ const Index = () => {
     setIsLoading(true);
 
     try {
-      const conversationHistory = buildConversationHistoryForAgent(
-        { ...getCurrentChat()!, messages: [...getCurrentChat()!.messages, userMessage] }, 
-        platformId, 
-        platforms
-      );
-      conversationHistory.push({ role: 'user', content: message });
-
-      const otherAgentsInChat = new Set<string>();
       const currentChatData = getCurrentChat();
-      currentChatData?.messages.forEach(msg => {
-        if (msg.sender === 'ai' && msg.platform && msg.platform !== platformId) {
-          otherAgentsInChat.add(msg.platform);
-        }
-      });
+      if (!currentChatData) return;
 
-      if (otherAgentsInChat.size > 0) {
-        const otherAgentNames = Array.from(otherAgentsInChat).map(pid => {
-          const p = platforms.find(platform => platform.id === pid);
-          return p ? p.name : pid;
-        });
-        const contextMessage = `Note: Other AI agents (${otherAgentNames.join(', ')}) have also participated in this conversation. You can reference their previous responses and provide your unique perspective.`;
-        conversationHistory.push({ role: 'user' as const, content: contextMessage });
-      }
+      const allMessages = [...currentChatData.messages, userMessage];
+      const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
 
-      const response = await callAIAPI(platform, conversationHistory);
+      const response = await callAIAPI(platform, allMessages, enabledPlatforms);
 
       const platformMessage: Message = {
         id: crypto.randomUUID(),
@@ -215,6 +226,8 @@ const Index = () => {
         sender: 'ai',
         platform: platform.id,
         timestamp: new Date(),
+        status: 'sent',
+        seenBy: []
       };
       
       addMessage(activeChat, platformMessage);
@@ -226,6 +239,8 @@ const Index = () => {
         sender: 'ai',
         platform: platform.id,
         timestamp: new Date(),
+        status: 'sent',
+        seenBy: []
       };
       
       addMessage(activeChat, errorMessage);
@@ -434,7 +449,7 @@ const Index = () => {
                   }`}>
                     <CardContent className="p-4">
                       {message.sender === 'ai' && message.platform && (
-                        <div className="mb-2 flex items-center gap-2">
+                        <div className="mb-2 flex items-center justify-between">
                           <Badge className={`${
                             message.platform === 'openai' ? 'bg-agent-openai border-agent-openai text-cyber-bg' :
                             message.platform === 'anthropic' ? 'bg-agent-anthropic border-agent-anthropic text-cyber-bg' :
@@ -444,6 +459,7 @@ const Index = () => {
                           } font-semibold cyber-glow`}>
                             {platforms.find(p => p.id === message.platform)?.icon} {platforms.find(p => p.id === message.platform)?.name}
                           </Badge>
+                          <MessageStatus message={message} platforms={platforms} />
                         </div>
                       )}
                       <div className={`text-base leading-relaxed whitespace-pre-wrap font-medium ${
@@ -451,10 +467,13 @@ const Index = () => {
                       }`}>
                         {message.content}
                       </div>
-                      <div className={`text-sm mt-3 font-medium ${
+                      <div className={`text-sm mt-3 font-medium flex items-center justify-between ${
                         message.sender === 'user' ? 'text-cyber-bg/80' : 'text-cyber-muted'
                       }`}>
-                        {message.timestamp.toLocaleTimeString()}
+                        <span>{message.timestamp.toLocaleTimeString()}</span>
+                        {message.sender === 'user' && (
+                          <MessageStatus message={message} platforms={platforms} />
+                        )}
                       </div>
                     </CardContent>
                   </Card>

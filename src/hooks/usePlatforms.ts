@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
-import type { AIPlatform } from '@/types/chat';
+import type { AIPlatform, Message } from '@/types/chat';
 import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI } from '@/services/aiApiService';
 
 export const usePlatforms = (user: SupabaseUser | null) => {
@@ -143,8 +142,39 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     console.log('Platform toggle saved to database');
   };
 
-  const callAIAPI = async (platform: AIPlatform, conversationHistory: Array<{role: 'user' | 'assistant', content: string}>): Promise<string> => {
+  const buildConversationForPlatform = (messages: Message[], platformId: string, enabledPlatforms: AIPlatform[]): Array<{role: 'user' | 'assistant', content: string}> => {
+    const conversationHistory: Array<{role: 'user' | 'assistant', content: string}> = [];
+    
+    messages.forEach(message => {
+      if (message.sender === 'user') {
+        conversationHistory.push({ role: 'user', content: message.content });
+      } else if (message.sender === 'ai' && message.platform) {
+        // Include messages from other AIs as context
+        const senderPlatform = enabledPlatforms.find(p => p.id === message.platform);
+        if (senderPlatform) {
+          const contextPrefix = message.platform === platformId ? '' : `[${senderPlatform.name}]: `;
+          conversationHistory.push({ 
+            role: 'assistant', 
+            content: contextPrefix + message.content 
+          });
+        }
+      }
+    });
+    
+    return conversationHistory;
+  };
+
+  const callAIAPI = async (platform: AIPlatform, messages: Message[], enabledPlatforms: AIPlatform[]): Promise<string> => {
     if (!user) throw new Error('User not authenticated');
+
+    const conversationHistory = buildConversationForPlatform(messages, platform.id, enabledPlatforms);
+    
+    // Add context about other active AIs
+    const otherAIs = enabledPlatforms.filter(p => p.id !== platform.id && p.enabled && p.hasApiKey);
+    if (otherAIs.length > 0) {
+      const contextMessage = `You are ${platform.name} participating in a multi-AI conversation with: ${otherAIs.map(p => p.name).join(', ')}. Respond naturally and feel free to reference or build upon what other AIs have said. Keep your responses concise and engaging.`;
+      conversationHistory.unshift({ role: 'user', content: contextMessage });
+    }
 
     switch (platform.id) {
       case 'anthropic':
