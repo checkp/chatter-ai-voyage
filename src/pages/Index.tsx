@@ -750,9 +750,27 @@ const Index = () => {
     setIsLoading(true);
 
     try {
-      // Build agent-specific conversation history
+      // Build agent-specific conversation history that includes other agents' responses
       const conversationHistory = buildConversationHistoryForAgent(activeChat, platformId);
       conversationHistory.push({ role: 'user', content: message });
+
+      // Add context about other agents that have participated
+      const otherAgentsInChat = new Set<string>();
+      const currentChatData = getCurrentChat();
+      currentChatData?.messages.forEach(msg => {
+        if (msg.sender === 'ai' && msg.platform && msg.platform !== platformId) {
+          otherAgentsInChat.add(msg.platform);
+        }
+      });
+
+      if (otherAgentsInChat.size > 0) {
+        const otherAgentNames = Array.from(otherAgentsInChat).map(pid => {
+          const p = platforms.find(platform => platform.id === pid);
+          return p ? p.name : pid;
+        });
+        const contextMessage = `Note: Other AI agents (${otherAgentNames.join(', ')}) have also participated in this conversation. You can reference their previous responses and provide your unique perspective.`;
+        conversationHistory.push({ role: 'user' as const, content: contextMessage });
+      }
 
       // Call the specific AI platform
       const response = await callAIAPI(platform, conversationHistory);
