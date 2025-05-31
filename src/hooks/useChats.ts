@@ -50,24 +50,16 @@ export const useChats = (user: SupabaseUser | null) => {
       console.log('Updated chat messages count:', updatedChat?.messages.length || 0);
       console.log('Message added successfully to UI');
       
-      return updatedChats;
-    });
-
-    // Save to database asynchronously (don't block UI updates)
-    setTimeout(() => {
-      console.log('Starting async database save for message:', message.id);
-      const chatToSave = chats.find(chat => chat.id === chatId);
-      if (chatToSave) {
-        const updatedChatData = {
-          ...chatToSave,
-          messages: [...chatToSave.messages, message],
-          lastUpdated: new Date()
-        };
-        saveConversation(updatedChatData).catch(error => {
+      // Save to database immediately with the updated chat data
+      if (user && updatedChat) {
+        console.log('Starting immediate database save for message:', message.id);
+        saveConversation(updatedChat).catch(error => {
           console.error('Failed to save message to database:', error);
         });
       }
-    }, 100); // Small delay to ensure state is updated
+      
+      return updatedChats;
+    });
   };
 
   const updateMessageStatus = (chatId: string, messageId: string, status: 'sending' | 'sent' | 'seen', seenBy?: string[]) => {
