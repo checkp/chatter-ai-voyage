@@ -38,6 +38,8 @@ export const useDiscussion = (
       return;
     }
 
+    console.log('Starting discussion with platforms:', enabledPlatforms.map(p => p.name));
+
     setDiscussionState(prev => ({
       ...prev,
       isActive: true,
@@ -47,11 +49,13 @@ export const useDiscussion = (
 
     // Start parallel AI responses
     enabledPlatforms.forEach(platform => {
+      console.log(`Triggering response from ${platform.name}...`);
       processAIResponse(chatId, platform, enabledPlatforms);
     });
 
     // Set overall discussion timeout
     discussionTimeoutRef.current = setTimeout(() => {
+      console.log('Discussion timeout reached, stopping...');
       stopDiscussion();
     }, discussionState.responseTimeout * discussionState.maxRounds);
   }, [discussionState.responseTimeout, discussionState.maxRounds]);
@@ -62,12 +66,17 @@ export const useDiscussion = (
     enabledPlatforms: AIPlatform[]
   ) => {
     try {
-      console.log(`Starting response from ${platform.name}...`);
+      console.log(`${platform.name} is thinking...`);
       
       const currentChat = getCurrentChat();
-      if (!currentChat) return;
+      if (!currentChat) {
+        console.log('No current chat found');
+        return;
+      }
 
+      console.log(`Calling ${platform.name} API...`);
       const response = await callAIAPI(platform, currentChat.messages, enabledPlatforms);
+      console.log(`${platform.name} responded:`, response.substring(0, 100) + '...');
       
       const agentMessage: Message = {
         id: crypto.randomUUID(),
@@ -79,30 +88,32 @@ export const useDiscussion = (
         seenBy: []
       };
       
+      // Add message immediately to update UI
+      console.log(`Adding ${platform.name} message to chat...`);
       addMessage(chatId, agentMessage);
-      console.log(`${platform.name} responded successfully`);
 
       // Remove from active responders
       setDiscussionState(prev => {
         const newActiveResponders = new Set(prev.activeResponders);
         newActiveResponders.delete(platform.id);
+        console.log(`${platform.name} finished. Remaining responders:`, Array.from(newActiveResponders));
         return {
           ...prev,
           activeResponders: newActiveResponders
         };
       });
 
-      // Check if we should trigger another round
+      // Check if we should trigger another round after a delay
       setTimeout(() => {
         checkForNextRound(chatId, enabledPlatforms);
-      }, 2000); // Small delay to allow other responses to come in
+      }, 2000);
       
     } catch (error) {
       console.error(`Error calling ${platform.name}:`, error);
       
       const errorMessage: Message = {
         id: crypto.randomUUID(),
-        content: `❌ Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
+        content: `❌ Error from ${platform.name}: ${error instanceof Error ? error.message : 'Failed to get response'}`,
         sender: 'ai',
         platform: platform.id,
         timestamp: new Date(),
@@ -116,6 +127,7 @@ export const useDiscussion = (
       setDiscussionState(prev => {
         const newActiveResponders = new Set(prev.activeResponders);
         newActiveResponders.delete(platform.id);
+        console.log(`${platform.name} error. Remaining responders:`, Array.from(newActiveResponders));
         return {
           ...prev,
           activeResponders: newActiveResponders
@@ -126,33 +138,47 @@ export const useDiscussion = (
 
   const checkForNextRound = useCallback((chatId: string, enabledPlatforms: AIPlatform[]) => {
     setDiscussionState(prev => {
+      console.log('Checking for next round. Current state:', {
+        isActive: prev.isActive,
+        roundCount: prev.roundCount,
+        maxRounds: prev.maxRounds,
+        activeResponders: prev.activeResponders.size
+      });
+
       // If discussion is not active or we've reached max rounds, stop
       if (!prev.isActive || prev.roundCount >= prev.maxRounds) {
+        console.log('Discussion finished: max rounds reached or not active');
         return prev;
       }
 
       // If there are still active responders, wait
       if (prev.activeResponders.size > 0) {
+        console.log('Still waiting for active responders');
         return prev;
       }
 
       // Check if there are recent messages that might trigger responses
       const currentChat = getCurrentChat();
-      if (!currentChat) return prev;
+      if (!currentChat) {
+        console.log('No current chat for next round check');
+        return prev;
+      }
 
-      const recentMessages = currentChat.messages.slice(-3); // Last 3 messages
+      const recentMessages = currentChat.messages.slice(-3);
       const hasRecentAIMessages = recentMessages.some(msg => 
         msg.sender === 'ai' && 
-        Date.now() - msg.timestamp.getTime() < 10000 // Within last 10 seconds
+        Date.now() - msg.timestamp.getTime() < 10000
       );
 
-      if (hasRecentAIMessages && Math.random() > 0.3) { // 70% chance to continue discussion
+      if (hasRecentAIMessages && Math.random() > 0.3) { // 70% chance to continue
         console.log(`Starting discussion round ${prev.roundCount + 1}`);
         
-        // Start next round with a subset of platforms (simulate natural conversation)
+        // Start next round with a subset of platforms
         const activeAgents = enabledPlatforms.filter(() => Math.random() > 0.4);
         
         if (activeAgents.length > 0) {
+          console.log('Next round participants:', activeAgents.map(p => p.name));
+          
           activeAgents.forEach(platform => {
             setTimeout(() => {
               processAIResponse(chatId, platform, enabledPlatforms);
@@ -165,6 +191,8 @@ export const useDiscussion = (
             activeResponders: new Set(activeAgents.map(p => p.id))
           };
         }
+      } else {
+        console.log('Discussion naturally concluded');
       }
 
       return prev;
@@ -172,6 +200,8 @@ export const useDiscussion = (
   }, [getCurrentChat, processAIResponse]);
 
   const stopDiscussion = useCallback(() => {
+    console.log('Stopping discussion...');
+    
     setDiscussionState(prev => ({
       ...prev,
       isActive: false,

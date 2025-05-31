@@ -14,16 +14,26 @@ export const useChats = (user: SupabaseUser | null) => {
   };
 
   const addMessage = (chatId: string, message: Message) => {
-    setChats(prev => prev.map(chat => 
-      chat.id === chatId 
-        ? { 
-            ...chat, 
-            messages: [...chat.messages, message],
-            lastUpdated: new Date()
-          }
-        : chat
-    ));
+    console.log('Adding message to chat:', chatId, 'from:', message.sender, message.platform || 'user');
+    
+    setChats(prev => {
+      const updatedChats = prev.map(chat => 
+        chat.id === chatId 
+          ? { 
+              ...chat, 
+              messages: [...chat.messages, message],
+              lastUpdated: new Date()
+            }
+          : chat
+      );
+      
+      console.log('Chat state updated. Total messages in active chat:', 
+        updatedChats.find(c => c.id === chatId)?.messages.length || 0);
+      
+      return updatedChats;
+    });
 
+    // Save to database asynchronously
     setTimeout(() => {
       const updatedChat = chats.find(chat => chat.id === chatId);
       if (updatedChat) {
