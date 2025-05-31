@@ -22,6 +22,7 @@ const ApiKeySettings = () => {
     { id: 'anthropic', name: 'Claude (Anthropic)', icon: '🎭' },
     { id: 'openai', name: 'ChatGPT (OpenAI)', icon: '🤖' },
     { id: 'deepseek', name: 'DeepSeek', icon: '🔍' },
+    { id: 'grok', name: 'Grok (X.AI)', icon: '🚀' },
   ];
 
   useEffect(() => {
@@ -186,6 +187,7 @@ const ApiKeySettings = () => {
                 {platform.id === 'anthropic' && 'Get your API key from the Anthropic Console'}
                 {platform.id === 'openai' && 'Get your API key from the OpenAI Platform'}
                 {platform.id === 'deepseek' && 'Get your API key from the DeepSeek Platform'}
+                {platform.id === 'grok' && 'Get your API key from the X.AI Console'}
               </div>
             </CardContent>
           </Card>

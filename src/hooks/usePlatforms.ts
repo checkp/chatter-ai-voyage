@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform } from '@/types/chat';
-import { callOpenAI, callDeepSeek, callClaudeAPI } from '@/services/aiApiService';
+import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI } from '@/services/aiApiService';
 
 export const usePlatforms = (user: SupabaseUser | null) => {
   const [platforms, setPlatforms] = useState<AIPlatform[]>([
@@ -30,6 +30,14 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       enabled: false, 
       color: 'bg-agent-deepseek border-agent-deepseek text-cyber-bg', 
       icon: '🔍',
+      hasApiKey: false
+    },
+    { 
+      id: 'grok', 
+      name: 'Grok', 
+      enabled: false, 
+      color: 'bg-agent-grok border-agent-grok text-cyber-bg', 
+      icon: '🚀',
       hasApiKey: false
     },
   ]);
@@ -145,6 +153,8 @@ export const usePlatforms = (user: SupabaseUser | null) => {
         return await callOpenAI(conversationHistory, user);
       case 'deepseek':
         return await callDeepSeek(conversationHistory, user);
+      case 'grok':
+        return await callGrokAPI(conversationHistory, user);
       default:
         throw new Error(`Unsupported platform: ${platform.id}`);
     }

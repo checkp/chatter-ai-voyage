@@ -96,6 +96,53 @@ export const callDeepSeek = async (
   return data.choices[0].message.content;
 };
 
+export const callGrokAPI = async (
+  conversationHistory: Array<{role: 'user' | 'assistant', content: string}>,
+  user: SupabaseUser
+): Promise<string> => {
+  console.log('Calling Grok API...');
+  
+  const { data: apiKeyData, error } = await supabase
+    .from('user_api_keys')
+    .select('encrypted_key')
+    .eq('user_id', user.id)
+    .eq('platform', 'grok')
+    .single();
+
+  if (error) {
+    console.error('Grok API key error:', error);
+    throw new Error('Grok API key not found. Please add your API key in settings.');
+  }
+
+  if (!apiKeyData?.encrypted_key) {
+    throw new Error('Grok API key is empty. Please add your API key in settings.');
+  }
+
+  console.log('Making Grok request with key:', apiKeyData.encrypted_key.substring(0, 10) + '...');
+
+  const response = await fetch('https://api.x.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKeyData.encrypted_key}`
+    },
+    body: JSON.stringify({
+      model: 'grok-beta',
+      messages: conversationHistory,
+      max_tokens: 1000
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Grok API response error:', response.status, errorText);
+    throw new Error(`Grok API error: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+};
+
 export const callClaudeAPI = async (
   conversationHistory: Array<{role: 'user' | 'assistant', content: string}>
 ): Promise<string> => {

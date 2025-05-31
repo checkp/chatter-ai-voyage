@@ -117,6 +117,8 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
         return 'agent-anthropic';
       case 'deepseek':
         return 'agent-deepseek';
+      case 'grok':
+        return 'agent-grok';
       default:
         return 'cyber-primary';
     }

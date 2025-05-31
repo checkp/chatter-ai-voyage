@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Send, Plus, MessageSquare, Settings, History, Key, LogOut, User, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -405,7 +404,9 @@ const Index = () => {
                       className={`h-7 px-3 text-xs font-medium border ${
                         platform.id === 'openai' ? 'border-agent-openai text-agent-openai hover:bg-agent-openai/20' :
                         platform.id === 'anthropic' ? 'border-agent-anthropic text-agent-anthropic hover:bg-agent-anthropic/20' :
-                        'border-agent-deepseek text-agent-deepseek hover:bg-agent-deepseek/20'
+                        platform.id === 'deepseek' ? 'border-agent-deepseek text-agent-deepseek hover:bg-agent-deepseek/20' :
+                        platform.id === 'grok' ? 'border-agent-grok text-agent-grok hover:bg-agent-grok/20' :
+                        'border-cyber-primary text-cyber-primary hover:bg-cyber-primary/20'
                       }`}
                     >
                       Chat
@@ -438,6 +439,7 @@ const Index = () => {
                             message.platform === 'openai' ? 'bg-agent-openai border-agent-openai text-cyber-bg' :
                             message.platform === 'anthropic' ? 'bg-agent-anthropic border-agent-anthropic text-cyber-bg' :
                             message.platform === 'deepseek' ? 'bg-agent-deepseek border-agent-deepseek text-cyber-bg' :
+                            message.platform === 'grok' ? 'bg-agent-grok border-agent-grok text-cyber-bg' :
                             'bg-cyber-primary border-cyber-primary text-cyber-bg'
                           } font-semibold cyber-glow`}>
                             {platforms.find(p => p.id === message.platform)?.icon} {platforms.find(p => p.id === message.platform)?.name}

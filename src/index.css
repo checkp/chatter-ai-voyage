@@ -1,79 +1,305 @@
 
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 210 40% 2%;
-    --foreground: 213 31% 91%;
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 10% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
 
-    --card: 217 33% 8%;
-    --card-foreground: 213 31% 91%;
+    /* Cyber theme colors */
+    --cyber-bg: 240 10% 3.9%;
+    --cyber-surface: 240 8% 8%;
+    --cyber-primary: 200 100% 60%;
+    --cyber-accent: 280 100% 70%;
+    --cyber-secondary: 160 100% 50%;
+    --cyber-text: 0 0% 95%;
+    --cyber-muted: 240 5% 64.9%;
+    --cyber-danger: 0 84.2% 60.2%;
 
-    --popover: 217 33% 8%;
-    --popover-foreground: 213 31% 91%;
+    /* Agent colors */
+    --agent-openai: 142 76% 36%;
+    --agent-anthropic: 25 95% 53%;
+    --agent-deepseek: 221 83% 53%;
+    --agent-grok: 210 40% 60%;
+  }
 
-    --primary: 195 100% 50%;
-    --primary-foreground: 210 40% 2%;
-
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 213 31% 91%;
-
-    --muted: 217 33% 17%;
-    --muted-foreground: 218 11% 65%;
-
-    --accent: 217 33% 17%;
-    --accent-foreground: 213 31% 91%;
-
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 213 31% 91%;
-
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 195 100% 50%;
-
-    --radius: 0.75rem;
-
-    --sidebar-background: 217 33% 8%;
-    --sidebar-foreground: 213 31% 91%;
-    --sidebar-primary: 195 100% 50%;
-    --sidebar-primary-foreground: 210 40% 2%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 213 31% 91%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 195 100% 50%;
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
 }
 
 @layer base {
   * {
-    @apply border-border font-cyber;
+    @apply border-border;
   }
-
   body {
-    @apply bg-cyber-bg text-cyber-text font-cyber text-base;
-    background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
-    min-height: 100vh;
+    @apply bg-background text-foreground;
   }
+}
 
-  .cyber-border {
-    border: 1px solid;
-    border-image: linear-gradient(45deg, #00d4ff, #8338ec, #ff006e) 1;
-  }
+/* Cyber theme utilities */
+.cyber-glow {
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+}
 
-  .cyber-glow {
-    box-shadow: 
-      0 0 5px currentColor,
-      0 0 10px currentColor,
-      0 0 15px currentColor,
-      0 0 20px currentColor;
-  }
+.text-glow {
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
 
-  .text-glow {
-    text-shadow: 
-      0 0 5px currentColor,
-      0 0 10px currentColor,
-      0 0 15px currentColor;
-  }
+/* Font utilities */
+.font-cyber {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Agent color utilities */
+.bg-agent-openai {
+  background-color: hsl(var(--agent-openai));
+}
+
+.border-agent-openai {
+  border-color: hsl(var(--agent-openai));
+}
+
+.text-agent-openai {
+  color: hsl(var(--agent-openai));
+}
+
+.bg-agent-anthropic {
+  background-color: hsl(var(--agent-anthropic));
+}
+
+.border-agent-anthropic {
+  border-color: hsl(var(--agent-anthropic));
+}
+
+.text-agent-anthropic {
+  color: hsl(var(--agent-anthropic));
+}
+
+.bg-agent-deepseek {
+  background-color: hsl(var(--agent-deepseek));
+}
+
+.border-agent-deepseek {
+  border-color: hsl(var(--agent-deepseek));
+}
+
+.text-agent-deepseek {
+  color: hsl(var(--agent-deepseek));
+}
+
+.bg-agent-grok {
+  background-color: hsl(var(--agent-grok));
+}
+
+.border-agent-grok {
+  border-color: hsl(var(--agent-grok));
+}
+
+.text-agent-grok {
+  color: hsl(var(--agent-grok));
+}
+
+/* Hover variants */
+.hover\:bg-agent-openai\/20:hover {
+  background-color: hsl(var(--agent-openai) / 0.2);
+}
+
+.hover\:bg-agent-anthropic\/20:hover {
+  background-color: hsl(var(--agent-anthropic) / 0.2);
+}
+
+.hover\:bg-agent-deepseek\/20:hover {
+  background-color: hsl(var(--agent-deepseek) / 0.2);
+}
+
+.hover\:bg-agent-grok\/20:hover {
+  background-color: hsl(var(--agent-grok) / 0.2);
+}
+
+.hover\:bg-agent-grok\/80:hover {
+  background-color: hsl(var(--agent-grok) / 0.8);
+}
+
+/* Cyber background utilities */
+.bg-cyber-bg {
+  background-color: hsl(var(--cyber-bg));
+}
+
+.bg-cyber-surface {
+  background-color: hsl(var(--cyber-surface));
+}
+
+.bg-cyber-primary {
+  background-color: hsl(var(--cyber-primary));
+}
+
+.bg-cyber-accent {
+  background-color: hsl(var(--cyber-accent));
+}
+
+.bg-cyber-secondary {
+  background-color: hsl(var(--cyber-secondary));
+}
+
+.bg-cyber-danger {
+  background-color: hsl(var(--cyber-danger));
+}
+
+/* Text color utilities */
+.text-cyber-bg {
+  color: hsl(var(--cyber-bg));
+}
+
+.text-cyber-text {
+  color: hsl(var(--cyber-text));
+}
+
+.text-cyber-muted {
+  color: hsl(var(--cyber-muted));
+}
+
+.text-cyber-primary {
+  color: hsl(var(--cyber-primary));
+}
+
+.text-cyber-accent {
+  color: hsl(var(--cyber-accent));
+}
+
+.text-cyber-secondary {
+  color: hsl(var(--cyber-secondary));
+}
+
+.text-cyber-danger {
+  color: hsl(var(--cyber-danger));
+}
+
+/* Border utilities */
+.border-cyber-primary {
+  border-color: hsl(var(--cyber-primary));
+}
+
+.border-cyber-secondary {
+  border-color: hsl(var(--cyber-secondary));
+}
+
+.border-cyber-surface {
+  border-color: hsl(var(--cyber-surface));
+}
+
+/* Hover utilities */
+.hover\:bg-cyber-primary\/20:hover {
+  background-color: hsl(var(--cyber-primary) / 0.2);
+}
+
+.hover\:bg-cyber-secondary\/20:hover {
+  background-color: hsl(var(--cyber-secondary) / 0.2);
+}
+
+.hover\:bg-cyber-danger\/20:hover {
+  background-color: hsl(var(--cyber-danger) / 0.2);
+}
+
+.hover\:bg-cyber-primary\/80:hover {
+  background-color: hsl(var(--cyber-primary) / 0.8);
+}
+
+.hover\:bg-cyber-accent\/80:hover {
+  background-color: hsl(var(--cyber-accent) / 0.8);
+}
+
+.hover\:bg-cyber-danger\/80:hover {
+  background-color: hsl(var(--cyber-danger) / 0.8);
+}
+
+.hover\:bg-cyber-surface\/80:hover {
+  background-color: hsl(var(--cyber-surface) / 0.8);
+}
+
+.hover\:border-cyber-primary\/50:hover {
+  border-color: hsl(var(--cyber-primary) / 0.5);
+}
+
+/* Additional opacity variants */
+.bg-cyber-primary\/10 {
+  background-color: hsl(var(--cyber-primary) / 0.1);
+}
+
+.bg-cyber-surface\/30 {
+  background-color: hsl(var(--cyber-surface) / 0.3);
+}
+
+.bg-cyber-surface\/50 {
+  background-color: hsl(var(--cyber-surface) / 0.5);
+}
+
+.bg-cyber-surface\/70 {
+  background-color: hsl(var(--cyber-surface) / 0.7);
+}
+
+.border-cyber-primary\/20 {
+  border-color: hsl(var(--cyber-primary) / 0.2);
+}
+
+.border-cyber-primary\/30 {
+  border-color: hsl(var(--cyber-primary) / 0.3);
+}
+
+.text-cyber-bg\/70 {
+  color: hsl(var(--cyber-bg) / 0.7);
+}
+
+.text-cyber-bg\/80 {
+  color: hsl(var(--cyber-bg) / 0.8);
 }
