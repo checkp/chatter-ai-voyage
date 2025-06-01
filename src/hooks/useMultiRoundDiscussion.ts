@@ -1,4 +1,3 @@
-
 import { useCallback, useRef, useState } from 'react';
 import type { Message, AIPlatform, Chat } from '@/types/chat';
 import { toast } from 'sonner';
@@ -101,9 +100,10 @@ export const useMultiRoundDiscussion = (
             console.error(`Platform ${platform.name} failed in round ${roundNumber}:`, error);
           } finally {
             // Remove from active responders when done (success or error)
-            updateState(prevState => ({
-              activeResponders: new Set([...prevState.activeResponders].filter(id => id !== platform.id))
-            }));
+            const newActiveResponders = new Set([...state.activeResponders].filter(id => id !== platform.id));
+            updateState({
+              activeResponders: newActiveResponders
+            });
             resolve();
           }
         }, index * 1000); // 1 second delay between each agent in a round
@@ -120,7 +120,7 @@ export const useMultiRoundDiscussion = (
         resolve();
       }, 3000); // 3 second pause between rounds
     });
-  }, [updateState, setPlatformStatus, clearError, processAIResponse]);
+  }, [updateState, setPlatformStatus, clearError, processAIResponse, state.activeResponders]);
 
   const shouldContinueDiscussion = useCallback((roundNumber: number, maxRounds: number) => {
     if (roundNumber >= maxRounds) {
