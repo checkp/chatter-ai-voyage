@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -44,6 +45,7 @@ const Index = () => {
   const [newChatTitle, setNewChatTitle] = useState('');
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
+  const [processingSentMessageId, setProcessingSentMessageId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const { 
@@ -172,11 +174,13 @@ const Index = () => {
   });
 
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ chatId, content, platformId }: { chatId: string, content: string, platformId?: string }) => {
+    mutationFn: async ({ chatId, content }: { chatId: string, content: string }) => {
       if (!user?.id) throw new Error('User not authenticated');
 
       const newMessageId = uuidv4();
       const timestamp = new Date().toISOString();
+
+      console.log('Saving user message to database:', newMessageId);
 
       // Save user message to database
       const { error: userMessageError } = await supabase
@@ -187,7 +191,7 @@ const Index = () => {
           content,
           sender: 'user',
           created_at: timestamp,
-          platform: platformId,
+          platform: null,
         }]);
 
       if (userMessageError) {
@@ -198,61 +202,90 @@ const Index = () => {
       return { chatId, content, newMessageId, timestamp };
     },
     onSuccess: async ({ chatId, content, newMessageId, timestamp }) => {
-      // Invalidate and refetch messages to reflect changes
+      console.log('User message saved, processing AI responses for message:', newMessageId);
+      setProcessingSentMessageId(newMessageId);
+      
+      // Refresh messages to show the user message immediately
       await queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
       
       // Call all enabled AI APIs in parallel
       const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
       if (enabledPlatforms.length === 0) {
         toast.error('No AI agents enabled. Please enable at least one agent in settings.');
+        setProcessingSentMessageId(null);
         return;
       }
 
       setIsLoadingResponse(true);
 
       try {
+        // Get current messages for context
+        const { data: currentMessages } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('conversation_id', chatId)
+          .order('created_at', { ascending: true });
+
+        const messageHistory = (currentMessages || []).map(msg => ({
+          ...msg,
+          sender: msg.sender as 'user' | 'ai',
+          timestamp: new Date(msg.created_at),
+          status: 'sent' as const,
+          seenBy: []
+        }));
+
         const aiResponses = await Promise.all(
           enabledPlatforms.map(async (platform) => {
             try {
-              const aiContent = await callAIAPI(platform, messages || [], platforms);
-              return { platformId: platform.id, content: aiContent };
+              console.log(`Calling ${platform.name} API...`);
+              const aiContent = await callAIAPI(platform, messageHistory, platforms);
+              return { platformId: platform.id, content: aiContent, success: true };
             } catch (apiError: any) {
               console.error(`Error calling ${platform.name} API:`, apiError);
               toast.error(`Error calling ${platform.name} API: ${apiError.message}`);
-              return { platformId: platform.id, content: `Error: ${apiError.message}` };
+              return { platformId: platform.id, content: `Error: ${apiError.message}`, success: false };
             }
           })
         );
 
-        // Save AI responses to database
-        const aiMessageInserts = aiResponses.map(({ platformId, content }) => ({
-          id: uuidv4(),
-          conversation_id: chatId,
-          content,
-          sender: 'ai',
-          created_at: new Date().toISOString(),
-          platform: platformId,
-        }));
+        // Save AI responses to database in batch
+        if (aiResponses.length > 0) {
+          const aiMessageInserts = aiResponses.map(({ platformId, content }) => ({
+            id: uuidv4(),
+            conversation_id: chatId,
+            content,
+            sender: 'ai',
+            created_at: new Date().toISOString(),
+            platform: platformId,
+          }));
 
-        const { error: aiMessageError } = await supabase
-          .from('messages')
-          .insert(aiMessageInserts);
+          console.log('Saving AI responses to database:', aiMessageInserts.length, 'messages');
+          const { error: aiMessageError } = await supabase
+            .from('messages')
+            .insert(aiMessageInserts);
 
-        if (aiMessageError) {
-          console.error('Error saving AI messages:', aiMessageError);
-          toast.error('Error saving AI messages: ' + aiMessageError.message);
-        } else {
-          // Update the UI with the new messages
-          await queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
-          toast.success('AI responses received');
+          if (aiMessageError) {
+            console.error('Error saving AI messages:', aiMessageError);
+            toast.error('Error saving AI messages: ' + aiMessageError.message);
+          } else {
+            console.log('AI responses saved successfully');
+            // Refresh messages to show AI responses
+            await queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+            const successfulResponses = aiResponses.filter(r => r.success).length;
+            if (successfulResponses > 0) {
+              toast.success(`${successfulResponses} AI responses received`);
+            }
+          }
         }
       } finally {
         setIsLoadingResponse(false);
+        setProcessingSentMessageId(null);
       }
     },
     onError: (error: any) => {
       console.error('Failed to send message:', error);
       toast.error('Failed to send message: ' + error.message);
+      setProcessingSentMessageId(null);
     },
   });
 
@@ -279,16 +312,26 @@ const Index = () => {
   }
 
   const handleSend = async () => {
-    if (!input.trim() || !activeChatId) return;
+    if (!input.trim() || !activeChatId || sendMessageMutation.isPending) {
+      console.log('Cannot send message:', { 
+        hasInput: !!input.trim(), 
+        hasActiveChat: !!activeChatId, 
+        isPending: sendMessageMutation.isPending 
+      });
+      return;
+    }
     
     const content = input.trim();
     setInput('');
 
+    console.log('Sending message:', content);
     try {
       await sendMessageMutation.mutateAsync({ chatId: activeChatId, content });
     } catch (error: any) {
       console.error('Failed to send message:', error);
       toast.error('Failed to send message: ' + error.message);
+      // Restore input on error
+      setInput(content);
     }
   };
 
@@ -406,6 +449,16 @@ const Index = () => {
                   </div>
                 </div>
               ))}
+              {isLoadingResponse && (
+                <div className="flex flex-col items-start mb-2">
+                  <div className="bg-muted rounded-lg p-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      AI assistants are responding...
+                    </div>
+                  </div>
+                </div>
+              )}
               <div ref={bottomRef} />
             </>
           )}
@@ -430,9 +483,13 @@ const Index = () => {
                 }}
                 placeholder="Type your message here..."
                 className="flex-1 resize-none"
+                disabled={isLoadingResponse || sendMessageMutation.isPending}
               />
-              <Button onClick={handleSend} disabled={isLoadingResponse}>
-                {isLoadingResponse ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+              <Button 
+                onClick={handleSend} 
+                disabled={isLoadingResponse || sendMessageMutation.isPending || !input.trim()}
+              >
+                {(isLoadingResponse || sendMessageMutation.isPending) ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                 Send
               </Button>
             </div>
