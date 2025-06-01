@@ -4,7 +4,8 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 export const callOpenAI = async (
   conversationHistory: Array<{role: 'user' | 'assistant', content: string}>,
-  user: SupabaseUser
+  user: SupabaseUser,
+  model: string = 'gpt-4o-mini'
 ): Promise<string> => {
   console.log('Calling OpenAI API...');
   
@@ -33,7 +34,7 @@ export const callOpenAI = async (
       'Authorization': `Bearer ${apiKeyData.encrypted_key}`
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: model,
       messages: conversationHistory,
       max_tokens: 1000
     })
@@ -51,7 +52,8 @@ export const callOpenAI = async (
 
 export const callDeepSeek = async (
   conversationHistory: Array<{role: 'user' | 'assistant', content: string}>,
-  user: SupabaseUser
+  user: SupabaseUser,
+  model: string = 'deepseek-chat'
 ): Promise<string> => {
   console.log('Calling DeepSeek API...');
   
@@ -80,7 +82,7 @@ export const callDeepSeek = async (
       'Authorization': `Bearer ${apiKeyData.encrypted_key}`
     },
     body: JSON.stringify({
-      model: 'deepseek-chat',
+      model: model,
       messages: conversationHistory,
       max_tokens: 1000
     })
@@ -98,7 +100,8 @@ export const callDeepSeek = async (
 
 export const callGrokAPI = async (
   conversationHistory: Array<{role: 'user' | 'assistant', content: string}>,
-  user: SupabaseUser
+  user: SupabaseUser,
+  model: string = 'grok-3'
 ): Promise<string> => {
   console.log('Calling Grok API...');
   
@@ -127,7 +130,7 @@ export const callGrokAPI = async (
       'Authorization': `Bearer ${apiKeyData.encrypted_key}`
     },
     body: JSON.stringify({
-      model: 'grok-3',
+      model: model,
       messages: conversationHistory,
       max_tokens: 1000
     })
@@ -144,7 +147,8 @@ export const callGrokAPI = async (
 };
 
 export const callClaudeAPI = async (
-  conversationHistory: Array<{role: 'user' | 'assistant', content: string}>
+  conversationHistory: Array<{role: 'user' | 'assistant', content: string}>,
+  model: string = 'claude-3-5-haiku-20241022'
 ): Promise<string> => {
   console.log('Calling Claude API via edge function...');
   
@@ -156,7 +160,7 @@ export const callClaudeAPI = async (
   console.log('Invoking claude-chat function...');
 
   const response = await supabase.functions.invoke('claude-chat', {
-    body: { messages: conversationHistory },
+    body: { messages: conversationHistory, model: model },
     headers: {
       Authorization: `Bearer ${session.access_token}`,
     },
