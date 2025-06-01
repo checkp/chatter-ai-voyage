@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -56,32 +57,7 @@ const Index = () => {
   
   const [activeTab, setActiveTab] = useState<'chat' | 'settings'>('chat');
 
-  const scrollToBottom = () => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
-
-  // Show loading while auth is being determined
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-        <p>Loading...</p>
-      </div>
-    );
-  }
-
-  // Show sign in prompt if not authenticated
-  if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <h1 className="text-2xl font-bold mb-4">Please sign in to continue.</h1>
-        <Button onClick={() => window.location.href = '/auth'}>
-          Go to Sign In
-        </Button>
-      </div>
-    );
-  }
-
+  // Always call hooks - move all useQuery hooks to the top
   const { data: chats, isLoading: isLoadingChats } = useQuery({
     queryKey: ['conversations', user?.id],
     queryFn: async () => {
@@ -107,13 +83,6 @@ const Index = () => {
     },
     enabled: !!user?.id,
   });
-
-  useEffect(() => {
-    if (chats && chats.length > 0 && !activeChatId) {
-      setActiveChatId(chats[0].id);
-      setIsInitialLoadComplete(true);
-    }
-  }, [chats, activeChatId]);
 
   const { data: messages, isLoading: isLoadingMessages } = useQuery({
     queryKey: ['messages', activeChatId],
@@ -141,6 +110,17 @@ const Index = () => {
     },
     enabled: !!activeChatId,
   });
+
+  const scrollToBottom = () => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  useEffect(() => {
+    if (chats && chats.length > 0 && !activeChatId) {
+      setActiveChatId(chats[0].id);
+      setIsInitialLoadComplete(true);
+    }
+  }, [chats, activeChatId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -271,6 +251,28 @@ const Index = () => {
       toast.error('Failed to send message: ' + error.message);
     },
   });
+
+  // Show loading while auth is being determined
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // Show sign in prompt if not authenticated
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <h1 className="text-2xl font-bold mb-4">Please sign in to continue.</h1>
+        <Button onClick={() => window.location.href = '/auth'}>
+          Go to Sign In
+        </Button>
+      </div>
+    );
+  }
 
   const handleSend = async () => {
     if (!input.trim() || !activeChatId) return;
