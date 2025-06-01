@@ -9,7 +9,7 @@ export const ModeToggle = () => {
 
   return (
     <Button variant="outline" size="icon" onClick={toggleTheme}>
-      {theme === 'dark' ? (
+      {theme === 'blue-cool' ? (
         <Sun className="h-4 w-4" />
       ) : (
         <Moon className="h-4 w-4" />

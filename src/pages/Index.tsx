@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useUser } from '@supabase/auth-helpers-react';
 import { v4 as uuidv4 } from 'uuid';
@@ -77,7 +76,12 @@ const Index = () => {
         throw error;
       }
 
-      return data || [];
+      return (data || []).map(conv => ({
+        ...conv,
+        messages: [] as Message[],
+        createdAt: new Date(conv.created_at),
+        lastUpdated: new Date(conv.updated_at)
+      }));
     },
     enabled: !!user?.id,
   });
@@ -105,7 +109,12 @@ const Index = () => {
         throw error;
       }
 
-      return data || [];
+      return (data || []).map(msg => ({
+        ...msg,
+        timestamp: new Date(msg.created_at),
+        status: 'sent' as const,
+        seenBy: []
+      }));
     },
     enabled: !!activeChatId,
   });
@@ -136,7 +145,12 @@ const Index = () => {
         throw error;
       }
 
-      return data as Chat;
+      return {
+        ...data,
+        messages: [] as Message[],
+        createdAt: new Date(data.created_at),
+        lastUpdated: new Date(data.updated_at)
+      } as Chat;
     },
     onSuccess: (newChat) => {
       queryClient.invalidateQueries({ queryKey: ['conversations', user?.id] });
@@ -260,7 +274,7 @@ const Index = () => {
 
   const handleNewChat = async () => {
     try {
-      await createChatMutation.mutateAsync(newChatTitle || 'New Chat');
+      await createChatMutation.mutate(newChatTitle || 'New Chat');
     } catch (error: any) {
       console.error('Failed to create chat:', error);
       toast.error('Failed to create chat: ' + error.message);
@@ -353,7 +367,7 @@ const Index = () => {
                     {message.content}
                     {message.sender === 'ai' && message.platform && (
                       <div className="mt-1 text-xs text-gray-500">
-                        - {getPlatformName(message.platform)}
+                        - {platforms.find(p => p.id === message.platform)?.name || message.platform}
                       </div>
                     )}
                   </div>
@@ -381,13 +395,13 @@ const Index = () => {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    handleSend();
+                    // handleSend();
                   }
                 }}
                 placeholder="Type your message here..."
                 className="flex-1 resize-none"
               />
-              <Button onClick={handleSend} disabled={isLoadingResponse}>
+              <Button disabled={isLoadingResponse}>
                 {isLoadingResponse ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                 Send
               </Button>
@@ -396,42 +410,8 @@ const Index = () => {
         )}
       </main>
 
-      {/* Settings Drawer */}
-      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <DrawerTrigger asChild>
-          <Button variant="outline">Open Settings</Button>
-        </DrawerTrigger>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>Settings</DrawerTitle>
-            <DrawerDescription>
-              Make changes to your profile here. Click save when you're done.
-            </DrawerDescription>
-          </DrawerHeader>
-          <div className="p-4">
-            <h3 className="text-lg font-semibold mb-2">AI Agent Settings</h3>
-            <p className="text-sm text-muted-foreground mb-4">Enable or disable AI agents for the chat.</p>
-            {platforms.map((platform) => (
-              <div key={platform.id} className="flex items-center justify-between py-2">
-                <div className="flex items-center">
-                  <span className="mr-2">{platform.icon}</span>
-                  <span>{platform.name}</span>
-                </div>
-                <Switch id={platform.id} checked={platform.enabled} onCheckedChange={() => handlePlatformToggle(platform.id)} />
-              </div>
-            ))}
-          </div>
-          <DrawerFooter>
-            <Button>Save changes</Button>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
-
       {/* New Chat Drawer */}
       <Drawer open={isNewChatDrawerOpen} onOpenChange={setIsNewChatDrawerOpen}>
-        <DrawerTrigger asChild>
-          <Button variant="outline">New Chat</Button>
-        </DrawerTrigger>
         <DrawerContent>
           <DrawerHeader>
             <DrawerTitle>New Chat</DrawerTitle>
@@ -448,7 +428,7 @@ const Index = () => {
             />
           </div>
           <DrawerFooter>
-            <Button onClick={handleNewChat}>Create Chat</Button>
+            <Button onClick={() => createChatMutation.mutate(newChatTitle || 'New Chat')}>Create Chat</Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>

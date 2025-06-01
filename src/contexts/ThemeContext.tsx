@@ -5,6 +5,7 @@ import type { ThemeVariant } from '@/types/theme';
 interface ThemeContextType {
   theme: ThemeVariant;
   setTheme: (theme: ThemeVariant) => void;
+  toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -27,13 +28,17 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     return (saved as ThemeVariant) || 'amber-warm';
   });
 
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'amber-warm' ? 'blue-cool' : 'amber-warm');
+  };
+
   useEffect(() => {
     localStorage.setItem('chat-theme', theme);
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );
