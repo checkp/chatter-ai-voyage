@@ -170,14 +170,13 @@ export const usePlatforms = (user: SupabaseUser | null) => {
           content: message.content 
         });
       } else if (message.sender === 'ai') {
+        // Skip the current platform's own messages to avoid sending it its own replies
         if (message.platform === platformId) {
-          // This platform's own previous responses
-          conversationHistory.push({ 
-            role: 'assistant', 
-            content: message.content 
-          });
-        } else if (message.platform && message.platform !== platformId) {
-          // Other AI agents' responses - include them as system context
+          return;
+        }
+        
+        // Include other AI agents' responses as system context
+        if (message.platform && message.platform !== platformId) {
           const otherPlatform = enabledPlatforms.find(p => p.id === message.platform);
           const platformName = otherPlatform?.name || message.platform;
           conversationHistory.push({ 
