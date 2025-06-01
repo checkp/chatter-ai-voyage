@@ -7,31 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Square } from 'lucide-react';
-
-interface Message {
-  id: string;
-  content: string;
-  sender: 'user' | 'ai';
-  platform?: string;
-  timestamp: Date;
-}
-
-interface Chat {
-  id: string;
-  title: string;
-  messages: Message[];
-  createdAt: Date;
-  lastUpdated: Date;
-}
-
-interface AIPlatform {
-  id: string;
-  name: string;
-  enabled: boolean;
-  color: string;
-  icon: string;
-  hasApiKey?: boolean;
-}
+import type { AIPlatform, Chat } from '@/types/chat';
 
 interface BotHistoryDialogProps {
   open: boolean;
@@ -79,9 +55,11 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
   // Extract messages relevant to this platform with the new structure
   const getBotMessages = () => {
     console.log('getBotMessages called for platform:', platform.name);
-    console.log('Total messages in chat:', currentChat.messages.length);
+    console.log('Total messages in chat:', currentChat.messages?.length || 0);
     
     const botMessages: Array<{content: string, timestamp: Date, isUser: boolean}> = [];
+    
+    if (!currentChat.messages) return botMessages;
     
     currentChat.messages.forEach((message, index) => {
       console.log(`Message ${index}:`, { 
@@ -90,10 +68,15 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
         content: message.content.substring(0, 100) + '...'
       });
       
+      // Handle timestamp - convert from string if needed, or use current date as fallback
+      const timestamp = message.timestamp 
+        ? (message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp))
+        : new Date(message.created_at);
+      
       if (message.sender === 'user') {
         botMessages.push({
           content: message.content,
-          timestamp: message.timestamp,
+          timestamp,
           isUser: true
         });
       } else if (message.sender === 'ai' && message.platform === platform.id) {
@@ -101,7 +84,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
         console.log('Found platform-specific message for', platform.name);
         botMessages.push({
           content: message.content,
-          timestamp: message.timestamp,
+          timestamp,
           isUser: false
         });
       }
