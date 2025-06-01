@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Send, Plus, MessageSquare, Settings, History, Key, LogOut, User, Trash2, Square, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,7 +31,6 @@ import { useScrollToBottom } from '@/hooks/useScrollToBottom';
 import type { Message, AIPlatform } from '@/types/chat';
 import MessageStatus from '@/components/chat/MessageStatus';
 import PlatformStatus from '@/components/chat/PlatformStatus';
-import { useSimpleDiscussion } from '@/hooks/useSimpleDiscussion';
 import { useMultiRoundDiscussion } from '@/hooks/useMultiRoundDiscussion';
 
 const Index = () => {
@@ -55,7 +55,6 @@ const Index = () => {
   } = useMultiRoundDiscussion(platforms, callAIAPI, addMessage, getCurrentChat);
 
   const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const [showBotHistoryDialog, setShowBotHistoryDialog] = useState(false);
@@ -85,23 +84,23 @@ const Index = () => {
       status: 'sent'
     };
 
+    // Add user message to chat
     addMessage(chatId, userMessage);
 
+    // Update chat title if this is the first message
     const targetChat = chats.find(chat => chat.id === chatId);
     if (!targetChat || targetChat.messages.length === 0) {
       updateChatTitle(chatId, inputMessage);
     }
 
     setInputMessage('');
-    setIsLoading(true);
 
     try {
+      // Start the multi-round discussion
       await startDiscussion(chatId, userMessage, enabledPlatforms);
     } catch (error) {
       console.error('Error in handleSendMessage:', error);
       toast.error('Failed to start discussion with AI platforms');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -141,8 +140,6 @@ const Index = () => {
       updateChatTitle(activeChat, message);
     }
 
-    setIsLoading(true);
-
     try {
       const currentChatData = getCurrentChat();
       if (!currentChatData) return;
@@ -177,8 +174,6 @@ const Index = () => {
       
       addMessage(activeChat, errorMessage);
       toast.error(`Failed to get response from ${platform.name}`);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -525,7 +520,7 @@ const Index = () => {
               </div>
             ))}
             
-            {(isLoading || activeResponders.length > 0) && (
+            {(activeResponders.length > 0) && (
               <div className="flex justify-start">
                 <Card className="modern-card-elevated modern-glow">
                   <CardContent className="p-6">
@@ -548,9 +543,7 @@ const Index = () => {
                         </div>
                       </div>
                       <span className="text-lg modern-text-muted font-medium">
-                        {activeResponders.length > 0 
-                          ? `Round ${roundCount}: ${activeResponders.length} AI platform(s) are responding...` 
-                          : 'AI platforms are thinking...'}
+                        Round {roundCount}: {activeResponders.length} AI platform(s) are responding...
                       </span>
                     </div>
                   </CardContent>
@@ -576,12 +569,12 @@ const Index = () => {
                     handleSendMessage();
                   }
                 }}
-                disabled={isLoading || isDiscussionActive}
+                disabled={isDiscussionActive}
                 className="flex-1 modern-input text-lg py-4"
               />
               <Button 
                 onClick={handleSendMessage}
-                disabled={!inputMessage.trim() || isLoading || isDiscussionActive}
+                disabled={!inputMessage.trim() || isDiscussionActive}
                 className="modern-btn-primary px-8 py-4 text-lg modern-glow-hover"
               >
                 <Send className="w-6 h-6" />
