@@ -144,6 +144,8 @@ export const useDiscussion = (
         content: response,
         sender: 'ai',
         platform: platform.id,
+        created_at: new Date().toISOString(),
+        conversation_id: chatId,
         timestamp: new Date(),
         status: 'sent',
         seenBy: []
