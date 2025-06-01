@@ -104,6 +104,57 @@ export const useChatManagement = (user: any) => {
     },
   });
 
+  const deleteChatMutation = useMutation({
+    mutationFn: async (chatId: string) => {
+      if (!user?.id) throw new Error('User not authenticated');
+
+      // First delete all messages for this conversation
+      const { error: messagesError } = await supabase
+        .from('messages')
+        .delete()
+        .eq('conversation_id', chatId);
+
+      if (messagesError) {
+        console.error('Error deleting messages:', messagesError);
+        throw messagesError;
+      }
+
+      // Then delete the conversation
+      const { error: conversationError } = await supabase
+        .from('conversations')
+        .delete()
+        .eq('id', chatId)
+        .eq('user_id', user.id);
+
+      if (conversationError) {
+        console.error('Error deleting conversation:', conversationError);
+        throw conversationError;
+      }
+
+      return chatId;
+    },
+    onSuccess: (deletedChatId) => {
+      queryClient.invalidateQueries({ queryKey: ['conversations', user?.id] });
+      
+      // If the deleted chat was active, switch to another chat or clear selection
+      if (activeChatId === deletedChatId) {
+        const remainingChats = chats?.filter(chat => chat.id !== deletedChatId);
+        if (remainingChats && remainingChats.length > 0) {
+          setActiveChatId(remainingChats[0].id);
+        } else {
+          setActiveChatId(null);
+        }
+      }
+      
+      toast.success('Chat deleted successfully');
+      console.log('Chat deleted successfully:', deletedChatId);
+    },
+    onError: (error: any) => {
+      console.error('Failed to delete chat:', error);
+      toast.error('Failed to delete chat: ' + error.message);
+    },
+  });
+
   useEffect(() => {
     // Auto-create first chat if user has no conversations
     if (chats && chats.length === 0 && !activeChatId && !isLoadingChats && user) {
@@ -123,6 +174,7 @@ export const useChatManagement = (user: any) => {
     activeChatId,
     setActiveChatId,
     createChatMutation,
+    deleteChatMutation,
     isInitialLoadComplete
   };
 };

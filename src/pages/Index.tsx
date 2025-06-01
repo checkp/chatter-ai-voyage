@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -30,6 +29,7 @@ const Index = () => {
     activeChatId,
     setActiveChatId,
     createChatMutation,
+    deleteChatMutation,
     isInitialLoadComplete
   } = useChatManagement(user);
 
@@ -57,6 +57,10 @@ const Index = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
+
+  const handleDeleteChat = (chatId: string) => {
+    deleteChatMutation.mutate(chatId);
+  };
 
   // Show loading while auth is being determined
   if (loading) {
@@ -88,6 +92,7 @@ const Index = () => {
         activeChatId={activeChatId}
         setActiveChatId={setActiveChatId}
         setIsNewChatDrawerOpen={setIsNewChatDrawerOpen}
+        onDeleteChat={handleDeleteChat}
       />
 
       {/* Main Chat Area */}
