@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef } from 'react';
 import type { Message, AIPlatform, Chat } from '@/types/chat';
 import { toast } from 'sonner';
@@ -86,6 +85,8 @@ export const useDiscussion = (
             content: `❌ ${platform.name} encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}`,
             sender: 'ai',
             platform: platform.id,
+            created_at: new Date().toISOString(),
+            conversation_id: chatId,
             timestamp: new Date(),
             status: 'sent',
             seenBy: []
