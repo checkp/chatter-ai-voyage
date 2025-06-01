@@ -7,6 +7,7 @@ import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 export const useAuth = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const handleSignOut = async () => {
     try {
@@ -19,36 +20,42 @@ export const useAuth = () => {
   };
 
   useEffect(() => {
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
+        setLoading(false);
         
-        if (event === 'SIGNED_IN') {
-          setTimeout(() => {
-            console.log('User signed in:', session?.user);
-          }, 0);
+        if (event === 'SIGNED_IN' && session?.user) {
+          console.log('User signed in successfully:', session.user.email);
+          // Only redirect if we're on the auth page
+          if (window.location.pathname === '/auth') {
+            window.location.href = '/';
+          }
+        }
+        
+        if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
+          // Only redirect if we're not already on auth page
+          if (window.location.pathname !== '/auth') {
+            window.location.href = '/auth';
+          }
         }
       }
     );
 
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (user === null && session === null) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (!session) {
-          window.location.href = '/auth';
-        }
-      });
-    }
-  }, [user, session]);
-
-  return { user, session, handleSignOut };
+  return { user, session, loading, handleSignOut };
 };

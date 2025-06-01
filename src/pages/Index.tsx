@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useUser } from '@supabase/auth-helpers-react';
 import { v4 as uuidv4 } from 'uuid';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,9 +31,10 @@ import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { getModelConfig } from '@/config/aiModels';
 import SettingsPanel from '@/components/SettingsPanel';
+import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
-  const user = useUser();
+  const { user, loading } = useAuth();
   const queryClient = useQueryClient();
   const { theme } = useTheme();
   const [input, setInput] = useState('');
@@ -58,6 +58,28 @@ const Index = () => {
 
   const scrollToBottom = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  // Show loading while auth is being determined
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // Show sign in prompt if not authenticated
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <h1 className="text-2xl font-bold mb-4">Please sign in to continue.</h1>
+        <Button onClick={() => window.location.href = '/auth'}>
+          Go to Sign In
+        </Button>
+      </div>
+    );
   }
 
   const { data: chats, isLoading: isLoadingChats } = useQuery({
@@ -286,17 +308,6 @@ const Index = () => {
     return platforms.find(p => p.id === platformId)?.name || platformId;
   };
 
-  if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <h1 className="text-2xl font-bold mb-4">Please sign in to continue.</h1>
-        <Button onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })}>
-          Sign in with Google
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background flex">
       {/* Chat List Sidebar */}
@@ -396,13 +407,13 @@ const Index = () => {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    // handleSend();
+                    handleSend();
                   }
                 }}
                 placeholder="Type your message here..."
                 className="flex-1 resize-none"
               />
-              <Button disabled={isLoadingResponse}>
+              <Button onClick={handleSend} disabled={isLoadingResponse}>
                 {isLoadingResponse ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                 Send
               </Button>
