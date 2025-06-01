@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Send, Plus, MessageSquare, Settings, History, Key, LogOut, User, Trash2, Square, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -59,6 +58,41 @@ const Index = () => {
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const [showBotHistoryDialog, setShowBotHistoryDialog] = useState(false);
   const [selectedPlatformForHistory, setSelectedPlatformForHistory] = useState<AIPlatform | null>(null);
+
+  const getAgentMessageColors = (platformId: string) => {
+    switch (platformId) {
+      case 'openai':
+        return {
+          bg: 'bg-gradient-to-br from-emerald-50 to-green-100',
+          border: 'border-emerald-200',
+          glow: 'hover:shadow-emerald-200/50'
+        };
+      case 'anthropic':
+        return {
+          bg: 'bg-gradient-to-br from-orange-50 to-amber-100',
+          border: 'border-orange-200',
+          glow: 'hover:shadow-orange-200/50'
+        };
+      case 'deepseek':
+        return {
+          bg: 'bg-gradient-to-br from-blue-50 to-indigo-100',
+          border: 'border-blue-200',
+          glow: 'hover:shadow-blue-200/50'
+        };
+      case 'grok':
+        return {
+          bg: 'bg-gradient-to-br from-purple-50 to-violet-100',
+          border: 'border-purple-200',
+          glow: 'hover:shadow-purple-200/50'
+        };
+      default:
+        return {
+          bg: 'modern-card-elevated',
+          border: 'modern-border',
+          glow: 'hover:shadow-xl'
+        };
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -468,57 +502,65 @@ const Index = () => {
         {/* Messages Area */}
         <ScrollArea className="flex-1 p-8 modern-bg-secondary">
           <div className="max-w-5xl mx-auto space-y-8">
-            {currentChat?.messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div className={`max-w-[85%] modern-enter ${message.sender === 'user' ? 'order-2' : 'order-1'}`}>
-                  <Card className={`transition-all duration-300 hover:shadow-xl modern-glow-hover ${
-                    message.sender === 'user' 
-                      ? 'modern-card-elevated bg-gradient-to-br from-amber-100 to-orange-100 border-amber-200' 
-                      : 'modern-card-elevated hover:scale-[1.01]'
-                  }`}>
-                    <CardContent className="p-6">
-                      {message.sender === 'ai' && message.platform && (
-                        <div className="mb-4 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Badge className={`font-semibold text-white px-3 py-1 ${
-                              message.platform === 'openai' ? 'modern-bg-agent-openai' :
-                              message.platform === 'anthropic' ? 'modern-bg-agent-anthropic' :
-                              message.platform === 'deepseek' ? 'modern-bg-agent-deepseek' :
-                              message.platform === 'grok' ? 'modern-bg-agent-grok' :
-                              'bg-amber-500'
-                            }`}>
-                              {platforms.find(p => p.id === message.platform)?.icon} {platforms.find(p => p.id === message.platform)?.name}
-                            </Badge>
-                            {message.roundNumber && (
-                              <Badge variant="outline" className="text-xs modern-text-muted">
-                                Round {message.roundNumber}
+            {currentChat?.messages.map((message) => {
+              const agentColors = message.sender === 'ai' && message.platform 
+                ? getAgentMessageColors(message.platform)
+                : null;
+
+              return (
+                <div
+                  key={message.id}
+                  className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className={`max-w-[85%] modern-enter ${message.sender === 'user' ? 'order-2' : 'order-1'}`}>
+                    <Card className={`transition-all duration-300 hover:shadow-xl modern-glow-hover ${
+                      message.sender === 'user' 
+                        ? 'modern-card-elevated bg-gradient-to-br from-amber-100 to-orange-100 border-amber-200' 
+                        : agentColors 
+                          ? `${agentColors.bg} ${agentColors.border} ${agentColors.glow} hover:scale-[1.01]`
+                          : 'modern-card-elevated hover:scale-[1.01]'
+                    }`}>
+                      <CardContent className="p-6">
+                        {message.sender === 'ai' && message.platform && (
+                          <div className="mb-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Badge className={`font-semibold text-white px-3 py-1 ${
+                                message.platform === 'openai' ? 'modern-bg-agent-openai' :
+                                message.platform === 'anthropic' ? 'modern-bg-agent-anthropic' :
+                                message.platform === 'deepseek' ? 'modern-bg-agent-deepseek' :
+                                message.platform === 'grok' ? 'modern-bg-agent-grok' :
+                                'bg-amber-500'
+                              }`}>
+                                {platforms.find(p => p.id === message.platform)?.icon} {platforms.find(p => p.id === message.platform)?.name}
                               </Badge>
-                            )}
+                              {message.roundNumber && (
+                                <Badge variant="outline" className="text-xs modern-text-muted">
+                                  Round {message.roundNumber}
+                                </Badge>
+                              )}
+                            </div>
+                            <MessageStatus message={message} platforms={platforms} />
                           </div>
-                          <MessageStatus message={message} platforms={platforms} />
-                        </div>
-                      )}
-                      <div className={`text-lg leading-relaxed whitespace-pre-wrap font-medium ${
-                        message.sender === 'ai' ? 'prose prose-lg max-w-none modern-text-primary' : 'modern-text-primary'
-                      }`}>
-                        {message.content}
-                      </div>
-                      <div className={`text-sm mt-4 font-medium flex items-center justify-between ${
-                        message.sender === 'user' ? 'modern-text-secondary' : 'modern-text-muted'
-                      }`}>
-                        <span>{message.timestamp.toLocaleTimeString()}</span>
-                        {message.sender === 'user' && (
-                          <MessageStatus message={message} platforms={platforms} />
                         )}
-                      </div>
-                    </CardContent>
-                  </Card>
+                        <div className={`text-lg leading-relaxed whitespace-pre-wrap font-medium ${
+                          message.sender === 'ai' ? 'prose prose-lg max-w-none modern-text-primary' : 'modern-text-primary'
+                        }`}>
+                          {message.content}
+                        </div>
+                        <div className={`text-sm mt-4 font-medium flex items-center justify-between ${
+                          message.sender === 'user' ? 'modern-text-secondary' : 'modern-text-muted'
+                        }`}>
+                          <span>{message.timestamp.toLocaleTimeString()}</span>
+                          {message.sender === 'user' && (
+                            <MessageStatus message={message} platforms={platforms} />
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             
             {(activeResponders.length > 0) && (
               <div className="flex justify-start">
