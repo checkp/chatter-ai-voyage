@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -109,18 +110,38 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
     return botMessages;
   };
 
-  const getAgentColor = (platformId: string) => {
+  const getAgentColorClasses = (platformId: string) => {
     switch (platformId) {
       case 'openai':
-        return 'agent-openai';
+        return {
+          bg: 'modern-bg-agent-openai',
+          text: 'text-white',
+          border: 'modern-border-agent-openai'
+        };
       case 'anthropic':
-        return 'agent-anthropic';
+        return {
+          bg: 'modern-bg-agent-anthropic',
+          text: 'text-white', 
+          border: 'modern-border-agent-anthropic'
+        };
       case 'deepseek':
-        return 'agent-deepseek';
+        return {
+          bg: 'modern-bg-agent-deepseek',
+          text: 'text-white',
+          border: 'modern-border-agent-deepseek'
+        };
       case 'grok':
-        return 'agent-grok';
+        return {
+          bg: 'modern-bg-agent-grok',
+          text: 'text-white',
+          border: 'modern-border-agent-grok'
+        };
       default:
-        return 'cyber-primary';
+        return {
+          bg: 'bg-amber-500',
+          text: 'text-white',
+          border: 'border-amber-500'
+        };
     }
   };
 
@@ -135,15 +156,16 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
   };
 
   const botMessages = getBotMessages();
+  const agentColors = getAgentColorClasses(platform.id);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl h-[85vh] flex flex-col bg-cyber-surface border-cyber-primary/30">
+      <DialogContent className="sm:max-w-3xl h-[85vh] flex flex-col modern-dialog">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="flex items-center gap-3 text-cyber-text">
+          <DialogTitle className="flex items-center gap-3 modern-text-primary">
             <span className="text-2xl">{platform?.icon}</span>
             <span className="text-xl font-bold">Chat with {platform?.name}</span>
-            <Badge className={`${platform?.color} font-semibold text-base px-3 py-1 cyber-glow`}>
+            <Badge className={`${agentColors.bg} font-semibold text-base px-3 py-1 modern-glow ${agentColors.text}`}>
               {platform?.name}
             </Badge>
           </DialogTitle>
@@ -152,9 +174,9 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
         <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
           <div className="space-y-4 min-h-0">
             {botMessages.length === 0 ? (
-              <div className="text-center text-cyber-muted py-12">
+              <div className="text-center modern-text-muted py-12">
                 <div className="text-4xl mb-4">{platform?.icon}</div>
-                <p className="text-lg font-medium mb-2">No conversation with {platform?.name} yet.</p>
+                <p className="text-lg font-medium mb-2 modern-text-primary">No conversation with {platform?.name} yet.</p>
                 <p className="text-base">Start chatting to see the conversation here.</p>
               </div>
             ) : (
@@ -164,19 +186,19 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
                   className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
                 >
                   <div className={`max-w-[85%] ${message.isUser ? 'order-2' : 'order-1'}`}>
-                    <Card className={`border ${
+                    <Card className={`modern-card-elevated transition-all duration-300 hover:shadow-xl modern-glow-hover ${
                       message.isUser 
-                        ? `bg-${getAgentColor(platform!.id)} text-cyber-bg border-${getAgentColor(platform!.id)} cyber-glow` 
-                        : 'bg-cyber-surface/70 border-cyber-primary/30 text-cyber-text'
+                        ? `${agentColors.bg} ${agentColors.text} ${agentColors.border} modern-glow` 
+                        : 'modern-card modern-text-primary'
                     }`}>
                       <CardContent className="p-4">
                         <div className={`text-base leading-relaxed whitespace-pre-wrap font-medium ${
-                          !message.isUser ? 'prose prose-sm max-w-none text-cyber-text' : ''
+                          !message.isUser ? 'prose prose-sm max-w-none modern-text-primary' : ''
                         }`}>
                           {message.content}
                         </div>
                         <div className={`text-sm mt-3 font-medium ${
-                          message.isUser ? 'text-cyber-bg/70' : 'text-cyber-muted'
+                          message.isUser ? 'text-white/70' : 'modern-text-muted'
                         }`}>
                           {message.timestamp.toLocaleTimeString()}
                         </div>
@@ -191,24 +213,24 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
         </ScrollArea>
 
         {/* Input Area */}
-        <div className="border-t border-cyber-primary/30 pt-4 flex-shrink-0">
+        <div className="modern-border-t pt-4 flex-shrink-0">
           <div className="flex gap-3">
             <Input
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder={`Chat with ${platform?.name}...`}
               onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-              className="flex-1 bg-cyber-surface/70 border-cyber-primary/30 focus:border-cyber-primary text-cyber-text placeholder:text-cyber-muted text-base font-medium"
+              className="flex-1 modern-input"
             />
             <Button 
               onClick={handleSendMessage}
               disabled={!inputMessage.trim()}
-              className={`bg-${getAgentColor(platform!.id)} hover:bg-${getAgentColor(platform!.id)}/80 text-cyber-bg font-semibold cyber-glow`}
+              className={`${agentColors.bg} hover:opacity-80 ${agentColors.text} font-semibold modern-glow`}
             >
               <Send className="w-5 h-5" />
             </Button>
           </div>
-          <div className="text-sm text-cyber-muted mt-3 text-center font-medium">
+          <div className="text-sm modern-text-muted mt-3 text-center font-medium">
             This will send a message only to {platform?.name}
           </div>
         </div>
