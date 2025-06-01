@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
@@ -29,68 +30,109 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
 
   const sendMessageMutation = useMutation({
     mutationFn: async ({ chatId, content }: { chatId: string, content: string }) => {
-      if (!user?.id) throw new Error('User not authenticated');
+      if (!user?.id) {
+        console.error('User not authenticated');
+        throw new Error('User not authenticated');
+      }
 
       const newMessageId = uuidv4();
       const timestamp = new Date().toISOString();
 
-      console.log('Saving user message to database:', newMessageId);
+      console.log('Attempting to save user message:', { newMessageId, chatId, content: content.substring(0, 50) + '...' });
 
-      // Save user message to database
-      const { error: userMessageError } = await supabase
-        .from('messages')
-        .insert([{
-          id: newMessageId,
-          conversation_id: chatId,
-          content,
-          sender: 'user',
-          created_at: timestamp,
-          platform: null,
-        }]);
+      try {
+        // First, verify the conversation exists and belongs to the user
+        const { data: conversation, error: convError } = await supabase
+          .from('conversations')
+          .select('id, user_id')
+          .eq('id', chatId)
+          .eq('user_id', user.id)
+          .single();
 
-      if (userMessageError) {
-        console.error('Error sending message:', userMessageError);
-        throw userMessageError;
+        if (convError) {
+          console.error('Error verifying conversation:', convError);
+          throw new Error('Conversation not found or access denied');
+        }
+
+        console.log('Conversation verified:', conversation);
+
+        // Save user message to database
+        const { data: messageData, error: userMessageError } = await supabase
+          .from('messages')
+          .insert([{
+            id: newMessageId,
+            conversation_id: chatId,
+            content,
+            sender: 'user',
+            created_at: timestamp,
+            platform: null,
+          }])
+          .select()
+          .single();
+
+        if (userMessageError) {
+          console.error('Error saving user message:', userMessageError);
+          throw userMessageError;
+        }
+
+        console.log('User message saved successfully:', messageData);
+        return { chatId, content, newMessageId, timestamp };
+
+      } catch (error) {
+        console.error('Failed to save message:', error);
+        throw error;
       }
-
-      return { chatId, content, newMessageId, timestamp };
     },
     onSuccess: async ({ chatId, content, newMessageId, timestamp }) => {
-      console.log('User message saved, adding AI responses to queue for message:', newMessageId);
+      console.log('User message saved successfully, starting AI processing for message:', newMessageId);
       setProcessingSentMessageId(newMessageId);
       
-      // Refresh messages to show the user message immediately
-      await queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
-      
-      // Add AI response processing to queue
-      const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
-      if (enabledPlatforms.length === 0) {
-        toast.error('No AI agents enabled. Please enable at least one agent in settings.');
+      try {
+        // Refresh messages to show the user message immediately
+        await queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+        console.log('Messages refreshed after user message');
+        
+        // Add AI response processing to queue
+        const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
+        if (enabledPlatforms.length === 0) {
+          toast.error('No AI agents enabled. Please enable at least one agent in settings.');
+          setProcessingSentMessageId(null);
+          return;
+        }
+
+        console.log('Starting AI processing for platforms:', enabledPlatforms.map(p => p.name));
+
+        // Reset stop signal and start processing
+        resetStopSignal();
+        setIsLoadingResponse(true);
+
+        // Initialize AI statuses
+        const initialStatuses: Record<string, 'thinking' | 'responding' | 'completed' | 'error'> = {};
+        enabledPlatforms.forEach(platform => {
+          initialStatuses[platform.id] = 'thinking';
+          // Add each AI response to the queue
+          addToQueue(chatId, `AI_RESPONSE:${platform.id}:${content}`);
+          console.log(`Added ${platform.name} to processing queue`);
+        });
+        setActiveAIStatuses(initialStatuses);
+
+        // Process the queue
+        console.log('Starting queue processing...');
+        await processMessageQueue(chatId);
+
+      } catch (error) {
+        console.error('Error during AI processing setup:', error);
         setProcessingSentMessageId(null);
-        return;
+        setActiveAIStatuses({});
+        setIsLoadingResponse(false);
       }
-
-      // Reset stop signal and start processing
-      resetStopSignal();
-      setIsLoadingResponse(true);
-
-      // Initialize AI statuses
-      const initialStatuses: Record<string, 'thinking' | 'responding' | 'completed' | 'error'> = {};
-      enabledPlatforms.forEach(platform => {
-        initialStatuses[platform.id] = 'thinking';
-        // Add each AI response to the queue
-        addToQueue(chatId, `AI_RESPONSE:${platform.id}:${content}`);
-      });
-      setActiveAIStatuses(initialStatuses);
-
-      // Process the queue
-      processMessageQueue(chatId);
     },
     onError: (error: any) => {
       console.error('Failed to send message:', error);
-      toast.error('Failed to send message: ' + error.message);
+      toast.error('Failed to send message: ' + (error.message || 'Unknown error'));
       setProcessingSentMessageId(null);
       setActiveAIStatuses({});
+      setIsLoadingResponse(false);
     },
   });
 
@@ -200,8 +242,13 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
   };
 
   const processMessageQueue = async (chatId: string) => {
-    if (isProcessing || shouldStop) {
-      console.log('Queue processing already running or stopped');
+    if (isProcessing) {
+      console.log('Queue processing already running');
+      return;
+    }
+
+    if (shouldStop) {
+      console.log('Queue processing stopped by user');
       return;
     }
 
@@ -229,6 +276,7 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
           if (nextMessage.content.startsWith('AI_RESPONSE:')) {
             const parts = nextMessage.content.split(':');
             const platformId = parts[1];
+            const originalContent = parts.slice(2).join(':'); // Rejoin in case content had colons
             const platform = platforms.find(p => p.id === platformId);
             
             if (!platform) {
@@ -239,11 +287,16 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
             setActiveAIStatuses(prev => ({ ...prev, [platform.id]: 'responding' }));
 
             // Get current messages for context
-            const { data: currentMessages } = await supabase
+            const { data: currentMessages, error: messagesError } = await supabase
               .from('messages')
               .select('*')
               .eq('conversation_id', chatId)
               .order('created_at', { ascending: true });
+
+            if (messagesError) {
+              console.error('Error fetching messages for AI context:', messagesError);
+              throw messagesError;
+            }
 
             const messageHistory = (currentMessages || []).map(msg => ({
               ...msg,
@@ -253,7 +306,9 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
               seenBy: []
             }));
 
+            console.log(`Calling AI API for ${platform.name} with ${messageHistory.length} messages`);
             const aiContent = await callAIAPI(platform, messageHistory, platforms);
+            console.log(`AI response received from ${platform.name}:`, aiContent.substring(0, 100) + '...');
             
             // Save AI response to database
             const { error: aiMessageError } = await supabase
@@ -268,6 +323,7 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
               }]);
 
             if (aiMessageError) {
+              console.error('Error saving AI response:', aiMessageError);
               throw aiMessageError;
             }
 
@@ -310,10 +366,13 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
         ).length;
         
         if (successfulResponses > 0) {
-          toast.success(`${successfulResponses} AI responses received`);
+          toast.success(`${successfulResponses} AI agent${successfulResponses > 1 ? 's' : ''} responded successfully`);
         }
       }
 
+    } catch (error: any) {
+      console.error('Error in queue processing:', error);
+      toast.error('Error processing AI responses: ' + error.message);
     } finally {
       setIsProcessing(false);
       setIsLoadingResponse(false);
@@ -337,12 +396,12 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
     const content = input.trim();
     setInput('');
 
-    console.log('Sending message:', content);
+    console.log('Sending message:', content.substring(0, 100) + '...');
     try {
       await sendMessageMutation.mutateAsync({ chatId: activeChatId, content });
     } catch (error: any) {
       console.error('Failed to send message:', error);
-      toast.error('Failed to send message: ' + error.message);
+      toast.error('Failed to send message: ' + (error.message || 'Unknown error'));
       // Restore input on error
       setInput(content);
     }
