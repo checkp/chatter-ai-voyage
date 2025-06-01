@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -157,26 +156,67 @@ export const callClaudeAPI = async (
     throw new Error('Not authenticated');
   }
 
-  console.log('Invoking claude-chat function...');
+  const maxRetries = 3;
+  let lastError: Error | null = null;
 
-  const response = await supabase.functions.invoke('claude-chat', {
-    body: { messages: conversationHistory, model: model },
-    headers: {
-      Authorization: `Bearer ${session.access_token}`,
-    },
-  });
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Invoking claude-chat function (attempt ${attempt}/${maxRetries})...`);
 
-  console.log('Claude function response:', response);
+      const response = await supabase.functions.invoke('claude-chat', {
+        body: { messages: conversationHistory, model: model },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
 
-  if (response.error) {
-    console.error('Claude function error:', response.error);
-    throw new Error(response.error.message || 'Claude API call failed');
+      console.log('Claude function response:', response);
+
+      if (response.error) {
+        console.error(`Claude function error (attempt ${attempt}):`, response.error);
+        lastError = new Error(response.error.message || 'Claude API call failed');
+        
+        // If this is not the last attempt, wait before retrying
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt - 1) * 1000; // Exponential backoff: 1s, 2s, 4s
+          console.log(`Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        throw lastError;
+      }
+
+      if (!response.data?.content) {
+        console.error(`Claude function missing content (attempt ${attempt}):`, response.data);
+        lastError = new Error('Claude API returned empty response');
+        
+        // If this is not the last attempt, wait before retrying
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt - 1) * 1000;
+          console.log(`Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        throw lastError;
+      }
+
+      console.log(`Claude API call successful on attempt ${attempt}`);
+      return response.data.content;
+
+    } catch (error) {
+      console.error(`Claude API error (attempt ${attempt}):`, error);
+      lastError = error instanceof Error ? error : new Error('Unknown error occurred');
+      
+      // If this is not the last attempt, wait before retrying
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt - 1) * 1000; // Exponential backoff
+        console.log(`Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+    }
   }
 
-  if (!response.data?.content) {
-    console.error('Claude function missing content:', response.data);
-    throw new Error('Claude API returned empty response');
-  }
-
-  return response.data.content;
+  // If we get here, all retries failed
+  throw lastError || new Error('Claude API call failed after all retries');
 };
