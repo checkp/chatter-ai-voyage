@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Send, Plus, MessageSquare, Settings, History, Key, LogOut, User, Trash2, Square, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -235,11 +236,7 @@ const Index = () => {
             {user && (
               <div className="modern-card p-4">
                 <div className="flex items-center gap-3">
-                  <Avatar className="w-12 h-12 ring-2 ring-offset-2 modern-glow"
-                          style={{ 
-                            ringColor: 'hsl(var(--modern-accent-primary))',
-                            ringOffsetColor: 'hsl(var(--modern-bg-primary))'
-                          }}>
+                  <Avatar className="w-12 h-12 modern-avatar-ring">
                     <AvatarImage src={user.user_metadata?.avatar_url} />
                     <AvatarFallback className="modern-bg-secondary modern-text-primary font-bold text-lg">
                       {user.email?.charAt(0).toUpperCase() || 'U'}
