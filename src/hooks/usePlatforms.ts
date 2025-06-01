@@ -100,6 +100,10 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     }
   };
 
+  const reloadSettings = async () => {
+    await Promise.all([loadAgentSettings(), loadApiKeysStatus()]);
+  };
+
   const saveAgentSetting = async (platformId: string, enabled: boolean, model?: string) => {
     if (!user) return;
 
@@ -249,6 +253,7 @@ Your goal: Contribute meaningfully to this multi-agent conversation as ${platfor
     setPlatforms,
     togglePlatform,
     callAIAPI,
-    loadApiKeysStatus
+    loadApiKeysStatus,
+    reloadSettings
   };
 };

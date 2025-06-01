@@ -18,7 +18,7 @@ import AIStatusBar from '@/components/AIStatusBar';
 const Index = () => {
   const { user, loading } = useAuth();
   const { theme } = useTheme();
-  const { platforms, togglePlatform, callAIAPI } = usePlatforms(user);
+  const { platforms, togglePlatform, callAIAPI, reloadSettings } = usePlatforms(user);
   const { messagesEndRef, scrollToBottom } = useScrollToBottom([]);
 
   const {
@@ -57,6 +57,12 @@ const Index = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
+
+  useEffect(() => {
+    if (activeTab === 'chat' && user) {
+      reloadSettings();
+    }
+  }, [activeTab, user, reloadSettings]);
 
   const handleDeleteChat = (chatId: string) => {
     deleteChatMutation.mutate(chatId);

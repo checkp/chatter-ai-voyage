@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Settings, Save } from 'lucide-react';
 import ModelSelector from './ModelSelector';
@@ -17,6 +19,7 @@ interface AgentSetting {
 const AgentSettings = () => {
   const [selectedModels, setSelectedModels] = useState<Record<string, string>>({});
   const [enabledPlatforms, setEnabledPlatforms] = useState<Record<string, boolean>>({});
+  const [apiKeysAvailable, setApiKeysAvailable] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
 
   const platforms = [
@@ -28,7 +31,34 @@ const AgentSettings = () => {
 
   useEffect(() => {
     loadSettings();
+    loadApiKeysStatus();
   }, []);
+
+  const loadApiKeysStatus = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: apiKeys, error } = await supabase
+        .from('user_api_keys')
+        .select('platform')
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error loading API keys:', error);
+        return;
+      }
+
+      const keysMap: Record<string, boolean> = {};
+      apiKeys?.forEach(key => {
+        keysMap[key.platform] = true;
+      });
+
+      setApiKeysAvailable(keysMap);
+    } catch (error: any) {
+      console.error('Failed to load API keys status:', error);
+    }
+  };
 
   const loadSettings = async () => {
     try {
@@ -116,6 +146,14 @@ const AgentSettings = () => {
     setSelectedModels(prev => ({ ...prev, [platform]: model }));
   };
 
+  const handleToggleEnabled = (platform: string, enabled: boolean) => {
+    if (enabled && !apiKeysAvailable[platform]) {
+      toast.error(`Please add an API key for ${platforms.find(p => p.id === platform)?.name} first in the API Keys tab`);
+      return;
+    }
+    setEnabledPlatforms(prev => ({ ...prev, [platform]: enabled }));
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -136,16 +174,30 @@ const AgentSettings = () => {
               <CardTitle className="flex items-center gap-2 text-lg">
                 <span>{platform.icon}</span>
                 {platform.name}
-                <span className="ml-auto text-sm text-gray-500">
-                  {enabledPlatforms[platform.id] ? 'Enabled' : 'Disabled'}
-                </span>
+                <div className="ml-auto flex items-center gap-3">
+                  <Label htmlFor={`enable-${platform.id}`} className="text-sm">
+                    {enabledPlatforms[platform.id] ? 'Enabled' : 'Disabled'}
+                  </Label>
+                  <Switch
+                    id={`enable-${platform.id}`}
+                    checked={enabledPlatforms[platform.id] || false}
+                    onCheckedChange={(checked) => handleToggleEnabled(platform.id, checked)}
+                    disabled={!apiKeysAvailable[platform.id]}
+                  />
+                </div>
               </CardTitle>
+              {!apiKeysAvailable[platform.id] && (
+                <p className="text-sm text-orange-600">
+                  API key required - add one in the API Keys tab to enable this agent
+                </p>
+              )}
             </CardHeader>
             <CardContent>
               <ModelSelector
                 platformId={platform.id}
                 selectedModel={selectedModels[platform.id] || getDefaultModel(platform.id)}
                 onModelChange={(model) => handleModelChange(platform.id, model)}
+                disabled={!enabledPlatforms[platform.id]}
               />
             </CardContent>
           </Card>
@@ -154,7 +206,7 @@ const AgentSettings = () => {
       
       <div className="text-sm text-gray-600 bg-blue-50 p-4 rounded-lg">
         <strong>Note:</strong> These settings control which AI model each agent uses when responding. 
-        You can change models at any time. Make sure to enable agents and add API keys in the main settings.
+        You can enable/disable agents here and change models at any time. Make sure to add API keys first.
       </div>
     </div>
   );
