@@ -1,37 +1,36 @@
-import React, { useState, useEffect, useRef } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ModeToggle } from '@/components/ModeToggle';
 import { useTheme } from '@/contexts/ThemeContext';
 import { toast } from 'sonner';
-import { Send, Settings, User, Plus, RefreshCw } from 'lucide-react';
+import { Send, Settings, Plus, RefreshCw } from 'lucide-react';
 import { usePlatforms } from '@/hooks/usePlatforms';
-import type { Message, Chat, AIPlatform } from '@/types/chat';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
+import type { Message, Chat } from '@/types/chat';
 import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
 } from "@/components/ui/drawer"
-import { Switch } from "@/components/ui/switch"
-import { Separator } from "@/components/ui/separator"
-import { getModelConfig } from '@/config/aiModels';
 import SettingsPanel from '@/components/SettingsPanel';
 import { useAuth } from '@/hooks/useAuth';
+import { useScrollToBottom } from '@/hooks/useScrollToBottom';
+import ChatSidebar from '@/components/ChatSidebar';
+import ChatHeader from '@/components/ChatHeader';
+import ChatMessages from '@/components/ChatMessages';
+import ChatInput from '@/components/ChatInput';
+import NewChatDrawer from '@/components/NewChatDrawer';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -46,17 +45,10 @@ const Index = () => {
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const [processingSentMessageId, setProcessingSentMessageId] = useState<string | null>(null);
   const [activeAIStatuses, setActiveAIStatuses] = useState<Record<string, 'thinking' | 'responding' | 'completed' | 'error'>>({});
-  const bottomRef = useRef<HTMLDivElement>(null);
-
-  const { 
-    platforms, 
-    setPlatforms, 
-    togglePlatform, 
-    callAIAPI, 
-    loadApiKeysStatus 
-  } = usePlatforms(user);
-  
   const [activeTab, setActiveTab] = useState<'chat' | 'settings'>('chat');
+
+  const { platforms, togglePlatform, callAIAPI } = usePlatforms(user);
+  const { messagesEndRef, scrollToBottom } = useScrollToBottom([]);
 
   // Always call hooks - move all useQuery hooks to the top
   const { data: chats, isLoading: isLoadingChats } = useQuery({
@@ -112,9 +104,9 @@ const Index = () => {
     enabled: !!activeChatId,
   });
 
-  const scrollToBottom = () => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   useEffect(() => {
     // Auto-create first chat if user has no conversations
@@ -126,10 +118,6 @@ const Index = () => {
       setIsInitialLoadComplete(true);
     }
   }, [chats, activeChatId, isLoadingChats, user]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, theme]);
 
   const createChatMutation = useMutation({
     mutationFn: async (title: string) => {
@@ -350,15 +338,6 @@ const Index = () => {
     }
   };
 
-  const handlePlatformToggle = async (platformId: string) => {
-    try {
-      await togglePlatform(platformId);
-    } catch (error: any) {
-      console.error('Failed to toggle platform:', error);
-      toast.error('Failed to toggle platform: ' + error.message);
-    }
-  };
-
   const handleNewChat = async () => {
     try {
       await createChatMutation.mutate(newChatTitle || 'New Chat');
@@ -368,228 +347,71 @@ const Index = () => {
     }
   };
 
-  const getPlatformName = (platformId: string) => {
-    return platforms.find(p => p.id === platformId)?.name || platformId;
-  };
-
-  const getPlatformColor = (platformId: string) => {
-    const platform = platforms.find(p => p.id === platformId);
-    if (!platform) return 'bg-gray-500';
-    
-    switch (platformId) {
-      case 'openai':
-        return 'modern-bg-agent-openai';
-      case 'anthropic':
-        return 'modern-bg-agent-anthropic';
-      case 'deepseek':
-        return 'modern-bg-agent-deepseek';
-      case 'grok':
-        return 'modern-bg-agent-grok';
-      default:
-        return 'bg-gray-500';
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Chat List Sidebar */}
-      <aside className="w-64 border-r bg-secondary border-border flex flex-col">
-        <div className="p-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Chats</h2>
-          <ModeToggle />
-        </div>
-
-        <Button variant="ghost" className="justify-start rounded-none hover:bg-accent hover:text-accent-foreground" onClick={() => setIsNewChatDrawerOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          New Chat
-        </Button>
-
-        <ScrollArea className="flex-1">
-          <div className="py-2">
-            {isLoadingChats && (
-              <div className="px-4 py-2">
-                <Skeleton className="h-9 w-full" />
-              </div>
-            )}
-            {!isLoadingChats && (!chats || chats.length === 0) && (
-              <div className="px-4 py-2 text-center text-muted-foreground">
-                <p className="text-sm">Creating your first chat...</p>
-              </div>
-            )}
-            {!isLoadingChats && chats?.map((chat) => (
-              <Button
-                key={chat.id}
-                variant="ghost"
-                className={`w-full justify-start rounded-none hover:bg-accent hover:text-accent-foreground ${activeChatId === chat.id ? 'bg-accent text-accent-foreground' : ''}`}
-                onClick={() => setActiveChatId(chat.id)}
-              >
-                {chat.title}
-              </Button>
-            ))}
-          </div>
-        </ScrollArea>
-      </aside>
+    <div className="min-h-screen bg-background flex h-screen overflow-hidden">
+      <ChatSidebar 
+        chats={chats}
+        isLoadingChats={isLoadingChats}
+        activeChatId={activeChatId}
+        setActiveChatId={setActiveChatId}
+        setIsNewChatDrawerOpen={setIsNewChatDrawerOpen}
+      />
 
       {/* Main Chat Area */}
-      <main className="flex-1 flex flex-col">
-        {/* Top Bar */}
-        <header className="border-b bg-secondary border-border p-4 flex items-center justify-between">
-          <div className="flex-1">
-            <h1 className="text-lg font-semibold">{chats?.find(chat => chat.id === activeChatId)?.title || 'Select a chat'}</h1>
-            
-            {/* AI Status Bar */}
-            {Object.keys(activeAIStatuses).length > 0 && (
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-sm text-muted-foreground">AI Status:</span>
-                {Object.entries(activeAIStatuses).map(([platformId, status]) => (
-                  <Badge 
-                    key={platformId}
-                    variant="outline"
-                    className={`text-xs ${
-                      status === 'thinking' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
-                      status === 'responding' ? `${getPlatformColor(platformId)} text-white border-transparent` :
-                      status === 'completed' ? 'bg-green-100 text-green-800 border-green-300' :
-                      'bg-red-100 text-red-800 border-red-300'
-                    }`}
-                  >
-                    {getPlatformName(platformId)}: {status}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" onClick={() => setActiveTab(activeTab === 'chat' ? 'settings' : 'chat')}>
-              {activeTab === 'chat' ? <Settings className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
-            </Button>
-            <Avatar>
-              <AvatarImage src={`https://avatar.vercel.sh/${user.email}.png`} />
-              <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
-            </Avatar>
-          </div>
-        </header>
+      <main className="flex-1 flex flex-col h-full overflow-hidden">
+        <ChatHeader 
+          chats={chats}
+          activeChatId={activeChatId}
+          activeAIStatuses={activeAIStatuses}
+          platforms={platforms}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          user={user}
+        />
 
         {/* Chat Messages Area */}
-        <div className="flex-1 p-4 overflow-y-auto">
+        <div className="flex-1 overflow-hidden">
           {activeTab === 'chat' && (
-            <>
-              {isLoadingMessages && (
-                <div className="flex flex-col gap-2">
-                  <Skeleton className="w-80 h-9" />
-                  <Skeleton className="w-64 h-9" />
-                  <Skeleton className="w-96 h-9" />
-                </div>
-              )}
-              {!isLoadingMessages && (!messages || messages.length === 0) && (
-                <div className="flex flex-col items-center justify-center h-full text-center">
-                  <div className="text-6xl mb-4">💬</div>
-                  <h3 className="text-xl font-semibold mb-2">Start a conversation</h3>
-                  <p className="text-muted-foreground mb-4">Send a message to begin chatting with AI assistants</p>
-                </div>
-              )}
-              {!isLoadingMessages && messages?.map((message) => (
-                <div key={message.id} className={`mb-4 flex flex-col ${message.sender === 'user' ? 'items-end' : 'items-start'}`}>
-                  <div className={`max-w-3xl rounded-lg p-4 text-sm ${message.sender === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : `bg-muted border-l-4 ${message.platform ? 
-                        message.platform === 'openai' ? 'border-l-green-500' :
-                        message.platform === 'anthropic' ? 'border-l-orange-500' :
-                        message.platform === 'deepseek' ? 'border-l-blue-500' :
-                        message.platform === 'grok' ? 'border-l-purple-500' :
-                        'border-l-gray-500'
-                      : 'border-l-gray-500'}`
-                    }`}>
-                    <div className="whitespace-pre-wrap leading-relaxed">
-                      {message.content}
-                    </div>
-                    {message.sender === 'ai' && message.platform && (
-                      <div className={`mt-2 text-xs font-medium ${
-                        message.platform === 'openai' ? 'text-green-600' :
-                        message.platform === 'anthropic' ? 'text-orange-600' :
-                        message.platform === 'deepseek' ? 'text-blue-600' :
-                        message.platform === 'grok' ? 'text-purple-600' :
-                        'text-gray-600'
-                      }`}>
-                        — {getPlatformName(message.platform)}
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {new Date(message.created_at).toLocaleTimeString()}
-                  </div>
-                </div>
-              ))}
-              {isLoadingResponse && (
-                <div className="flex flex-col items-start mb-4">
-                  <div className="bg-muted rounded-lg p-4 text-sm border-l-4 border-l-amber-500">
-                    <div className="flex items-center gap-2">
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                      AI assistants are responding...
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div ref={bottomRef} />
-            </>
+            <ScrollArea className="h-full">
+              <div className="p-4">
+                <ChatMessages 
+                  messages={messages}
+                  isLoadingMessages={isLoadingMessages}
+                  isLoadingResponse={isLoadingResponse}
+                  platforms={platforms}
+                />
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
           )}
 
           {activeTab === 'settings' && (
-            <SettingsPanel />
+            <div className="h-full overflow-y-auto p-4">
+              <SettingsPanel />
+            </div>
           )}
         </div>
 
         {/* Chat Input */}
         {activeTab === 'chat' && (
-          <footer className="border-t bg-secondary border-border p-4">
-            <div className="flex items-center gap-2">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                placeholder="Type your message here..."
-                className="flex-1 resize-none"
-                disabled={isLoadingResponse || sendMessageMutation.isPending}
-              />
-              <Button 
-                onClick={handleSend} 
-                disabled={isLoadingResponse || sendMessageMutation.isPending || !input.trim()}
-              >
-                {(isLoadingResponse || sendMessageMutation.isPending) ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                Send
-              </Button>
-            </div>
-          </footer>
+          <ChatInput 
+            input={input}
+            setInput={setInput}
+            handleSend={handleSend}
+            isLoadingResponse={isLoadingResponse}
+            isPending={sendMessageMutation.isPending}
+          />
         )}
       </main>
 
-      {/* New Chat Drawer */}
-      <Drawer open={isNewChatDrawerOpen} onOpenChange={setIsNewChatDrawerOpen}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>New Chat</DrawerTitle>
-            <DrawerDescription>
-              Enter a title for the new chat.
-            </DrawerDescription>
-          </DrawerHeader>
-          <div className="p-4">
-            <Input
-              type="text"
-              placeholder="Chat title"
-              value={newChatTitle}
-              onChange={(e) => setNewChatTitle(e.target.value)}
-            />
-          </div>
-          <DrawerFooter>
-            <Button onClick={() => createChatMutation.mutate(newChatTitle || 'New Chat')}>Create Chat</Button>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+      <NewChatDrawer 
+        isOpen={isNewChatDrawerOpen}
+        setIsOpen={setIsNewChatDrawerOpen}
+        newChatTitle={newChatTitle}
+        setNewChatTitle={setNewChatTitle}
+        onCreateChat={handleNewChat}
+        isLoading={createChatMutation.isPending}
+      />
     </div>
   );
 };
