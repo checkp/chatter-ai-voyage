@@ -145,57 +145,48 @@ export const usePlatforms = (user: SupabaseUser | null) => {
   const buildConversationForPlatform = (messages: Message[], platformId: string, enabledPlatforms: AIPlatform[]): Array<{role: 'user' | 'assistant', content: string}> => {
     const conversationHistory: Array<{role: 'user' | 'assistant', content: string}> = [];
     
-    // Take the last 15 messages to maintain context but avoid token limits
-    const recentMessages = messages.slice(-15);
+    // Take the last 10 messages to maintain context but avoid token limits
+    const recentMessages = messages.slice(-10);
     
-    // Group messages by type for better context building
-    let lastUserMessage = '';
-    const otherAIResponses: string[] = [];
+    // Track the last few messages to avoid repetition
+    const lastUserMessage = recentMessages.filter(m => m.sender === 'user').slice(-1)[0];
+    const currentRoundMessages = recentMessages.filter(m => 
+      m.roundNumber && m.roundNumber === lastUserMessage?.roundNumber
+    );
     
+    // Only include the most recent user message and this platform's own responses
     recentMessages.forEach(message => {
       if (message.sender === 'user') {
-        // If we have accumulated other AI responses, include them as context
-        if (otherAIResponses.length > 0 && lastUserMessage) {
-          conversationHistory.push({ role: 'user', content: lastUserMessage });
-          
-          // Add other AI responses as a single context message
-          const contextMessage = `Other AI perspectives:\n${otherAIResponses.join('\n\n')}`;
-          conversationHistory.push({ role: 'user', content: contextMessage });
-          
-          otherAIResponses.length = 0; // Clear the array
-        }
-        
-        lastUserMessage = message.content;
-      } else if (message.sender === 'ai' && message.platform) {
-        if (message.platform === platformId) {
-          // This platform's own messages as assistant responses
-          if (lastUserMessage) {
-            conversationHistory.push({ role: 'user', content: lastUserMessage });
-            lastUserMessage = '';
-          }
-          conversationHistory.push({ 
-            role: 'assistant', 
-            content: message.content 
-          });
-        } else {
-          // Other AI responses - collect them for context
-          const senderPlatform = enabledPlatforms.find(p => p.id === message.platform);
-          if (senderPlatform) {
-            otherAIResponses.push(`${senderPlatform.name}: ${message.content}`);
-          }
-        }
+        conversationHistory.push({ 
+          role: 'user', 
+          content: message.content 
+        });
+      } else if (message.sender === 'ai' && message.platform === platformId) {
+        // Only include this platform's own previous responses
+        conversationHistory.push({ 
+          role: 'assistant', 
+          content: message.content 
+        });
       }
     });
     
-    // Add the final user message if exists
-    if (lastUserMessage) {
-      conversationHistory.push({ role: 'user', content: lastUserMessage });
-    }
+    // Add minimal context from other AIs in the current round only
+    const otherCurrentRoundResponses = currentRoundMessages.filter(m => 
+      m.sender === 'ai' && m.platform !== platformId
+    );
     
-    // Add any remaining other AI responses as context
-    if (otherAIResponses.length > 0) {
-      const contextMessage = `Other AI perspectives:\n${otherAIResponses.join('\n\n')}`;
-      conversationHistory.push({ role: 'user', content: contextMessage });
+    if (otherCurrentRoundResponses.length > 0) {
+      const recentOtherResponses = otherCurrentRoundResponses.slice(-2); // Only last 2 other responses
+      const contextSummary = recentOtherResponses.map(m => {
+        const platform = enabledPlatforms.find(p => p.id === m.platform);
+        const snippet = m.content.length > 100 ? m.content.substring(0, 100) + '...' : m.content;
+        return `${platform?.name}: ${snippet}`;
+      }).join('\n');
+      
+      conversationHistory.push({ 
+        role: 'user', 
+        content: `Recent peer responses (for context only, don't repeat these points):\n${contextSummary}` 
+      });
     }
     
     return conversationHistory;
@@ -206,26 +197,26 @@ export const usePlatforms = (user: SupabaseUser | null) => {
 
     const conversationHistory = buildConversationForPlatform(messages, platform.id, enabledPlatforms);
     
-    // Enhanced multi-agent context with clearer instructions
+    // Enhanced multi-agent context with anti-repetition instructions
     const otherAIs = enabledPlatforms.filter(p => p.id !== platform.id && p.enabled && p.hasApiKey);
     if (otherAIs.length > 0) {
       const contextMessage = `You are ${platform.name} in a multi-AI discussion with: ${otherAIs.map(p => p.name).join(', ')}.
 
-IMPORTANT GUIDELINES:
-- You are continuing a conversation, not starting fresh each time
-- Build upon previous points made by yourself and others
-- Avoid repeating what you or others have already said
-- If other AI perspectives are shared, respond to them thoughtfully
-- Keep responses focused and conversational (2-4 sentences typically)
-- Add new insights, ask follow-up questions, or respectfully disagree when appropriate
-- Remember the conversation context from your previous responses
+CRITICAL INSTRUCTIONS:
+- This is a flowing conversation, NOT separate individual responses
+- DO NOT repeat points already made by yourself or others
+- DO NOT acknowledge or summarize what others have said
+- Build upon the conversation naturally with NEW insights
+- If you have nothing new to add, ask a thoughtful follow-up question
+- Keep responses concise (1-3 sentences typically)
+- Avoid phrases like "building on what [AI] said" or "I agree with [AI]"
+- Focus on advancing the discussion, not rehashing it
 
-Respond as ${platform.name} with your distinctive perspective, building on the conversation naturally.`;
+Your goal: Add genuine value to the ongoing conversation as ${platform.name}.`;
       
       conversationHistory.unshift({ role: 'user', content: contextMessage });
     } else {
-      // Single AI context  
-      conversationHistory.unshift({ role: 'user', content: `You are ${platform.name}. Continue the conversation naturally, building on your previous responses.` });
+      conversationHistory.unshift({ role: 'user', content: `You are ${platform.name}. Continue the conversation naturally, building on your previous responses without repeating yourself.` });
     }
 
     console.log(`Calling ${platform.name} API with ${conversationHistory.length} messages`);
