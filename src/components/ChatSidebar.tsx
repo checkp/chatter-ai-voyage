@@ -23,8 +23,9 @@ interface ChatSidebarProps {
   isLoadingChats: boolean;
   activeChatId: string | null;
   setActiveChatId: (id: string) => void;
-  setIsNewChatDrawerOpen: (open: boolean) => void;
+  onCreateChat: () => void;
   onDeleteChat?: (chatId: string) => void;
+  isCreatingChat?: boolean;
 }
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({
@@ -32,8 +33,9 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   isLoadingChats,
   activeChatId,
   setActiveChatId,
-  setIsNewChatDrawerOpen,
-  onDeleteChat
+  onCreateChat,
+  onDeleteChat,
+  isCreatingChat = false
 }) => {
   const handleDeleteChat = (chatId: string, event: React.MouseEvent) => {
     event.stopPropagation();
@@ -52,10 +54,11 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
       <Button 
         variant="ghost" 
         className="justify-start rounded-none hover:bg-accent hover:text-accent-foreground flex-shrink-0" 
-        onClick={() => setIsNewChatDrawerOpen(true)}
+        onClick={onCreateChat}
+        disabled={isCreatingChat}
       >
         <Plus className="w-4 h-4 mr-2" />
-        New Chat
+        {isCreatingChat ? 'Creating...' : 'New Chat'}
       </Button>
 
       <ScrollArea className="flex-1">

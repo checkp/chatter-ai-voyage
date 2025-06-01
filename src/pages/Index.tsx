@@ -13,7 +13,6 @@ import ChatSidebar from '@/components/ChatSidebar';
 import ChatHeader from '@/components/ChatHeader';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInput from '@/components/ChatInput';
-import NewChatDrawer from '@/components/NewChatDrawer';
 import SettingsPanel from '@/components/SettingsPanel';
 import AIStatusBar from '@/components/AIStatusBar';
 
@@ -51,13 +50,8 @@ const Index = () => {
   const {
     isDrawerOpen,
     setIsDrawerOpen,
-    isNewChatDrawerOpen,
-    setIsNewChatDrawerOpen,
-    newChatTitle,
-    setNewChatTitle,
     activeTab,
-    setActiveTab,
-    handleNewChat
+    setActiveTab
   } = useUIState();
 
   useEffect(() => {
@@ -66,6 +60,11 @@ const Index = () => {
 
   const handleDeleteChat = (chatId: string) => {
     deleteChatMutation.mutate(chatId);
+  };
+
+  const handleCreateChat = () => {
+    const timestamp = new Date().toLocaleString();
+    createChatMutation.mutate(`New Chat - ${timestamp}`);
   };
 
   // Show loading while auth is being determined
@@ -97,8 +96,9 @@ const Index = () => {
         isLoadingChats={isLoadingChats}
         activeChatId={activeChatId}
         setActiveChatId={setActiveChatId}
-        setIsNewChatDrawerOpen={setIsNewChatDrawerOpen}
+        onCreateChat={handleCreateChat}
         onDeleteChat={handleDeleteChat}
+        isCreatingChat={createChatMutation.isPending}
       />
 
       {/* Main Chat Area */}
@@ -155,15 +155,6 @@ const Index = () => {
           />
         )}
       </main>
-
-      <NewChatDrawer 
-        isOpen={isNewChatDrawerOpen}
-        setIsOpen={setIsNewChatDrawerOpen}
-        newChatTitle={newChatTitle}
-        setNewChatTitle={setNewChatTitle}
-        onCreateChat={() => handleNewChat(createChatMutation)}
-        isLoading={createChatMutation.isPending}
-      />
     </div>
   );
 };
