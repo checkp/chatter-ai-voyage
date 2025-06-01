@@ -63,26 +63,26 @@ const Index = () => {
     switch (platformId) {
       case 'openai':
         return {
-          bg: 'bg-gradient-to-br from-emerald-50 to-green-100',
-          border: 'border-emerald-200',
+          bg: 'bg-gradient-to-br from-emerald-50 to-teal-100',
+          border: 'border-emerald-300',
           glow: 'hover:shadow-emerald-200/50'
         };
       case 'anthropic':
         return {
-          bg: 'bg-gradient-to-br from-orange-50 to-amber-100',
-          border: 'border-orange-200',
-          glow: 'hover:shadow-orange-200/50'
+          bg: 'bg-gradient-to-br from-rose-50 to-pink-100',
+          border: 'border-rose-300',
+          glow: 'hover:shadow-rose-200/50'
         };
       case 'deepseek':
         return {
-          bg: 'bg-gradient-to-br from-blue-50 to-indigo-100',
-          border: 'border-blue-200',
+          bg: 'bg-gradient-to-br from-blue-50 to-cyan-100',
+          border: 'border-blue-300',
           glow: 'hover:shadow-blue-200/50'
         };
       case 'grok':
         return {
-          bg: 'bg-gradient-to-br from-purple-50 to-violet-100',
-          border: 'border-purple-200',
+          bg: 'bg-gradient-to-br from-purple-50 to-indigo-100',
+          border: 'border-purple-300',
           glow: 'hover:shadow-purple-200/50'
         };
       default:
