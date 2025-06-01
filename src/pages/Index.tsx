@@ -192,23 +192,23 @@ const Index = () => {
 
   if (user === null && session === null) {
     return (
-      <div className="h-screen flex items-center justify-center">
+      <div className="h-screen flex items-center justify-center bg-pastel-bg">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Loading...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pastel-primary mx-auto mb-4"></div>
+          <p className="text-pastel-text">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex bg-cyber-bg font-cyber text-cyber-text">
+    <div className="h-screen flex bg-pastel-bg font-sans text-pastel-text">
       {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-cyber-primary/30 bg-cyber-surface/50 backdrop-blur-sm`}>
-        <div className="p-4 border-b border-cyber-primary/30">
+      <div className={`${sidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-pastel-primary/30 bg-gradient-to-b from-pastel-surface to-pastel-surface/70 backdrop-blur-md`}>
+        <div className="p-4 border-b border-pastel-primary/30">
           <Button 
             onClick={createNewChat}
-            className="w-full justify-start gap-2 bg-gradient-to-r from-cyber-primary to-cyber-accent hover:from-cyber-primary/80 hover:to-cyber-accent/80 text-cyber-bg font-semibold text-base mb-2 cyber-glow"
+            className="w-full justify-start gap-2 bg-gradient-to-r from-pastel-primary to-pastel-accent hover:from-pastel-primary/80 hover:to-pastel-accent/80 text-pastel-text font-semibold text-base mb-3 shadow-lg hover:shadow-xl transition-all duration-200 animate-float"
           >
             <Plus className="w-5 h-5" />
             New Chat
@@ -216,29 +216,29 @@ const Index = () => {
           
           <Dialog open={showApiKeyDialog} onOpenChange={handleApiKeyDialogClose}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="w-full justify-start gap-2 mb-2 border-cyber-secondary/50 text-cyber-text hover:bg-cyber-secondary/20 text-base">
+              <Button variant="outline" className="w-full justify-start gap-2 mb-3 border-pastel-secondary/50 text-pastel-text hover:bg-pastel-secondary/20 text-base shadow-sm">
                 <Key className="w-5 h-5" />
                 API Keys
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto bg-cyber-surface border-cyber-primary/30">
+            <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto bg-pastel-surface border-pastel-primary/30 shadow-2xl">
               <DialogHeader>
-                <DialogTitle className="text-cyber-text text-xl font-bold">API Key Settings</DialogTitle>
+                <DialogTitle className="text-pastel-text text-xl font-bold">API Key Settings</DialogTitle>
               </DialogHeader>
               <ApiKeySettings />
             </DialogContent>
           </Dialog>
 
           {user && (
-            <div className="flex items-center gap-2 p-3 bg-cyber-surface/50 rounded-lg border border-cyber-primary/20">
-              <Avatar className="w-9 h-9 border border-cyber-primary/30">
+            <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-pastel-surface to-pastel-primary/10 rounded-xl border border-pastel-primary/20 shadow-sm">
+              <Avatar className="w-10 h-10 border-2 border-pastel-primary/30 shadow-md">
                 <AvatarImage src={user.user_metadata?.avatar_url} />
-                <AvatarFallback className="bg-cyber-primary text-cyber-bg font-bold">
+                <AvatarFallback className="bg-pastel-primary text-pastel-text font-bold text-lg">
                   {user.email?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate text-cyber-text">
+                <div className="text-sm font-medium truncate text-pastel-text">
                   {user.user_metadata?.full_name || user.email}
                 </div>
               </div>
@@ -246,7 +246,7 @@ const Index = () => {
                 variant="ghost"
                 size="sm"
                 onClick={handleSignOut}
-                className="h-8 w-8 p-0 hover:bg-cyber-danger/20 text-cyber-danger"
+                className="h-8 w-8 p-0 hover:bg-pastel-danger/20 text-pastel-danger"
               >
                 <LogOut className="w-4 h-4" />
               </Button>
@@ -255,50 +255,50 @@ const Index = () => {
         </div>
         
         <ScrollArea className="flex-1 p-4">
-          <div className="space-y-2">
+          <div className="space-y-3">
             {chats.map((chat) => (
               <Card 
                 key={chat.id} 
-                className={`cursor-pointer transition-all hover:shadow-lg border group ${
+                className={`cursor-pointer transition-all duration-200 hover:shadow-lg border group hover:scale-[1.02] ${
                   activeChat === chat.id 
-                    ? 'border-cyber-primary bg-cyber-primary/10 cyber-glow' 
-                    : 'border-cyber-surface hover:border-cyber-primary/50 bg-cyber-surface/30'
+                    ? 'border-pastel-primary bg-gradient-to-r from-pastel-primary/20 to-pastel-accent/20 shadow-md' 
+                    : 'border-pastel-surface hover:border-pastel-primary/50 bg-pastel-surface/50 hover:bg-pastel-surface/80'
                 }`}
               >
-                <CardContent className="p-3">
+                <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div 
-                      className="flex items-center gap-2 mb-1 flex-1 min-w-0"
+                      className="flex items-center gap-3 mb-2 flex-1 min-w-0"
                       onClick={() => setActiveChat(chat.id)}
                     >
-                      <MessageSquare className="w-4 h-4 text-cyber-primary flex-shrink-0" />
-                      <span className="font-medium text-sm truncate text-cyber-text">{chat.title}</span>
+                      <MessageSquare className="w-4 h-4 text-pastel-primary flex-shrink-0" />
+                      <span className="font-medium text-sm truncate text-pastel-text">{chat.title}</span>
                     </div>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 hover:bg-cyber-danger/20 text-cyber-danger opacity-70 group-hover:opacity-100 transition-opacity ml-2"
+                          className="h-8 w-8 p-0 hover:bg-pastel-danger/20 text-pastel-danger opacity-60 group-hover:opacity-100 transition-opacity ml-2"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-cyber-surface border-cyber-primary/30">
+                      <AlertDialogContent className="bg-pastel-surface border-pastel-primary/30 shadow-2xl">
                         <AlertDialogHeader>
-                          <AlertDialogTitle className="text-cyber-text">Delete Chat</AlertDialogTitle>
-                          <AlertDialogDescription className="text-cyber-muted">
+                          <AlertDialogTitle className="text-pastel-text">Delete Chat</AlertDialogTitle>
+                          <AlertDialogDescription className="text-pastel-muted">
                             Are you sure you want to delete "{chat.title}"? This action cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel className="border-cyber-primary/30 text-cyber-text hover:bg-cyber-surface/80">
+                          <AlertDialogCancel className="border-pastel-primary/30 text-pastel-text hover:bg-pastel-surface/80">
                             Cancel
                           </AlertDialogCancel>
                           <AlertDialogAction 
                             onClick={() => deleteChat(chat.id)}
-                            className="bg-cyber-danger hover:bg-cyber-danger/80 text-cyber-text"
+                            className="bg-pastel-danger hover:bg-pastel-danger/80 text-white"
                           >
                             Delete
                           </AlertDialogAction>
@@ -306,7 +306,7 @@ const Index = () => {
                       </AlertDialogContent>
                     </AlertDialog>
                   </div>
-                  <div className="text-xs text-cyber-muted">
+                  <div className="text-xs text-pastel-muted font-medium">
                     {chat.messages.length} messages
                   </div>
                 </CardContent>
@@ -319,29 +319,29 @@ const Index = () => {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="border-b border-cyber-primary/30 bg-cyber-surface/50 backdrop-blur-sm p-4">
+        <div className="border-b border-pastel-primary/30 bg-gradient-to-r from-pastel-surface to-pastel-surface/70 backdrop-blur-md p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="text-cyber-primary hover:bg-cyber-primary/20"
+                className="text-pastel-primary hover:bg-pastel-primary/20 shadow-sm"
               >
                 <History className="w-5 h-5" />
               </Button>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-cyber-primary via-cyber-accent to-cyber-secondary bg-clip-text text-transparent text-glow">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-pastel-primary via-pastel-accent to-pastel-secondary bg-clip-text text-transparent">
                 Multi-AI Chat
               </h1>
               
               {/* Discussion Controls */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 {isDiscussionActive ? (
                   <Button
                     onClick={stopDiscussion}
                     variant="outline"
                     size="sm"
-                    className="border-cyber-danger text-cyber-danger hover:bg-cyber-danger/20"
+                    className="border-pastel-danger text-pastel-danger hover:bg-pastel-danger/20 shadow-sm"
                   >
                     <Square className="w-4 h-4 mr-2" />
                     Stop Discussion
@@ -359,7 +359,7 @@ const Index = () => {
                     }}
                     variant="outline"
                     size="sm"
-                    className="border-cyber-accent text-cyber-accent hover:bg-cyber-accent/20"
+                    className="border-pastel-accent text-pastel-accent hover:bg-pastel-accent/20 shadow-sm"
                     disabled={!currentChat?.messages.length}
                   >
                     <Play className="w-4 h-4 mr-2" />
@@ -368,7 +368,7 @@ const Index = () => {
                 )}
                 
                 {isDiscussionActive && (
-                  <div className="text-sm text-cyber-muted">
+                  <div className="text-sm text-pastel-muted bg-pastel-surface/50 px-3 py-1 rounded-full">
                     Round {roundCount}/{maxRounds} • {activeResponders.length} responding
                   </div>
                 )}
@@ -378,16 +378,22 @@ const Index = () => {
             <div className="flex items-center gap-6">
               {platforms.map((platform) => (
                 <div key={platform.id} className="flex items-center gap-3">
-                  <span className="text-lg">{platform.icon}</span>
-                  <span className="text-base font-medium text-cyber-text">{platform.name}</span>
+                  <span className="text-xl">{platform.icon}</span>
+                  <span className="text-base font-medium text-pastel-text">{platform.name}</span>
                   <Switch
                     checked={platform.enabled && platform.hasApiKey}
                     onCheckedChange={() => togglePlatform(platform.id)}
                     disabled={!platform.hasApiKey}
-                    className="data-[state=checked]:bg-cyber-primary"
+                    className={`data-[state=checked]:${
+                      platform.id === 'openai' ? 'bg-agent-openai' :
+                      platform.id === 'anthropic' ? 'bg-agent-anthropic' :
+                      platform.id === 'deepseek' ? 'bg-agent-deepseek' :
+                      platform.id === 'grok' ? 'bg-agent-grok' :
+                      'bg-pastel-primary'
+                    }`}
                   />
                   {!platform.hasApiKey && (
-                    <Badge variant="destructive" className="text-xs bg-cyber-danger text-cyber-text">No Key</Badge>
+                    <Badge variant="destructive" className="text-xs bg-pastel-danger text-white">No Key</Badge>
                   )}
                   {platform.hasApiKey && (
                     <div className="flex items-center gap-2">
@@ -395,21 +401,39 @@ const Index = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleViewBotHistory(platform)}
-                        className={`h-7 px-3 text-xs font-medium border ${
+                        className={`h-8 px-3 text-xs font-medium border shadow-sm transition-all duration-200 hover:scale-105 ${
                           platform.id === 'openai' ? 'border-agent-openai text-agent-openai hover:bg-agent-openai/20' :
                           platform.id === 'anthropic' ? 'border-agent-anthropic text-agent-anthropic hover:bg-agent-anthropic/20' :
                           platform.id === 'deepseek' ? 'border-agent-deepseek text-agent-deepseek hover:bg-agent-deepseek/20' :
                           platform.id === 'grok' ? 'border-agent-grok text-agent-grok hover:bg-agent-grok/20' :
-                          'border-cyber-primary text-cyber-primary hover:bg-cyber-primary/20'
+                          'border-pastel-primary text-pastel-primary hover:bg-pastel-primary/20'
                         }`}
                       >
                         Chat
                       </Button>
                       {activeResponders.includes(platform.id) && (
                         <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-cyber-accent rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-cyber-accent rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                          <div className="w-2 h-2 bg-cyber-accent rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          <div className={`w-2 h-2 rounded-full animate-bounce ${
+                            platform.id === 'openai' ? 'bg-agent-openai' :
+                            platform.id === 'anthropic' ? 'bg-agent-anthropic' :
+                            platform.id === 'deepseek' ? 'bg-agent-deepseek' :
+                            platform.id === 'grok' ? 'bg-agent-grok' :
+                            'bg-pastel-accent'
+                          }`}></div>
+                          <div className={`w-2 h-2 rounded-full animate-bounce ${
+                            platform.id === 'openai' ? 'bg-agent-openai' :
+                            platform.id === 'anthropic' ? 'bg-agent-anthropic' :
+                            platform.id === 'deepseek' ? 'bg-agent-deepseek' :
+                            platform.id === 'grok' ? 'bg-agent-grok' :
+                            'bg-pastel-accent'
+                          }`} style={{ animationDelay: '0.1s' }}></div>
+                          <div className={`w-2 h-2 rounded-full animate-bounce ${
+                            platform.id === 'openai' ? 'bg-agent-openai' :
+                            platform.id === 'anthropic' ? 'bg-agent-anthropic' :
+                            platform.id === 'deepseek' ? 'bg-agent-deepseek' :
+                            platform.id === 'grok' ? 'bg-agent-grok' :
+                            'bg-pastel-accent'
+                          }`} style={{ animationDelay: '0.2s' }}></div>
                         </div>
                       )}
                     </div>
@@ -421,41 +445,41 @@ const Index = () => {
         </div>
 
         {/* Messages */}
-        <ScrollArea className="flex-1 p-4">
-          <div className="max-w-4xl mx-auto space-y-4">
+        <ScrollArea className="flex-1 p-6 bg-gradient-to-b from-pastel-bg to-pastel-surface/30">
+          <div className="max-w-4xl mx-auto space-y-6">
             {currentChat?.messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div className={`max-w-[80%] ${message.sender === 'user' ? 'order-2' : 'order-1'}`}>
-                  <Card className={`border ${
+                  <Card className={`border transition-all duration-200 hover:shadow-lg ${
                     message.sender === 'user' 
-                      ? 'bg-gradient-to-r from-cyber-primary to-cyber-accent text-cyber-bg border-cyber-primary cyber-glow' 
-                      : 'bg-cyber-surface/70 border-cyber-primary/30 text-cyber-text'
+                      ? 'bg-gradient-to-r from-pastel-primary to-pastel-accent text-pastel-text border-pastel-primary shadow-md' 
+                      : 'bg-pastel-surface/70 border-pastel-primary/30 text-pastel-text shadow-sm hover:shadow-md'
                   }`}>
-                    <CardContent className="p-4">
+                    <CardContent className="p-5">
                       {message.sender === 'ai' && message.platform && (
-                        <div className="mb-2 flex items-center justify-between">
-                          <Badge className={`${
-                            message.platform === 'openai' ? 'bg-agent-openai border-agent-openai text-cyber-bg' :
-                            message.platform === 'anthropic' ? 'bg-agent-anthropic border-agent-anthropic text-cyber-bg' :
-                            message.platform === 'deepseek' ? 'bg-agent-deepseek border-agent-deepseek text-cyber-bg' :
-                            message.platform === 'grok' ? 'bg-agent-grok border-agent-grok text-cyber-bg' :
-                            'bg-cyber-primary border-cyber-primary text-cyber-bg'
-                          } font-semibold cyber-glow`}>
+                        <div className="mb-3 flex items-center justify-between">
+                          <Badge className={`font-semibold shadow-sm ${
+                            message.platform === 'openai' ? 'bg-agent-openai border-agent-openai text-white' :
+                            message.platform === 'anthropic' ? 'bg-agent-anthropic border-agent-anthropic text-white' :
+                            message.platform === 'deepseek' ? 'bg-agent-deepseek border-agent-deepseek text-white' :
+                            message.platform === 'grok' ? 'bg-agent-grok border-agent-grok text-white' :
+                            'bg-pastel-primary border-pastel-primary text-white'
+                          }`}>
                             {platforms.find(p => p.id === message.platform)?.icon} {platforms.find(p => p.id === message.platform)?.name}
                           </Badge>
                           <MessageStatus message={message} platforms={platforms} />
                         </div>
                       )}
                       <div className={`text-base leading-relaxed whitespace-pre-wrap font-medium ${
-                        message.sender === 'ai' ? 'prose prose-sm max-w-none text-cyber-text' : ''
+                        message.sender === 'ai' ? 'prose prose-sm max-w-none text-pastel-text' : ''
                       }`}>
                         {message.content}
                       </div>
-                      <div className={`text-sm mt-3 font-medium flex items-center justify-between ${
-                        message.sender === 'user' ? 'text-cyber-bg/80' : 'text-cyber-muted'
+                      <div className={`text-sm mt-4 font-medium flex items-center justify-between ${
+                        message.sender === 'user' ? 'text-pastel-text/80' : 'text-pastel-muted'
                       }`}>
                         <span>{message.timestamp.toLocaleTimeString()}</span>
                         {message.sender === 'user' && (
@@ -470,15 +494,15 @@ const Index = () => {
             
             {(isLoading || activeResponders.length > 0) && (
               <div className="flex justify-start">
-                <Card className="bg-cyber-surface/70 border-cyber-primary/30">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex space-x-1">
-                        <div className="w-3 h-3 bg-cyber-primary rounded-full animate-bounce cyber-glow"></div>
-                        <div className="w-3 h-3 bg-cyber-accent rounded-full animate-bounce cyber-glow" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-3 h-3 bg-cyber-secondary rounded-full animate-bounce cyber-glow" style={{ animationDelay: '0.2s' }}></div>
+                <Card className="bg-pastel-surface/70 border-pastel-primary/30 shadow-sm">
+                  <CardContent className="p-5">
+                    <div className="flex items-center gap-4">
+                      <div className="flex space-x-2">
+                        <div className="w-3 h-3 bg-pastel-primary rounded-full animate-bounce shadow-sm"></div>
+                        <div className="w-3 h-3 bg-pastel-accent rounded-full animate-bounce shadow-sm" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-3 h-3 bg-pastel-secondary rounded-full animate-bounce shadow-sm" style={{ animationDelay: '0.2s' }}></div>
                       </div>
-                      <span className="text-base text-cyber-muted font-medium">
+                      <span className="text-base text-pastel-muted font-medium">
                         {activeResponders.length > 0 
                           ? `${activeResponders.length} AI platform(s) are discussing...` 
                           : 'AI platforms are thinking...'}
@@ -494,9 +518,9 @@ const Index = () => {
         </ScrollArea>
 
         {/* Input Area */}
-        <div className="border-t border-cyber-primary/30 bg-cyber-surface/50 backdrop-blur-sm p-4">
+        <div className="border-t border-pastel-primary/30 bg-gradient-to-r from-pastel-surface to-pastel-surface/70 backdrop-blur-md p-6 shadow-lg">
           <div className="max-w-4xl mx-auto">
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               <Input
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
@@ -508,18 +532,18 @@ const Index = () => {
                   }
                 }}
                 disabled={isLoading}
-                className="flex-1 bg-cyber-surface/70 border-cyber-primary/30 focus:border-cyber-primary text-cyber-text placeholder:text-cyber-muted text-base font-medium"
+                className="flex-1 bg-pastel-surface/70 border-pastel-primary/30 focus:border-pastel-primary text-pastel-text placeholder:text-pastel-muted text-base font-medium shadow-sm hover:shadow-md transition-shadow duration-200"
               />
               <Button 
                 onClick={handleSendMessage}
                 disabled={!inputMessage.trim() || isLoading}
-                className="bg-gradient-to-r from-cyber-primary to-cyber-accent hover:from-cyber-primary/80 hover:to-cyber-accent/80 text-cyber-bg font-semibold cyber-glow"
+                className="bg-gradient-to-r from-pastel-primary to-pastel-accent hover:from-pastel-primary/80 hover:to-pastel-accent/80 text-pastel-text font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
               >
                 <Send className="w-5 h-5" />
               </Button>
             </div>
             
-            <div className="mt-3 text-sm text-cyber-muted text-center font-medium">
+            <div className="mt-4 text-sm text-pastel-muted text-center font-medium bg-pastel-surface/30 py-2 rounded-lg">
               {isDiscussionActive 
                 ? `Discussion active: Round ${roundCount}/${maxRounds} - ${platforms.filter(p => p.enabled && p.hasApiKey).length} AI platform(s) participating`
                 : `${platforms.filter(p => p.enabled && p.hasApiKey).length} AI platform(s) enabled`}

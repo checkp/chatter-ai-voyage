@@ -33,48 +33,64 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
 
-    /* Cyber theme colors */
-    --cyber-bg: 240 10% 3.9%;
-    --cyber-surface: 240 8% 8%;
-    --cyber-primary: 200 100% 60%;
-    --cyber-accent: 280 100% 70%;
-    --cyber-secondary: 160 100% 50%;
-    --cyber-text: 0 0% 95%;
-    --cyber-muted: 240 5% 64.9%;
-    --cyber-danger: 0 84.2% 60.2%;
+    /* Pastel theme colors */
+    --pastel-bg: 220 20% 98%;
+    --pastel-surface: 210 25% 95%;
+    --pastel-primary: 200 80% 85%;
+    --pastel-accent: 280 70% 88%;
+    --pastel-secondary: 160 60% 85%;
+    --pastel-text: 220 15% 25%;
+    --pastel-muted: 220 10% 55%;
+    --pastel-danger: 0 70% 85%;
 
-    /* Agent colors */
-    --agent-openai: 142 76% 36%;
-    --agent-anthropic: 25 95% 53%;
-    --agent-deepseek: 221 83% 53%;
-    --agent-grok: 210 40% 60%;
+    /* Pastel agent colors */
+    --agent-openai: 180 70% 80%;     /* Soft teal */
+    --agent-anthropic: 320 60% 85%;  /* Soft lavender */
+    --agent-deepseek: 260 65% 82%;   /* Soft purple */
+    --agent-grok: 40 80% 82%;        /* Soft peach */
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --background: 220 15% 8%;
+    --foreground: 210 20% 95%;
+    --card: 220 15% 10%;
+    --card-foreground: 210 20% 95%;
+    --popover: 220 15% 10%;
+    --popover-foreground: 210 20% 95%;
+    --primary: 210 20% 90%;
+    --primary-foreground: 220 15% 10%;
+    --secondary: 220 10% 15%;
+    --secondary-foreground: 210 20% 90%;
+    --muted: 220 10% 15%;
+    --muted-foreground: 220 5% 60%;
+    --accent: 220 10% 15%;
+    --accent-foreground: 210 20% 90%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --border: 220 10% 18%;
+    --input: 220 10% 18%;
+    --ring: 210 20% 80%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+
+    /* Dark mode pastel colors */
+    --pastel-bg: 220 15% 8%;
+    --pastel-surface: 220 12% 12%;
+    --pastel-primary: 200 60% 70%;
+    --pastel-accent: 280 50% 75%;
+    --pastel-secondary: 160 45% 70%;
+    --pastel-text: 210 20% 90%;
+    --pastel-muted: 220 10% 60%;
+    --pastel-danger: 0 55% 70%;
+
+    /* Dark mode agent colors */
+    --agent-openai: 180 50% 65%;
+    --agent-anthropic: 320 45% 70%;
+    --agent-deepseek: 260 50% 67%;
+    --agent-grok: 40 60% 67%;
   }
 }
 
@@ -87,13 +103,13 @@
   }
 }
 
-/* Cyber theme utilities */
-.cyber-glow {
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+/* Pastel theme utilities */
+.pastel-glow {
+  box-shadow: 0 0 20px rgba(200, 220, 255, 0.3);
 }
 
-.text-glow {
-  text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+.text-glow-pastel {
+  text-shadow: 0 0 15px rgba(200, 220, 255, 0.4);
 }
 
 /* Font utilities */
@@ -150,7 +166,7 @@
   color: hsl(var(--agent-grok));
 }
 
-/* Hover variants */
+/* Hover variants for agents */
 .hover\:bg-agent-openai\/20:hover {
   background-color: hsl(var(--agent-openai) / 0.2);
 }
@@ -171,135 +187,135 @@
   background-color: hsl(var(--agent-grok) / 0.8);
 }
 
-/* Cyber background utilities */
-.bg-cyber-bg {
-  background-color: hsl(var(--cyber-bg));
+/* Pastel background utilities */
+.bg-pastel-bg {
+  background-color: hsl(var(--pastel-bg));
 }
 
-.bg-cyber-surface {
-  background-color: hsl(var(--cyber-surface));
+.bg-pastel-surface {
+  background-color: hsl(var(--pastel-surface));
 }
 
-.bg-cyber-primary {
-  background-color: hsl(var(--cyber-primary));
+.bg-pastel-primary {
+  background-color: hsl(var(--pastel-primary));
 }
 
-.bg-cyber-accent {
-  background-color: hsl(var(--cyber-accent));
+.bg-pastel-accent {
+  background-color: hsl(var(--pastel-accent));
 }
 
-.bg-cyber-secondary {
-  background-color: hsl(var(--cyber-secondary));
+.bg-pastel-secondary {
+  background-color: hsl(var(--pastel-secondary));
 }
 
-.bg-cyber-danger {
-  background-color: hsl(var(--cyber-danger));
+.bg-pastel-danger {
+  background-color: hsl(var(--pastel-danger));
 }
 
 /* Text color utilities */
-.text-cyber-bg {
-  color: hsl(var(--cyber-bg));
+.text-pastel-bg {
+  color: hsl(var(--pastel-bg));
 }
 
-.text-cyber-text {
-  color: hsl(var(--cyber-text));
+.text-pastel-text {
+  color: hsl(var(--pastel-text));
 }
 
-.text-cyber-muted {
-  color: hsl(var(--cyber-muted));
+.text-pastel-muted {
+  color: hsl(var(--pastel-muted));
 }
 
-.text-cyber-primary {
-  color: hsl(var(--cyber-primary));
+.text-pastel-primary {
+  color: hsl(var(--pastel-primary));
 }
 
-.text-cyber-accent {
-  color: hsl(var(--cyber-accent));
+.text-pastel-accent {
+  color: hsl(var(--pastel-accent));
 }
 
-.text-cyber-secondary {
-  color: hsl(var(--cyber-secondary));
+.text-pastel-secondary {
+  color: hsl(var(--pastel-secondary));
 }
 
-.text-cyber-danger {
-  color: hsl(var(--cyber-danger));
+.text-pastel-danger {
+  color: hsl(var(--pastel-danger));
 }
 
 /* Border utilities */
-.border-cyber-primary {
-  border-color: hsl(var(--cyber-primary));
+.border-pastel-primary {
+  border-color: hsl(var(--pastel-primary));
 }
 
-.border-cyber-secondary {
-  border-color: hsl(var(--cyber-secondary));
+.border-pastel-secondary {
+  border-color: hsl(var(--pastel-secondary));
 }
 
-.border-cyber-surface {
-  border-color: hsl(var(--cyber-surface));
+.border-pastel-surface {
+  border-color: hsl(var(--pastel-surface));
 }
 
 /* Hover utilities */
-.hover\:bg-cyber-primary\/20:hover {
-  background-color: hsl(var(--cyber-primary) / 0.2);
+.hover\:bg-pastel-primary\/20:hover {
+  background-color: hsl(var(--pastel-primary) / 0.2);
 }
 
-.hover\:bg-cyber-secondary\/20:hover {
-  background-color: hsl(var(--cyber-secondary) / 0.2);
+.hover\:bg-pastel-secondary\/20:hover {
+  background-color: hsl(var(--pastel-secondary) / 0.2);
 }
 
-.hover\:bg-cyber-danger\/20:hover {
-  background-color: hsl(var(--cyber-danger) / 0.2);
+.hover\:bg-pastel-danger\/20:hover {
+  background-color: hsl(var(--pastel-danger) / 0.2);
 }
 
-.hover\:bg-cyber-primary\/80:hover {
-  background-color: hsl(var(--cyber-primary) / 0.8);
+.hover\:bg-pastel-primary\/80:hover {
+  background-color: hsl(var(--pastel-primary) / 0.8);
 }
 
-.hover\:bg-cyber-accent\/80:hover {
-  background-color: hsl(var(--cyber-accent) / 0.8);
+.hover\:bg-pastel-accent\/80:hover {
+  background-color: hsl(var(--pastel-accent) / 0.8);
 }
 
-.hover\:bg-cyber-danger\/80:hover {
-  background-color: hsl(var(--cyber-danger) / 0.8);
+.hover\:bg-pastel-danger\/80:hover {
+  background-color: hsl(var(--pastel-danger) / 0.8);
 }
 
-.hover\:bg-cyber-surface\/80:hover {
-  background-color: hsl(var(--cyber-surface) / 0.8);
+.hover\:bg-pastel-surface\/80:hover {
+  background-color: hsl(var(--pastel-surface) / 0.8);
 }
 
-.hover\:border-cyber-primary\/50:hover {
-  border-color: hsl(var(--cyber-primary) / 0.5);
+.hover\:border-pastel-primary\/50:hover {
+  border-color: hsl(var(--pastel-primary) / 0.5);
 }
 
 /* Additional opacity variants */
-.bg-cyber-primary\/10 {
-  background-color: hsl(var(--cyber-primary) / 0.1);
+.bg-pastel-primary\/10 {
+  background-color: hsl(var(--pastel-primary) / 0.1);
 }
 
-.bg-cyber-surface\/30 {
-  background-color: hsl(var(--cyber-surface) / 0.3);
+.bg-pastel-surface\/30 {
+  background-color: hsl(var(--pastel-surface) / 0.3);
 }
 
-.bg-cyber-surface\/50 {
-  background-color: hsl(var(--cyber-surface) / 0.5);
+.bg-pastel-surface\/50 {
+  background-color: hsl(var(--pastel-surface) / 0.5);
 }
 
-.bg-cyber-surface\/70 {
-  background-color: hsl(var(--cyber-surface) / 0.7);
+.bg-pastel-surface\/70 {
+  background-color: hsl(var(--pastel-surface) / 0.7);
 }
 
-.border-cyber-primary\/20 {
-  border-color: hsl(var(--cyber-primary) / 0.2);
+.border-pastel-primary\/20 {
+  border-color: hsl(var(--pastel-primary) / 0.2);
 }
 
-.border-cyber-primary\/30 {
-  border-color: hsl(var(--cyber-primary) / 0.3);
+.border-pastel-primary\/30 {
+  border-color: hsl(var(--pastel-primary) / 0.3);
 }
 
-.text-cyber-bg\/70 {
-  color: hsl(var(--cyber-bg) / 0.7);
+.text-pastel-bg\/70 {
+  color: hsl(var(--pastel-bg) / 0.7);
 }
 
-.text-cyber-bg\/80 {
-  color: hsl(var(--cyber-bg) / 0.8);
+.text-pastel-bg\/80 {
+  color: hsl(var(--pastel-bg) / 0.8);
 }
