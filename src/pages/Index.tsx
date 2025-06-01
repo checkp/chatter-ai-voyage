@@ -1,648 +1,494 @@
-import React, { useState } from 'react';
-import { Send, Plus, MessageSquare, Settings, History, Key, LogOut, User, Trash2, Square, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useUser } from '@supabase/auth-helpers-react';
+import { v4 as uuidv4 } from 'uuid';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle, 
-  AlertDialogTrigger 
-} from '@/components/ui/alert-dialog';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { ModeToggle } from '@/components/ModeToggle';
+import { useTheme } from '@/contexts/ThemeContext';
 import { toast } from 'sonner';
-import ApiKeySettings from '@/components/ApiKeySettings';
-import BotHistoryDialog from '@/components/BotHistoryDialog';
-import { ThemeSelector } from '@/components/ui/theme-selector';
-import { useAuth } from '@/hooks/useAuth';
-import { useChats } from '@/hooks/useChats';
+import { Send, Settings, User, Plus, RefreshCw } from 'lucide-react';
 import { usePlatforms } from '@/hooks/usePlatforms';
-import { useScrollToBottom } from '@/hooks/useScrollToBottom';
-import type { Message, AIPlatform } from '@/types/chat';
-import MessageStatus from '@/components/chat/MessageStatus';
-import PlatformStatus from '@/components/chat/PlatformStatus';
-import { useMultiRoundDiscussion } from '@/hooks/useMultiRoundDiscussion';
+import type { Message, Chat, AIPlatform } from '@/types/chat';
+import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Textarea } from "@/components/ui/textarea"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
+import { Switch } from "@/components/ui/switch"
+import { Separator } from "@/components/ui/separator"
+import { getModelConfig } from '@/config/aiModels';
+import SettingsPanel from '@/components/SettingsPanel';
 
 const Index = () => {
-  const { user, session, handleSignOut } = useAuth();
-  const { chats, activeChat, setActiveChat, getCurrentChat, addMessage, updateChatTitle, createNewChat, deleteChat } = useChats(user);
-  const { platforms, togglePlatform, callAIAPI, loadApiKeysStatus } = usePlatforms(user);
-  const { messagesEndRef } = useScrollToBottom([activeChat, getCurrentChat()?.messages?.length]);
+  const user = useUser();
+  const queryClient = useQueryClient();
+  const { theme } = useTheme();
+  const [input, setInput] = useState('');
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isNewChatDrawerOpen, setIsNewChatDrawerOpen] = useState(false);
+  const [newChatTitle, setNewChatTitle] = useState('');
+  const [isLoadingResponse, setIsLoadingResponse] = useState(false);
+  const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Use the enhanced multi-round discussion hook
   const { 
-    startDiscussion, 
-    stopDiscussion,
-    forceStop,
-    isDiscussionActive, 
-    activeResponders, 
-    roundCount, 
-    maxRounds, 
-    platformStatuses,
-    errors,
-    discussionSummary,
-    setMaxRounds 
-  } = useMultiRoundDiscussion(platforms, callAIAPI, addMessage, getCurrentChat);
+    platforms, 
+    setPlatforms, 
+    togglePlatform, 
+    callAIAPI, 
+    loadApiKeysStatus 
+  } = usePlatforms(user);
+  
+  const [activeTab, setActiveTab] = useState<'chat' | 'settings'>('chat');
 
-  const [inputMessage, setInputMessage] = useState('');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
-  const [showBotHistoryDialog, setShowBotHistoryDialog] = useState(false);
-  const [selectedPlatformForHistory, setSelectedPlatformForHistory] = useState<AIPlatform | null>(null);
+  const scrollToBottom = () => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
 
-  const getAgentMessageColors = (platformId: string) => {
-    switch (platformId) {
-      case 'openai':
-        return {
-          bg: 'bg-gradient-to-br from-emerald-50 to-teal-100',
-          border: 'border-emerald-300',
-          glow: 'hover:shadow-emerald-200/50'
-        };
-      case 'anthropic':
-        return {
-          bg: 'bg-gradient-to-br from-rose-50 to-pink-100',
-          border: 'border-rose-300',
-          glow: 'hover:shadow-rose-200/50'
-        };
-      case 'deepseek':
-        return {
-          bg: 'bg-gradient-to-br from-blue-50 to-cyan-100',
-          border: 'border-blue-300',
-          glow: 'hover:shadow-blue-200/50'
-        };
-      case 'grok':
-        return {
-          bg: 'bg-gradient-to-br from-purple-50 to-indigo-100',
-          border: 'border-purple-300',
-          glow: 'hover:shadow-purple-200/50'
-        };
-      default:
-        return {
-          bg: 'modern-card-elevated',
-          border: 'modern-border',
-          glow: 'hover:shadow-xl'
-        };
+  const { data: chats, isLoading: isLoadingChats } = useQuery<Chat[]>(
+    ['chats', user?.id],
+    async () => {
+      if (!user?.id) return [];
+
+      const { data, error } = await supabase
+        .from('chats')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching chats:', error);
+        throw error;
+      }
+
+      return data || [];
+    },
+    {
+      enabled: !!user?.id,
+      onSuccess: () => {
+        setIsInitialLoadComplete(true);
+      }
     }
-  };
+  );
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
+  useEffect(() => {
+    if (chats && chats.length > 0 && !activeChatId) {
+      setActiveChatId(chats[0].id);
+    }
+  }, [chats, activeChatId]);
+
+  const { data: messages, isLoading: isLoadingMessages } = useQuery<Message[]>(
+    ['messages', activeChatId],
+    async () => {
+      if (!activeChatId) return [];
+
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('chat_id', activeChatId)
+        .order('timestamp', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching messages:', error);
+        throw error;
+      }
+
+      return data || [];
+    },
+    {
+      enabled: !!activeChatId,
+      onSuccess: () => {
+        scrollToBottom();
+      }
+    }
+  );
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, theme]);
+
+  const createChatMutation = useMutation(
+    async (title: string) => {
+      if (!user?.id) throw new Error('User not authenticated');
+
+      const newChatId = uuidv4();
+      const { data, error } = await supabase
+        .from('chats')
+        .insert([{ 
+          id: newChatId,
+          user_id: user.id, 
+          title,
+          created_at: new Date().toISOString(),
+          last_updated: new Date().toISOString()
+        }])
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('Error creating chat:', error);
+        throw error;
+      }
+
+      return data as Chat;
+    },
+    {
+      onSuccess: (newChat) => {
+        queryClient.invalidateQueries(['chats', user?.id]);
+        setActiveChatId(newChat.id);
+        setNewChatTitle('');
+        setIsNewChatDrawerOpen(false);
+      },
+      onError: (error: any) => {
+        console.error('Failed to create chat:', error);
+        toast.error('Failed to create chat: ' + error.message);
+      },
+    }
+  );
+
+  const sendMessageMutation = useMutation(
+    async ({ chatId, content, platformId }: { chatId: string, content: string, platformId?: string }) => {
+      if (!user?.id) throw new Error('User not authenticated');
+
+      const newMessageId = uuidv4();
+      const timestamp = new Date().toISOString();
+
+      // Optimistically update the UI
+      queryClient.setQueryData<Message[]>(['messages', chatId], (oldMessages) => [
+        ...(oldMessages || []),
+        {
+          id: newMessageId,
+          chat_id: chatId,
+          content,
+          sender: 'user',
+          timestamp: new Date(timestamp),
+          status: 'sending',
+          platform: platformId,
+          seenBy: [],
+          responses: [],
+        },
+      ]);
+
+      // Save user message to database
+      const { error: userMessageError } = await supabase
+        .from('messages')
+        .insert([{
+          id: newMessageId,
+          chat_id: chatId,
+          content,
+          sender: 'user',
+          timestamp,
+          platform: platformId,
+          seenBy: [],
+          responses: [],
+        }]);
+
+      if (userMessageError) {
+        console.error('Error sending message:', userMessageError);
+        throw userMessageError;
+      }
+
+      return { chatId, content, newMessageId, timestamp };
+    },
+    {
+      onSuccess: async ({ chatId, content, newMessageId, timestamp }) => {
+        // Invalidate and refetch messages to reflect changes
+        await queryClient.invalidateQueries(['messages', chatId]);
+        
+        // Call all enabled AI APIs in parallel
+        const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
+        if (enabledPlatforms.length === 0) {
+          toast.error('No AI agents enabled. Please enable at least one agent in settings.');
+          return;
+        }
+
+        setIsLoadingResponse(true);
+        
+        // Determine the next round number
+        const lastMessage = messages?.slice(-1)[0];
+        const nextRoundNumber = lastMessage?.sender === 'user' ? (lastMessage.roundNumber || 0) + 1 : 1;
+
+        try {
+          const aiResponses = await Promise.all(
+            enabledPlatforms.map(async (platform) => {
+              try {
+                const aiContent = await callAIAPI(platform, messages || [], platforms);
+                return { platformId: platform.id, content: aiContent };
+              } catch (apiError: any) {
+                console.error(`Error calling ${platform.name} API:`, apiError);
+                toast.error(`Error calling ${platform.name} API: ${apiError.message}`);
+                return { platformId: platform.id, content: `Error: ${apiError.message}` };
+              }
+            })
+          );
+
+          // Save AI responses to database
+          const aiMessageInserts = aiResponses.map(({ platformId, content }) => ({
+            id: uuidv4(),
+            chat_id: chatId,
+            content,
+            sender: 'ai',
+            timestamp: new Date().toISOString(),
+            platform: platformId,
+            seenBy: [],
+            responses: [newMessageId],
+            roundNumber: nextRoundNumber,
+          }));
+
+          const { error: aiMessageError } = await supabase
+            .from('messages')
+            .insert(aiMessageInserts);
+
+          if (aiMessageError) {
+            console.error('Error saving AI messages:', aiMessageError);
+            toast.error('Error saving AI messages: ' + aiMessageError.message);
+          } else {
+            // Update the UI with the new messages
+            await queryClient.invalidateQueries(['messages', chatId]);
+            toast.success('AI responses received');
+          }
+        } finally {
+          setIsLoadingResponse(false);
+        }
+      },
+      onError: (error: any) => {
+        console.error('Failed to send message:', error);
+        toast.error('Failed to send message: ' + error.message);
+      },
+    }
+  );
+
+  const handleSend = async () => {
+    if (!input.trim() || !activeChatId) return;
     
-    let chatId = activeChat;
-    
-    if (!chatId) {
-      chatId = await createNewChat();
-    }
-
-    const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
-    
-    if (enabledPlatforms.length === 0) {
-      toast.error('Please enable at least one AI platform with a valid API key');
-      return;
-    }
-
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      content: inputMessage,
-      sender: 'user',
-      timestamp: new Date(),
-      status: 'sent'
-    };
-
-    // Add user message to chat
-    addMessage(chatId, userMessage);
-
-    // Update chat title if this is the first message
-    const targetChat = chats.find(chat => chat.id === chatId);
-    if (!targetChat || targetChat.messages.length === 0) {
-      updateChatTitle(chatId, inputMessage);
-    }
-
-    setInputMessage('');
+    const content = input.trim();
+    setInput('');
 
     try {
-      // Start the multi-round discussion
-      await startDiscussion(chatId, userMessage, enabledPlatforms);
-    } catch (error) {
-      console.error('Error in handleSendMessage:', error);
-      toast.error('Failed to start discussion with AI platforms');
+      await sendMessageMutation.mutateAsync({ chatId: activeChatId, content });
+    } catch (error: any) {
+      console.error('Failed to send message:', error);
+      toast.error('Failed to send message: ' + error.message);
     }
   };
 
-  const handleApiKeyDialogClose = (open: boolean) => {
-    setShowApiKeyDialog(open);
-    if (!open) {
-      loadApiKeysStatus();
-    }
-  };
-
-  const handleViewBotHistory = (platform: AIPlatform) => {
-    setSelectedPlatformForHistory(platform);
-    setShowBotHistoryDialog(true);
-  };
-
-  const handleSendMessageToSpecificBot = async (message: string, platformId: string) => {
-    if (!activeChat) return;
-
-    const platform = platforms.find(p => p.id === platformId);
-    if (!platform || !platform.hasApiKey) {
-      toast.error(`${platform?.name || 'Platform'} is not available or missing API key`);
-      return;
-    }
-
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      content: message,
-      sender: 'user',
-      timestamp: new Date(),
-      status: 'sent'
-    };
-
-    addMessage(activeChat, userMessage);
-
-    const currentChat = getCurrentChat();
-    if (currentChat && currentChat.messages.length === 0) {
-      updateChatTitle(activeChat, message);
-    }
-
+  const handlePlatformToggle = async (platformId: string) => {
     try {
-      const currentChatData = getCurrentChat();
-      if (!currentChatData) return;
-
-      const allMessages = [...currentChatData.messages, userMessage];
-      const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
-
-      const response = await callAIAPI(platform, allMessages, enabledPlatforms);
-
-      const platformMessage: Message = {
-        id: crypto.randomUUID(),
-        content: response,
-        sender: 'ai',
-        platform: platform.id,
-        timestamp: new Date(),
-        status: 'sent',
-        seenBy: []
-      };
-      
-      addMessage(activeChat, platformMessage);
-
-    } catch (error) {
-      const errorMessage: Message = {
-        id: crypto.randomUUID(),
-        content: `❌ Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
-        sender: 'ai',
-        platform: platform.id,
-        timestamp: new Date(),
-        status: 'sent',
-        seenBy: []
-      };
-      
-      addMessage(activeChat, errorMessage);
-      toast.error(`Failed to get response from ${platform.name}`);
+      await togglePlatform(platformId);
+    } catch (error: any) {
+      console.error('Failed to toggle platform:', error);
+      toast.error('Failed to toggle platform: ' + error.message);
     }
   };
 
-  const currentChat = getCurrentChat();
+  const handleNewChat = async () => {
+    try {
+      await createChatMutation.mutateAsync(newChatTitle || 'New Chat');
+    } catch (error: any) {
+      console.error('Failed to create chat:', error);
+      toast.error('Failed to create chat: ' + error.message);
+    }
+  };
 
-  if (user === null && session === null) {
+  const getPlatformName = (platformId: string) => {
+    return platforms.find(p => p.id === platformId)?.name || platformId;
+  };
+
+  if (!user) {
     return (
-      <div className="h-screen flex items-center justify-center modern-bg-primary">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent modern-glow mx-auto mb-6"
-               style={{ 
-                 borderTopColor: 'hsl(var(--modern-accent-primary))',
-                 borderRightColor: 'hsl(var(--modern-accent-secondary))'
-               }}>
-          </div>
-          <p className="modern-text-primary text-lg font-medium">Loading your workspace...</p>
-        </div>
+      <div className="flex flex-col items-center justify-center h-screen">
+        <h1 className="text-2xl font-bold mb-4">Please sign in to continue.</h1>
+        <Button onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })}>
+          Sign in with Google
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex modern-bg-primary modern-text-primary font-inter">
-      {/* Modern Sidebar */}
-      <div className={`${sidebarOpen ? 'w-80' : 'w-0'} transition-all duration-500 ease-out overflow-hidden`}>
-        <div className="h-full glass-morphism modern-border-r p-6 flex flex-col">
-          {/* Sidebar Header */}
-          <div className="space-y-4 mb-6">
-            <Button 
-              onClick={createNewChat}
-              className="w-full modern-btn-primary text-base font-semibold py-4 modern-float modern-glow-hover gap-3"
-            >
-              <Plus className="w-5 h-5" />
-              New Conversation
-            </Button>
-            
-            <div className="flex gap-2">
-              <Dialog open={showApiKeyDialog} onOpenChange={handleApiKeyDialogClose}>
-                <DialogTrigger asChild>
-                  <Button className="flex-1 modern-btn-secondary">
-                    <Key className="w-4 h-4 mr-2" />
-                    API Keys
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="modern-dialog sm:max-w-2xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle className="modern-text-primary text-2xl font-bold">API Configuration</DialogTitle>
-                  </DialogHeader>
-                  <ApiKeySettings />
-                </DialogContent>
-              </Dialog>
-              
-              <ThemeSelector />
-            </div>
+    <div className="min-h-screen bg-background flex">
+      {/* Chat List Sidebar */}
+      <aside className="w-64 border-r bg-secondary border-border flex flex-col">
+        <div className="p-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Chats</h2>
+          <ModeToggle />
+        </div>
 
-            {user && (
-              <div className="modern-card p-4">
-                <div className="flex items-center gap-3">
-                  <Avatar className="w-12 h-12 modern-avatar-ring">
-                    <AvatarImage src={user.user_metadata?.avatar_url} />
-                    <AvatarFallback className="modern-bg-secondary modern-text-primary font-bold text-lg">
-                      {user.email?.charAt(0).toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold truncate modern-text-primary">
-                      {user.user_metadata?.full_name || user.email}
-                    </div>
-                    <div className="text-xs modern-text-muted">Online</div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleSignOut}
-                    className="h-8 w-8 p-0 modern-text-muted hover:modern-text-primary"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </Button>
-                </div>
+        <Button variant="ghost" className="justify-start rounded-none hover:bg-accent hover:text-accent-foreground" onClick={() => setIsNewChatDrawerOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          New Chat
+        </Button>
+
+        <ScrollArea className="flex-1">
+          <div className="py-2">
+            {isLoadingChats && (
+              <div className="px-4 py-2">
+                <Skeleton className="h-9 w-full" />
               </div>
             )}
+            {!isLoadingChats && chats?.map((chat) => (
+              <Button
+                key={chat.id}
+                variant="ghost"
+                className={`w-full justify-start rounded-none hover:bg-accent hover:text-accent-foreground ${activeChatId === chat.id ? 'bg-accent text-accent-foreground' : ''}`}
+                onClick={() => setActiveChatId(chat.id)}
+              >
+                {chat.title}
+              </Button>
+            ))}
           </div>
-          
-          {/* Chat List */}
-          <ScrollArea className="flex-1">
-            <div className="space-y-3">
-              {chats.map((chat) => (
-                <Card 
-                  key={chat.id} 
-                  className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] modern-glow-hover group ${
-                    activeChat === chat.id 
-                      ? 'modern-card-selected modern-glow' 
-                      : 'modern-card hover:shadow-lg'
-                  }`}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div 
-                        className="flex items-center gap-3 mb-3 flex-1 min-w-0"
-                        onClick={() => setActiveChat(chat.id)}
-                      >
-                        <div className="w-2 h-2 rounded-full"
-                             style={{ backgroundColor: 'hsl(var(--modern-accent-primary))' }}>
-                        </div>
-                        <span className="font-semibold text-sm truncate modern-text-primary">{chat.title}</span>
-                      </div>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 modern-text-muted hover:modern-text-primary opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="modern-dialog">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="modern-text-primary">Delete Conversation</AlertDialogTitle>
-                            <AlertDialogDescription className="modern-text-muted">
-                              Are you sure you want to delete "{chat.title}"? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel className="modern-btn-secondary">
-                              Cancel
-                            </AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={() => deleteChat(chat.id)}
-                              className="bg-red-500 hover:bg-red-600 text-white"
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                    <div className="text-xs modern-text-muted font-medium flex items-center gap-2">
-                      <MessageSquare className="w-3 h-3" />
-                      {chat.messages.length} messages
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </ScrollArea>
-        </div>
-      </div>
+        </ScrollArea>
+      </aside>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Modern Header */}
-        <div className="glass-morphism modern-border-b p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="modern-btn-ghost"
-              >
-                <History className="w-5 h-5" />
-              </Button>
-              <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 bg-clip-text text-transparent modern-float">
-                  Multi-AI Studio
-                </h1>
-                <p className="modern-text-muted text-sm font-medium mt-1">
-                  Collaborate with multiple AI platforms
-                </p>
-              </div>
-              
-              {/* Enhanced Discussion Controls */}
-              <div className="flex items-center gap-3">
-                {isDiscussionActive && (
-                  <>
-                    <Button
-                      onClick={stopDiscussion}
-                      className="modern-btn-secondary border-red-200 text-red-600 hover:bg-red-50"
-                    >
-                      <Square className="w-4 h-4 mr-2" />
-                      Stop Discussion
-                    </Button>
-                    <Button
-                      onClick={forceStop}
-                      className="modern-btn-secondary border-red-300 text-red-700 hover:bg-red-100"
-                    >
-                      <AlertTriangle className="w-4 h-4 mr-2" />
-                      Force Stop
-                    </Button>
-                  </>
-                )}
-                
-                {isDiscussionActive && (
-                  <div className="modern-card px-4 py-2">
-                    <div className="text-sm modern-text-muted font-medium">
-                      Round {roundCount}/{maxRounds} • {activeResponders.length} responding
-                    </div>
-                    {discussionSummary.length > 0 && (
-                      <div className="text-xs modern-text-accent mt-1">
-                        {discussionSummary[0]}
+      <main className="flex-1 flex flex-col">
+        {/* Top Bar */}
+        <header className="border-b bg-secondary border-border p-4 flex items-center justify-between">
+          <h1 className="text-lg font-semibold">{chats?.find(chat => chat.id === activeChatId)?.title || 'Select a chat'}</h1>
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="icon" onClick={() => setActiveTab(activeTab === 'chat' ? 'settings' : 'chat')}>
+              {activeTab === 'chat' ? <Settings className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
+            </Button>
+            <Avatar>
+              <AvatarImage src={`https://avatar.vercel.sh/${user.email}.png`} />
+              <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
+            </Avatar>
+          </div>
+        </header>
+
+        {/* Chat Messages Area */}
+        <div className="flex-1 p-4 overflow-y-auto">
+          {activeTab === 'chat' && (
+            <>
+              {isLoadingMessages && (
+                <div className="flex flex-col gap-2">
+                  <Skeleton className="w-80 h-9" />
+                  <Skeleton className="w-64 h-9" />
+                  <Skeleton className="w-96 h-9" />
+                </div>
+              )}
+              {!isLoadingMessages && messages?.map((message) => (
+                <div key={message.id} className={`mb-2 flex flex-col ${message.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div className={`max-w-3xl rounded-lg p-3 text-sm break-words ${message.sender === 'user'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted'
+                    }`}>
+                    {message.content}
+                    {message.sender === 'ai' && message.platform && (
+                      <div className="mt-1 text-xs text-gray-500">
+                        - {getPlatformName(message.platform)}
                       </div>
                     )}
                   </div>
-                )}
-
-                {/* Max Rounds Control */}
-                {!isDiscussionActive && (
-                  <div className="modern-card px-4 py-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm modern-text-muted font-medium">Max Rounds:</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setMaxRounds(Math.max(1, maxRounds - 1))}
-                        className="h-6 w-6 p-0"
-                      >
-                        -
-                      </Button>
-                      <span className="text-sm font-bold modern-text-primary min-w-[2ch] text-center">
-                        {maxRounds}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setMaxRounds(Math.min(10, maxRounds + 1))}
-                        className="h-6 w-6 p-0"
-                      >
-                        +
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* Platform Controls */}
-            <div className="flex items-center gap-6">
-              {platforms.map((platform) => (
-                <div key={platform.id} className="flex items-center gap-3">
-                  <span className="text-2xl">{platform.icon}</span>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold modern-text-primary">{platform.name}</span>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Switch
-                        checked={platform.enabled && platform.hasApiKey}
-                        onCheckedChange={() => togglePlatform(platform.id)}
-                        disabled={!platform.hasApiKey}
-                        className={`data-[state=checked]:${
-                          platform.id === 'openai' ? 'modern-bg-agent-openai' :
-                          platform.id === 'anthropic' ? 'modern-bg-agent-anthropic' :
-                          platform.id === 'deepseek' ? 'modern-bg-agent-deepseek' :
-                          platform.id === 'grok' ? 'modern-bg-agent-grok' :
-                          'bg-amber-500'
-                        }`}
-                      />
-                      {!platform.hasApiKey && (
-                        <Badge variant="destructive" className="text-xs">No Key</Badge>
-                      )}
-                      {platform.hasApiKey && (
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleViewBotHistory(platform)}
-                            className={`h-7 px-3 text-xs font-medium border transition-all duration-200 hover:scale-105 ${
-                              platform.id === 'openai' ? 'modern-border-agent-openai modern-agent-openai hover:modern-bg-agent-openai hover:text-white' :
-                              platform.id === 'anthropic' ? 'modern-border-agent-anthropic modern-agent-anthropic hover:modern-bg-agent-anthropic hover:text-white' :
-                              platform.id === 'deepseek' ? 'modern-border-agent-deepseek modern-agent-deepseek hover:modern-bg-agent-deepseek hover:text-white' :
-                              platform.id === 'grok' ? 'modern-border-agent-grok modern-agent-grok hover:modern-bg-agent-grok hover:text-white' :
-                              'modern-border modern-text-accent hover:bg-amber-500 hover:text-white'
-                            }`}
-                          >
-                            Chat
-                          </Button>
-                          <PlatformStatus 
-                            platform={platform}
-                            status={platformStatuses.get(platform.id) || 'idle'}
-                            error={errors.get(platform.id)}
-                          />
-                        </div>
-                      )}
-                    </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {new Date(message.timestamp).toLocaleTimeString()}
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
+              <div ref={bottomRef} />
+            </>
+          )}
+
+          {activeTab === 'settings' && (
+            <SettingsPanel />
+          )}
         </div>
 
-        {/* Messages Area */}
-        <ScrollArea className="flex-1 p-8 modern-bg-secondary">
-          <div className="max-w-5xl mx-auto space-y-8">
-            {currentChat?.messages.map((message) => {
-              const agentColors = message.sender === 'ai' && message.platform 
-                ? getAgentMessageColors(message.platform)
-                : null;
-
-              return (
-                <div
-                  key={message.id}
-                  className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div className={`max-w-[85%] modern-enter ${message.sender === 'user' ? 'order-2' : 'order-1'}`}>
-                    <Card className={`transition-all duration-300 hover:shadow-xl modern-glow-hover ${
-                      message.sender === 'user' 
-                        ? 'modern-card-elevated bg-gradient-to-br from-amber-100 to-orange-100 border-amber-200' 
-                        : agentColors 
-                          ? `${agentColors.bg} ${agentColors.border} ${agentColors.glow} hover:scale-[1.01]`
-                          : 'modern-card-elevated hover:scale-[1.01]'
-                    }`}>
-                      <CardContent className="p-6">
-                        {message.sender === 'ai' && message.platform && (
-                          <div className="mb-4 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <Badge className={`font-semibold text-white px-3 py-1 ${
-                                message.platform === 'openai' ? 'modern-bg-agent-openai' :
-                                message.platform === 'anthropic' ? 'modern-bg-agent-anthropic' :
-                                message.platform === 'deepseek' ? 'modern-bg-agent-deepseek' :
-                                message.platform === 'grok' ? 'modern-bg-agent-grok' :
-                                'bg-amber-500'
-                              }`}>
-                                {platforms.find(p => p.id === message.platform)?.icon} {platforms.find(p => p.id === message.platform)?.name}
-                              </Badge>
-                              {message.roundNumber && (
-                                <Badge variant="outline" className="text-xs modern-text-muted">
-                                  Round {message.roundNumber}
-                                </Badge>
-                              )}
-                            </div>
-                            <MessageStatus message={message} platforms={platforms} />
-                          </div>
-                        )}
-                        <div className={`text-lg leading-relaxed whitespace-pre-wrap font-medium ${
-                          message.sender === 'ai' ? 'prose prose-lg max-w-none modern-text-primary' : 'modern-text-primary'
-                        }`}>
-                          {message.content}
-                        </div>
-                        <div className={`text-sm mt-4 font-medium flex items-center justify-between ${
-                          message.sender === 'user' ? 'modern-text-secondary' : 'modern-text-muted'
-                        }`}>
-                          <span>{message.timestamp.toLocaleTimeString()}</span>
-                          {message.sender === 'user' && (
-                            <MessageStatus message={message} platforms={platforms} />
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-              );
-            })}
-            
-            {(activeResponders.length > 0) && (
-              <div className="flex justify-start">
-                <Card className="modern-card-elevated modern-glow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-4">
-                      <div className="flex space-x-2">
-                        <div className="w-4 h-4 rounded-full animate-bounce"
-                             style={{ backgroundColor: 'hsl(var(--modern-accent-primary))' }}>
-                        </div>
-                        <div className="w-4 h-4 rounded-full animate-bounce"
-                             style={{ 
-                               backgroundColor: 'hsl(var(--modern-accent-secondary))',
-                               animationDelay: '0.1s'
-                             }}>
-                        </div>
-                        <div className="w-4 h-4 rounded-full animate-bounce"
-                             style={{ 
-                               backgroundColor: 'hsl(var(--modern-accent-tertiary))',
-                               animationDelay: '0.2s'
-                             }}>
-                        </div>
-                      </div>
-                      <span className="text-lg modern-text-muted font-medium">
-                        Round {roundCount}: {activeResponders.length} AI platform(s) are responding...
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-            
-            <div ref={messagesEndRef} />
-          </div>
-        </ScrollArea>
-
-        {/* Modern Input Area */}
-        <div className="glass-morphism modern-border-t p-8">
-          <div className="max-w-5xl mx-auto">
-            <div className="flex gap-4">
-              <Input
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Start a multi-round conversation with AI platforms..."
+        {/* Chat Input */}
+        {activeTab === 'chat' && (
+          <footer className="border-t bg-secondary border-border p-4">
+            <div className="flex items-center gap-2">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    handleSendMessage();
+                    handleSend();
                   }
                 }}
-                disabled={isDiscussionActive}
-                className="flex-1 modern-input text-lg py-4"
+                placeholder="Type your message here..."
+                className="flex-1 resize-none"
               />
-              <Button 
-                onClick={handleSendMessage}
-                disabled={!inputMessage.trim() || isDiscussionActive}
-                className="modern-btn-primary px-8 py-4 text-lg modern-glow-hover"
-              >
-                <Send className="w-6 h-6" />
+              <Button onClick={handleSend} disabled={isLoadingResponse}>
+                {isLoadingResponse ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                Send
               </Button>
             </div>
-            
-            <div className="mt-6 text-center">
-              <div className="modern-card inline-block px-6 py-3">
-                <span className="text-sm modern-text-muted font-medium">
-                  {isDiscussionActive 
-                    ? `Multi-round discussion active: Round ${roundCount}/${maxRounds} - ${platforms.filter(p => p.enabled && p.hasApiKey).length} AI platform(s) collaborating`
-                    : `${platforms.filter(p => p.enabled && p.hasApiKey).length} AI platform(s) ready for multi-round discussion (max ${maxRounds} rounds)`}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+          </footer>
+        )}
+      </main>
 
-      <BotHistoryDialog
-        open={showBotHistoryDialog}
-        onOpenChange={setShowBotHistoryDialog}
-        platform={selectedPlatformForHistory}
-        currentChat={getCurrentChat()}
-        onSendMessage={handleSendMessageToSpecificBot}
-      />
+      {/* Settings Drawer */}
+      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+        <DrawerTrigger asChild>
+          <Button variant="outline">Open Settings</Button>
+        </DrawerTrigger>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Settings</DrawerTitle>
+            <DrawerDescription>
+              Make changes to your profile here. Click save when you're done.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="p-4">
+            <h3 className="text-lg font-semibold mb-2">AI Agent Settings</h3>
+            <p className="text-sm text-muted-foreground mb-4">Enable or disable AI agents for the chat.</p>
+            {platforms.map((platform) => (
+              <div key={platform.id} className="flex items-center justify-between py-2">
+                <div className="flex items-center">
+                  <span className="mr-2">{platform.icon}</span>
+                  <span>{platform.name}</span>
+                </div>
+                <Switch id={platform.id} checked={platform.enabled} onCheckedChange={() => handlePlatformToggle(platform.id)} />
+              </div>
+            ))}
+          </div>
+          <DrawerFooter>
+            <Button>Save changes</Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+
+      {/* New Chat Drawer */}
+      <Drawer open={isNewChatDrawerOpen} onOpenChange={setIsNewChatDrawerOpen}>
+        <DrawerTrigger asChild>
+          <Button variant="outline">New Chat</Button>
+        </DrawerTrigger>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>New Chat</DrawerTitle>
+            <DrawerDescription>
+              Enter a title for the new chat.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="p-4">
+            <Input
+              type="text"
+              placeholder="Chat title"
+              value={newChatTitle}
+              onChange={(e) => setNewChatTitle(e.target.value)}
+            />
+          </div>
+          <DrawerFooter>
+            <Button onClick={handleNewChat}>Create Chat</Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };
