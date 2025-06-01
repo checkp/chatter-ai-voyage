@@ -44,17 +44,12 @@ export const useMultiRoundDiscussion = (
         timestamp: new Date(),
         status: 'sent',
         seenBy: [],
-        roundNumber // Add round tracking
+        roundNumber
       };
       
       addMessage(chatId, agentMessage);
       setPlatformStatus(platform.id, 'completed');
       console.log(`[Round ${roundNumber}] ${platform.name} response completed`);
-
-      // Remove from active responders
-      updateState({
-        activeResponders: new Set([...state.activeResponders].filter(id => id !== platform.id))
-      });
 
       return agentMessage;
     } catch (error) {
@@ -75,14 +70,9 @@ export const useMultiRoundDiscussion = (
       };
       addMessage(chatId, errorMessage);
 
-      // Remove from active responders on error
-      updateState({
-        activeResponders: new Set([...state.activeResponders].filter(id => id !== platform.id))
-      });
-
       throw error;
     }
-  }, [state.activeResponders, setPlatformStatus, addError, clearError, updateState, callAIAPI, addMessage, getCurrentChat]);
+  }, [setPlatformStatus, addError, clearError, callAIAPI, addMessage, getCurrentChat]);
 
   const executeRound = useCallback(async (
     chatId: string,
@@ -109,8 +99,13 @@ export const useMultiRoundDiscussion = (
             await processAIResponse(chatId, platform, enabledPlatforms, roundNumber);
           } catch (error) {
             console.error(`Platform ${platform.name} failed in round ${roundNumber}:`, error);
+          } finally {
+            // Remove from active responders when done (success or error)
+            updateState(prevState => ({
+              activeResponders: new Set([...prevState.activeResponders].filter(id => id !== platform.id))
+            }));
+            resolve();
           }
-          resolve();
         }, index * 1000); // 1 second delay between each agent in a round
       })
     );
@@ -174,6 +169,7 @@ export const useMultiRoundDiscussion = (
       return;
     }
 
+    // Initialize discussion state
     updateState({
       isDiscussionActive: true,
       activeResponders: new Set(),
@@ -185,7 +181,9 @@ export const useMultiRoundDiscussion = (
 
     try {
       for (let round = 1; round <= state.maxRounds; round++) {
-        if (!state.isDiscussionActive) {
+        // Check if discussion was stopped by user
+        const currentState = state;
+        if (!currentState.isDiscussionActive) {
           console.log('Discussion stopped by user');
           break;
         }
