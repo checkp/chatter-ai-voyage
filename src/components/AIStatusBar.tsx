@@ -1,16 +1,27 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Bot, Brain, Search, Zap } from 'lucide-react';
-import type { AIPlatform } from '@/types/chat';
+import type { AIPlatform, Chat } from '@/types/chat';
+import BotHistoryDialog from './BotHistoryDialog';
 
 interface AIStatusBarProps {
   platforms: AIPlatform[];
   activeAIStatuses: Record<string, 'thinking' | 'responding' | 'completed' | 'error'>;
+  currentChat?: Chat | null;
+  onSendMessage?: (message: string, platformId: string) => void;
 }
 
-const AIStatusBar: React.FC<AIStatusBarProps> = ({ platforms, activeAIStatuses }) => {
+const AIStatusBar: React.FC<AIStatusBarProps> = ({ 
+  platforms, 
+  activeAIStatuses, 
+  currentChat,
+  onSendMessage 
+}) => {
+  const [selectedPlatform, setSelectedPlatform] = useState<AIPlatform | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const getPlatformIcon = (platformId: string) => {
     switch (platformId) {
       case 'openai':
@@ -75,6 +86,11 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({ platforms, activeAIStatuses }
     }
   };
 
+  const handlePlatformClick = (platform: AIPlatform) => {
+    setSelectedPlatform(platform);
+    setIsDialogOpen(true);
+  };
+
   const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
 
   if (enabledPlatforms.length === 0) {
@@ -82,40 +98,54 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({ platforms, activeAIStatuses }
   }
 
   return (
-    <div className="bg-secondary/50 border-b border-border px-4 py-2">
-      <div className="flex items-center gap-4">
-        <span className="text-sm font-medium text-muted-foreground">AI Agents:</span>
-        <div className="flex items-center gap-3">
-          <TooltipProvider>
-            {enabledPlatforms.map((platform) => {
-              const status = activeAIStatuses[platform.id];
-              const Icon = getPlatformIcon(platform.id);
-              
-              return (
-                <Tooltip key={platform.id}>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-2">
-                      <div className="relative">
-                        <Icon className="w-4 h-4 text-muted-foreground" />
-                        <div 
-                          className={`absolute -top-1 -right-1 w-2 h-2 rounded-full ${getStatusColor(status || 'idle')} ${getStatusAnimation(status || 'idle')}`}
-                        />
+    <>
+      <div className="bg-secondary/50 border-b border-border px-4 py-2">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium text-muted-foreground">AI Agents:</span>
+          <div className="flex items-center gap-3">
+            <TooltipProvider>
+              {enabledPlatforms.map((platform) => {
+                const status = activeAIStatuses[platform.id];
+                const Icon = getPlatformIcon(platform.id);
+                
+                return (
+                  <Tooltip key={platform.id}>
+                    <TooltipTrigger asChild>
+                      <div 
+                        className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors"
+                        onClick={() => handlePlatformClick(platform)}
+                      >
+                        <div className="relative">
+                          <Icon className="w-4 h-4 text-muted-foreground" />
+                          <div 
+                            className={`absolute -top-1 -right-1 w-2 h-2 rounded-full ${getStatusColor(status || 'idle')} ${getStatusAnimation(status || 'idle')}`}
+                          />
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {platform.name}
+                        </Badge>
                       </div>
-                      <Badge variant="outline" className="text-xs">
-                        {platform.name}
-                      </Badge>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-sm">{getVerboseStatus(platform, status)}</p>
-                  </TooltipContent>
-                </Tooltip>
-              );
-            })}
-          </TooltipProvider>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">{getVerboseStatus(platform, status)}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Click to view chat history</p>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </TooltipProvider>
+          </div>
         </div>
       </div>
-    </div>
+
+      <BotHistoryDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        platform={selectedPlatform}
+        currentChat={currentChat}
+        onSendMessage={onSendMessage}
+      />
+    </>
   );
 };
 

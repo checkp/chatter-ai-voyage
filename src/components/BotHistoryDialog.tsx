@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send } from 'lucide-react';
+import { Send, Square } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -49,6 +49,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
   onSendMessage
 }) => {
   const [inputMessage, setInputMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -145,14 +146,24 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
     }
   };
 
-  const handleSendMessage = () => {
-    if (!inputMessage.trim() || !onSendMessage) return;
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || !onSendMessage || isSending) return;
     
-    onSendMessage(inputMessage, platform.id);
+    setIsSending(true);
+    try {
+      await onSendMessage(inputMessage, platform.id);
+      setInputMessage('');
+      
+      // Auto-scroll after sending message
+      setTimeout(scrollToBottom, 100);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleStopConversation = () => {
     setInputMessage('');
-    
-    // Auto-scroll after sending message
-    setTimeout(scrollToBottom, 100);
+    onOpenChange(false);
   };
 
   const botMessages = getBotMessages();
@@ -162,12 +173,23 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl h-[85vh] flex flex-col modern-dialog">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="flex items-center gap-3 modern-text-primary">
-            <span className="text-2xl">{platform?.icon}</span>
-            <span className="text-xl font-bold">Chat with {platform?.name}</span>
-            <Badge className={`${agentColors.bg} font-semibold text-base px-3 py-1 modern-glow ${agentColors.text}`}>
-              {platform?.name}
-            </Badge>
+          <DialogTitle className="flex items-center justify-between modern-text-primary">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{platform?.icon}</span>
+              <span className="text-xl font-bold">Chat with {platform?.name}</span>
+              <Badge className={`${agentColors.bg} font-semibold text-base px-3 py-1 modern-glow ${agentColors.text}`}>
+                {platform?.name}
+              </Badge>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleStopConversation}
+              className="flex items-center gap-2"
+            >
+              <Square className="w-4 h-4" />
+              End Chat
+            </Button>
           </DialogTitle>
         </DialogHeader>
         
@@ -220,14 +242,19 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder={`Chat with ${platform?.name}...`}
               onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+              disabled={isSending}
               className="flex-1 modern-input"
             />
             <Button 
               onClick={handleSendMessage}
-              disabled={!inputMessage.trim()}
+              disabled={!inputMessage.trim() || isSending}
               className={`${agentColors.bg} hover:opacity-80 ${agentColors.text} font-semibold modern-glow`}
             >
-              <Send className="w-5 h-5" />
+              {isSending ? (
+                <div className="w-5 h-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              ) : (
+                <Send className="w-5 h-5" />
+              )}
             </Button>
           </div>
           <div className="text-sm modern-text-muted mt-3 text-center font-medium">

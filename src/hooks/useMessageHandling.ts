@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
@@ -94,6 +93,111 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
       setActiveAIStatuses({});
     },
   });
+
+  const sendSingleAgentMessage = async (chatId: string, content: string, platformId: string) => {
+    if (!user?.id) throw new Error('User not authenticated');
+
+    const platform = platforms.find(p => p.id === platformId);
+    if (!platform || !platform.enabled || !platform.hasApiKey) {
+      toast.error('Selected AI agent is not available');
+      return;
+    }
+
+    try {
+      const newMessageId = uuidv4();
+      const timestamp = new Date().toISOString();
+
+      console.log('Saving user message for single agent:', newMessageId);
+
+      // Save user message to database
+      const { error: userMessageError } = await supabase
+        .from('messages')
+        .insert([{
+          id: newMessageId,
+          conversation_id: chatId,
+          content,
+          sender: 'user',
+          created_at: timestamp,
+          platform: null,
+        }]);
+
+      if (userMessageError) {
+        console.error('Error sending message:', userMessageError);
+        throw userMessageError;
+      }
+
+      // Refresh messages to show the user message immediately
+      await queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+
+      // Set AI status to thinking
+      setActiveAIStatuses({ [platform.id]: 'thinking' });
+
+      // Get current messages for context
+      const { data: currentMessages } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', chatId)
+        .order('created_at', { ascending: true });
+
+      const messageHistory = (currentMessages || []).map(msg => ({
+        ...msg,
+        sender: msg.sender as 'user' | 'ai',
+        timestamp: new Date(msg.created_at),
+        status: 'sent' as const,
+        seenBy: []
+      }));
+
+      setActiveAIStatuses(prev => ({ ...prev, [platform.id]: 'responding' }));
+
+      const aiContent = await callAIAPI(platform, messageHistory, [platform]);
+      
+      // Save AI response to database
+      const { error: aiMessageError } = await supabase
+        .from('messages')
+        .insert([{
+          id: uuidv4(),
+          conversation_id: chatId,
+          content: aiContent,
+          sender: 'ai',
+          created_at: new Date().toISOString(),
+          platform: platform.id,
+        }]);
+
+      if (aiMessageError) {
+        throw aiMessageError;
+      }
+
+      setActiveAIStatuses(prev => ({ ...prev, [platform.id]: 'completed' }));
+      
+      // Refresh messages
+      await queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+
+      toast.success(`${platform.name} responded successfully`);
+
+      // Clear status after delay
+      setTimeout(() => {
+        setActiveAIStatuses(prev => {
+          const newStatuses = { ...prev };
+          delete newStatuses[platform.id];
+          return newStatuses;
+        });
+      }, 2000);
+
+    } catch (error: any) {
+      console.error('Error sending single agent message:', error);
+      setActiveAIStatuses(prev => ({ ...prev, [platform.id]: 'error' }));
+      toast.error(`Error with ${platform.name}: ${error.message}`);
+      
+      // Clear error status after delay
+      setTimeout(() => {
+        setActiveAIStatuses(prev => {
+          const newStatuses = { ...prev };
+          delete newStatuses[platform.id];
+          return newStatuses;
+        });
+      }, 3000);
+    }
+  };
 
   const processMessageQueue = async (chatId: string) => {
     if (isProcessing || shouldStop) {
@@ -260,6 +364,7 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
     handleStop,
     messageQueue,
     getPendingCount: getPendingCount(),
-    canStop: isProcessing && !shouldStop
+    canStop: isProcessing && !shouldStop,
+    sendSingleAgentMessage
   };
 };

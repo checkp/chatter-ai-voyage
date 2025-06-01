@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -44,7 +43,8 @@ const Index = () => {
     handleStop,
     messageQueue,
     getPendingCount,
-    canStop
+    canStop,
+    sendSingleAgentMessage
   } = useMessageHandling(user, platforms, callAIAPI);
 
   const {
@@ -65,6 +65,11 @@ const Index = () => {
   const handleCreateChat = () => {
     const timestamp = new Date().toLocaleString();
     createChatMutation.mutate(`New Chat - ${timestamp}`);
+  };
+
+  const handleSingleAgentMessage = async (message: string, platformId: string) => {
+    if (!activeChatId) return;
+    await sendSingleAgentMessage(activeChatId, message, platformId);
   };
 
   // Show loading while auth is being determined
@@ -106,6 +111,8 @@ const Index = () => {
         <AIStatusBar 
           platforms={platforms}
           activeAIStatuses={activeAIStatuses}
+          currentChat={chats?.find(chat => chat.id === activeChatId)}
+          onSendMessage={handleSingleAgentMessage}
         />
         
         <ChatHeader 
