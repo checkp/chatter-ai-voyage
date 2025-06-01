@@ -170,8 +170,9 @@ export const usePlatforms = (user: SupabaseUser | null) => {
           content: message.content 
         });
       } else if (message.sender === 'ai') {
-        // Skip the current platform's own messages to avoid sending it its own replies
+        // FIXED: Skip the current platform's own messages completely
         if (message.platform === platformId) {
+          console.log(`Skipping ${platformId}'s own message:`, message.content.substring(0, 50));
           return;
         }
         
@@ -187,6 +188,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       }
     });
     
+    console.log(`Built conversation for ${platformId} with ${conversationHistory.length} messages`);
     return conversationHistory;
   };
 
@@ -208,12 +210,13 @@ IMPORTANT INSTRUCTIONS:
 - You can reference other agents' points when relevant
 - Keep responses focused and add genuine value to the discussion
 - Avoid redundant information already covered by other agents
+- DO NOT reference or build upon your own previous responses
 
 Your goal: Contribute meaningfully to this multi-agent conversation as ${platform.name}.`;
       
       conversationHistory.unshift({ role: 'user', content: contextMessage });
     } else {
-      conversationHistory.unshift({ role: 'user', content: `You are ${platform.name}. Continue the conversation naturally, building on your previous responses.` });
+      conversationHistory.unshift({ role: 'user', content: `You are ${platform.name}. Respond to the conversation naturally without referencing your previous responses.` });
     }
 
     console.log(`Calling ${platform.name} API with ${conversationHistory.length} messages and model: ${platform.selectedModel}`);

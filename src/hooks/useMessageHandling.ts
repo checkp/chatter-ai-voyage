@@ -117,13 +117,14 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
           break;
         }
 
-        console.log('Processing queued message:', nextMessage.id);
+        console.log('Processing queued message:', nextMessage.id, nextMessage.content.substring(0, 50));
         updateMessageStatus(nextMessage.id, 'processing');
 
         try {
           // Parse AI response message
           if (nextMessage.content.startsWith('AI_RESPONSE:')) {
-            const [, platformId, originalContent] = nextMessage.content.split(':', 3);
+            const parts = nextMessage.content.split(':');
+            const platformId = parts[1];
             const platform = platforms.find(p => p.id === platformId);
             
             if (!platform) {
@@ -180,14 +181,15 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
           console.error('Error processing queued message:', error);
           
           if (nextMessage.content.startsWith('AI_RESPONSE:')) {
-            const [, platformId] = nextMessage.content.split(':', 3);
+            const parts = nextMessage.content.split(':');
+            const platformId = parts[1];
             setActiveAIStatuses(prev => ({ ...prev, [platformId]: 'error' }));
           }
 
           updateMessageStatus(nextMessage.id, 'failed');
           toast.error(`Error processing message: ${error.message}`);
           
-          // Remove failed message from queue (you could implement retry logic here)
+          // Remove failed message from queue
           removeFromQueue(nextMessage.id);
         }
       }
