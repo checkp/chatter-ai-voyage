@@ -41,7 +41,11 @@ const Index = () => {
     isLoadingResponse,
     activeAIStatuses,
     sendMessageMutation,
-    handleSend
+    handleSend,
+    handleStop,
+    messageQueue,
+    getPendingCount,
+    canStop
   } = useMessageHandling(user, platforms, callAIAPI);
 
   const {
@@ -143,8 +147,11 @@ const Index = () => {
             input={input}
             setInput={setInput}
             handleSend={() => handleSend(activeChatId)}
+            handleStop={handleStop}
             isLoadingResponse={isLoadingResponse}
             isPending={sendMessageMutation.isPending}
+            canStop={canStop}
+            pendingCount={getPendingCount}
           />
         )}
       </main>
