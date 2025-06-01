@@ -29,15 +29,21 @@ const PlatformStatus: React.FC<PlatformStatusProps> = ({ platform, status, error
   const getStatusColor = () => {
     switch (status) {
       case 'thinking':
-        return 'border-pastel-accent text-pastel-accent';
+        return 'modern-text-accent border-amber-300';
       case 'responding':
-        return `border-agent-${platform.id} text-agent-${platform.id}`;
+        return `${
+          platform.id === 'openai' ? 'modern-border-agent-openai modern-agent-openai' :
+          platform.id === 'anthropic' ? 'modern-border-agent-anthropic modern-agent-anthropic' :
+          platform.id === 'deepseek' ? 'modern-border-agent-deepseek modern-agent-deepseek' :
+          platform.id === 'grok' ? 'modern-border-agent-grok modern-agent-grok' :
+          'modern-text-accent border-amber-300'
+        }`;
       case 'completed':
-        return 'border-pastel-secondary text-pastel-secondary';
+        return 'text-green-600 border-green-300';
       case 'error':
-        return 'border-pastel-danger text-pastel-danger';
+        return 'text-red-600 border-red-300';
       default:
-        return 'border-pastel-muted text-pastel-muted';
+        return 'modern-text-muted modern-border';
     }
   };
 
@@ -46,11 +52,11 @@ const PlatformStatus: React.FC<PlatformStatusProps> = ({ platform, status, error
   return (
     <Badge 
       variant="outline" 
-      className={`text-xs ${getStatusColor()} transition-all duration-200`}
+      className={`text-xs modern-glow-hover transition-all duration-300 ${getStatusColor()}`}
       title={error || status}
     >
       {getStatusIcon()}
-      <span className="ml-1 capitalize">{status}</span>
+      <span className="ml-1 capitalize font-medium">{status}</span>
     </Badge>
   );
 };

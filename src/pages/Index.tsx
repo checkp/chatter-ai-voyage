@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import ApiKeySettings from '@/components/ApiKeySettings';
 import BotHistoryDialog from '@/components/BotHistoryDialog';
+import { ThemeSelector } from '@/components/ui/theme-selector';
 import { useAuth } from '@/hooks/useAuth';
 import { useChats } from '@/hooks/useChats';
 import { usePlatforms } from '@/hooks/usePlatforms';
@@ -183,166 +184,190 @@ const Index = () => {
 
   if (user === null && session === null) {
     return (
-      <div className="h-screen flex items-center justify-center bg-pastel-bg">
+      <div className="h-screen flex items-center justify-center modern-bg-primary">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pastel-primary mx-auto mb-4"></div>
-          <p className="text-pastel-text">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent modern-glow mx-auto mb-6"
+               style={{ 
+                 borderTopColor: 'hsl(var(--modern-accent-primary))',
+                 borderRightColor: 'hsl(var(--modern-accent-secondary))'
+               }}>
+          </div>
+          <p className="modern-text-primary text-lg font-medium">Loading your workspace...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex bg-pastel-bg font-sans text-pastel-text">
-      {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-pastel-primary/30 bg-gradient-to-b from-pastel-surface to-pastel-surface/70 backdrop-blur-md`}>
-        <div className="p-4 border-b border-pastel-primary/30">
-          <Button 
-            onClick={createNewChat}
-            className="w-full justify-start gap-2 bg-gradient-to-r from-pastel-primary to-pastel-accent hover:from-pastel-primary/80 hover:to-pastel-accent/80 text-pastel-text font-semibold text-base mb-3 shadow-lg hover:shadow-xl transition-all duration-200 animate-float"
-          >
-            <Plus className="w-5 h-5" />
-            New Chat
-          </Button>
-          
-          <Dialog open={showApiKeyDialog} onOpenChange={handleApiKeyDialogClose}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="w-full justify-start gap-2 mb-3 border-pastel-secondary/50 text-pastel-text hover:bg-pastel-secondary/20 text-base shadow-sm">
-                <Key className="w-5 h-5" />
-                API Keys
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto bg-pastel-surface border-pastel-primary/30 shadow-2xl">
-              <DialogHeader>
-                <DialogTitle className="text-pastel-text text-xl font-bold">API Key Settings</DialogTitle>
-              </DialogHeader>
-              <ApiKeySettings />
-            </DialogContent>
-          </Dialog>
+    <div className="h-screen flex modern-bg-primary modern-text-primary font-inter">
+      {/* Modern Sidebar */}
+      <div className={`${sidebarOpen ? 'w-80' : 'w-0'} transition-all duration-500 ease-out overflow-hidden`}>
+        <div className="h-full glass-morphism modern-border-r p-6 flex flex-col">
+          {/* Sidebar Header */}
+          <div className="space-y-4 mb-6">
+            <Button 
+              onClick={createNewChat}
+              className="w-full modern-btn-primary text-base font-semibold py-4 modern-float modern-glow-hover gap-3"
+            >
+              <Plus className="w-5 h-5" />
+              New Conversation
+            </Button>
+            
+            <div className="flex gap-2">
+              <Dialog open={showApiKeyDialog} onOpenChange={handleApiKeyDialogClose}>
+                <DialogTrigger asChild>
+                  <Button className="flex-1 modern-btn-secondary">
+                    <Key className="w-4 h-4 mr-2" />
+                    API Keys
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="modern-dialog sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="modern-text-primary text-2xl font-bold">API Configuration</DialogTitle>
+                  </DialogHeader>
+                  <ApiKeySettings />
+                </DialogContent>
+              </Dialog>
+              
+              <ThemeSelector />
+            </div>
 
-          {user && (
-            <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-pastel-surface to-pastel-primary/10 rounded-xl border border-pastel-primary/20 shadow-sm">
-              <Avatar className="w-10 h-10 border-2 border-pastel-primary/30 shadow-md">
-                <AvatarImage src={user.user_metadata?.avatar_url} />
-                <AvatarFallback className="bg-pastel-primary text-pastel-text font-bold text-lg">
-                  {user.email?.charAt(0).toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate text-pastel-text">
-                  {user.user_metadata?.full_name || user.email}
+            {user && (
+              <div className="modern-card p-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-12 h-12 ring-2 ring-offset-2 modern-glow"
+                          style={{ 
+                            ringColor: 'hsl(var(--modern-accent-primary))',
+                            ringOffsetColor: 'hsl(var(--modern-bg-primary))'
+                          }}>
+                    <AvatarImage src={user.user_metadata?.avatar_url} />
+                    <AvatarFallback className="modern-bg-secondary modern-text-primary font-bold text-lg">
+                      {user.email?.charAt(0).toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold truncate modern-text-primary">
+                      {user.user_metadata?.full_name || user.email}
+                    </div>
+                    <div className="text-xs modern-text-muted">Online</div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSignOut}
+                    className="h-8 w-8 p-0 modern-text-muted hover:modern-text-primary"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSignOut}
-                className="h-8 w-8 p-0 hover:bg-pastel-danger/20 text-pastel-danger"
-              >
-                <LogOut className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
-        </div>
-        
-        <ScrollArea className="flex-1 p-4">
-          <div className="space-y-3">
-            {chats.map((chat) => (
-              <Card 
-                key={chat.id} 
-                className={`cursor-pointer transition-all duration-200 hover:shadow-lg border group hover:scale-[1.02] ${
-                  activeChat === chat.id 
-                    ? 'border-pastel-primary bg-gradient-to-r from-pastel-primary/20 to-pastel-accent/20 shadow-md' 
-                    : 'border-pastel-surface hover:border-pastel-primary/50 bg-pastel-surface/50 hover:bg-pastel-surface/80'
-                }`}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div 
-                      className="flex items-center gap-3 mb-2 flex-1 min-w-0"
-                      onClick={() => setActiveChat(chat.id)}
-                    >
-                      <MessageSquare className="w-4 h-4 text-pastel-primary flex-shrink-0" />
-                      <span className="font-medium text-sm truncate text-pastel-text">{chat.title}</span>
-                    </div>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 hover:bg-pastel-danger/20 text-pastel-danger opacity-60 group-hover:opacity-100 transition-opacity ml-2"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-pastel-surface border-pastel-primary/30 shadow-2xl">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle className="text-pastel-text">Delete Chat</AlertDialogTitle>
-                          <AlertDialogDescription className="text-pastel-muted">
-                            Are you sure you want to delete "{chat.title}"? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel className="border-pastel-primary/30 text-pastel-text hover:bg-pastel-surface/80">
-                            Cancel
-                          </AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={() => deleteChat(chat.id)}
-                            className="bg-pastel-danger hover:bg-pastel-danger/80 text-white"
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                  <div className="text-xs text-pastel-muted font-medium">
-                    {chat.messages.length} messages
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            )}
           </div>
-        </ScrollArea>
+          
+          {/* Chat List */}
+          <ScrollArea className="flex-1">
+            <div className="space-y-3">
+              {chats.map((chat) => (
+                <Card 
+                  key={chat.id} 
+                  className={`cursor-pointer transition-all duration-300 hover:scale-[1.02] modern-glow-hover group ${
+                    activeChat === chat.id 
+                      ? 'modern-card-selected modern-glow' 
+                      : 'modern-card hover:shadow-lg'
+                  }`}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div 
+                        className="flex items-center gap-3 mb-3 flex-1 min-w-0"
+                        onClick={() => setActiveChat(chat.id)}
+                      >
+                        <div className="w-2 h-2 rounded-full"
+                             style={{ backgroundColor: 'hsl(var(--modern-accent-primary))' }}>
+                        </div>
+                        <span className="font-semibold text-sm truncate modern-text-primary">{chat.title}</span>
+                      </div>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 modern-text-muted hover:modern-text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="modern-dialog">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="modern-text-primary">Delete Conversation</AlertDialogTitle>
+                            <AlertDialogDescription className="modern-text-muted">
+                              Are you sure you want to delete "{chat.title}"? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="modern-btn-secondary">
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => deleteChat(chat.id)}
+                              className="bg-red-500 hover:bg-red-600 text-white"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                    <div className="text-xs modern-text-muted font-medium flex items-center gap-2">
+                      <MessageSquare className="w-3 h-3" />
+                      {chat.messages.length} messages
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
       </div>
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className="border-b border-pastel-primary/30 bg-gradient-to-r from-pastel-surface to-pastel-surface/70 backdrop-blur-md p-6 shadow-sm">
+        {/* Modern Header */}
+        <div className="glass-morphism modern-border-b p-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="text-pastel-primary hover:bg-pastel-primary/20 shadow-sm"
+                className="modern-btn-ghost"
               >
                 <History className="w-5 h-5" />
               </Button>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-pastel-primary via-pastel-accent to-pastel-secondary bg-clip-text text-transparent">
-                Multi-AI Chat
-              </h1>
+              <div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 bg-clip-text text-transparent modern-float">
+                  Multi-AI Studio
+                </h1>
+                <p className="modern-text-muted text-sm font-medium mt-1">
+                  Collaborate with multiple AI platforms
+                </p>
+              </div>
               
-              {/* Improved Discussion Controls */}
+              {/* Discussion Controls */}
               <div className="flex items-center gap-3">
                 {isDiscussionActive && (
                   <>
                     <Button
                       onClick={stopDiscussion}
-                      variant="outline"
-                      size="sm"
-                      className="border-pastel-danger text-pastel-danger hover:bg-pastel-danger/20 shadow-sm"
+                      className="modern-btn-secondary border-red-200 text-red-600 hover:bg-red-50"
                     >
                       <Square className="w-4 h-4 mr-2" />
-                      Stop Discussion
+                      Stop
                     </Button>
                     <Button
                       onClick={forceStop}
-                      variant="outline"
-                      size="sm"
-                      className="border-pastel-danger text-pastel-danger hover:bg-pastel-danger/20 shadow-sm"
+                      className="modern-btn-secondary border-red-300 text-red-700 hover:bg-red-100"
                     >
                       <AlertTriangle className="w-4 h-4 mr-2" />
                       Force Stop
@@ -351,98 +376,105 @@ const Index = () => {
                 )}
                 
                 {isDiscussionActive && (
-                  <div className="text-sm text-pastel-muted bg-pastel-surface/50 px-3 py-1 rounded-full">
-                    Round {roundCount}/{maxRounds} • {activeResponders.length} active
+                  <div className="modern-card px-4 py-2">
+                    <div className="text-sm modern-text-muted font-medium">
+                      Round {roundCount}/{maxRounds} • {activeResponders.length} active
+                    </div>
                   </div>
                 )}
               </div>
             </div>
             
+            {/* Platform Controls */}
             <div className="flex items-center gap-6">
               {platforms.map((platform) => (
                 <div key={platform.id} className="flex items-center gap-3">
-                  <span className="text-xl">{platform.icon}</span>
-                  <span className="text-base font-medium text-pastel-text">{platform.name}</span>
-                  <Switch
-                    checked={platform.enabled && platform.hasApiKey}
-                    onCheckedChange={() => togglePlatform(platform.id)}
-                    disabled={!platform.hasApiKey}
-                    className={`data-[state=checked]:${
-                      platform.id === 'openai' ? 'bg-agent-openai' :
-                      platform.id === 'anthropic' ? 'bg-agent-anthropic' :
-                      platform.id === 'deepseek' ? 'bg-agent-deepseek' :
-                      platform.id === 'grok' ? 'bg-agent-grok' :
-                      'bg-pastel-primary'
-                    }`}
-                  />
-                  {!platform.hasApiKey && (
-                    <Badge variant="destructive" className="text-xs bg-pastel-danger text-white">No Key</Badge>
-                  )}
-                  {platform.hasApiKey && (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewBotHistory(platform)}
-                        className={`h-8 px-3 text-xs font-medium border shadow-sm transition-all duration-200 hover:scale-105 ${
-                          platform.id === 'openai' ? 'border-agent-openai text-agent-openai hover:bg-agent-openai/20' :
-                          platform.id === 'anthropic' ? 'border-agent-anthropic text-agent-anthropic hover:bg-agent-anthropic/20' :
-                          platform.id === 'deepseek' ? 'border-agent-deepseek text-agent-deepseek hover:bg-agent-deepseek/20' :
-                          platform.id === 'grok' ? 'border-agent-grok text-agent-grok hover:bg-agent-grok/20' :
-                          'border-pastel-primary text-pastel-primary hover:bg-pastel-primary/20'
+                  <span className="text-2xl">{platform.icon}</span>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold modern-text-primary">{platform.name}</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Switch
+                        checked={platform.enabled && platform.hasApiKey}
+                        onCheckedChange={() => togglePlatform(platform.id)}
+                        disabled={!platform.hasApiKey}
+                        className={`data-[state=checked]:${
+                          platform.id === 'openai' ? 'modern-bg-agent-openai' :
+                          platform.id === 'anthropic' ? 'modern-bg-agent-anthropic' :
+                          platform.id === 'deepseek' ? 'modern-bg-agent-deepseek' :
+                          platform.id === 'grok' ? 'modern-bg-agent-grok' :
+                          'bg-amber-500'
                         }`}
-                      >
-                        Chat
-                      </Button>
-                      <PlatformStatus 
-                        platform={platform}
-                        status={platformStatuses.get(platform.id) || 'idle'}
-                        error={errors.get(platform.id)}
                       />
+                      {!platform.hasApiKey && (
+                        <Badge variant="destructive" className="text-xs">No Key</Badge>
+                      )}
+                      {platform.hasApiKey && (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewBotHistory(platform)}
+                            className={`h-7 px-3 text-xs font-medium border transition-all duration-200 hover:scale-105 ${
+                              platform.id === 'openai' ? 'modern-border-agent-openai modern-agent-openai hover:modern-bg-agent-openai hover:text-white' :
+                              platform.id === 'anthropic' ? 'modern-border-agent-anthropic modern-agent-anthropic hover:modern-bg-agent-anthropic hover:text-white' :
+                              platform.id === 'deepseek' ? 'modern-border-agent-deepseek modern-agent-deepseek hover:modern-bg-agent-deepseek hover:text-white' :
+                              platform.id === 'grok' ? 'modern-border-agent-grok modern-agent-grok hover:modern-bg-agent-grok hover:text-white' :
+                              'modern-border modern-text-accent hover:bg-amber-500 hover:text-white'
+                            }`}
+                          >
+                            Chat
+                          </Button>
+                          <PlatformStatus 
+                            platform={platform}
+                            status={platformStatuses.get(platform.id) || 'idle'}
+                            error={errors.get(platform.id)}
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Messages */}
-        <ScrollArea className="flex-1 p-6 bg-gradient-to-b from-pastel-bg to-pastel-surface/30">
-          <div className="max-w-4xl mx-auto space-y-6">
+        {/* Messages Area */}
+        <ScrollArea className="flex-1 p-8 modern-bg-secondary">
+          <div className="max-w-5xl mx-auto space-y-8">
             {currentChat?.messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div className={`max-w-[80%] ${message.sender === 'user' ? 'order-2' : 'order-1'}`}>
-                  <Card className={`border transition-all duration-200 hover:shadow-lg ${
+                <div className={`max-w-[85%] modern-enter ${message.sender === 'user' ? 'order-2' : 'order-1'}`}>
+                  <Card className={`transition-all duration-300 hover:shadow-xl modern-glow-hover ${
                     message.sender === 'user' 
-                      ? 'bg-gradient-to-r from-pastel-primary to-pastel-accent text-pastel-text border-pastel-primary shadow-md' 
-                      : 'bg-pastel-surface/70 border-pastel-primary/30 text-pastel-text shadow-sm hover:shadow-md'
+                      ? 'modern-card-elevated bg-gradient-to-br from-amber-100 to-orange-100 border-amber-200' 
+                      : 'modern-card-elevated hover:scale-[1.01]'
                   }`}>
-                    <CardContent className="p-5">
+                    <CardContent className="p-6">
                       {message.sender === 'ai' && message.platform && (
-                        <div className="mb-3 flex items-center justify-between">
-                          <Badge className={`font-semibold shadow-sm ${
-                            message.platform === 'openai' ? 'bg-agent-openai border-agent-openai text-white' :
-                            message.platform === 'anthropic' ? 'bg-agent-anthropic border-agent-anthropic text-white' :
-                            message.platform === 'deepseek' ? 'bg-agent-deepseek border-agent-deepseek text-white' :
-                            message.platform === 'grok' ? 'bg-agent-grok border-agent-grok text-white' :
-                            'bg-pastel-primary border-pastel-primary text-white'
+                        <div className="mb-4 flex items-center justify-between">
+                          <Badge className={`font-semibold text-white px-3 py-1 ${
+                            message.platform === 'openai' ? 'modern-bg-agent-openai' :
+                            message.platform === 'anthropic' ? 'modern-bg-agent-anthropic' :
+                            message.platform === 'deepseek' ? 'modern-bg-agent-deepseek' :
+                            message.platform === 'grok' ? 'modern-bg-agent-grok' :
+                            'bg-amber-500'
                           }`}>
                             {platforms.find(p => p.id === message.platform)?.icon} {platforms.find(p => p.id === message.platform)?.name}
                           </Badge>
                           <MessageStatus message={message} platforms={platforms} />
                         </div>
                       )}
-                      <div className={`text-base leading-relaxed whitespace-pre-wrap font-medium ${
-                        message.sender === 'ai' ? 'prose prose-sm max-w-none text-pastel-text' : ''
+                      <div className={`text-lg leading-relaxed whitespace-pre-wrap font-medium ${
+                        message.sender === 'ai' ? 'prose prose-lg max-w-none modern-text-primary' : 'modern-text-primary'
                       }`}>
                         {message.content}
                       </div>
                       <div className={`text-sm mt-4 font-medium flex items-center justify-between ${
-                        message.sender === 'user' ? 'text-pastel-text/80' : 'text-pastel-muted'
+                        message.sender === 'user' ? 'modern-text-secondary' : 'modern-text-muted'
                       }`}>
                         <span>{message.timestamp.toLocaleTimeString()}</span>
                         {message.sender === 'user' && (
@@ -457,17 +489,29 @@ const Index = () => {
             
             {(isLoading || activeResponders.length > 0) && (
               <div className="flex justify-start">
-                <Card className="bg-pastel-surface/70 border-pastel-primary/30 shadow-sm">
-                  <CardContent className="p-5">
+                <Card className="modern-card-elevated modern-glow">
+                  <CardContent className="p-6">
                     <div className="flex items-center gap-4">
                       <div className="flex space-x-2">
-                        <div className="w-3 h-3 bg-pastel-primary rounded-full animate-bounce shadow-sm"></div>
-                        <div className="w-3 h-3 bg-pastel-accent rounded-full animate-bounce shadow-sm" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-3 h-3 bg-pastel-secondary rounded-full animate-bounce shadow-sm" style={{ animationDelay: '0.2s' }}></div>
+                        <div className="w-4 h-4 rounded-full animate-bounce"
+                             style={{ backgroundColor: 'hsl(var(--modern-accent-primary))' }}>
+                        </div>
+                        <div className="w-4 h-4 rounded-full animate-bounce"
+                             style={{ 
+                               backgroundColor: 'hsl(var(--modern-accent-secondary))',
+                               animationDelay: '0.1s'
+                             }}>
+                        </div>
+                        <div className="w-4 h-4 rounded-full animate-bounce"
+                             style={{ 
+                               backgroundColor: 'hsl(var(--modern-accent-tertiary))',
+                               animationDelay: '0.2s'
+                             }}>
+                        </div>
                       </div>
-                      <span className="text-base text-pastel-muted font-medium">
+                      <span className="text-lg modern-text-muted font-medium">
                         {activeResponders.length > 0 
-                          ? `${activeResponders.length} AI platform(s) are responding...` 
+                          ? `${activeResponders.length} AI platform(s) are crafting responses...` 
                           : 'AI platforms are thinking...'}
                       </span>
                     </div>
@@ -480,14 +524,14 @@ const Index = () => {
           </div>
         </ScrollArea>
 
-        {/* Input Area */}
-        <div className="border-t border-pastel-primary/30 bg-gradient-to-r from-pastel-surface to-pastel-surface/70 backdrop-blur-md p-6 shadow-lg">
-          <div className="max-w-4xl mx-auto">
+        {/* Modern Input Area */}
+        <div className="glass-morphism modern-border-t p-8">
+          <div className="max-w-5xl mx-auto">
             <div className="flex gap-4">
               <Input
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Start a discussion with AI platforms..."
+                placeholder="Start a conversation with AI platforms..."
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -495,21 +539,25 @@ const Index = () => {
                   }
                 }}
                 disabled={isLoading || isDiscussionActive}
-                className="flex-1 bg-pastel-surface/70 border-pastel-primary/30 focus:border-pastel-primary text-pastel-text placeholder:text-pastel-muted text-base font-medium shadow-sm hover:shadow-md transition-shadow duration-200"
+                className="flex-1 modern-input text-lg py-4"
               />
               <Button 
                 onClick={handleSendMessage}
                 disabled={!inputMessage.trim() || isLoading || isDiscussionActive}
-                className="bg-gradient-to-r from-pastel-primary to-pastel-accent hover:from-pastel-primary/80 hover:to-pastel-accent/80 text-pastel-text font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+                className="modern-btn-primary px-8 py-4 text-lg modern-glow-hover"
               >
-                <Send className="w-5 h-5" />
+                <Send className="w-6 h-6" />
               </Button>
             </div>
             
-            <div className="mt-4 text-sm text-pastel-muted text-center font-medium bg-pastel-surface/30 py-2 rounded-lg">
-              {isDiscussionActive 
-                ? `Discussion active: Round ${roundCount}/${maxRounds} - ${platforms.filter(p => p.enabled && p.hasApiKey).length} AI platform(s) participating`
-                : `${platforms.filter(p => p.enabled && p.hasApiKey).length} AI platform(s) enabled`}
+            <div className="mt-6 text-center">
+              <div className="modern-card inline-block px-6 py-3">
+                <span className="text-sm modern-text-muted font-medium">
+                  {isDiscussionActive 
+                    ? `Discussion active: Round ${roundCount}/${maxRounds} - ${platforms.filter(p => p.enabled && p.hasApiKey).length} AI platform(s) participating`
+                    : `${platforms.filter(p => p.enabled && p.hasApiKey).length} AI platform(s) ready to collaborate`}
+                </span>
+              </div>
             </div>
           </div>
         </div>
