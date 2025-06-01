@@ -100,6 +100,7 @@ export type Database = {
           created_at: string
           enabled: boolean
           id: string
+          model: string | null
           platform: string
           updated_at: string
           user_id: string
@@ -108,6 +109,7 @@ export type Database = {
           created_at?: string
           enabled?: boolean
           id?: string
+          model?: string | null
           platform: string
           updated_at?: string
           user_id: string
@@ -116,6 +118,7 @@ export type Database = {
           created_at?: string
           enabled?: boolean
           id?: string
+          model?: string | null
           platform?: string
           updated_at?: string
           user_id?: string

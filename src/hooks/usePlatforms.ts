@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform, Message } from '@/types/chat';
 import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI } from '@/services/aiApiService';
+import { getDefaultModel } from '@/config/aiModels';
 
 export const usePlatforms = (user: SupabaseUser | null) => {
   const [platforms, setPlatforms] = useState<AIPlatform[]>([
@@ -13,7 +15,8 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       enabled: false, 
       color: 'bg-agent-openai border-agent-openai text-cyber-bg', 
       icon: '🤖',
-      hasApiKey: false
+      hasApiKey: false,
+      selectedModel: getDefaultModel('openai')
     },
     { 
       id: 'anthropic', 
@@ -21,7 +24,8 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       enabled: false,
       color: 'bg-agent-anthropic border-agent-anthropic text-cyber-bg', 
       icon: '🎭',
-      hasApiKey: false
+      hasApiKey: false,
+      selectedModel: getDefaultModel('anthropic')
     },
     { 
       id: 'deepseek', 
@@ -29,7 +33,8 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       enabled: false, 
       color: 'bg-agent-deepseek border-agent-deepseek text-cyber-bg', 
       icon: '🔍',
-      hasApiKey: false
+      hasApiKey: false,
+      selectedModel: getDefaultModel('deepseek')
     },
     { 
       id: 'grok', 
@@ -37,7 +42,8 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       enabled: false, 
       color: 'bg-agent-grok border-agent-grok text-cyber-bg', 
       icon: '🚀',
-      hasApiKey: false
+      hasApiKey: false,
+      selectedModel: getDefaultModel('grok')
     },
   ]);
 
@@ -72,7 +78,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     try {
       const { data: settings, error } = await supabase
         .from('user_agent_settings')
-        .select('platform, enabled')
+        .select('platform, enabled, model')
         .eq('user_id', user.id);
 
       if (error) {
@@ -80,29 +86,39 @@ export const usePlatforms = (user: SupabaseUser | null) => {
         return;
       }
 
-      const settingsMap = new Map((settings || []).map(setting => [setting.platform, setting.enabled]));
+      const settingsMap = new Map((settings || []).map(setting => [
+        setting.platform, 
+        { enabled: setting.enabled, model: setting.model }
+      ]));
       
       setPlatforms(prev => prev.map(platform => ({
         ...platform,
-        enabled: settingsMap.get(platform.id) || false
+        enabled: settingsMap.get(platform.id)?.enabled || false,
+        selectedModel: settingsMap.get(platform.id)?.model || getDefaultModel(platform.id)
       })));
     } catch (error: any) {
       console.error('Failed to load agent settings:', error);
     }
   };
 
-  const saveAgentSetting = async (platformId: string, enabled: boolean) => {
+  const saveAgentSetting = async (platformId: string, enabled: boolean, model?: string) => {
     if (!user) return;
 
     try {
+      const updateData: any = {
+        user_id: user.id,
+        platform: platformId,
+        enabled: enabled,
+        updated_at: new Date().toISOString()
+      };
+
+      if (model) {
+        updateData.model = model;
+      }
+
       const { error } = await supabase
         .from('user_agent_settings')
-        .upsert({
-          user_id: user.id,
-          platform: platformId,
-          enabled: enabled,
-          updated_at: new Date().toISOString()
-        }, {
+        .upsert(updateData, {
           onConflict: 'user_id,platform'
         });
 
@@ -219,17 +235,19 @@ Your goal: Add genuine value to the ongoing conversation as ${platform.name}.`;
       conversationHistory.unshift({ role: 'user', content: `You are ${platform.name}. Continue the conversation naturally, building on your previous responses without repeating yourself.` });
     }
 
-    console.log(`Calling ${platform.name} API with ${conversationHistory.length} messages`);
+    console.log(`Calling ${platform.name} API with ${conversationHistory.length} messages and model: ${platform.selectedModel}`);
+    
+    const selectedModel = platform.selectedModel || getDefaultModel(platform.id);
     
     switch (platform.id) {
       case 'anthropic':
-        return await callClaudeAPI(conversationHistory);
+        return await callClaudeAPI(conversationHistory, selectedModel);
       case 'openai':
-        return await callOpenAI(conversationHistory, user);
+        return await callOpenAI(conversationHistory, user, selectedModel);
       case 'deepseek':
-        return await callDeepSeek(conversationHistory, user);
+        return await callDeepSeek(conversationHistory, user, selectedModel);
       case 'grok':
-        return await callGrokAPI(conversationHistory, user);
+        return await callGrokAPI(conversationHistory, user, selectedModel);
       default:
         throw new Error(`Unsupported platform: ${platform.id}`);
     }

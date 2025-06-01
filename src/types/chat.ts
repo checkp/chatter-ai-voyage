@@ -27,4 +27,5 @@ export interface AIPlatform {
   icon: string;
   hasApiKey?: boolean;
   endpoint?: string;
+  selectedModel?: string;
 }

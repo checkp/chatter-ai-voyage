@@ -7,14 +7,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Key, Save, Eye, EyeOff } from 'lucide-react';
+import ModelSelector from './ModelSelector';
+import { getDefaultModel } from '@/config/aiModels';
 
 interface ApiKey {
   platform: string;
   encrypted_key: string;
 }
 
+interface AgentSetting {
+  platform: string;
+  model: string;
+}
+
 const ApiKeySettings = () => {
   const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
+  const [selectedModels, setSelectedModels] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
 
@@ -27,6 +35,7 @@ const ApiKeySettings = () => {
 
   useEffect(() => {
     loadApiKeys();
+    loadModelSettings();
   }, []);
 
   const loadApiKeys = async () => {
@@ -59,6 +68,43 @@ const ApiKeySettings = () => {
     } catch (error: any) {
       console.error('Failed to load API keys:', error);
       toast.error('Failed to load API keys: ' + error.message);
+    }
+  };
+
+  const loadModelSettings = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log('No user found when loading model settings');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('user_agent_settings')
+        .select('platform, model')
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error loading model settings:', error);
+        throw error;
+      }
+
+      const modelsMap: Record<string, string> = {};
+      data?.forEach((setting: AgentSetting) => {
+        modelsMap[setting.platform] = setting.model || getDefaultModel(setting.platform);
+      });
+
+      // Set defaults for platforms without settings
+      platforms.forEach(platform => {
+        if (!modelsMap[platform.id]) {
+          modelsMap[platform.id] = getDefaultModel(platform.id);
+        }
+      });
+
+      setSelectedModels(modelsMap);
+    } catch (error: any) {
+      console.error('Failed to load model settings:', error);
+      toast.error('Failed to load model settings: ' + error.message);
     }
   };
 
@@ -127,6 +173,44 @@ const ApiKeySettings = () => {
     }
   };
 
+  const saveModelSetting = async (platform: string, model: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('No user found when saving model setting');
+        throw new Error('User not authenticated');
+      }
+
+      const { error } = await supabase
+        .from('user_agent_settings')
+        .upsert({
+          user_id: user.id,
+          platform,
+          model,
+          enabled: false, // Keep existing enabled state
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,platform'
+        });
+
+      if (error) {
+        console.error('Error saving model setting:', error);
+        throw error;
+      }
+
+      console.log('Successfully saved model setting:', platform, model);
+      toast.success(`${platforms.find(p => p.id === platform)?.name} model updated`);
+    } catch (error: any) {
+      console.error('Failed to save model setting:', error);
+      toast.error('Failed to save model setting: ' + error.message);
+    }
+  };
+
+  const handleModelChange = (platform: string, model: string) => {
+    setSelectedModels(prev => ({ ...prev, [platform]: model }));
+    saveModelSetting(platform, model);
+  };
+
   const toggleShowKey = (platform: string) => {
     setShowKeys(prev => ({ ...prev, [platform]: !prev[platform] }));
   };
@@ -182,6 +266,13 @@ const ApiKeySettings = () => {
                   </Button>
                 </div>
               </div>
+
+              <ModelSelector
+                platformId={platform.id}
+                selectedModel={selectedModels[platform.id] || getDefaultModel(platform.id)}
+                onModelChange={(model) => handleModelChange(platform.id, model)}
+                disabled={!apiKeys[platform.id]}
+              />
               
               <div className="text-xs text-gray-500">
                 {platform.id === 'anthropic' && 'Get your API key from the Anthropic Console'}
