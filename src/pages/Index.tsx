@@ -63,8 +63,7 @@ const Index = () => {
   };
 
   const handleCreateChat = () => {
-    const timestamp = new Date().toLocaleString();
-    createChatMutation.mutate(`New Chat - ${timestamp}`);
+    createChatMutation.mutate('New Chat');
   };
 
   const handleSingleAgentMessage = async (message: string, platformId: string) => {

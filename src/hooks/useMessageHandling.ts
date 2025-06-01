@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
@@ -6,6 +5,34 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { AIPlatform } from '@/types/chat';
 import { useMessageQueue } from './useMessageQueue';
+
+const generateChatTitle = (message: string): string => {
+  // Remove extra whitespace and limit length
+  const cleanMessage = message.trim();
+  
+  // If message is short enough, use it as is
+  if (cleanMessage.length <= 50) {
+    return cleanMessage;
+  }
+  
+  // Try to find a natural break point (sentence end, comma, etc.)
+  const sentences = cleanMessage.split(/[.!?]+/);
+  if (sentences[0] && sentences[0].length <= 50) {
+    return sentences[0].trim();
+  }
+  
+  // Try to break at word boundaries
+  const words = cleanMessage.split(' ');
+  let title = '';
+  for (const word of words) {
+    if ((title + ' ' + word).length > 47) { // Leave room for "..."
+      break;
+    }
+    title += (title ? ' ' : '') + word;
+  }
+  
+  return title ? title + '...' : cleanMessage.substring(0, 47) + '...';
+};
 
 export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI: any) => {
   const queryClient = useQueryClient();
@@ -44,7 +71,7 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
         // First, verify the conversation exists and belongs to the user
         const { data: conversation, error: convError } = await supabase
           .from('conversations')
-          .select('id, user_id')
+          .select('id, user_id, title')
           .eq('id', chatId)
           .eq('user_id', user.id)
           .single();
@@ -55,6 +82,9 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
         }
 
         console.log('Conversation verified:', conversation);
+
+        // Check if this is the first message (title is still "New Chat")
+        const isFirstMessage = conversation.title === 'New Chat';
 
         // Save user message to database
         const { data: messageData, error: userMessageError } = await supabase
@@ -76,6 +106,28 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
         }
 
         console.log('User message saved successfully:', messageData);
+
+        // Update chat title if this is the first message
+        if (isFirstMessage) {
+          const newTitle = generateChatTitle(content);
+          console.log('Updating chat title to:', newTitle);
+          
+          const { error: titleUpdateError } = await supabase
+            .from('conversations')
+            .update({ title: newTitle, updated_at: new Date().toISOString() })
+            .eq('id', chatId)
+            .eq('user_id', user.id);
+
+          if (titleUpdateError) {
+            console.error('Error updating chat title:', titleUpdateError);
+            // Don't throw here, title update is not critical
+          } else {
+            console.log('Chat title updated successfully');
+            // Refresh conversations to show the new title
+            queryClient.invalidateQueries({ queryKey: ['conversations', user.id] });
+          }
+        }
+
         return { chatId, content, newMessageId, timestamp };
 
       } catch (error) {
