@@ -1,3 +1,4 @@
+
 import { useCallback, useRef, useState } from 'react';
 import type { Message, AIPlatform, Chat } from '@/types/chat';
 import { toast } from 'sonner';
@@ -100,10 +101,9 @@ export const useMultiRoundDiscussion = (
             console.error(`Platform ${platform.name} failed in round ${roundNumber}:`, error);
           } finally {
             // Remove from active responders when done (success or error)
-            const newActiveResponders = new Set([...state.activeResponders].filter(id => id !== platform.id));
-            updateState({
-              activeResponders: newActiveResponders
-            });
+            updateState(prevState => ({
+              activeResponders: new Set([...prevState.activeResponders].filter(id => id !== platform.id))
+            }));
             resolve();
           }
         }, index * 1000); // 1 second delay between each agent in a round
@@ -120,7 +120,7 @@ export const useMultiRoundDiscussion = (
         resolve();
       }, 3000); // 3 second pause between rounds
     });
-  }, [updateState, setPlatformStatus, clearError, processAIResponse, state.activeResponders]);
+  }, [updateState, setPlatformStatus, clearError, processAIResponse]);
 
   const shouldContinueDiscussion = useCallback((roundNumber: number, maxRounds: number) => {
     if (roundNumber >= maxRounds) {
@@ -181,13 +181,8 @@ export const useMultiRoundDiscussion = (
 
     try {
       for (let round = 1; round <= state.maxRounds; round++) {
-        // Check if discussion was stopped by user
-        const currentState = state;
-        if (!currentState.isDiscussionActive) {
-          console.log('Discussion stopped by user');
-          break;
-        }
-
+        console.log(`Starting round ${round} of ${state.maxRounds}`);
+        
         await executeRound(chatId, enabledPlatforms, round);
         
         // Check if we should continue to next round
@@ -215,7 +210,7 @@ export const useMultiRoundDiscussion = (
       toast.info('Discussion timeout reached');
     }, 120000); // 2 minute timeout for multi-round discussions
 
-  }, [state.isDiscussionActive, state.maxRounds, updateState, getCurrentChat, executeRound, shouldContinueDiscussion]);
+  }, [state.maxRounds, updateState, getCurrentChat, executeRound, shouldContinueDiscussion]);
 
   const finishDiscussion = useCallback(() => {
     console.log('=== DISCUSSION FINISHED ===');
