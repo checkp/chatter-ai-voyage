@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useUser } from '@supabase/auth-helpers-react';
 import { v4 as uuidv4 } from 'uuid';
@@ -60,48 +61,44 @@ const Index = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
-  const { data: chats, isLoading: isLoadingChats } = useQuery<Chat[]>(
-    ['chats', user?.id],
-    async () => {
+  const { data: chats, isLoading: isLoadingChats } = useQuery({
+    queryKey: ['conversations', user?.id],
+    queryFn: async () => {
       if (!user?.id) return [];
 
       const { data, error } = await supabase
-        .from('chats')
+        .from('conversations')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching chats:', error);
+        console.error('Error fetching conversations:', error);
         throw error;
       }
 
       return data || [];
     },
-    {
-      enabled: !!user?.id,
-      onSuccess: () => {
-        setIsInitialLoadComplete(true);
-      }
-    }
-  );
+    enabled: !!user?.id,
+  });
 
   useEffect(() => {
     if (chats && chats.length > 0 && !activeChatId) {
       setActiveChatId(chats[0].id);
+      setIsInitialLoadComplete(true);
     }
   }, [chats, activeChatId]);
 
-  const { data: messages, isLoading: isLoadingMessages } = useQuery<Message[]>(
-    ['messages', activeChatId],
-    async () => {
+  const { data: messages, isLoading: isLoadingMessages } = useQuery({
+    queryKey: ['messages', activeChatId],
+    queryFn: async () => {
       if (!activeChatId) return [];
 
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .eq('chat_id', activeChatId)
-        .order('timestamp', { ascending: true });
+        .eq('conversation_id', activeChatId)
+        .order('created_at', { ascending: true });
 
       if (error) {
         console.error('Error fetching messages:', error);
@@ -110,91 +107,66 @@ const Index = () => {
 
       return data || [];
     },
-    {
-      enabled: !!activeChatId,
-      onSuccess: () => {
-        scrollToBottom();
-      }
-    }
-  );
+    enabled: !!activeChatId,
+  });
 
   useEffect(() => {
     scrollToBottom();
   }, [messages, theme]);
 
-  const createChatMutation = useMutation(
-    async (title: string) => {
+  const createChatMutation = useMutation({
+    mutationFn: async (title: string) => {
       if (!user?.id) throw new Error('User not authenticated');
 
       const newChatId = uuidv4();
       const { data, error } = await supabase
-        .from('chats')
+        .from('conversations')
         .insert([{ 
           id: newChatId,
           user_id: user.id, 
           title,
           created_at: new Date().toISOString(),
-          last_updated: new Date().toISOString()
+          updated_at: new Date().toISOString()
         }])
         .select('*')
         .single();
 
       if (error) {
-        console.error('Error creating chat:', error);
+        console.error('Error creating conversation:', error);
         throw error;
       }
 
       return data as Chat;
     },
-    {
-      onSuccess: (newChat) => {
-        queryClient.invalidateQueries(['chats', user?.id]);
-        setActiveChatId(newChat.id);
-        setNewChatTitle('');
-        setIsNewChatDrawerOpen(false);
-      },
-      onError: (error: any) => {
-        console.error('Failed to create chat:', error);
-        toast.error('Failed to create chat: ' + error.message);
-      },
-    }
-  );
+    onSuccess: (newChat) => {
+      queryClient.invalidateQueries({ queryKey: ['conversations', user?.id] });
+      setActiveChatId(newChat.id);
+      setNewChatTitle('');
+      setIsNewChatDrawerOpen(false);
+    },
+    onError: (error: any) => {
+      console.error('Failed to create conversation:', error);
+      toast.error('Failed to create conversation: ' + error.message);
+    },
+  });
 
-  const sendMessageMutation = useMutation(
-    async ({ chatId, content, platformId }: { chatId: string, content: string, platformId?: string }) => {
+  const sendMessageMutation = useMutation({
+    mutationFn: async ({ chatId, content, platformId }: { chatId: string, content: string, platformId?: string }) => {
       if (!user?.id) throw new Error('User not authenticated');
 
       const newMessageId = uuidv4();
       const timestamp = new Date().toISOString();
-
-      // Optimistically update the UI
-      queryClient.setQueryData<Message[]>(['messages', chatId], (oldMessages) => [
-        ...(oldMessages || []),
-        {
-          id: newMessageId,
-          chat_id: chatId,
-          content,
-          sender: 'user',
-          timestamp: new Date(timestamp),
-          status: 'sending',
-          platform: platformId,
-          seenBy: [],
-          responses: [],
-        },
-      ]);
 
       // Save user message to database
       const { error: userMessageError } = await supabase
         .from('messages')
         .insert([{
           id: newMessageId,
-          chat_id: chatId,
+          conversation_id: chatId,
           content,
           sender: 'user',
-          timestamp,
+          created_at: timestamp,
           platform: platformId,
-          seenBy: [],
-          responses: [],
         }]);
 
       if (userMessageError) {
@@ -204,73 +176,64 @@ const Index = () => {
 
       return { chatId, content, newMessageId, timestamp };
     },
-    {
-      onSuccess: async ({ chatId, content, newMessageId, timestamp }) => {
-        // Invalidate and refetch messages to reflect changes
-        await queryClient.invalidateQueries(['messages', chatId]);
-        
-        // Call all enabled AI APIs in parallel
-        const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
-        if (enabledPlatforms.length === 0) {
-          toast.error('No AI agents enabled. Please enable at least one agent in settings.');
-          return;
+    onSuccess: async ({ chatId, content, newMessageId, timestamp }) => {
+      // Invalidate and refetch messages to reflect changes
+      await queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+      
+      // Call all enabled AI APIs in parallel
+      const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
+      if (enabledPlatforms.length === 0) {
+        toast.error('No AI agents enabled. Please enable at least one agent in settings.');
+        return;
+      }
+
+      setIsLoadingResponse(true);
+
+      try {
+        const aiResponses = await Promise.all(
+          enabledPlatforms.map(async (platform) => {
+            try {
+              const aiContent = await callAIAPI(platform, messages || [], platforms);
+              return { platformId: platform.id, content: aiContent };
+            } catch (apiError: any) {
+              console.error(`Error calling ${platform.name} API:`, apiError);
+              toast.error(`Error calling ${platform.name} API: ${apiError.message}`);
+              return { platformId: platform.id, content: `Error: ${apiError.message}` };
+            }
+          })
+        );
+
+        // Save AI responses to database
+        const aiMessageInserts = aiResponses.map(({ platformId, content }) => ({
+          id: uuidv4(),
+          conversation_id: chatId,
+          content,
+          sender: 'ai',
+          created_at: new Date().toISOString(),
+          platform: platformId,
+        }));
+
+        const { error: aiMessageError } = await supabase
+          .from('messages')
+          .insert(aiMessageInserts);
+
+        if (aiMessageError) {
+          console.error('Error saving AI messages:', aiMessageError);
+          toast.error('Error saving AI messages: ' + aiMessageError.message);
+        } else {
+          // Update the UI with the new messages
+          await queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+          toast.success('AI responses received');
         }
-
-        setIsLoadingResponse(true);
-        
-        // Determine the next round number
-        const lastMessage = messages?.slice(-1)[0];
-        const nextRoundNumber = lastMessage?.sender === 'user' ? (lastMessage.roundNumber || 0) + 1 : 1;
-
-        try {
-          const aiResponses = await Promise.all(
-            enabledPlatforms.map(async (platform) => {
-              try {
-                const aiContent = await callAIAPI(platform, messages || [], platforms);
-                return { platformId: platform.id, content: aiContent };
-              } catch (apiError: any) {
-                console.error(`Error calling ${platform.name} API:`, apiError);
-                toast.error(`Error calling ${platform.name} API: ${apiError.message}`);
-                return { platformId: platform.id, content: `Error: ${apiError.message}` };
-              }
-            })
-          );
-
-          // Save AI responses to database
-          const aiMessageInserts = aiResponses.map(({ platformId, content }) => ({
-            id: uuidv4(),
-            chat_id: chatId,
-            content,
-            sender: 'ai',
-            timestamp: new Date().toISOString(),
-            platform: platformId,
-            seenBy: [],
-            responses: [newMessageId],
-            roundNumber: nextRoundNumber,
-          }));
-
-          const { error: aiMessageError } = await supabase
-            .from('messages')
-            .insert(aiMessageInserts);
-
-          if (aiMessageError) {
-            console.error('Error saving AI messages:', aiMessageError);
-            toast.error('Error saving AI messages: ' + aiMessageError.message);
-          } else {
-            // Update the UI with the new messages
-            await queryClient.invalidateQueries(['messages', chatId]);
-            toast.success('AI responses received');
-          }
-        } finally {
-          setIsLoadingResponse(false);
-        }
-      },
-      onError: (error: any) => {
-        console.error('Failed to send message:', error);
-        toast.error('Failed to send message: ' + error.message);
-      },
-    }
-  );
+      } finally {
+        setIsLoadingResponse(false);
+      }
+    },
+    onError: (error: any) => {
+      console.error('Failed to send message:', error);
+      toast.error('Failed to send message: ' + error.message);
+    },
+  });
 
   const handleSend = async () => {
     if (!input.trim() || !activeChatId) return;
@@ -395,7 +358,7 @@ const Index = () => {
                     )}
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
-                    {new Date(message.timestamp).toLocaleTimeString()}
+                    {new Date(message.created_at).toLocaleTimeString()}
                   </div>
                 </div>
               ))}
