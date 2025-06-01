@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -116,11 +115,15 @@ const Index = () => {
   }
 
   useEffect(() => {
-    if (chats && chats.length > 0 && !activeChatId) {
+    // Auto-create first chat if user has no conversations
+    if (chats && chats.length === 0 && !activeChatId && !isLoadingChats && user) {
+      console.log('No chats found, creating first chat automatically');
+      createChatMutation.mutate('Welcome Chat');
+    } else if (chats && chats.length > 0 && !activeChatId) {
       setActiveChatId(chats[0].id);
       setIsInitialLoadComplete(true);
     }
-  }, [chats, activeChatId]);
+  }, [chats, activeChatId, isLoadingChats, user]);
 
   useEffect(() => {
     scrollToBottom();
@@ -160,6 +163,7 @@ const Index = () => {
       setActiveChatId(newChat.id);
       setNewChatTitle('');
       setIsNewChatDrawerOpen(false);
+      console.log('New chat created successfully:', newChat.id);
     },
     onError: (error: any) => {
       console.error('Failed to create conversation:', error);
@@ -331,6 +335,11 @@ const Index = () => {
                 <Skeleton className="h-9 w-full" />
               </div>
             )}
+            {!isLoadingChats && (!chats || chats.length === 0) && (
+              <div className="px-4 py-2 text-center text-muted-foreground">
+                <p className="text-sm">Creating your first chat...</p>
+              </div>
+            )}
             {!isLoadingChats && chats?.map((chat) => (
               <Button
                 key={chat.id}
@@ -370,6 +379,13 @@ const Index = () => {
                   <Skeleton className="w-80 h-9" />
                   <Skeleton className="w-64 h-9" />
                   <Skeleton className="w-96 h-9" />
+                </div>
+              )}
+              {!isLoadingMessages && (!messages || messages.length === 0) && (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <div className="text-6xl mb-4">💬</div>
+                  <h3 className="text-xl font-semibold mb-2">Start a conversation</h3>
+                  <p className="text-muted-foreground mb-4">Send a message to begin chatting with AI assistants</p>
                 </div>
               )}
               {!isLoadingMessages && messages?.map((message) => (
