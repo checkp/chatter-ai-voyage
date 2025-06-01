@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, Plus, MessageSquare, Settings, History, Key, LogOut, User, Trash2, Play, Square } from 'lucide-react';
+import { Send, Plus, MessageSquare, Settings, History, Key, LogOut, User, Trash2, Square, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -26,27 +26,30 @@ import { useAuth } from '@/hooks/useAuth';
 import { useChats } from '@/hooks/useChats';
 import { usePlatforms } from '@/hooks/usePlatforms';
 import { useScrollToBottom } from '@/hooks/useScrollToBottom';
-import { buildConversationHistoryForAgent } from '@/utils/chatUtils';
 import type { Message, AIPlatform } from '@/types/chat';
 import MessageStatus from '@/components/chat/MessageStatus';
-import { useDiscussion } from '@/hooks/useDiscussion';
+import PlatformStatus from '@/components/chat/PlatformStatus';
+import { useSimpleDiscussion } from '@/hooks/useSimpleDiscussion';
 
 const Index = () => {
   const { user, session, handleSignOut } = useAuth();
-  const { chats, activeChat, setActiveChat, getCurrentChat, addMessage, updateChatTitle, createNewChat, deleteChat, updateMessageStatus } = useChats(user);
+  const { chats, activeChat, setActiveChat, getCurrentChat, addMessage, updateChatTitle, createNewChat, deleteChat } = useChats(user);
   const { platforms, togglePlatform, callAIAPI, loadApiKeysStatus } = usePlatforms(user);
   const { messagesEndRef } = useScrollToBottom([activeChat, getCurrentChat()?.messages?.length]);
 
-  // Add discussion hook
+  // Use the simplified discussion hook
   const { 
     startDiscussion, 
-    stopDiscussion, 
+    stopDiscussion,
+    forceStop,
     isDiscussionActive, 
     activeResponders, 
     roundCount, 
     maxRounds, 
+    platformStatuses,
+    errors,
     setMaxRounds 
-  } = useDiscussion(platforms, callAIAPI, addMessage, getCurrentChat);
+  } = useSimpleDiscussion(platforms, callAIAPI, addMessage, getCurrentChat);
 
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -56,26 +59,15 @@ const Index = () => {
   const [selectedPlatformForHistory, setSelectedPlatformForHistory] = useState<AIPlatform | null>(null);
 
   const handleSendMessage = async () => {
-    console.log('handleSendMessage called');
-    
-    if (!inputMessage.trim()) {
-      console.log('No input message');
-      return;
-    }
+    if (!inputMessage.trim()) return;
     
     let chatId = activeChat;
     
     if (!chatId) {
-      console.log('No active chat, creating new one');
       chatId = await createNewChat();
     }
 
-    const enabledPlatforms = platforms.filter(p => {
-      console.log(`Platform ${p.name}: enabled=${p.enabled}, hasApiKey=${p.hasApiKey}`);
-      return p.enabled && p.hasApiKey;
-    });
-    
-    console.log('Enabled platforms:', enabledPlatforms);
+    const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
     
     if (enabledPlatforms.length === 0) {
       toast.error('Please enable at least one AI platform with a valid API key');
@@ -101,7 +93,6 @@ const Index = () => {
     setIsLoading(true);
 
     try {
-      // Start the discussion instead of sequential processing
       await startDiscussion(chatId, userMessage, enabledPlatforms);
     } catch (error) {
       console.error('Error in handleSendMessage:', error);
@@ -334,42 +325,34 @@ const Index = () => {
                 Multi-AI Chat
               </h1>
               
-              {/* Discussion Controls */}
+              {/* Improved Discussion Controls */}
               <div className="flex items-center gap-3">
-                {isDiscussionActive ? (
-                  <Button
-                    onClick={stopDiscussion}
-                    variant="outline"
-                    size="sm"
-                    className="border-pastel-danger text-pastel-danger hover:bg-pastel-danger/20 shadow-sm"
-                  >
-                    <Square className="w-4 h-4 mr-2" />
-                    Stop Discussion
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={() => {
-                      if (currentChat && currentChat.messages.length > 0) {
-                        const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
-                        const lastUserMessage = [...currentChat.messages].reverse().find(m => m.sender === 'user');
-                        if (lastUserMessage) {
-                          startDiscussion(activeChat!, lastUserMessage, enabledPlatforms);
-                        }
-                      }
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="border-pastel-accent text-pastel-accent hover:bg-pastel-accent/20 shadow-sm"
-                    disabled={!currentChat?.messages.length}
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    Continue Discussion
-                  </Button>
+                {isDiscussionActive && (
+                  <>
+                    <Button
+                      onClick={stopDiscussion}
+                      variant="outline"
+                      size="sm"
+                      className="border-pastel-danger text-pastel-danger hover:bg-pastel-danger/20 shadow-sm"
+                    >
+                      <Square className="w-4 h-4 mr-2" />
+                      Stop Discussion
+                    </Button>
+                    <Button
+                      onClick={forceStop}
+                      variant="outline"
+                      size="sm"
+                      className="border-pastel-danger text-pastel-danger hover:bg-pastel-danger/20 shadow-sm"
+                    >
+                      <AlertTriangle className="w-4 h-4 mr-2" />
+                      Force Stop
+                    </Button>
+                  </>
                 )}
                 
                 {isDiscussionActive && (
                   <div className="text-sm text-pastel-muted bg-pastel-surface/50 px-3 py-1 rounded-full">
-                    Round {roundCount}/{maxRounds} • {activeResponders.length} responding
+                    Round {roundCount}/{maxRounds} • {activeResponders.length} active
                   </div>
                 )}
               </div>
@@ -411,31 +394,11 @@ const Index = () => {
                       >
                         Chat
                       </Button>
-                      {activeResponders.includes(platform.id) && (
-                        <div className="flex space-x-1">
-                          <div className={`w-2 h-2 rounded-full animate-bounce ${
-                            platform.id === 'openai' ? 'bg-agent-openai' :
-                            platform.id === 'anthropic' ? 'bg-agent-anthropic' :
-                            platform.id === 'deepseek' ? 'bg-agent-deepseek' :
-                            platform.id === 'grok' ? 'bg-agent-grok' :
-                            'bg-pastel-accent'
-                          }`}></div>
-                          <div className={`w-2 h-2 rounded-full animate-bounce ${
-                            platform.id === 'openai' ? 'bg-agent-openai' :
-                            platform.id === 'anthropic' ? 'bg-agent-anthropic' :
-                            platform.id === 'deepseek' ? 'bg-agent-deepseek' :
-                            platform.id === 'grok' ? 'bg-agent-grok' :
-                            'bg-pastel-accent'
-                          }`} style={{ animationDelay: '0.1s' }}></div>
-                          <div className={`w-2 h-2 rounded-full animate-bounce ${
-                            platform.id === 'openai' ? 'bg-agent-openai' :
-                            platform.id === 'anthropic' ? 'bg-agent-anthropic' :
-                            platform.id === 'deepseek' ? 'bg-agent-deepseek' :
-                            platform.id === 'grok' ? 'bg-agent-grok' :
-                            'bg-pastel-accent'
-                          }`} style={{ animationDelay: '0.2s' }}></div>
-                        </div>
-                      )}
+                      <PlatformStatus 
+                        platform={platform}
+                        status={platformStatuses.get(platform.id) || 'idle'}
+                        error={errors.get(platform.id)}
+                      />
                     </div>
                   )}
                 </div>
@@ -504,7 +467,7 @@ const Index = () => {
                       </div>
                       <span className="text-base text-pastel-muted font-medium">
                         {activeResponders.length > 0 
-                          ? `${activeResponders.length} AI platform(s) are discussing...` 
+                          ? `${activeResponders.length} AI platform(s) are responding...` 
                           : 'AI platforms are thinking...'}
                       </span>
                     </div>
@@ -531,12 +494,12 @@ const Index = () => {
                     handleSendMessage();
                   }
                 }}
-                disabled={isLoading}
+                disabled={isLoading || isDiscussionActive}
                 className="flex-1 bg-pastel-surface/70 border-pastel-primary/30 focus:border-pastel-primary text-pastel-text placeholder:text-pastel-muted text-base font-medium shadow-sm hover:shadow-md transition-shadow duration-200"
               />
               <Button 
                 onClick={handleSendMessage}
-                disabled={!inputMessage.trim() || isLoading}
+                disabled={!inputMessage.trim() || isLoading || isDiscussionActive}
                 className="bg-gradient-to-r from-pastel-primary to-pastel-accent hover:from-pastel-primary/80 hover:to-pastel-accent/80 text-pastel-text font-semibold shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
               >
                 <Send className="w-5 h-5" />
