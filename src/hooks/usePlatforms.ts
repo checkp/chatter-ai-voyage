@@ -145,31 +145,58 @@ export const usePlatforms = (user: SupabaseUser | null) => {
   const buildConversationForPlatform = (messages: Message[], platformId: string, enabledPlatforms: AIPlatform[]): Array<{role: 'user' | 'assistant', content: string}> => {
     const conversationHistory: Array<{role: 'user' | 'assistant', content: string}> = [];
     
-    // Take the last 20 messages to maintain context but avoid token limits
-    const recentMessages = messages.slice(-20);
+    // Take the last 15 messages to maintain context but avoid token limits
+    const recentMessages = messages.slice(-15);
+    
+    // Group messages by type for better context building
+    let lastUserMessage = '';
+    const otherAIResponses: string[] = [];
     
     recentMessages.forEach(message => {
       if (message.sender === 'user') {
-        conversationHistory.push({ role: 'user', content: message.content });
+        // If we have accumulated other AI responses, include them as context
+        if (otherAIResponses.length > 0 && lastUserMessage) {
+          conversationHistory.push({ role: 'user', content: lastUserMessage });
+          
+          // Add other AI responses as a single context message
+          const contextMessage = `Other AI perspectives:\n${otherAIResponses.join('\n\n')}`;
+          conversationHistory.push({ role: 'user', content: contextMessage });
+          
+          otherAIResponses.length = 0; // Clear the array
+        }
+        
+        lastUserMessage = message.content;
       } else if (message.sender === 'ai' && message.platform) {
-        // Include this platform's own messages as assistant responses
         if (message.platform === platformId) {
+          // This platform's own messages as assistant responses
+          if (lastUserMessage) {
+            conversationHistory.push({ role: 'user', content: lastUserMessage });
+            lastUserMessage = '';
+          }
           conversationHistory.push({ 
             role: 'assistant', 
             content: message.content 
           });
         } else {
-          // Include other AI responses as context from other agents
+          // Other AI responses - collect them for context
           const senderPlatform = enabledPlatforms.find(p => p.id === message.platform);
           if (senderPlatform) {
-            conversationHistory.push({ 
-              role: 'user', 
-              content: `[${senderPlatform.name} said]: ${message.content}` 
-            });
+            otherAIResponses.push(`${senderPlatform.name}: ${message.content}`);
           }
         }
       }
     });
+    
+    // Add the final user message if exists
+    if (lastUserMessage) {
+      conversationHistory.push({ role: 'user', content: lastUserMessage });
+    }
+    
+    // Add any remaining other AI responses as context
+    if (otherAIResponses.length > 0) {
+      const contextMessage = `Other AI perspectives:\n${otherAIResponses.join('\n\n')}`;
+      conversationHistory.push({ role: 'user', content: contextMessage });
+    }
     
     return conversationHistory;
   };
@@ -179,28 +206,26 @@ export const usePlatforms = (user: SupabaseUser | null) => {
 
     const conversationHistory = buildConversationForPlatform(messages, platform.id, enabledPlatforms);
     
-    // Enhanced multi-agent context
+    // Enhanced multi-agent context with clearer instructions
     const otherAIs = enabledPlatforms.filter(p => p.id !== platform.id && p.enabled && p.hasApiKey);
     if (otherAIs.length > 0) {
-      const contextMessage = `You are ${platform.name} participating in a multi-round AI discussion with: ${otherAIs.map(p => p.name).join(', ')}.
+      const contextMessage = `You are ${platform.name} in a multi-AI discussion with: ${otherAIs.map(p => p.name).join(', ')}.
 
-DISCUSSION GUIDELINES:
-- Build upon, challenge, or complement what other AIs have said
-- Reference other agents' points naturally (e.g., "As Claude mentioned..." or "I disagree with ChatGPT because...")
-- Ask questions to deepen the conversation
-- Share your unique perspective as ${platform.name}
-- Keep responses engaging and conversational (2-4 sentences typically)
-- If you strongly agree/disagree with another AI, explain why
-- Bring up new angles or considerations others may have missed
+IMPORTANT GUIDELINES:
+- You are continuing a conversation, not starting fresh each time
+- Build upon previous points made by yourself and others
+- Avoid repeating what you or others have already said
+- If other AI perspectives are shared, respond to them thoughtfully
+- Keep responses focused and conversational (2-4 sentences typically)
+- Add new insights, ask follow-up questions, or respectfully disagree when appropriate
+- Remember the conversation context from your previous responses
 
-The conversation includes responses from other AIs marked as "[AI Name] said: ..." - you can reference and respond to these.
-
-Respond as ${platform.name} with your distinctive voice and perspective.`;
+Respond as ${platform.name} with your distinctive perspective, building on the conversation naturally.`;
       
       conversationHistory.unshift({ role: 'user', content: contextMessage });
     } else {
       // Single AI context  
-      conversationHistory.unshift({ role: 'user', content: `You are ${platform.name}. Respond as ${platform.name} with your distinctive perspective.` });
+      conversationHistory.unshift({ role: 'user', content: `You are ${platform.name}. Continue the conversation naturally, building on your previous responses.` });
     }
 
     console.log(`Calling ${platform.name} API with ${conversationHistory.length} messages`);
