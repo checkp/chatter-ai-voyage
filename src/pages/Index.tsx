@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -46,6 +45,7 @@ const Index = () => {
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const [processingSentMessageId, setProcessingSentMessageId] = useState<string | null>(null);
+  const [activeAIStatuses, setActiveAIStatuses] = useState<Record<string, 'thinking' | 'responding' | 'completed' | 'error'>>({});
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const { 
@@ -218,6 +218,13 @@ const Index = () => {
 
       setIsLoadingResponse(true);
 
+      // Initialize AI statuses
+      const initialStatuses: Record<string, 'thinking' | 'responding' | 'completed' | 'error'> = {};
+      enabledPlatforms.forEach(platform => {
+        initialStatuses[platform.id] = 'thinking';
+      });
+      setActiveAIStatuses(initialStatuses);
+
       try {
         // Get current messages for context
         const { data: currentMessages } = await supabase
@@ -238,11 +245,16 @@ const Index = () => {
           enabledPlatforms.map(async (platform) => {
             try {
               console.log(`Calling ${platform.name} API...`);
+              setActiveAIStatuses(prev => ({ ...prev, [platform.id]: 'responding' }));
+              
               const aiContent = await callAIAPI(platform, messageHistory, platforms);
+              
+              setActiveAIStatuses(prev => ({ ...prev, [platform.id]: 'completed' }));
               return { platformId: platform.id, content: aiContent, success: true };
             } catch (apiError: any) {
               console.error(`Error calling ${platform.name} API:`, apiError);
               toast.error(`Error calling ${platform.name} API: ${apiError.message}`);
+              setActiveAIStatuses(prev => ({ ...prev, [platform.id]: 'error' }));
               return { platformId: platform.id, content: `Error: ${apiError.message}`, success: false };
             }
           })
@@ -280,12 +292,15 @@ const Index = () => {
       } finally {
         setIsLoadingResponse(false);
         setProcessingSentMessageId(null);
+        // Clear statuses after a delay
+        setTimeout(() => setActiveAIStatuses({}), 2000);
       }
     },
     onError: (error: any) => {
       console.error('Failed to send message:', error);
       toast.error('Failed to send message: ' + error.message);
       setProcessingSentMessageId(null);
+      setActiveAIStatuses({});
     },
   });
 
@@ -357,6 +372,24 @@ const Index = () => {
     return platforms.find(p => p.id === platformId)?.name || platformId;
   };
 
+  const getPlatformColor = (platformId: string) => {
+    const platform = platforms.find(p => p.id === platformId);
+    if (!platform) return 'bg-gray-500';
+    
+    switch (platformId) {
+      case 'openai':
+        return 'modern-bg-agent-openai';
+      case 'anthropic':
+        return 'modern-bg-agent-anthropic';
+      case 'deepseek':
+        return 'modern-bg-agent-deepseek';
+      case 'grok':
+        return 'modern-bg-agent-grok';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex">
       {/* Chat List Sidebar */}
@@ -401,7 +434,31 @@ const Index = () => {
       <main className="flex-1 flex flex-col">
         {/* Top Bar */}
         <header className="border-b bg-secondary border-border p-4 flex items-center justify-between">
-          <h1 className="text-lg font-semibold">{chats?.find(chat => chat.id === activeChatId)?.title || 'Select a chat'}</h1>
+          <div className="flex-1">
+            <h1 className="text-lg font-semibold">{chats?.find(chat => chat.id === activeChatId)?.title || 'Select a chat'}</h1>
+            
+            {/* AI Status Bar */}
+            {Object.keys(activeAIStatuses).length > 0 && (
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-sm text-muted-foreground">AI Status:</span>
+                {Object.entries(activeAIStatuses).map(([platformId, status]) => (
+                  <Badge 
+                    key={platformId}
+                    variant="outline"
+                    className={`text-xs ${
+                      status === 'thinking' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
+                      status === 'responding' ? `${getPlatformColor(platformId)} text-white border-transparent` :
+                      status === 'completed' ? 'bg-green-100 text-green-800 border-green-300' :
+                      'bg-red-100 text-red-800 border-red-300'
+                    }`}
+                  >
+                    {getPlatformName(platformId)}: {status}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+          
           <div className="flex items-center gap-4">
             <Button variant="outline" size="icon" onClick={() => setActiveTab(activeTab === 'chat' ? 'settings' : 'chat')}>
               {activeTab === 'chat' ? <Settings className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
@@ -432,15 +489,29 @@ const Index = () => {
                 </div>
               )}
               {!isLoadingMessages && messages?.map((message) => (
-                <div key={message.id} className={`mb-2 flex flex-col ${message.sender === 'user' ? 'items-end' : 'items-start'}`}>
-                  <div className={`max-w-3xl rounded-lg p-3 text-sm break-words ${message.sender === 'user'
+                <div key={message.id} className={`mb-4 flex flex-col ${message.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div className={`max-w-3xl rounded-lg p-4 text-sm ${message.sender === 'user'
                     ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted'
+                    : `bg-muted border-l-4 ${message.platform ? 
+                        message.platform === 'openai' ? 'border-l-green-500' :
+                        message.platform === 'anthropic' ? 'border-l-orange-500' :
+                        message.platform === 'deepseek' ? 'border-l-blue-500' :
+                        message.platform === 'grok' ? 'border-l-purple-500' :
+                        'border-l-gray-500'
+                      : 'border-l-gray-500'}`
                     }`}>
-                    {message.content}
+                    <div className="whitespace-pre-wrap leading-relaxed">
+                      {message.content}
+                    </div>
                     {message.sender === 'ai' && message.platform && (
-                      <div className="mt-1 text-xs text-gray-500">
-                        - {platforms.find(p => p.id === message.platform)?.name || message.platform}
+                      <div className={`mt-2 text-xs font-medium ${
+                        message.platform === 'openai' ? 'text-green-600' :
+                        message.platform === 'anthropic' ? 'text-orange-600' :
+                        message.platform === 'deepseek' ? 'text-blue-600' :
+                        message.platform === 'grok' ? 'text-purple-600' :
+                        'text-gray-600'
+                      }`}>
+                        — {getPlatformName(message.platform)}
                       </div>
                     )}
                   </div>
@@ -450,8 +521,8 @@ const Index = () => {
                 </div>
               ))}
               {isLoadingResponse && (
-                <div className="flex flex-col items-start mb-2">
-                  <div className="bg-muted rounded-lg p-3 text-sm">
+                <div className="flex flex-col items-start mb-4">
+                  <div className="bg-muted rounded-lg p-4 text-sm border-l-4 border-l-amber-500">
                     <div className="flex items-center gap-2">
                       <RefreshCw className="h-4 w-4 animate-spin" />
                       AI assistants are responding...
