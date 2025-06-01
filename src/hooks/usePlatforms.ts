@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -146,23 +145,26 @@ export const usePlatforms = (user: SupabaseUser | null) => {
   const buildConversationForPlatform = (messages: Message[], platformId: string, enabledPlatforms: AIPlatform[]): Array<{role: 'user' | 'assistant', content: string}> => {
     const conversationHistory: Array<{role: 'user' | 'assistant', content: string}> = [];
     
-    messages.forEach(message => {
+    // Take the last 20 messages to maintain context but avoid token limits
+    const recentMessages = messages.slice(-20);
+    
+    recentMessages.forEach(message => {
       if (message.sender === 'user') {
         conversationHistory.push({ role: 'user', content: message.content });
       } else if (message.sender === 'ai' && message.platform) {
-        // Only include messages from the same platform as assistant responses
+        // Include this platform's own messages as assistant responses
         if (message.platform === platformId) {
           conversationHistory.push({ 
             role: 'assistant', 
             content: message.content 
           });
         } else {
-          // Include other AI responses as user context to show what others said
+          // Include other AI responses as context from other agents
           const senderPlatform = enabledPlatforms.find(p => p.id === message.platform);
           if (senderPlatform) {
             conversationHistory.push({ 
               role: 'user', 
-              content: `[${senderPlatform.name} responded]: ${message.content}` 
+              content: `[${senderPlatform.name} said]: ${message.content}` 
             });
           }
         }
@@ -177,22 +179,28 @@ export const usePlatforms = (user: SupabaseUser | null) => {
 
     const conversationHistory = buildConversationForPlatform(messages, platform.id, enabledPlatforms);
     
-    // Add platform-specific context for multi-agent discussion
+    // Enhanced multi-agent context
     const otherAIs = enabledPlatforms.filter(p => p.id !== platform.id && p.enabled && p.hasApiKey);
     if (otherAIs.length > 0) {
-      const contextMessage = `You are ${platform.name}. You are participating in a multi-AI discussion with: ${otherAIs.map(p => p.name).join(', ')}. 
+      const contextMessage = `You are ${platform.name} participating in a multi-round AI discussion with: ${otherAIs.map(p => p.name).join(', ')}.
 
-The conversation flows naturally - you can:
-- Respond to the user's questions
-- Build upon or challenge what other AIs have said
-- Ask questions or make observations
+DISCUSSION GUIDELINES:
+- Build upon, challenge, or complement what other AIs have said
+- Reference other agents' points naturally (e.g., "As Claude mentioned..." or "I disagree with ChatGPT because...")
+- Ask questions to deepen the conversation
 - Share your unique perspective as ${platform.name}
+- Keep responses engaging and conversational (2-4 sentences typically)
+- If you strongly agree/disagree with another AI, explain why
+- Bring up new angles or considerations others may have missed
 
-Keep responses conversational and engaging. Feel free to reference other AIs' responses naturally. Do not pretend to be any other AI.`;
+The conversation includes responses from other AIs marked as "[AI Name] said: ..." - you can reference and respond to these.
+
+Respond as ${platform.name} with your distinctive voice and perspective.`;
+      
       conversationHistory.unshift({ role: 'user', content: contextMessage });
     } else {
-      // Single AI context
-      conversationHistory.unshift({ role: 'user', content: `You are ${platform.name}. Respond as ${platform.name}.` });
+      // Single AI context  
+      conversationHistory.unshift({ role: 'user', content: `You are ${platform.name}. Respond as ${platform.name} with your distinctive perspective.` });
     }
 
     console.log(`Calling ${platform.name} API with ${conversationHistory.length} messages`);

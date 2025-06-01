@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Send, Plus, MessageSquare, Settings, History, Key, LogOut, User, Trash2, Square, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,6 +31,7 @@ import type { Message, AIPlatform } from '@/types/chat';
 import MessageStatus from '@/components/chat/MessageStatus';
 import PlatformStatus from '@/components/chat/PlatformStatus';
 import { useSimpleDiscussion } from '@/hooks/useSimpleDiscussion';
+import { useMultiRoundDiscussion } from '@/hooks/useMultiRoundDiscussion';
 
 const Index = () => {
   const { user, session, handleSignOut } = useAuth();
@@ -39,7 +39,7 @@ const Index = () => {
   const { platforms, togglePlatform, callAIAPI, loadApiKeysStatus } = usePlatforms(user);
   const { messagesEndRef } = useScrollToBottom([activeChat, getCurrentChat()?.messages?.length]);
 
-  // Use the simplified discussion hook
+  // Use the enhanced multi-round discussion hook
   const { 
     startDiscussion, 
     stopDiscussion,
@@ -50,8 +50,9 @@ const Index = () => {
     maxRounds, 
     platformStatuses,
     errors,
+    discussionSummary,
     setMaxRounds 
-  } = useSimpleDiscussion(platforms, callAIAPI, addMessage, getCurrentChat);
+  } = useMultiRoundDiscussion(platforms, callAIAPI, addMessage, getCurrentChat);
 
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -351,7 +352,7 @@ const Index = () => {
                 </p>
               </div>
               
-              {/* Discussion Controls */}
+              {/* Enhanced Discussion Controls */}
               <div className="flex items-center gap-3">
                 {isDiscussionActive && (
                   <>
@@ -360,7 +361,7 @@ const Index = () => {
                       className="modern-btn-secondary border-red-200 text-red-600 hover:bg-red-50"
                     >
                       <Square className="w-4 h-4 mr-2" />
-                      Stop
+                      Stop Discussion
                     </Button>
                     <Button
                       onClick={forceStop}
@@ -375,7 +376,40 @@ const Index = () => {
                 {isDiscussionActive && (
                   <div className="modern-card px-4 py-2">
                     <div className="text-sm modern-text-muted font-medium">
-                      Round {roundCount}/{maxRounds} • {activeResponders.length} active
+                      Round {roundCount}/{maxRounds} • {activeResponders.length} responding
+                    </div>
+                    {discussionSummary.length > 0 && (
+                      <div className="text-xs modern-text-accent mt-1">
+                        {discussionSummary[0]}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Max Rounds Control */}
+                {!isDiscussionActive && (
+                  <div className="modern-card px-4 py-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm modern-text-muted font-medium">Max Rounds:</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setMaxRounds(Math.max(1, maxRounds - 1))}
+                        className="h-6 w-6 p-0"
+                      >
+                        -
+                      </Button>
+                      <span className="text-sm font-bold modern-text-primary min-w-[2ch] text-center">
+                        {maxRounds}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setMaxRounds(Math.min(10, maxRounds + 1))}
+                        className="h-6 w-6 p-0"
+                      >
+                        +
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -453,15 +487,22 @@ const Index = () => {
                     <CardContent className="p-6">
                       {message.sender === 'ai' && message.platform && (
                         <div className="mb-4 flex items-center justify-between">
-                          <Badge className={`font-semibold text-white px-3 py-1 ${
-                            message.platform === 'openai' ? 'modern-bg-agent-openai' :
-                            message.platform === 'anthropic' ? 'modern-bg-agent-anthropic' :
-                            message.platform === 'deepseek' ? 'modern-bg-agent-deepseek' :
-                            message.platform === 'grok' ? 'modern-bg-agent-grok' :
-                            'bg-amber-500'
-                          }`}>
-                            {platforms.find(p => p.id === message.platform)?.icon} {platforms.find(p => p.id === message.platform)?.name}
-                          </Badge>
+                          <div className="flex items-center gap-3">
+                            <Badge className={`font-semibold text-white px-3 py-1 ${
+                              message.platform === 'openai' ? 'modern-bg-agent-openai' :
+                              message.platform === 'anthropic' ? 'modern-bg-agent-anthropic' :
+                              message.platform === 'deepseek' ? 'modern-bg-agent-deepseek' :
+                              message.platform === 'grok' ? 'modern-bg-agent-grok' :
+                              'bg-amber-500'
+                            }`}>
+                              {platforms.find(p => p.id === message.platform)?.icon} {platforms.find(p => p.id === message.platform)?.name}
+                            </Badge>
+                            {message.roundNumber && (
+                              <Badge variant="outline" className="text-xs modern-text-muted">
+                                Round {message.roundNumber}
+                              </Badge>
+                            )}
+                          </div>
                           <MessageStatus message={message} platforms={platforms} />
                         </div>
                       )}
@@ -508,7 +549,7 @@ const Index = () => {
                       </div>
                       <span className="text-lg modern-text-muted font-medium">
                         {activeResponders.length > 0 
-                          ? `${activeResponders.length} AI platform(s) are crafting responses...` 
+                          ? `Round ${roundCount}: ${activeResponders.length} AI platform(s) are responding...` 
                           : 'AI platforms are thinking...'}
                       </span>
                     </div>
@@ -528,7 +569,7 @@ const Index = () => {
               <Input
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Start a conversation with AI platforms..."
+                placeholder="Start a multi-round conversation with AI platforms..."
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -551,8 +592,8 @@ const Index = () => {
               <div className="modern-card inline-block px-6 py-3">
                 <span className="text-sm modern-text-muted font-medium">
                   {isDiscussionActive 
-                    ? `Discussion active: Round ${roundCount}/${maxRounds} - ${platforms.filter(p => p.enabled && p.hasApiKey).length} AI platform(s) participating`
-                    : `${platforms.filter(p => p.enabled && p.hasApiKey).length} AI platform(s) ready to collaborate`}
+                    ? `Multi-round discussion active: Round ${roundCount}/${maxRounds} - ${platforms.filter(p => p.enabled && p.hasApiKey).length} AI platform(s) collaborating`
+                    : `${platforms.filter(p => p.enabled && p.hasApiKey).length} AI platform(s) ready for multi-round discussion (max ${maxRounds} rounds)`}
                 </span>
               </div>
             </div>

@@ -1,3 +1,4 @@
+
 export interface Message {
   id: string;
   content: string;
@@ -7,6 +8,7 @@ export interface Message {
   status?: 'sending' | 'sent' | 'seen';
   seenBy?: string[]; // platform IDs that have seen this message
   responses?: string[]; // message IDs of responses to this message
+  roundNumber?: number; // Track which discussion round this message belongs to
 }
 
 export interface Chat {
