@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -11,7 +12,7 @@ export const useChats = (user: SupabaseUser | null) => {
 
   const getCurrentChat = (): Chat | null => {
     const chat = chats.find(chat => chat.id === activeChat) || null;
-    console.log('getCurrentChat called - Active chat:', activeChat, 'Found chat:', !!chat, 'Messages count:', chat?.messages.length || 0);
+    console.log('getCurrentChat called - Active chat:', activeChat, 'Found chat:', !!chat, 'Messages count:', chat?.messages?.length || 0);
     return chat;
   };
 
@@ -38,20 +39,20 @@ export const useChats = (user: SupabaseUser | null) => {
         return prev;
       }
       
-      console.log('addMessage - Target chat current messages:', targetChat.messages.length);
+      console.log('addMessage - Target chat current messages:', targetChat.messages?.length || 0);
       
       const updatedChats = prev.map(chat => 
         chat.id === chatId 
           ? { 
               ...chat, 
-              messages: [...chat.messages, message],
-              lastUpdated: new Date()
+              messages: [...(chat.messages || []), message],
+              updated_at: new Date().toISOString()
             }
           : chat
       );
       
       const updatedChat = updatedChats.find(c => c.id === chatId);
-      console.log('addMessage - Updated chat messages count:', updatedChat?.messages.length || 0);
+      console.log('addMessage - Updated chat messages count:', updatedChat?.messages?.length || 0);
       console.log('addMessage - Message added successfully to UI state');
       
       // Save to database immediately
@@ -77,7 +78,7 @@ export const useChats = (user: SupabaseUser | null) => {
       chat.id === chatId 
         ? { 
             ...chat, 
-            messages: chat.messages.map(msg => 
+            messages: (chat.messages || []).map(msg => 
               msg.id === messageId 
                 ? { ...msg, status, seenBy: seenBy || msg.seenBy }
                 : msg
@@ -101,8 +102,9 @@ export const useChats = (user: SupabaseUser | null) => {
       id: generateChatId(),
       title: 'New Chat',
       messages: [],
-      createdAt: new Date(),
-      lastUpdated: new Date()
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      user_id: user?.id || ''
     };
 
     setChats(prev => [newChat, ...prev]);
@@ -171,7 +173,7 @@ export const useChats = (user: SupabaseUser | null) => {
     }
 
     try {
-      console.log('saveConversation - Starting save for chat:', chat.id, 'with', chat.messages.length, 'messages');
+      console.log('saveConversation - Starting save for chat:', chat.id, 'with', chat.messages?.length || 0, 'messages');
       
       const { error: convError } = await supabase
         .from('conversations')
@@ -179,8 +181,8 @@ export const useChats = (user: SupabaseUser | null) => {
           id: chat.id,
           user_id: user.id,
           title: chat.title,
-          created_at: chat.createdAt.toISOString(),
-          updated_at: chat.lastUpdated.toISOString()
+          created_at: chat.created_at,
+          updated_at: chat.updated_at
         }, {
           onConflict: 'id'
         });
@@ -197,7 +199,7 @@ export const useChats = (user: SupabaseUser | null) => {
         .eq('conversation_id', chat.id);
 
       const existingMessageIds = new Set((existingMessages || []).map(msg => msg.id));
-      const newMessages = chat.messages.filter(msg => !existingMessageIds.has(msg.id));
+      const newMessages = (chat.messages || []).filter(msg => !existingMessageIds.has(msg.id));
 
       console.log('saveConversation - Existing messages:', existingMessageIds.size, 'New messages:', newMessages.length);
 
@@ -208,7 +210,7 @@ export const useChats = (user: SupabaseUser | null) => {
           content: msg.content,
           sender: msg.sender,
           platform: msg.platform,
-          created_at: msg.timestamp.toISOString()
+          created_at: msg.created_at
         }));
 
         console.log('saveConversation - Inserting messages:', messagesToInsert.map(m => ({ id: m.id, sender: m.sender, platform: m.platform })));
@@ -260,17 +262,16 @@ export const useChats = (user: SupabaseUser | null) => {
           }
 
           return {
-            id: conv.id,
-            title: conv.title,
+            ...conv,
             messages: (messages || []).map(msg => ({
               id: msg.id,
               content: msg.content,
               sender: msg.sender as 'user' | 'ai',
               platform: msg.platform,
+              created_at: msg.created_at,
+              conversation_id: msg.conversation_id,
               timestamp: new Date(msg.created_at)
-            })),
-            createdAt: new Date(conv.created_at),
-            lastUpdated: new Date(conv.updated_at)
+            }))
           };
         })
       );
@@ -302,7 +303,6 @@ export const useChats = (user: SupabaseUser | null) => {
     updateMessageStatus,
     updateChatTitle,
     createNewChat,
-    deleteChat,
     saveConversation
   };
 };

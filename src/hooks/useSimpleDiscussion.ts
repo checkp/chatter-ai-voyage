@@ -29,13 +29,15 @@ export const useSimpleDiscussion = (
       }
 
       setPlatformStatus(platform.id, 'responding');
-      const response = await callAIAPI(platform, currentChat.messages, enabledPlatforms);
+      const response = await callAIAPI(platform, currentChat.messages || [], enabledPlatforms);
       
       const agentMessage: Message = {
         id: crypto.randomUUID(),
         content: response,
         sender: 'ai',
         platform: platform.id,
+        created_at: new Date().toISOString(),
+        conversation_id: chatId,
         timestamp: new Date(),
         status: 'sent',
         seenBy: []
@@ -61,6 +63,8 @@ export const useSimpleDiscussion = (
         content: `❌ ${platform.name} encountered an error: ${errorMsg}`,
         sender: 'ai',
         platform: platform.id,
+        created_at: new Date().toISOString(),
+        conversation_id: chatId,
         timestamp: new Date(),
         status: 'sent',
         seenBy: []

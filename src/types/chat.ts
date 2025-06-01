@@ -6,7 +6,7 @@ export interface Message {
   platform?: string;
   created_at: string;
   conversation_id: string;
-  timestamp: Date;
+  timestamp?: Date;
   status?: 'sending' | 'sent' | 'seen';
   seenBy?: string[];
   roundNumber?: number;
@@ -18,9 +18,9 @@ export interface Chat {
   created_at: string;
   updated_at: string;
   user_id: string;
-  messages: Message[];
-  createdAt: Date;
-  lastUpdated: Date;
+  messages?: Message[];
+  createdAt?: Date;
+  lastUpdated?: Date;
 }
 
 export interface AIPlatform {

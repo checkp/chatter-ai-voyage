@@ -111,6 +111,7 @@ const Index = () => {
 
       return (data || []).map(msg => ({
         ...msg,
+        sender: msg.sender as 'user' | 'ai',
         timestamp: new Date(msg.created_at),
         status: 'sent' as const,
         seenBy: []

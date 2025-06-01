@@ -1,5 +1,5 @@
 
-export type ThemeVariant = 'amber-warm' | 'amber-cool' | 'amber-dark' | 'amber-minimal';
+export type ThemeVariant = 'amber-warm' | 'amber-cool' | 'amber-dark' | 'amber-minimal' | 'blue-cool';
 
 export interface Theme {
   id: ThemeVariant;
@@ -51,6 +51,16 @@ export const themes: Theme[] = [
       primary: '#F59E0B',
       secondary: '#F3F4F6',
       background: '#FFFFFF'
+    }
+  },
+  {
+    id: 'blue-cool',
+    name: 'Blue Cool',
+    description: 'Cool blue tones with modern aesthetics',
+    preview: {
+      primary: '#3B82F6',
+      secondary: '#E0E7FF',
+      background: '#F8FAFC'
     }
   }
 ];

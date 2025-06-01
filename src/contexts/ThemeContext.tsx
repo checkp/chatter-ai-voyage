@@ -29,7 +29,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   });
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'amber-warm' ? 'blue-cool' : 'amber-warm');
+    setTheme(prev => {
+      const newTheme: ThemeVariant = prev === 'amber-warm' ? 'blue-cool' : 'amber-warm';
+      return newTheme;
+    });
   };
 
   useEffect(() => {
