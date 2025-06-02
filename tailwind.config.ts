@@ -33,25 +33,23 @@ export default {
 				'4xl': ['2.5rem', { lineHeight: '3rem' }],
 			},
 			colors: {
-				// Pastel color palette
+				// Pastel amber palette with greenish accents
 				pastel: {
-					bg: '#fafbfc',
-					surface: '#f3f5f7',
-					primary: '#b3d9f2',
-					secondary: '#c8e6c9',
-					accent: '#e1bee7',
-					success: '#b8f5cd',
-					warning: '#fff3cd',
-					danger: '#f8d7da',
-					text: '#2c3e50',
-					muted: '#6c757d',
+					cream: '#fefcf7',      // Background warm cream
+					amber: '#d99733',      // Main warm amber
+					sage: '#86b377',       // Sage green accent
+					mist: '#f5ebd0',       // Pale amber mist
+					forest: '#78716c',     // Warm gray-brown
+					gold: '#fbbf24',       // Bright amber gold
+					moss: '#a1a197',       // Muted brown-green
+					pearl: '#ffffff',      // Pure white
 				},
-				// Agent-specific pastel colors
+				// Agent-specific warm amber and green tones
 				agent: {
-					openai: '#a8e6cf',     // Soft mint green
-					anthropic: '#d1c4e9',  // Soft lavender
-					deepseek: '#b39ddb',   // Soft purple
-					grok: '#ffcc80',       // Soft peach
+					openai: '#d99733',     // Warm amber
+					anthropic: '#86b377',  // Sage green
+					deepseek: '#9ca3af',   // Soft sage gray
+					grok: '#fbbf24',       // Bright amber
 				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -119,12 +117,12 @@ export default {
 						height: '0'
 					}
 				},
-				'pastel-glow': {
+				'amber-glow': {
 					'0%, 100%': { 
-						boxShadow: '0 0 10px rgba(179, 217, 242, 0.4), 0 0 20px rgba(179, 217, 242, 0.2)'
+						boxShadow: '0 0 10px rgba(217, 151, 51, 0.4), 0 0 20px rgba(217, 151, 51, 0.2)'
 					},
 					'50%': { 
-						boxShadow: '0 0 20px rgba(179, 217, 242, 0.6), 0 0 40px rgba(179, 217, 242, 0.3)'
+						boxShadow: '0 0 20px rgba(217, 151, 51, 0.6), 0 0 40px rgba(217, 151, 51, 0.3)'
 					}
 				},
 				'float': {
@@ -135,7 +133,7 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'pastel-glow': 'pastel-glow 3s ease-in-out infinite',
+				'amber-glow': 'amber-glow 3s ease-in-out infinite',
 				'float': 'float 3s ease-in-out infinite'
 			}
 		}
