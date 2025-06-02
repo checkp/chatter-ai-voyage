@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -96,7 +95,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
     return null;
   }
 
-  // Fixed message filtering logic using the fetched messages
+  // Updated message filtering logic to show only relevant messages for this agent
   const getBotMessages = () => {
     console.log('=== getBotMessages DEBUG ===');
     console.log('Platform:', platform.name, 'ID:', platform.id);
@@ -142,13 +141,19 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
         : new Date(message.created_at);
       
       if (message.sender === 'user') {
-        // Include ALL user messages in every agent's conversation view
-        console.log('✓ Adding user message to conversation');
-        conversationMessages.push({
-          content: message.content,
-          timestamp,
-          isUser: true
-        });
+        // For user messages, show:
+        // 1. Messages with platform=null (general chat messages - visible to all agents)
+        // 2. Messages with platform matching this agent (private messages to this agent)
+        if (message.platform === null || message.platform === platform.id) {
+          console.log('✓ Adding user message to conversation (general or private to this agent)');
+          conversationMessages.push({
+            content: message.content,
+            timestamp,
+            isUser: true
+          });
+        } else {
+          console.log('✗ Skipping user message private to another agent:', message.platform);
+        }
       } else if (message.sender === 'ai') {
         // Only include AI messages from this specific platform
         console.log('AI message platform check:', message.platform, 'vs target:', platform.id);
@@ -251,19 +256,6 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
                 <div className="text-4xl mb-4">{platform?.icon}</div>
                 <p className="text-lg font-medium mb-2 text-gray-800 dark:text-gray-200">No conversation with {platform?.name} yet.</p>
                 <p className="text-base text-gray-700 dark:text-gray-300">Start chatting to see the conversation here.</p>
-                <div className="mt-4 text-sm text-gray-500 dark:text-gray-500">
-                  <p>Debug info:</p>
-                  <p>Current chat ID: {currentChat?.id}</p>
-                  <p>Total messages fetched: {chatMessages?.length || 0}</p>
-                  <p>Platform ID: {platform?.id}</p>
-                  <p>Chat title: {currentChat?.title}</p>
-                  {chatMessages && chatMessages.length > 0 && (
-                    <div className="mt-2">
-                      <p>Message senders: {[...new Set(chatMessages.map(m => m.sender))].join(', ')}</p>
-                      <p>Message platforms: {[...new Set(chatMessages.map(m => m.platform).filter(Boolean))].join(', ')}</p>
-                    </div>
-                  )}
-                </div>
               </div>
             ) : (
               botMessages.map((message, index) => (
@@ -274,7 +266,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
                   <div className={`max-w-[85%] ${message.isUser ? 'order-2' : 'order-1'}`}>
                     <Card className={`transition-all duration-300 hover:shadow-lg rounded-xl overflow-hidden ${
                       message.isUser 
-                        ? 'bg-blue-600 text-white border-none shadow-md' 
+                        ? 'bg-blue-800 text-white border-none shadow-md' 
                         : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm'
                     }`}>
                       <CardContent className="p-4">
@@ -311,7 +303,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
             <Input
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              placeholder={`Chat with ${platform?.name}...`}
+              placeholder={`Chat privately with ${platform?.name}...`}
               onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
               disabled={isSending}
               className="flex-1 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-xl px-4 py-3 font-medium"
@@ -329,7 +321,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
             </Button>
           </div>
           <div className="text-sm text-gray-500 dark:text-gray-400 mt-3 text-center font-medium">
-            This will send a message only to {platform?.name}
+            This will send a private message only to {platform?.name}
           </div>
         </div>
       </DialogContent>

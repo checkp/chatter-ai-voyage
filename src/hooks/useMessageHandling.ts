@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
@@ -87,7 +86,7 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
         // Check if this is the first message (title is still "New Chat")
         const isFirstMessage = conversation.title === 'New Chat';
 
-        // Save user message to database
+        // Save user message to database - this is from general chat (visible to all agents)
         const { data: messageData, error: userMessageError } = await supabase
           .from('messages')
           .insert([{
@@ -96,7 +95,7 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
             content,
             sender: 'user',
             created_at: timestamp,
-            platform: null,
+            platform: null, // null means it's a general message visible to all agents
           }])
           .select()
           .single();
@@ -285,9 +284,9 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
       const newMessageId = uuidv4();
       const timestamp = new Date().toISOString();
 
-      console.log('Saving user message for single agent:', newMessageId);
+      console.log('Saving user message for single agent:', newMessageId, 'platform:', platformId);
 
-      // Save user message to database
+      // Save user message to database with platform ID to make it private to this agent
       const { error: userMessageError } = await supabase
         .from('messages')
         .insert([{
@@ -296,7 +295,7 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
           content,
           sender: 'user',
           created_at: timestamp,
-          platform: null,
+          platform: platformId, // Set platform ID to make this message private to this agent
         }]);
 
       if (userMessageError) {
@@ -306,6 +305,7 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
 
       // Refresh messages to show the user message immediately
       await queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+      await queryClient.invalidateQueries({ queryKey: ['chat-messages', chatId] });
       console.log('Messages refreshed after user message from agent dialog');
 
       // Set AI status to thinking
@@ -350,6 +350,7 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
       
       // Refresh messages again to show the AI response
       await queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+      await queryClient.invalidateQueries({ queryKey: ['chat-messages', chatId] });
       console.log('Messages refreshed after AI response from agent dialog');
 
       toast.success(`${platform.name} responded successfully`);
