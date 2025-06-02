@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -5,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Square } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { AIPlatform, Chat } from '@/types/chat';
@@ -32,7 +33,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
 
   // Fetch messages for the current chat directly
   const { data: chatMessages = [] } = useQuery({
-    queryKey: ['messages', currentChat?.id],
+    queryKey: ['chat-messages', currentChat?.id],
     queryFn: async () => {
       if (!currentChat?.id) return [];
 
@@ -227,11 +228,6 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
     }
   };
 
-  const handleStopConversation = () => {
-    setInputMessage('');
-    onOpenChange(false);
-  };
-
   const botMessages = getBotMessages();
   const agentColors = getAgentColorClasses(platform.id);
 
@@ -239,23 +235,12 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl h-[85vh] flex flex-col modern-dialog">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="flex items-center justify-between modern-text-primary">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{platform?.icon}</span>
-              <span className="text-xl font-bold">Chat with {platform?.name}</span>
-              <Badge className={`${agentColors.bg} font-semibold text-base px-3 py-1 modern-glow ${agentColors.text}`}>
-                {platform?.name}
-              </Badge>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleStopConversation}
-              className="flex items-center gap-2"
-            >
-              <Square className="w-4 h-4" />
-              End Chat
-            </Button>
+          <DialogTitle className="flex items-center gap-3 modern-text-primary">
+            <span className="text-2xl">{platform?.icon}</span>
+            <span className="text-xl font-bold">Chat with {platform?.name}</span>
+            <Badge className={`${agentColors.bg} font-semibold text-base px-3 py-1 modern-glow ${agentColors.text}`}>
+              {platform?.name}
+            </Badge>
           </DialogTitle>
         </DialogHeader>
         
@@ -265,7 +250,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
               <div className="text-center modern-text-muted py-12">
                 <div className="text-4xl mb-4">{platform?.icon}</div>
                 <p className="text-lg font-medium mb-2 modern-text-primary">No conversation with {platform?.name} yet.</p>
-                <p className="text-base">Start chatting to see the conversation here.</p>
+                <p className="text-base modern-text-primary">Start chatting to see the conversation here.</p>
                 <div className="mt-4 text-sm modern-text-muted">
                   <p>Debug info:</p>
                   <p>Current chat ID: {currentChat?.id}</p>
@@ -290,16 +275,20 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
                     <Card className={`modern-card-elevated transition-all duration-300 hover:shadow-xl modern-glow-hover ${
                       message.isUser 
                         ? `${agentColors.bg} ${agentColors.text} ${agentColors.border} modern-glow` 
-                        : 'modern-card modern-text-primary'
+                        : 'modern-card'
                     }`}>
                       <CardContent className="p-4">
                         <div className={`text-base leading-relaxed whitespace-pre-wrap font-medium ${
-                          !message.isUser ? 'prose prose-sm max-w-none modern-text-primary' : ''
+                          message.isUser 
+                            ? 'text-white' 
+                            : 'text-slate-800 dark:text-slate-200'
                         }`}>
                           {message.content}
                         </div>
                         <div className={`text-sm mt-3 font-medium ${
-                          message.isUser ? 'text-white/70' : 'modern-text-muted'
+                          message.isUser 
+                            ? 'text-white/70' 
+                            : 'text-slate-600 dark:text-slate-400'
                         }`}>
                           {message.timestamp.toLocaleTimeString()}
                           {message.platform && !message.isUser && (
