@@ -51,52 +51,67 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
 
   if (!platform || !currentChat) return null;
 
-  // Extract messages relevant to this platform - fixed logic
+  // Fixed message filtering logic
   const getBotMessages = () => {
-    console.log('getBotMessages called for platform:', platform.name);
-    console.log('Total messages in chat:', currentChat.messages?.length || 0);
+    console.log('=== getBotMessages DEBUG ===');
+    console.log('Platform:', platform.name, 'ID:', platform.id);
+    console.log('Current chat messages count:', currentChat.messages?.length || 0);
     
     const conversationMessages: Array<{content: string, timestamp: Date, isUser: boolean, platform?: string}> = [];
     
-    if (!currentChat.messages) return conversationMessages;
+    if (!currentChat.messages || currentChat.messages.length === 0) {
+      console.log('No messages found in chat');
+      return conversationMessages;
+    }
     
     // Sort messages by creation time to maintain chronological order
     const sortedMessages = [...currentChat.messages].sort((a, b) => 
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
     
+    console.log('Processing', sortedMessages.length, 'sorted messages');
+    
     sortedMessages.forEach((message, index) => {
-      console.log(`Message ${index}:`, { 
-        sender: message.sender, 
-        platform: message.platform, 
-        content: message.content.substring(0, 50) + '...'
+      console.log(`Message ${index + 1}:`, {
+        id: message.id,
+        sender: message.sender,
+        platform: message.platform || 'null',
+        content_preview: message.content.substring(0, 30) + '...',
+        created_at: message.created_at
       });
       
-      // Handle timestamp - convert from string if needed, or use current date as fallback
+      // Handle timestamp
       const timestamp = message.timestamp 
         ? (message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp))
         : new Date(message.created_at);
       
       if (message.sender === 'user') {
         // Include ALL user messages in every agent's conversation view
+        console.log('✓ Adding user message to conversation');
         conversationMessages.push({
           content: message.content,
           timestamp,
           isUser: true
         });
-      } else if (message.sender === 'ai' && message.platform === platform.id) {
+      } else if (message.sender === 'ai') {
         // Only include AI messages from this specific platform
-        console.log('Found platform-specific AI message for', platform.name);
-        conversationMessages.push({
-          content: message.content,
-          timestamp,
-          isUser: false,
-          platform: message.platform
-        });
+        console.log('AI message platform check:', message.platform, 'vs target:', platform.id);
+        if (message.platform === platform.id) {
+          console.log('✓ Adding AI message from', platform.name, 'to conversation');
+          conversationMessages.push({
+            content: message.content,
+            timestamp,
+            isUser: false,
+            platform: message.platform
+          });
+        } else {
+          console.log('✗ Skipping AI message from different platform:', message.platform);
+        }
       }
     });
     
-    console.log('Final conversation messages for', platform.name, ':', conversationMessages.length);
+    console.log('Final conversation for', platform.name, ':', conversationMessages.length, 'messages');
+    console.log('=== END DEBUG ===');
     return conversationMessages;
   };
 
@@ -196,6 +211,11 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
                 <div className="text-4xl mb-4">{platform?.icon}</div>
                 <p className="text-lg font-medium mb-2 modern-text-primary">No conversation with {platform?.name} yet.</p>
                 <p className="text-base">Start chatting to see the conversation here.</p>
+                <div className="mt-4 text-sm modern-text-muted">
+                  <p>Debug info:</p>
+                  <p>Total messages in chat: {currentChat?.messages?.length || 0}</p>
+                  <p>Platform ID: {platform?.id}</p>
+                </div>
               </div>
             ) : (
               botMessages.map((message, index) => (
@@ -219,6 +239,9 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
                           message.isUser ? 'text-white/70' : 'modern-text-muted'
                         }`}>
                           {message.timestamp.toLocaleTimeString()}
+                          {message.platform && !message.isUser && (
+                            <span className="ml-2 opacity-75">• {platform?.name}</span>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
