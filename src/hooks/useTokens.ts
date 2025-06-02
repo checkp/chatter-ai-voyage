@@ -34,7 +34,7 @@ interface TokenPackage {
 export const useTokens = (user: SupabaseUser | null) => {
   const queryClient = useQueryClient();
 
-  // Fetch user token balance
+  // Fetch user token balance with RLS protection
   const { data: tokenBalance, isLoading: isLoadingBalance } = useQuery({
     queryKey: ['tokens', user?.id],
     queryFn: async () => {
@@ -56,7 +56,7 @@ export const useTokens = (user: SupabaseUser | null) => {
     enabled: !!user,
   });
 
-  // Fetch token transaction history
+  // Fetch token transaction history with RLS protection
   const { data: transactions, isLoading: isLoadingTransactions } = useQuery({
     queryKey: ['token-transactions', user?.id],
     queryFn: async () => {
@@ -79,7 +79,7 @@ export const useTokens = (user: SupabaseUser | null) => {
     enabled: !!user,
   });
 
-  // Fetch available token packages
+  // Fetch available token packages (public read access)
   const { data: packages, isLoading: isLoadingPackages } = useQuery({
     queryKey: ['token-packages'],
     queryFn: async () => {
@@ -131,42 +131,8 @@ export const useTokens = (user: SupabaseUser | null) => {
     return totalCost;
   };
 
-  // Deduct tokens after successful API call
-  const deductTokensMutation = useMutation({
-    mutationFn: async ({ platformId, model, tokensUsed }: { 
-      platformId: string; 
-      model: string; 
-      tokensUsed: number; 
-    }) => {
-      if (!user) throw new Error('User not authenticated');
-
-      const response = await supabase.functions.invoke('deduct-tokens', {
-        body: { 
-          platform_id: platformId,
-          model: model,
-          tokens_used: tokensUsed
-        },
-        headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-        },
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message || 'Failed to deduct tokens');
-      }
-
-      return response.data;
-    },
-    onSuccess: () => {
-      // Refresh token balance
-      queryClient.invalidateQueries({ queryKey: ['tokens', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['token-transactions', user?.id] });
-    },
-    onError: (error: any) => {
-      console.error('Failed to deduct tokens:', error);
-      toast.error('Failed to deduct tokens: ' + error.message);
-    },
-  });
+  // SECURITY: Removed the deductTokens function as it should only be handled server-side
+  // Token deductions now happen automatically in edge functions with proper validation
 
   return {
     tokenBalance,
@@ -177,7 +143,5 @@ export const useTokens = (user: SupabaseUser | null) => {
     isLoadingPackages,
     checkTokenBalance,
     calculateTokenCost,
-    deductTokens: deductTokensMutation.mutate,
-    isDeductingTokens: deductTokensMutation.isPending,
   };
 };

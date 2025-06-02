@@ -25,7 +25,9 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model, user_id } = await req.json();
+    // SECURITY FIX: Extract user_id from authenticated session, not from request body
+    const { messages, model } = await req.json();
+    const user_id = user.id;
     
     // Check token balance
     const { data: tokenData, error: tokenError } = await supabaseClient
@@ -70,7 +72,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Grok API error: ${response.status} - ${errorText}`);
+      throw new Error(`Grok API error: ${response.status}`);
     }
 
     const data_response = await response.json();
@@ -85,8 +87,6 @@ serve(async (req) => {
     const apiCostPer1kTokens = pricingData.api_cost_per_1k_tokens;
     const actualApiCost = (totalTokens / 1000) * apiCostPer1kTokens;
     const tokensToDeduct = Math.ceil(actualApiCost / 0.001);
-
-    console.log(`Grok API usage: ${totalTokens} tokens, cost: $${actualApiCost}, deducting: ${tokensToDeduct} tokens`);
 
     if (tokenData.balance < tokensToDeduct) {
       throw new Error('Insufficient tokens for this request');
@@ -103,7 +103,7 @@ serve(async (req) => {
       })
       .eq('user_id', user_id);
 
-    // Log transaction with detailed metadata
+    // Log transaction with detailed metadata (without sensitive info)
     await supabaseClient
       .from('token_transactions')
       .insert({
@@ -129,8 +129,9 @@ serve(async (req) => {
     });
 
   } catch (error) {
+    // SECURITY FIX: Don't expose internal error details
     console.error('Grok function error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: 'Request failed' }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

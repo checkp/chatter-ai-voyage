@@ -3,282 +3,219 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Key, Save, Eye, EyeOff } from 'lucide-react';
-import ModelSelector from './ModelSelector';
-import { getDefaultModel } from '@/config/aiModels';
+import { Eye, EyeOff, Key, Save, Trash2 } from 'lucide-react';
 
 interface ApiKey {
   platform: string;
-  encrypted_key: string;
-}
-
-interface AgentSetting {
-  platform: string;
-  model: string;
+  hasKey: boolean;
 }
 
 const ApiKeySettings = () => {
   const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
-  const [selectedModels, setSelectedModels] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(false);
+  const [existingKeys, setExistingKeys] = useState<ApiKey[]>([]);
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(false);
+  const [savingKey, setSavingKey] = useState<string | null>(null);
 
   const platforms = [
-    { id: 'anthropic', name: 'Claude (Anthropic)', icon: '🎭' },
-    { id: 'openai', name: 'ChatGPT (OpenAI)', icon: '🤖' },
-    { id: 'deepseek', name: 'DeepSeek', icon: '🔍' },
-    { id: 'grok', name: 'Grok (X.AI)', icon: '🚀' },
+    { id: 'openai', name: 'OpenAI', placeholder: 'sk-...' },
+    { id: 'anthropic', name: 'Anthropic', placeholder: 'sk-ant-...' },
+    { id: 'deepseek', name: 'DeepSeek', placeholder: 'sk-...' },
+    { id: 'grok', name: 'Grok (X.AI)', placeholder: 'xai-...' },
   ];
 
   useEffect(() => {
-    loadApiKeys();
-    loadModelSettings();
+    loadExistingKeys();
   }, []);
 
-  const loadApiKeys = async () => {
+  const loadExistingKeys = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.log('No user found when loading API keys');
-        return;
-      }
-
-      console.log('Loading API keys for user:', user.id);
+      if (!user) return;
 
       const { data, error } = await supabase
         .from('user_api_keys')
-        .select('platform, encrypted_key')
+        .select('platform')
         .eq('user_id', user.id);
 
       if (error) {
-        console.error('Error loading API keys:', error);
-        throw error;
-      }
-
-      console.log('Loaded API keys from database:', data);
-
-      const keysMap: Record<string, string> = {};
-      data?.forEach((key: ApiKey) => {
-        keysMap[key.platform] = key.encrypted_key;
-      });
-      setApiKeys(keysMap);
-    } catch (error: any) {
-      console.error('Failed to load API keys:', error);
-      toast.error('Failed to load API keys: ' + error.message);
-    }
-  };
-
-  const loadModelSettings = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.log('No user found when loading model settings');
+        console.error('Error loading existing keys:', error);
         return;
       }
 
-      const { data, error } = await supabase
-        .from('user_agent_settings')
-        .select('platform, model')
-        .eq('user_id', user.id);
+      const keys: ApiKey[] = platforms.map(platform => ({
+        platform: platform.id,
+        hasKey: data?.some(key => key.platform === platform.id) || false
+      }));
 
-      if (error) {
-        console.error('Error loading model settings:', error);
-        throw error;
-      }
-
-      const modelsMap: Record<string, string> = {};
-      data?.forEach((setting: AgentSetting) => {
-        modelsMap[setting.platform] = setting.model || getDefaultModel(setting.platform);
-      });
-
-      // Set defaults for platforms without settings
-      platforms.forEach(platform => {
-        if (!modelsMap[platform.id]) {
-          modelsMap[platform.id] = getDefaultModel(platform.id);
-        }
-      });
-
-      setSelectedModels(modelsMap);
+      setExistingKeys(keys);
     } catch (error: any) {
-      console.error('Failed to load model settings:', error);
-      toast.error('Failed to load model settings: ' + error.message);
+      console.error('Failed to load existing keys:', error);
     }
   };
 
-  const saveApiKey = async (platform: string, key: string) => {
-    setLoading(true);
+  const saveApiKey = async (platform: string) => {
+    const apiKey = apiKeys[platform];
+    if (!apiKey || !apiKey.trim()) {
+      toast.error('Please enter an API key');
+      return;
+    }
+
+    setSavingKey(platform);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.error('No user found when saving API key');
-        throw new Error('User not authenticated');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
       }
 
-      console.log('Saving API key for platform:', platform, 'user:', user.id);
+      // Use the secure encryption function
+      const response = await supabase.functions.invoke('encrypt-api-key', {
+        body: { 
+          platform,
+          api_key: apiKey
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
 
-      if (!key.trim()) {
-        console.log('Deleting API key for platform:', platform);
-        // Delete the key if it's empty
-        const { error } = await supabase
-          .from('user_api_keys')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('platform', platform);
-
-        if (error) {
-          console.error('Error deleting API key:', error);
-          throw error;
-        }
-        
-        setApiKeys(prev => {
-          const updated = { ...prev };
-          delete updated[platform];
-          return updated;
-        });
-      } else {
-        console.log('Upserting API key for platform:', platform);
-        // Upsert the key
-        const { data, error } = await supabase
-          .from('user_api_keys')
-          .upsert({
-            user_id: user.id,
-            platform,
-            encrypted_key: key, // In production, encrypt this
-          }, {
-            onConflict: 'user_id,platform'
-          });
-
-        if (error) {
-          console.error('Error upserting API key:', error);
-          throw error;
-        }
-
-        console.log('Successfully saved API key, result:', data);
-        
-        setApiKeys(prev => ({ ...prev, [platform]: key }));
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to save API key');
       }
 
-      toast.success(`${platforms.find(p => p.id === platform)?.name} API key saved successfully`);
+      // Clear the input and update existing keys
+      setApiKeys(prev => ({ ...prev, [platform]: '' }));
+      setShowKeys(prev => ({ ...prev, [platform]: false }));
+      await loadExistingKeys();
       
-      // Reload keys to verify they were saved
-      await loadApiKeys();
+      toast.success(`${platforms.find(p => p.id === platform)?.name} API key saved securely`);
     } catch (error: any) {
       console.error('Failed to save API key:', error);
       toast.error('Failed to save API key: ' + error.message);
     } finally {
-      setLoading(false);
+      setSavingKey(null);
     }
   };
 
-  const saveModelSetting = async (platform: string, model: string) => {
+  const deleteApiKey = async (platform: string) => {
+    setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.error('No user found when saving model setting');
         throw new Error('User not authenticated');
       }
 
       const { error } = await supabase
-        .from('user_agent_settings')
-        .upsert({
-          user_id: user.id,
-          platform,
-          model,
-          enabled: false, // Keep existing enabled state
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id,platform'
-        });
+        .from('user_api_keys')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('platform', platform);
 
       if (error) {
-        console.error('Error saving model setting:', error);
-        throw error;
+        throw new Error(error.message);
       }
 
-      console.log('Successfully saved model setting:', platform, model);
-      toast.success(`${platforms.find(p => p.id === platform)?.name} model updated`);
+      await loadExistingKeys();
+      toast.success(`${platforms.find(p => p.id === platform)?.name} API key deleted`);
     } catch (error: any) {
-      console.error('Failed to save model setting:', error);
-      toast.error('Failed to save model setting: ' + error.message);
+      console.error('Failed to delete API key:', error);
+      toast.error('Failed to delete API key: ' + error.message);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleModelChange = (platform: string, model: string) => {
-    setSelectedModels(prev => ({ ...prev, [platform]: model }));
-    saveModelSetting(platform, model);
   };
 
   const toggleShowKey = (platform: string) => {
     setShowKeys(prev => ({ ...prev, [platform]: !prev[platform] }));
   };
 
-  const updateApiKey = (platform: string, value: string) => {
+  const handleKeyChange = (platform: string, value: string) => {
     setApiKeys(prev => ({ ...prev, [platform]: value }));
+  };
+
+  const hasExistingKey = (platform: string) => {
+    return existingKeys.find(key => key.platform === platform)?.hasKey || false;
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
         <Key className="w-5 h-5" />
-        <h2 className="text-2xl font-bold">API Key Settings</h2>
+        <h2 className="text-2xl font-bold">API Key Management</h2>
       </div>
       
       <div className="grid gap-4">
         {platforms.map((platform) => (
           <Card key={platform.id}>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <span>{platform.icon}</span>
+              <CardTitle className="flex items-center justify-between text-lg">
                 {platform.name}
+                {hasExistingKey(platform.id) && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-green-600 bg-green-100 px-2 py-1 rounded">
+                      ✓ Configured
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deleteApiKey(platform.id)}
+                      disabled={loading}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor={platform.id}>API Key</Label>
+                <Label htmlFor={`${platform.id}-key`}>API Key</Label>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <Input
-                      id={platform.id}
+                      id={`${platform.id}-key`}
                       type={showKeys[platform.id] ? 'text' : 'password'}
-                      placeholder={`Enter your ${platform.name} API key`}
+                      placeholder={platform.placeholder}
                       value={apiKeys[platform.id] || ''}
-                      onChange={(e) => updateApiKey(platform.id, e.target.value)}
+                      onChange={(e) => handleKeyChange(platform.id, e.target.value)}
                       className="pr-10"
                     />
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3"
                       onClick={() => toggleShowKey(platform.id)}
-                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
                     >
-                      {showKeys[platform.id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
+                      {showKeys[platform.id] ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </Button>
                   </div>
                   <Button
-                    onClick={() => saveApiKey(platform.id, apiKeys[platform.id] || '')}
-                    disabled={loading}
-                    size="sm"
+                    onClick={() => saveApiKey(platform.id)}
+                    disabled={!apiKeys[platform.id] || savingKey === platform.id}
+                    className="min-w-[100px]"
                   >
-                    <Save className="w-4 h-4 mr-1" />
-                    Save
+                    {savingKey === platform.id ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Saving...
+                      </div>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Save
+                      </>
+                    )}
                   </Button>
                 </div>
-              </div>
-
-              <ModelSelector
-                platformId={platform.id}
-                selectedModel={selectedModels[platform.id] || getDefaultModel(platform.id)}
-                onModelChange={(model) => handleModelChange(platform.id, model)}
-                disabled={!apiKeys[platform.id]}
-              />
-              
-              <div className="text-xs text-gray-500">
-                {platform.id === 'anthropic' && 'Get your API key from the Anthropic Console'}
-                {platform.id === 'openai' && 'Get your API key from the OpenAI Platform'}
-                {platform.id === 'deepseek' && 'Get your API key from the DeepSeek Platform'}
-                {platform.id === 'grok' && 'Get your API key from the X.AI Console'}
               </div>
             </CardContent>
           </Card>
@@ -286,8 +223,8 @@ const ApiKeySettings = () => {
       </div>
       
       <div className="text-sm text-gray-600 bg-blue-50 p-4 rounded-lg">
-        <strong>Note:</strong> Your API keys are stored securely and are only used to make requests on your behalf. 
-        They are never shared with other users or used for any other purpose.
+        <strong>Security Notice:</strong> Your API keys are encrypted using industry-standard encryption before being stored in the database. 
+        They are only decrypted when needed to make API calls on your behalf. Never share your API keys with anyone.
       </div>
     </div>
   );

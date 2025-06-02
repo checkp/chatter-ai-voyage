@@ -173,7 +173,7 @@ export type Database = {
           id: string
           metadata: Json | null
           transaction_type: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           amount: number
@@ -183,7 +183,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           transaction_type: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           amount?: number
@@ -193,7 +193,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           transaction_type?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -262,7 +262,7 @@ export type Database = {
           total_consumed: number | null
           total_purchased: number | null
           updated_at: string | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           balance?: number
@@ -271,7 +271,7 @@ export type Database = {
           total_consumed?: number | null
           total_purchased?: number | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           balance?: number
@@ -280,7 +280,7 @@ export type Database = {
           total_consumed?: number | null
           total_purchased?: number | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
