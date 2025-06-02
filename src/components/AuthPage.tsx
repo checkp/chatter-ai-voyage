@@ -27,9 +27,17 @@ const AuthPage = () => {
   }, []);
 
   const cleanupAuthState = () => {
+    // Remove all auth-related keys from localStorage
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
         localStorage.removeItem(key);
+      }
+    });
+    
+    // Remove from sessionStorage if in use
+    Object.keys(sessionStorage || {}).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        sessionStorage.removeItem(key);
       }
     });
   };
@@ -39,33 +47,66 @@ const AuthPage = () => {
     setLoading(true);
 
     try {
+      // Clean up existing auth state first
       cleanupAuthState();
       
+      // Attempt global sign out to ensure clean state
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+        console.log('Global signout attempt completed');
+      }
+      
       if (isSignUp) {
+        console.log('Attempting to sign up user:', email);
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
         });
         
-        if (error) throw error;
+        if (error) {
+          console.error('Sign up error:', error);
+          throw error;
+        }
         
         if (data.user) {
-          toast.success('Account created successfully! Please check your email for verification.');
+          console.log('User signed up successfully:', data.user.id);
+          if (data.user.email_confirmed_at) {
+            // Email is already confirmed, redirect immediately
+            toast.success('Account created successfully! Redirecting...');
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 1000);
+          } else {
+            // Email confirmation required
+            toast.success('Account created! Please check your email for verification.');
+          }
         }
       } else {
+        console.log('Attempting to sign in user:', email);
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         
-        if (error) throw error;
+        if (error) {
+          console.error('Sign in error:', error);
+          throw error;
+        }
         
         if (data.user) {
-          window.location.href = '/';
+          console.log('User signed in successfully:', data.user.id);
+          toast.success('Signed in successfully! Redirecting...');
+          // Use setTimeout to ensure auth state is properly set
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 500);
         }
       }
     } catch (error: any) {
-      toast.error(error.message);
+      console.error('Auth error:', error);
+      toast.error(error.message || 'An error occurred during authentication');
     } finally {
       setLoading(false);
     }
@@ -76,6 +117,13 @@ const AuthPage = () => {
     try {
       cleanupAuthState();
       
+      // Attempt global sign out first
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        console.log('Global signout attempt completed');
+      }
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -83,9 +131,13 @@ const AuthPage = () => {
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Google auth error:', error);
+        throw error;
+      }
     } catch (error: any) {
-      toast.error(error.message);
+      console.error('Google auth error:', error);
+      toast.error(error.message || 'An error occurred with Google authentication');
       setLoading(false);
     }
   };
@@ -95,6 +147,13 @@ const AuthPage = () => {
     try {
       cleanupAuthState();
       
+      // Attempt global sign out first
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        console.log('Global signout attempt completed');
+      }
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
         options: {
@@ -102,9 +161,13 @@ const AuthPage = () => {
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Apple auth error:', error);
+        throw error;
+      }
     } catch (error: any) {
-      toast.error(error.message);
+      console.error('Apple auth error:', error);
+      toast.error(error.message || 'An error occurred with Apple authentication');
       setLoading(false);
     }
   };
