@@ -6,59 +6,59 @@
 
 @layer base {
   :root {
-    /* RoboHerd pastel green theme inspired by the logo */
-    --background: 248 250 248; /* Very light green-cream */
-    --foreground: 34 89 44; /* Deep forest green */
+    /* RoboHerd pastel green theme */
+    --background: 245 241 232; /* roboherd-cream */
+    --foreground: 90 124 90; /* roboherd-forest */
     --card: 255 255 255;
-    --card-foreground: 34 89 44;
+    --card-foreground: 90 124 90;
     --popover: 255 255 255;
-    --popover-foreground: 34 89 44;
-    --primary: 34 139 69; /* Forest green */
+    --popover-foreground: 90 124 90;
+    --primary: 143 174 154; /* roboherd-sage */
     --primary-foreground: 255 255 255;
-    --secondary: 187 224 187; /* Light mint */
-    --secondary-foreground: 34 89 44;
-    --muted: 240 253 240; /* Very light green */
-    --muted-foreground: 74 120 74; /* Medium green */
-    --accent: 72 187 120; /* Emerald accent */
+    --secondary: 168 196 162; /* roboherd-mint */
+    --secondary-foreground: 90 124 90;
+    --muted: 245 241 232; /* roboherd-cream */
+    --muted-foreground: 107 142 107; /* roboherd-moss */
+    --accent: 82 160 133; /* roboherd-jade */
     --accent-foreground: 255 255 255;
     --destructive: 239 68 68;
     --destructive-foreground: 255 255 255;
-    --border: 187 224 187; /* Light mint border */
-    --input: 187 224 187;
-    --ring: 34 139 69; /* Forest green ring */
-    --chart-1: 34 139 69;
-    --chart-2: 72 187 120;
-    --chart-3: 16 185 129;
-    --chart-4: 110 231 183;
-    --chart-5: 52 211 153;
+    --border: 168 196 162; /* roboherd-mint */
+    --input: 168 196 162;
+    --ring: 143 174 154; /* roboherd-sage */
+    --chart-1: 143 174 154;
+    --chart-2: 82 160 133;
+    --chart-3: 74 155 142;
+    --chart-4: 155 197 195;
+    --chart-5: 107 142 107;
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 20 40 20; /* Dark forest */
-    --foreground: 240 253 240;
-    --card: 30 50 30;
-    --card-foreground: 240 253 240;
-    --popover: 30 50 30;
-    --popover-foreground: 240 253 240;
-    --primary: 72 187 120;
-    --primary-foreground: 20 40 20;
-    --secondary: 40 80 40;
-    --secondary-foreground: 240 253 240;
-    --muted: 50 70 50;
-    --muted-foreground: 187 224 187;
-    --accent: 110 231 183;
-    --accent-foreground: 20 40 20;
+    --background: 41 58 41; /* Dark forest */
+    --foreground: 245 241 232;
+    --card: 41 58 41;
+    --card-foreground: 245 241 232;
+    --popover: 41 58 41;
+    --popover-foreground: 245 241 232;
+    --primary: 143 174 154;
+    --primary-foreground: 41 58 41;
+    --secondary: 90 124 90;
+    --secondary-foreground: 245 241 232;
+    --muted: 60 80 60;
+    --muted-foreground: 168 196 162;
+    --accent: 82 160 133;
+    --accent-foreground: 245 241 232;
     --destructive: 220 38 38;
-    --destructive-foreground: 240 253 240;
-    --border: 74 120 74;
-    --input: 74 120 74;
-    --ring: 72 187 120;
-    --chart-1: 72 187 120;
-    --chart-2: 110 231 183;
-    --chart-3: 16 185 129;
-    --chart-4: 52 211 153;
-    --chart-5: 34 139 69;
+    --destructive-foreground: 245 241 232;
+    --border: 90 124 90;
+    --input: 90 124 90;
+    --ring: 143 174 154;
+    --chart-1: 143 174 154;
+    --chart-2: 82 160 133;
+    --chart-3: 74 155 142;
+    --chart-4: 155 197 195;
+    --chart-5: 107 142 107;
   }
 }
 
@@ -68,8 +68,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    background: linear-gradient(135deg, rgb(248 250 248) 0%, rgb(240 253 240) 100%);
-    min-height: 100vh;
+    background-color: rgb(245 241 232); /* roboherd-cream */
   }
 }
 
@@ -82,16 +81,16 @@
   /* RoboHerd Theme System */
   [data-theme="amber-warm"], [data-theme="amber-cool"], [data-theme="amber-dark"], [data-theme="amber-minimal"], [data-theme="blue-cool"] {
     /* Override all themes with RoboHerd palette */
-    --modern-accent-primary: 34 139 69; /* Forest green */
-    --modern-accent-secondary: 187 224 187; /* Light mint */
-    --modern-accent-tertiary: 72 187 120; /* Emerald */
-    --modern-bg-primary: 248 250 248; /* Light green-cream */
+    --modern-accent-primary: 143 174 154; /* roboherd-sage */
+    --modern-accent-secondary: 168 196 162; /* roboherd-mint */
+    --modern-accent-tertiary: 82 160 133; /* roboherd-jade */
+    --modern-bg-primary: 245 241 232; /* roboherd-cream */
     --modern-bg-secondary: 255 255 255;
-    --modern-text-primary: 34 89 44; /* Deep forest */
-    --modern-text-secondary: 74 120 74; /* Medium green */
-    --modern-text-muted: 110 170 110; /* Muted green */
-    --modern-text-accent: 34 139 69; /* Forest green */
-    --modern-border: 187 224 187; /* Light mint */
+    --modern-text-primary: 90 124 90; /* roboherd-forest */
+    --modern-text-secondary: 107 142 107; /* roboherd-moss */
+    --modern-text-muted: 143 174 154; /* roboherd-sage */
+    --modern-text-accent: 82 160 133; /* roboherd-jade */
+    --modern-border: 168 196 162; /* roboherd-mint */
   }
 
   /* Modern Base Styles */
@@ -106,28 +105,28 @@
   .modern-border-b { border-bottom: 1px solid hsl(var(--modern-border)); }
   .modern-border-t { border-top: 1px solid hsl(var(--modern-border)); }
 
-  /* Agent Colors - RoboHerd Green Variants matching the logo sheep */
-  .modern-bg-agent-openai { background-color: #10b981; } /* Emerald green */
-  .modern-agent-openai { color: #10b981; }
-  .modern-border-agent-openai { border-color: #10b981; }
+  /* Agent Colors - RoboHerd Green Variants */
+  .modern-bg-agent-openai { background-color: #8fae9a; } /* Primary sage */
+  .modern-agent-openai { color: #8fae9a; }
+  .modern-border-agent-openai { border-color: #8fae9a; }
   
-  .modern-bg-agent-anthropic { background-color: #14b8a6; } /* Teal */
-  .modern-agent-anthropic { color: #14b8a6; }
-  .modern-border-agent-anthropic { border-color: #14b8a6; }
+  .modern-bg-agent-anthropic { background-color: #52a085; } /* Jade */
+  .modern-agent-anthropic { color: #52a085; }
+  .modern-border-agent-anthropic { border-color: #52a085; }
   
-  .modern-bg-agent-deepseek { background-color: #059669; } /* Emerald 600 */
-  .modern-agent-deepseek { color: #059669; }
-  .modern-border-agent-deepseek { border-color: #059669; }
+  .modern-bg-agent-deepseek { background-color: #4a9b8e; } /* Teal-emerald */
+  .modern-agent-deepseek { color: #4a9b8e; }
+  .modern-border-agent-deepseek { border-color: #4a9b8e; }
   
-  .modern-bg-agent-grok { background-color: #0891b2; } /* Cyan 600 */
-  .modern-agent-grok { color: #0891b2; }
-  .modern-border-agent-grok { border-color: #0891b2; }
+  .modern-bg-agent-grok { background-color: #9bc5c3; } /* Light seafoam */
+  .modern-agent-grok { color: #9bc5c3; }
+  .modern-border-agent-grok { border-color: #9bc5c3; }
 
   /* Glass Morphism */
   .glass-morphism {
     backdrop-filter: blur(16px);
     background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(72, 187, 120, 0.2);
+    border: 1px solid rgba(143, 174, 154, 0.2);
   }
 
   /* Modern Cards */
@@ -136,7 +135,7 @@
     border: 1px solid hsl(var(--modern-border));
     border-radius: 16px;
     backdrop-filter: blur(8px);
-    box-shadow: 0 4px 24px rgba(34, 139, 69, 0.08);
+    box-shadow: 0 4px 24px rgba(143, 174, 154, 0.08);
   }
 
   .modern-card-elevated {
@@ -144,7 +143,7 @@
     border: 1px solid hsl(var(--modern-border));
     border-radius: 20px;
     backdrop-filter: blur(12px);
-    box-shadow: 0 8px 32px rgba(34, 139, 69, 0.12);
+    box-shadow: 0 8px 32px rgba(143, 174, 154, 0.12);
   }
 
   .modern-card-selected {
@@ -222,33 +221,6 @@
     box-shadow: 0 0 0 4px hsl(var(--modern-accent-primary) / 0.1);
   }
 
-  /* Modern Dialog */
-  .modern-dialog {
-    background: hsl(var(--modern-bg-primary));
-    border: 1px solid hsl(var(--modern-border));
-    border-radius: 24px;
-    backdrop-filter: blur(16px);
-    box-shadow: 0 24px 64px rgba(34, 139, 69, 0.15);
-  }
-
-  /* Avatar Ring */
-  .modern-avatar-ring {
-    position: relative;
-  }
-
-  .modern-avatar-ring::before {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    background: linear-gradient(135deg, 
-      hsl(var(--modern-accent-primary)), 
-      hsl(var(--modern-accent-tertiary))
-    );
-    border-radius: 50%;
-    z-index: -1;
-    filter: blur(0.5px);
-  }
-
   /* Animations */
   .modern-float {
     animation: float 6s ease-in-out infinite;
@@ -258,16 +230,8 @@
     filter: drop-shadow(0 0 20px hsl(var(--modern-accent-primary) / 0.3));
   }
 
-  .modern-glow-hover {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .modern-glow-hover:hover {
-    filter: drop-shadow(0 0 24px hsl(var(--modern-accent-primary) / 0.4));
-  }
-
-  .modern-enter {
-    animation: slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  .roboherd-glow {
+    animation: roboherd-glow 3s ease-in-out infinite;
   }
 
   @keyframes float {
@@ -275,28 +239,12 @@
     50% { transform: translateY(-10px); }
   }
 
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0px);
-    }
-  }
-
-  /* RoboHerd specific animations */
   @keyframes roboherd-glow {
-    '0%, 100%': { 
-      boxShadow: '0 0 10px rgba(34, 139, 69, 0.4), 0 0 20px rgba(34, 139, 69, 0.2)'
-    },
-    '50%': { 
-      boxShadow: '0 0 20px rgba(34, 139, 69, 0.6), 0 0 40px rgba(34, 139, 69, 0.3)'
+    0%, 100% { 
+      box-shadow: 0 0 10px rgba(143, 174, 154, 0.4), 0 0 20px rgba(143, 174, 154, 0.2);
     }
-  }
-
-  .roboherd-glow {
-    animation: roboherd-glow 3s ease-in-out infinite;
+    50% { 
+      box-shadow: 0 0 20px rgba(143, 174, 154, 0.6), 0 0 40px rgba(143, 174, 154, 0.3);
+    }
   }
 }
