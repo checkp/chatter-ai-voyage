@@ -81,10 +81,11 @@ serve(async (req) => {
     const completionTokens = data_response.usage?.completion_tokens || 0;
     const totalTokens = data_response.usage?.total_tokens || promptTokens + completionTokens;
 
-    // Calculate cost in our token system
+    // FIXED: More reasonable token calculation
+    // Our tokens are worth approximately $0.01 each (1 cent)
     const apiCostPer1kTokens = pricingData.api_cost_per_1k_tokens;
     const actualApiCost = (totalTokens / 1000) * apiCostPer1kTokens;
-    const tokensToDeduct = Math.ceil(actualApiCost / 0.001);
+    const tokensToDeduct = Math.ceil(actualApiCost / 0.01); // Changed from 0.001 to 0.01
 
     console.log(`DeepSeek API usage: ${totalTokens} tokens, cost: $${actualApiCost}, deducting: ${tokensToDeduct} tokens`);
 
