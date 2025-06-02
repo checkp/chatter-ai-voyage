@@ -48,22 +48,22 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           <div className={`max-w-3xl rounded-lg p-4 text-sm ${message.sender === 'user'
             ? 'bg-primary text-primary-foreground'
             : `bg-muted border-l-4 ${message.platform ? 
-                message.platform === 'openai' ? 'border-l-green-500' :
-                message.platform === 'anthropic' ? 'border-l-orange-500' :
-                message.platform === 'deepseek' ? 'border-l-blue-500' :
-                message.platform === 'grok' ? 'border-l-purple-500' :
-                'border-l-gray-500'
-              : 'border-l-gray-500'}`
+                message.platform === 'openai' ? 'border-l-[#8FBC8F] bg-[#8FBC8F]/10' :
+                message.platform === 'anthropic' ? 'border-l-[#98D982] bg-[#98D982]/10' :
+                message.platform === 'deepseek' ? 'border-l-[#87CEEB] bg-[#87CEEB]/10' :
+                message.platform === 'grok' ? 'border-l-[#DDA0DD] bg-[#DDA0DD]/10' :
+                'border-l-gray-500 bg-gray-50'
+              : 'border-l-gray-500 bg-gray-50'}`
             }`}>
             <div className="whitespace-pre-wrap leading-relaxed">
               {message.content}
             </div>
             {message.sender === 'ai' && message.platform && (
               <div className={`mt-2 text-xs font-medium ${
-                message.platform === 'openai' ? 'text-green-600' :
-                message.platform === 'anthropic' ? 'text-orange-600' :
-                message.platform === 'deepseek' ? 'text-blue-600' :
-                message.platform === 'grok' ? 'text-purple-600' :
+                message.platform === 'openai' ? 'text-[#6B8E6B]' :
+                message.platform === 'anthropic' ? 'text-[#7AC464]' :
+                message.platform === 'deepseek' ? 'text-[#69B7CD]' :
+                message.platform === 'grok' ? 'text-[#C082C0]' :
                 'text-gray-600'
               }`}>
                 — {getPlatformName(message.platform)}
@@ -77,7 +77,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       ))}
       {isLoadingResponse && (
         <div className="flex flex-col items-start mb-4">
-          <div className="bg-muted rounded-lg p-4 text-sm border-l-4 border-l-amber-500">
+          <div className="bg-muted rounded-lg p-4 text-sm border-l-4 border-l-amber-400 bg-amber-50">
             <div className="flex items-center gap-2">
               <RefreshCw className="h-4 w-4 animate-spin" />
               AI assistants are responding...

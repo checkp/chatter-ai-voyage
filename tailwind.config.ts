@@ -33,25 +33,25 @@ export default {
 				'4xl': ['2.5rem', { lineHeight: '3rem' }],
 			},
 			colors: {
-				// Pastel color palette
+				// Pastel Amber-Green color palette
 				pastel: {
-					bg: '#fafbfc',
-					surface: '#f3f5f7',
-					primary: '#b3d9f2',
-					secondary: '#c8e6c9',
-					accent: '#e1bee7',
-					success: '#b8f5cd',
-					warning: '#fff3cd',
-					danger: '#f8d7da',
-					text: '#2c3e50',
-					muted: '#6c757d',
+					bg: '#FEFDF8',           // Very light amber-white
+					surface: '#FBF9F0',      // Light amber surface
+					primary: '#D4B886',      // Soft amber
+					secondary: '#C8D4A3',    // Sage green
+					accent: '#B8C99C',       // Muted green
+					success: '#A8D4A8',      // Soft green
+					warning: '#F5E6B8',      // Pale amber warning
+					danger: '#E8C5C5',       // Soft pink-red
+					text: '#3D4A2E',         // Dark green-brown
+					muted: '#6B7A5C',        // Muted green-gray
 				},
-				// Agent-specific pastel colors
+				// Agent-specific pastel amber-green colors
 				agent: {
-					openai: '#a8e6cf',     // Soft mint green
-					anthropic: '#d1c4e9',  // Soft lavender
-					deepseek: '#b39ddb',   // Soft purple
-					grok: '#ffcc80',       // Soft peach
+					openai: '#8FBC8F',       // Dark Sea Green
+					anthropic: '#98D982',    // Light Green
+					deepseek: '#87CEEB',     // Sky Blue with green tint
+					grok: '#DDA0DD',         // Plum with green undertone
 				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',

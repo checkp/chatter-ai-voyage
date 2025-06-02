@@ -5,16 +5,24 @@ import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
 
 export const ModeToggle = () => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
+
+  const toggleDarkMode = () => {
+    if (theme === 'amber-dark') {
+      setTheme('amber-warm');
+    } else {
+      setTheme('amber-dark');
+    }
+  };
 
   return (
-    <Button variant="outline" size="icon" onClick={toggleTheme}>
-      {theme === 'blue-cool' ? (
+    <Button variant="outline" size="icon" onClick={toggleDarkMode}>
+      {theme === 'amber-dark' ? (
         <Sun className="h-4 w-4" />
       ) : (
         <Moon className="h-4 w-4" />
       )}
-      <span className="sr-only">Toggle theme</span>
+      <span className="sr-only">Toggle dark mode</span>
     </Button>
   );
 };
