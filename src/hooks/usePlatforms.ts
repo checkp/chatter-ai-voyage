@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -12,7 +11,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     { 
       id: 'openai', 
       name: 'ChatGPT', 
-      enabled: false, 
+      enabled: true, // Default enabled for new users
       color: 'bg-agent-openai border-agent-openai text-cyber-bg', 
       icon: '🤖',
       hasApiKey: true, // Always true with centralized keys
@@ -21,7 +20,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     { 
       id: 'anthropic', 
       name: 'Claude', 
-      enabled: false,
+      enabled: true, // Default enabled for new users
       color: 'bg-agent-anthropic border-agent-anthropic text-cyber-bg', 
       icon: '🎭',
       hasApiKey: true, // Always true with centralized keys
@@ -30,7 +29,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     { 
       id: 'deepseek', 
       name: 'DeepSeek', 
-      enabled: false, 
+      enabled: true, // Default enabled for new users
       color: 'bg-agent-deepseek border-agent-deepseek text-cyber-bg', 
       icon: '🔍',
       hasApiKey: true, // Always true with centralized keys
@@ -39,7 +38,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     { 
       id: 'grok', 
       name: 'Grok', 
-      enabled: false, 
+      enabled: true, // Default enabled for new users
       color: 'bg-agent-grok border-agent-grok text-cyber-bg', 
       icon: '🚀',
       hasApiKey: true, // Always true with centralized keys
@@ -48,7 +47,11 @@ export const usePlatforms = (user: SupabaseUser | null) => {
   ]);
 
   const loadAgentSettings = async () => {
-    if (!user) return;
+    if (!user) {
+      // For non-authenticated users, keep defaults (all enabled)
+      console.log('No user authenticated, using default platform settings');
+      return;
+    }
 
     try {
       const { data: settings, error } = await supabase
@@ -58,6 +61,12 @@ export const usePlatforms = (user: SupabaseUser | null) => {
 
       if (error) {
         console.error('Error loading agent settings:', error);
+        // Don't return early - keep defaults if there's an error
+      }
+
+      // If no settings exist, user gets the defaults (all enabled)
+      if (!settings || settings.length === 0) {
+        console.log('No agent settings found for user, keeping defaults (all enabled)');
         return;
       }
 
@@ -68,12 +77,13 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       
       setPlatforms(prev => prev.map(platform => ({
         ...platform,
-        enabled: settingsMap.get(platform.id)?.enabled || false,
+        enabled: settingsMap.has(platform.id) ? settingsMap.get(platform.id)?.enabled || false : true, // Default to enabled if no setting
         selectedModel: settingsMap.get(platform.id)?.model || getDefaultModel(platform.id),
         hasApiKey: true // Always true with centralized keys
       })));
     } catch (error: any) {
       console.error('Failed to load agent settings:', error);
+      // Keep defaults on error
     }
   };
 
@@ -82,7 +92,10 @@ export const usePlatforms = (user: SupabaseUser | null) => {
   };
 
   const saveAgentSetting = async (platformId: string, enabled: boolean, model?: string) => {
-    if (!user) return;
+    if (!user) {
+      console.log('Cannot save settings without authenticated user');
+      return;
+    }
 
     try {
       const updateData: any = {
@@ -214,9 +227,7 @@ Your goal: Contribute meaningfully to this multi-agent conversation as ${platfor
   };
 
   useEffect(() => {
-    if (user) {
-      loadAgentSettings();
-    }
+    loadAgentSettings();
   }, [user]);
 
   return {

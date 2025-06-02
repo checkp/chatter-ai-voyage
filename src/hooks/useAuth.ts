@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -103,30 +104,30 @@ export const useAuth = () => {
         return;
       }
 
-      // Enable all 4 platforms by default
+      // Enable all 4 platforms by default with centralized API keys
       const defaultPlatforms = [
-        { platform: 'openai', model: 'gpt-4o-mini' },
-        { platform: 'anthropic', model: 'claude-3-5-haiku-20241022' },
-        { platform: 'deepseek', model: 'deepseek-chat' },
-        { platform: 'grok', model: 'grok-3' }
+        { platform: 'openai', model: 'gpt-4o-mini', enabled: true },
+        { platform: 'anthropic', model: 'claude-3-5-haiku-20241022', enabled: true },
+        { platform: 'deepseek', model: 'deepseek-chat', enabled: true },
+        { platform: 'grok', model: 'grok-3', enabled: true }
       ];
       
       const settingsToInsert = [];
 
-      for (const { platform, model } of defaultPlatforms) {
+      for (const { platform, model, enabled } of defaultPlatforms) {
         const existingSetting = existingSettings?.find(s => s.platform === platform);
         if (!existingSetting) {
           settingsToInsert.push({
             user_id: userId,
             platform: platform,
-            enabled: true,
+            enabled: enabled,
             model: model
           });
         }
       }
 
       if (settingsToInsert.length > 0) {
-        console.log('Creating default agent settings for user:', userId, settingsToInsert);
+        console.log('Creating default agent settings for new user:', userId, settingsToInsert);
         const { error: insertError } = await supabase
           .from('user_agent_settings')
           .insert(settingsToInsert);
@@ -134,8 +135,10 @@ export const useAuth = () => {
         if (insertError) {
           console.error('Error creating default agent settings:', insertError);
         } else {
-          console.log('Successfully created default agent settings for all 4 platforms');
+          console.log('Successfully created default agent settings - all 4 platforms enabled by default');
         }
+      } else {
+        console.log('User already has agent settings configured');
       }
     } catch (error) {
       console.error('Error ensuring default agent settings:', error);

@@ -7,7 +7,7 @@ export const callOpenAI = async (
   user: SupabaseUser,
   model: string = 'gpt-4o-mini'
 ): Promise<string> => {
-  console.log('Calling OpenAI API...');
+  console.log('Calling OpenAI API with centralized key...');
   
   const response = await supabase.functions.invoke('openai-chat', {
     body: { 
@@ -38,7 +38,7 @@ export const callDeepSeek = async (
   user: SupabaseUser,
   model: string = 'deepseek-chat'
 ): Promise<string> => {
-  console.log('Calling DeepSeek API...');
+  console.log('Calling DeepSeek API with centralized key...');
   
   const response = await supabase.functions.invoke('deepseek-chat', {
     body: { 
@@ -69,7 +69,7 @@ export const callGrokAPI = async (
   user: SupabaseUser,
   model: string = 'grok-3'
 ): Promise<string> => {
-  console.log('Calling Grok API...');
+  console.log('Calling Grok API with centralized key...');
   
   const response = await supabase.functions.invoke('grok-chat', {
     body: { 
@@ -99,7 +99,7 @@ export const callClaudeAPI = async (
   conversationHistory: Array<{role: 'user' | 'assistant', content: string}>,
   model: string = 'claude-3-5-haiku-20241022'
 ): Promise<string> => {
-  console.log('Calling Claude API via edge function...');
+  console.log('Calling Claude API with centralized key...');
   
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
@@ -111,7 +111,7 @@ export const callClaudeAPI = async (
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`Invoking claude-chat function (attempt ${attempt}/${maxRetries})...`);
+      console.log(`Invoking claude-chat function with centralized key (attempt ${attempt}/${maxRetries})...`);
 
       const response = await supabase.functions.invoke('claude-chat', {
         body: { messages: conversationHistory, model: model },
@@ -148,7 +148,7 @@ export const callClaudeAPI = async (
         throw lastError;
       }
 
-      console.log(`Claude API call successful on attempt ${attempt}`);
+      console.log(`Claude API call successful on attempt ${attempt} using centralized key`);
       return response.data.content;
 
     } catch (error) {
