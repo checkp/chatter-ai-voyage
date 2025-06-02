@@ -19,7 +19,7 @@ const Index = () => {
   const { user, loading } = useAuth();
   const { theme } = useTheme();
   const { platforms, togglePlatform, callAIAPI, reloadSettings } = usePlatforms(user);
-  const { messagesEndRef, scrollToBottom, scrollToBottomImmediate } = useScrollToBottom();
+  const { messagesEndRef, scrollAreaRef, scrollToBottom, scrollToBottomImmediate } = useScrollToBottom();
   const previousMessageCountRef = useRef(0);
 
   const {
@@ -68,8 +68,12 @@ const Index = () => {
   // Handle scrolling when messages change
   useEffect(() => {
     if (messages && messages.length > previousMessageCountRef.current) {
-      // New messages added - smooth scroll
-      scrollToBottom();
+      // New messages added - smooth scroll with proper timing
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          scrollToBottom();
+        }, 50);
+      });
       previousMessageCountRef.current = messages.length;
     } else if (messages) {
       previousMessageCountRef.current = messages.length;
@@ -79,10 +83,12 @@ const Index = () => {
   // Handle initial scroll when chat loads or changes
   useEffect(() => {
     if (messages && !isLoadingMessages && activeChatId) {
-      // Chat loaded - immediate scroll to bottom
-      setTimeout(() => {
-        scrollToBottomImmediate();
-      }, 100);
+      // Chat loaded - immediate scroll to bottom with proper timing
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          scrollToBottomImmediate();
+        }, 150);
+      });
     }
   }, [activeChatId, isLoadingMessages, messages, scrollToBottomImmediate]);
 
@@ -169,15 +175,17 @@ const Index = () => {
         {/* Chat Messages Area */}
         <div className="flex-1 overflow-hidden">
           {activeTab === 'chat' && (
-            <ScrollArea className="h-full">
-              <div className="p-4">
-                <ChatMessages 
-                  messages={messages}
-                  isLoadingMessages={isLoadingMessages}
-                  isLoadingResponse={isLoadingResponse}
-                  platforms={platforms}
-                />
-                <div ref={messagesEndRef} />
+            <ScrollArea className="h-full" ref={scrollAreaRef}>
+              <div className="p-4 min-h-full flex flex-col">
+                <div className="flex-1">
+                  <ChatMessages 
+                    messages={messages}
+                    isLoadingMessages={isLoadingMessages}
+                    isLoadingResponse={isLoadingResponse}
+                    platforms={platforms}
+                  />
+                </div>
+                <div ref={messagesEndRef} className="h-1" />
               </div>
             </ScrollArea>
           )}
