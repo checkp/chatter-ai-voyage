@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -23,6 +22,72 @@ export const useAuth = () => {
         sessionStorage.removeItem(key);
       }
     });
+  };
+
+  const ensureUserTokens = async (userId: string) => {
+    try {
+      // Check if user already has tokens
+      const { data: existingTokens, error: fetchError } = await supabase
+        .from('user_tokens')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (fetchError && fetchError.code === 'PGRST116') {
+        // No tokens found, create initial token balance
+        console.log('Creating initial token balance for user:', userId);
+        const { error: insertError } = await supabase
+          .from('user_tokens')
+          .insert({
+            user_id: userId,
+            balance: 300,
+            total_purchased: 0,
+            total_consumed: 0
+          });
+
+        if (insertError) {
+          console.error('Error creating initial tokens:', insertError);
+        } else {
+          console.log('Successfully created initial token balance of 300');
+        }
+      } else if (existingTokens) {
+        console.log('User already has token balance:', existingTokens.balance);
+      }
+    } catch (error) {
+      console.error('Error ensuring user tokens:', error);
+    }
+  };
+
+  const ensureUserProfile = async (user: SupabaseUser) => {
+    try {
+      // Check if user profile exists
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (fetchError && fetchError.code === 'PGRST116') {
+        // No profile found, create one
+        console.log('Creating user profile for:', user.email);
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+            avatar_url: user.user_metadata?.avatar_url || null
+          });
+
+        if (insertError) {
+          console.error('Error creating user profile:', insertError);
+        } else {
+          console.log('Successfully created user profile');
+        }
+      }
+    } catch (error) {
+      console.error('Error ensuring user profile:', error);
+    }
   };
 
   const handleSignOut = async () => {
@@ -57,7 +122,7 @@ export const useAuth = () => {
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         if (!mounted) return;
 
         console.log('Auth state change:', event, session?.user?.email);
@@ -70,11 +135,16 @@ export const useAuth = () => {
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('User signed in successfully:', session.user.email);
           
-          // Defer any additional data loading to prevent deadlocks
-          setTimeout(() => {
-            if (mounted && window.location.pathname === '/auth') {
-              console.log('Redirecting from auth page to main app');
-              window.location.href = '/';
+          // Defer additional setup to prevent deadlocks
+          setTimeout(async () => {
+            if (mounted) {
+              await ensureUserProfile(session.user);
+              await ensureUserTokens(session.user.id);
+              
+              if (window.location.pathname === '/auth') {
+                console.log('Redirecting from auth page to main app');
+                window.location.href = '/';
+              }
             }
           }, 100);
         }
@@ -112,6 +182,12 @@ export const useAuth = () => {
           setSession(session);
           setUser(session?.user ?? null);
           setLoading(false);
+
+          // Ensure user setup for existing sessions
+          if (session?.user) {
+            await ensureUserProfile(session.user);
+            await ensureUserTokens(session.user.id);
+          }
         }
       } catch (error) {
         console.error('Error during initial session check:', error);
