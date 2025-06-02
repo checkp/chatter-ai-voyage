@@ -44,88 +44,132 @@ export const useTokens = (user: SupabaseUser | null) => {
       
       console.log('useTokens: Fetching tokens for user:', user.id);
       
-      // First, get all token records for this user to check for duplicates
-      const { data: allRecords, error: selectError } = await supabase
-        .from('user_tokens')
-        .select('id, balance, total_purchased, total_consumed, created_at')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true }); // Get oldest first
-
-      console.log('useTokens: All token records:', { allRecords, selectError });
-
-      if (selectError) {
-        console.error('useTokens: Error fetching token records:', selectError);
-        return { balance: 0, total_purchased: 0, total_consumed: 0 };
+      // Check if user is authenticated with Supabase
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('useTokens: Current session:', { 
+        hasSession: !!session, 
+        userId: session?.user?.id, 
+        sessionError 
+      });
+      
+      if (!session || session.user.id !== user.id) {
+        console.error('useTokens: User not properly authenticated');
+        throw new Error('User not authenticated');
       }
-
-      // If no records found, create initial record
-      if (!allRecords || allRecords.length === 0) {
-        console.log('useTokens: No token records found, creating initial record');
-        
-        const { data: insertData, error: insertError } = await supabase
+      
+      try {
+        // First, get all token records for this user to check for duplicates
+        const { data: allRecords, error: selectError } = await supabase
           .from('user_tokens')
-          .insert({
-            user_id: user.id,
-            balance: 300,
-            total_purchased: 0,
-            total_consumed: 0
-          })
-          .select('balance, total_purchased, total_consumed')
-          .single();
+          .select('id, balance, total_purchased, total_consumed, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: true }); // Get oldest first
 
-        if (insertError) {
-          console.error('useTokens: Error creating token record:', insertError);
+        console.log('useTokens: Query result:', { allRecords, selectError });
+
+        if (selectError) {
+          console.error('useTokens: Error fetching token records:', selectError);
+          
+          // If it's a 403 error, the user might not be properly authenticated
+          if (selectError.code === 'PGRST301') {
+            throw new Error('Access denied - user not authenticated');
+          }
+          
           return { balance: 0, total_purchased: 0, total_consumed: 0 };
         }
-        
-        console.log('useTokens: Successfully created token record:', insertData);
-        return insertData as TokenBalance;
-      }
 
-      // If multiple records found, clean up duplicates
-      if (allRecords.length > 1) {
-        console.log('useTokens: Multiple token records found, cleaning up duplicates');
-        
-        // Keep the first record (oldest), delete the rest
-        const recordToKeep = allRecords[0];
-        const recordsToDelete = allRecords.slice(1);
-        
-        for (const record of recordsToDelete) {
-          console.log('useTokens: Deleting duplicate record:', record.id);
-          await supabase
+        // If no records found, create initial record
+        if (!allRecords || allRecords.length === 0) {
+          console.log('useTokens: No token records found, creating initial record');
+          
+          const { data: insertData, error: insertError } = await supabase
             .from('user_tokens')
-            .delete()
-            .eq('id', record.id);
-        }
-        
-        console.log('useTokens: Using record:', recordToKeep);
-        return {
-          balance: recordToKeep.balance,
-          total_purchased: recordToKeep.total_purchased,
-          total_consumed: recordToKeep.total_consumed
-        } as TokenBalance;
-      }
+            .insert({
+              user_id: user.id,
+              balance: 300,
+              total_purchased: 0,
+              total_consumed: 0
+            })
+            .select('balance, total_purchased, total_consumed')
+            .single();
 
-      // Single record found - normal case
-      const record = allRecords[0];
-      console.log('useTokens: Single token record found:', record);
-      return {
-        balance: record.balance,
-        total_purchased: record.total_purchased,
-        total_consumed: record.total_consumed
-      } as TokenBalance;
+          if (insertError) {
+            console.error('useTokens: Error creating token record:', insertError);
+            if (insertError.code === 'PGRST301') {
+              throw new Error('Access denied - cannot create token record');
+            }
+            return { balance: 0, total_purchased: 0, total_consumed: 0 };
+          }
+          
+          console.log('useTokens: Successfully created token record:', insertData);
+          return insertData as TokenBalance;
+        }
+
+        // If multiple records found, clean up duplicates
+        if (allRecords.length > 1) {
+          console.log('useTokens: Multiple token records found, cleaning up duplicates');
+          
+          // Keep the first record (oldest), delete the rest
+          const recordToKeep = allRecords[0];
+          const recordsToDelete = allRecords.slice(1);
+          
+          for (const record of recordsToDelete) {
+            console.log('useTokens: Deleting duplicate record:', record.id);
+            const { error: deleteError } = await supabase
+              .from('user_tokens')
+              .delete()
+              .eq('id', record.id);
+              
+            if (deleteError) {
+              console.error('useTokens: Error deleting duplicate record:', deleteError);
+            }
+          }
+          
+          console.log('useTokens: Using record:', recordToKeep);
+          return {
+            balance: recordToKeep.balance,
+            total_purchased: recordToKeep.total_purchased,
+            total_consumed: recordToKeep.total_consumed
+          } as TokenBalance;
+        }
+
+        // Single record found - normal case
+        const record = allRecords[0];
+        console.log('useTokens: Single token record found:', record);
+        return {
+          balance: record.balance,
+          total_purchased: record.total_purchased,
+          total_consumed: record.total_consumed
+        } as TokenBalance;
+      } catch (error) {
+        console.error('useTokens: Unexpected error:', error);
+        throw error;
+      }
     },
     enabled: !!user,
     staleTime: 5000,
     refetchOnWindowFocus: true,
-    retry: 2,
+    retry: (failureCount, error) => {
+      // Don't retry on authentication errors
+      if (error?.message?.includes('Access denied') || error?.message?.includes('not authenticated')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
     retryDelay: 500,
   });
 
-  // Log any token errors
+  // Log any token errors with more detail
   useEffect(() => {
     if (tokenError) {
       console.error('useTokens: Token query error:', tokenError);
+      
+      // Show user-friendly error messages
+      if (tokenError.message?.includes('Access denied')) {
+        toast.error('Please sign in again to access your token balance');
+      } else if (tokenError.message?.includes('not authenticated')) {
+        toast.error('Authentication required to view tokens');
+      }
     }
   }, [tokenError]);
 
