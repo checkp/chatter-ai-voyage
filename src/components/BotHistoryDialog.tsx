@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -180,33 +181,33 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
     switch (platformId) {
       case 'openai':
         return {
-          bg: 'modern-bg-agent-openai',
+          bg: 'bg-agent-openai',
           text: 'text-white',
-          border: 'modern-border-agent-openai'
+          border: 'border-agent-openai'
         };
       case 'anthropic':
         return {
-          bg: 'modern-bg-agent-anthropic',
+          bg: 'bg-agent-anthropic',
           text: 'text-white', 
-          border: 'modern-border-agent-anthropic'
+          border: 'border-agent-anthropic'
         };
       case 'deepseek':
         return {
-          bg: 'modern-bg-agent-deepseek',
+          bg: 'bg-agent-deepseek',
           text: 'text-white',
-          border: 'modern-border-agent-deepseek'
+          border: 'border-agent-deepseek'
         };
       case 'grok':
         return {
-          bg: 'modern-bg-agent-grok',
+          bg: 'bg-agent-grok',
           text: 'text-white',
-          border: 'modern-border-agent-grok'
+          border: 'border-agent-grok'
         };
       default:
         return {
-          bg: 'bg-amber-500',
-          text: 'text-white',
-          border: 'border-amber-500'
+          bg: 'bg-primary',
+          text: 'text-primary-foreground',
+          border: 'border-primary'
         };
     }
   };
@@ -238,9 +239,9 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl h-[85vh] flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl font-inter">
-        <DialogHeader className="flex-shrink-0 pb-4 border-b border-gray-100 dark:border-gray-800">
-          <DialogTitle className="flex items-center gap-3 text-gray-900 dark:text-gray-100">
+      <DialogContent className="sm:max-w-3xl h-[85vh] flex flex-col bg-background border border-border rounded-2xl shadow-2xl font-inter">
+        <DialogHeader className="flex-shrink-0 pb-4 border-b border-border">
+          <DialogTitle className="flex items-center gap-3 text-foreground">
             <span className="text-2xl">{platform?.icon}</span>
             <span className="text-xl font-bold">Chat with {platform?.name}</span>
             <Badge className={`${agentColors.bg} font-semibold text-base px-3 py-1 ${agentColors.text} rounded-full`}>
@@ -252,10 +253,10 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
         <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
           <div className="space-y-4 min-h-0">
             {botMessages.length === 0 ? (
-              <div className="text-center py-12 text-gray-600 dark:text-gray-400">
+              <div className="text-center py-12 text-muted-foreground">
                 <div className="text-4xl mb-4">{platform?.icon}</div>
-                <p className="text-lg font-medium mb-2 text-gray-800 dark:text-gray-200">No conversation with {platform?.name} yet.</p>
-                <p className="text-base text-gray-700 dark:text-gray-300">Start chatting to see the conversation here.</p>
+                <p className="text-lg font-medium mb-2 text-foreground">No conversation with {platform?.name} yet.</p>
+                <p className="text-base text-muted-foreground">Start chatting to see the conversation here.</p>
               </div>
             ) : (
               botMessages.map((message, index) => (
@@ -266,21 +267,21 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
                   <div className={`max-w-[85%] ${message.isUser ? 'order-2' : 'order-1'}`}>
                     <Card className={`transition-all duration-300 hover:shadow-lg rounded-xl overflow-hidden ${
                       message.isUser 
-                        ? 'bg-blue-800 text-white border-none shadow-md' 
-                        : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm'
+                        ? 'bg-primary text-primary-foreground border-none shadow-md' 
+                        : 'bg-card border border-border shadow-sm'
                     }`}>
                       <CardContent className="p-4">
                         <div className={`text-base leading-relaxed whitespace-pre-wrap font-medium ${
                           message.isUser 
-                            ? 'text-white' 
-                            : 'text-gray-900 dark:text-gray-100'
+                            ? 'text-primary-foreground' 
+                            : 'text-card-foreground'
                         }`}>
                           {message.content}
                         </div>
                         <div className={`text-sm mt-3 font-medium ${
                           message.isUser 
-                            ? 'text-white/80' 
-                            : 'text-gray-500 dark:text-gray-400'
+                            ? 'text-primary-foreground/80' 
+                            : 'text-muted-foreground'
                         }`}>
                           {message.timestamp.toLocaleTimeString()}
                           {message.platform && !message.isUser && (
@@ -298,7 +299,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
         </ScrollArea>
 
         {/* Input Area */}
-        <div className="border-t border-gray-100 dark:border-gray-800 pt-4 flex-shrink-0">
+        <div className="border-t border-border pt-4 flex-shrink-0">
           <div className="flex gap-3">
             <Input
               value={inputMessage}
@@ -306,7 +307,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
               placeholder={`Chat privately with ${platform?.name}...`}
               onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
               disabled={isSending}
-              className="flex-1 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-xl px-4 py-3 font-medium"
+              className="flex-1 border-border bg-background text-foreground rounded-xl px-4 py-3 font-medium"
             />
             <Button 
               onClick={handleSendMessage}
@@ -320,7 +321,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
               )}
             </Button>
           </div>
-          <div className="text-sm text-gray-500 dark:text-gray-400 mt-3 text-center font-medium">
+          <div className="text-sm text-muted-foreground mt-3 text-center font-medium">
             This will send a private message only to {platform?.name}
           </div>
         </div>
