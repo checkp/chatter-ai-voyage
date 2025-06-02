@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useTheme } from '@/contexts/ThemeContext';
@@ -19,7 +19,8 @@ const Index = () => {
   const { user, loading } = useAuth();
   const { theme } = useTheme();
   const { platforms, togglePlatform, callAIAPI, reloadSettings } = usePlatforms(user);
-  const { messagesEndRef, scrollToBottom } = useScrollToBottom([]);
+  const { messagesEndRef, scrollToBottom } = useScrollToBottom();
+  const previousMessageCountRef = useRef(0);
 
   const {
     chats,
@@ -55,7 +56,13 @@ const Index = () => {
   } = useUIState();
 
   useEffect(() => {
-    scrollToBottom();
+    // Only scroll if we have more messages than before
+    if (messages && messages.length > previousMessageCountRef.current) {
+      scrollToBottom();
+      previousMessageCountRef.current = messages.length;
+    } else if (messages) {
+      previousMessageCountRef.current = messages.length;
+    }
   }, [messages, scrollToBottom]);
 
   useEffect(() => {
