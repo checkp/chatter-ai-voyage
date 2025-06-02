@@ -68,9 +68,8 @@ export const useFreeMode = () => {
       try {
         console.log(`Free mode: Processing message ${currentMessageCount + 1}/${freeModeMessageLimit} with ${currentPlatform.name}`);
         
-        // Let the AI respond naturally to the existing conversation context
-        const contextPrompt = `Continue this conversation naturally. Build upon what others have said, add your unique perspective, ask questions, or introduce related ideas. Keep the conversation flowing and engaging.`;
-        await sendSingleAgentMessage(chatId, contextPrompt, currentPlatform.id);
+        // Let the AI respond naturally to the existing conversation without any prompting
+        await sendSingleAgentMessage(chatId, '', currentPlatform.id);
 
         currentMessageCount++;
         setFreeModeMessageCount(currentMessageCount);
