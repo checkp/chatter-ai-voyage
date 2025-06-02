@@ -16,7 +16,7 @@ import ChatInput from '@/components/ChatInput';
 import SettingsPanel from '@/components/SettingsPanel';
 
 const Index = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, handleSignOut } = useAuth();
   const { theme } = useTheme();
   const { platforms, togglePlatform, callAIAPI, reloadSettings } = usePlatforms(user);
   const { messagesEndRef, scrollAreaRef, scrollToBottom, scrollToBottomImmediate } = useScrollToBottom();
@@ -166,6 +166,7 @@ const Index = () => {
           onStopFreeMode={stopFreeMode}
           onUpdateFreeModeLimit={updateMessageLimit}
           onSendSingleAgentMessage={handleSingleAgentMessage}
+          onSignOut={handleSignOut}
         />
 
         {/* Chat Messages Area */}

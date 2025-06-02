@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from '@/components/ui/badge';
-import { Settings, X, Bot, Brain, Search, Zap } from 'lucide-react';
+import { Settings, X, Bot, Brain, Search, Zap, LogOut } from 'lucide-react';
 import FreeModeControls from '@/components/FreeModeControls';
 import BotHistoryDialog from '@/components/BotHistoryDialog';
 import TokenBalance from '@/components/TokenBalance';
@@ -26,6 +27,8 @@ interface ChatHeaderProps {
   onUpdateFreeModeLimit: (limit: number) => void;
   // Single agent messaging
   onSendSingleAgentMessage?: (message: string, platformId: string) => void;
+  // Logout function
+  onSignOut: () => void;
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -43,7 +46,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   onStartFreeMode,
   onStopFreeMode,
   onUpdateFreeModeLimit,
-  onSendSingleAgentMessage
+  onSendSingleAgentMessage,
+  onSignOut
 }) => {
   const [selectedAgent, setSelectedAgent] = useState<AIPlatform | null>(null);
   const [isAgentDialogOpen, setIsAgentDialogOpen] = useState(false);
@@ -196,6 +200,16 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             >
               {activeTab === 'chat' ? <Settings className="h-4 w-4" /> : <X className="h-4 w-4" />}
             </Button>
+            
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={onSignOut}
+              title="Sign Out"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+            
             <Avatar>
               <AvatarImage src={`https://avatar.vercel.sh/${user.email}.png`} />
               <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
