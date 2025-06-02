@@ -19,7 +19,6 @@ interface AgentSetting {
 const AgentSettings = () => {
   const [selectedModels, setSelectedModels] = useState<Record<string, string>>({});
   const [enabledPlatforms, setEnabledPlatforms] = useState<Record<string, boolean>>({});
-  const [apiKeysAvailable, setApiKeysAvailable] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
 
   const platforms = [
@@ -31,34 +30,7 @@ const AgentSettings = () => {
 
   useEffect(() => {
     loadSettings();
-    loadApiKeysStatus();
   }, []);
-
-  const loadApiKeysStatus = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: apiKeys, error } = await supabase
-        .from('user_api_keys')
-        .select('platform')
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('Error loading API keys:', error);
-        return;
-      }
-
-      const keysMap: Record<string, boolean> = {};
-      apiKeys?.forEach(key => {
-        keysMap[key.platform] = true;
-      });
-
-      setApiKeysAvailable(keysMap);
-    } catch (error: any) {
-      console.error('Failed to load API keys status:', error);
-    }
-  };
 
   const loadSettings = async () => {
     try {
@@ -147,10 +119,6 @@ const AgentSettings = () => {
   };
 
   const handleToggleEnabled = (platform: string, enabled: boolean) => {
-    if (enabled && !apiKeysAvailable[platform]) {
-      toast.error(`Please add an API key for ${platforms.find(p => p.id === platform)?.name} first in the API Keys tab`);
-      return;
-    }
     setEnabledPlatforms(prev => ({ ...prev, [platform]: enabled }));
   };
 
@@ -182,15 +150,9 @@ const AgentSettings = () => {
                     id={`enable-${platform.id}`}
                     checked={enabledPlatforms[platform.id] || false}
                     onCheckedChange={(checked) => handleToggleEnabled(platform.id, checked)}
-                    disabled={!apiKeysAvailable[platform.id]}
                   />
                 </div>
               </CardTitle>
-              {!apiKeysAvailable[platform.id] && (
-                <p className="text-sm text-orange-600">
-                  API key required - add one in the API Keys tab to enable this agent
-                </p>
-              )}
             </CardHeader>
             <CardContent>
               <ModelSelector
@@ -206,7 +168,7 @@ const AgentSettings = () => {
       
       <div className="text-sm text-gray-600 bg-blue-50 p-4 rounded-lg">
         <strong>Note:</strong> These settings control which AI model each agent uses when responding. 
-        You can enable/disable agents here and change models at any time. Make sure to add API keys first.
+        You can enable/disable agents here and change models at any time.
       </div>
     </div>
   );
