@@ -1,5 +1,4 @@
 
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -275,7 +274,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
                   <div className={`max-w-[85%] ${message.isUser ? 'order-2' : 'order-1'}`}>
                     <Card className={`transition-all duration-300 hover:shadow-lg rounded-xl overflow-hidden ${
                       message.isUser 
-                        ? `${agentColors.bg} ${agentColors.text} border-none shadow-md` 
+                        ? 'bg-blue-600 text-white border-none shadow-md' 
                         : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm'
                     }`}>
                       <CardContent className="p-4">
@@ -339,4 +338,3 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
 };
 
 export default BotHistoryDialog;
-
