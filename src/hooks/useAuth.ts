@@ -77,7 +77,8 @@ export const useAuth = () => {
             id: user.id,
             email: user.email,
             full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-            avatar_url: user.user_metadata?.avatar_url || null
+            avatar_url: user.user_metadata?.avatar_url || null,
+            has_completed_onboarding: false // New users should see the welcome screen
           });
 
         if (insertError) {

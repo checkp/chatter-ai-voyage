@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -10,11 +9,13 @@ import { useChatManagement } from '@/hooks/useChatManagement';
 import { useMessageHandling } from '@/hooks/useMessageHandling';
 import { useUIState } from '@/hooks/useUIState';
 import { useFreeMode } from '@/hooks/useFreeMode';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatHeader from '@/components/ChatHeader';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInput from '@/components/ChatInput';
 import SettingsPanel from '@/components/SettingsPanel';
+import WelcomeScreen from '@/components/WelcomeScreen';
 
 const Index = () => {
   const { user, loading, handleSignOut } = useAuth();
@@ -22,6 +23,9 @@ const Index = () => {
   const { platforms, togglePlatform, callAIAPI, reloadSettings } = usePlatforms(user);
   const { messagesEndRef, scrollAreaRef, scrollToBottom, scrollToBottomImmediate } = useScrollToBottom();
   const previousMessageCountRef = useRef(0);
+
+  // Add onboarding hook
+  const { hasCompletedOnboarding, isLoading: isLoadingOnboarding, completeOnboarding, skipOnboarding } = useOnboarding(user);
 
   const {
     chats,
@@ -112,11 +116,28 @@ const Index = () => {
     startFreeMode(activeChatId, platforms, callAIAPI, sendSingleAgentMessage);
   };
 
+  // Handle welcome screen completion
+  const handleWelcomeComplete = async () => {
+    await completeOnboarding();
+    // Create first chat if none exists
+    if (!chats || chats.length === 0) {
+      handleCreateChat();
+    }
+  };
+
+  const handleWelcomeSkip = async () => {
+    await skipOnboarding();
+    // Create first chat if none exists
+    if (!chats || chats.length === 0) {
+      handleCreateChat();
+    }
+  };
+
   // Find the current chat object for AIStatusBar
   const currentChat = chats?.find(chat => chat.id === activeChatId);
 
   // Show loading while auth is being determined
-  if (loading) {
+  if (loading || isLoadingOnboarding) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
@@ -134,6 +155,16 @@ const Index = () => {
           Go to Sign In
         </Button>
       </div>
+    );
+  }
+
+  // Show welcome screen for new users
+  if (hasCompletedOnboarding === false) {
+    return (
+      <WelcomeScreen 
+        onGetStarted={handleWelcomeComplete}
+        onSkip={handleWelcomeSkip}
+      />
     );
   }
 
