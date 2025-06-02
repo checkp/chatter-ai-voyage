@@ -152,6 +152,7 @@ const Index = () => {
           onStartFreeMode={handleStartFreeMode}
           onStopFreeMode={stopFreeMode}
           onUpdateFreeModeLimit={updateMessageLimit}
+          onSendSingleAgentMessage={handleSingleAgentMessage}
         />
 
         {/* Chat Messages Area */}
