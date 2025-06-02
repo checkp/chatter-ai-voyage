@@ -1,5 +1,5 @@
 
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 
 export const useScrollToBottom = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -10,5 +10,11 @@ export const useScrollToBottom = () => {
     }
   }, []);
 
-  return { messagesEndRef, scrollToBottom };
+  const scrollToBottomImmediate = useCallback(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
+    }
+  }, []);
+
+  return { messagesEndRef, scrollToBottom, scrollToBottomImmediate };
 };

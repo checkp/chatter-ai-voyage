@@ -19,7 +19,7 @@ const Index = () => {
   const { user, loading } = useAuth();
   const { theme } = useTheme();
   const { platforms, togglePlatform, callAIAPI, reloadSettings } = usePlatforms(user);
-  const { messagesEndRef, scrollToBottom } = useScrollToBottom();
+  const { messagesEndRef, scrollToBottom, scrollToBottomImmediate } = useScrollToBottom();
   const previousMessageCountRef = useRef(0);
 
   const {
@@ -65,15 +65,26 @@ const Index = () => {
     updateMessageLimit
   } = useFreeMode();
 
+  // Handle scrolling when messages change
   useEffect(() => {
-    // Only scroll if we have more messages than before
     if (messages && messages.length > previousMessageCountRef.current) {
+      // New messages added - smooth scroll
       scrollToBottom();
       previousMessageCountRef.current = messages.length;
     } else if (messages) {
       previousMessageCountRef.current = messages.length;
     }
   }, [messages, scrollToBottom]);
+
+  // Handle initial scroll when chat loads or changes
+  useEffect(() => {
+    if (messages && !isLoadingMessages && activeChatId) {
+      // Chat loaded - immediate scroll to bottom
+      setTimeout(() => {
+        scrollToBottomImmediate();
+      }, 100);
+    }
+  }, [activeChatId, isLoadingMessages, messages, scrollToBottomImmediate]);
 
   useEffect(() => {
     if (activeTab === 'chat' && user) {
