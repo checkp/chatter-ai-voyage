@@ -14,6 +14,13 @@ interface TokenBalanceProps {
 const TokenBalance: React.FC<TokenBalanceProps> = ({ user, onPurchaseClick }) => {
   const { tokenBalance, isLoadingBalance } = useTokens(user);
 
+  console.log('TokenBalance rendering:', { 
+    balance: tokenBalance?.balance, 
+    tokenBalance, 
+    user: user?.id,
+    isLoadingBalance 
+  });
+
   if (isLoadingBalance) {
     return (
       <div className="flex items-center gap-2">
@@ -25,8 +32,6 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({ user, onPurchaseClick }) =>
 
   const balance = tokenBalance?.balance ?? 0;
   const isLowBalance = balance < 50;
-
-  console.log('TokenBalance rendering:', { balance, tokenBalance, user: user?.id });
 
   const handleClick = () => {
     if (onPurchaseClick) {

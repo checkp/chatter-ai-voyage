@@ -34,16 +34,16 @@ interface TokenPackage {
 export const useTokens = (user: SupabaseUser | null) => {
   const queryClient = useQueryClient();
 
-  // Fetch user token balance with RLS protection
+  // Fetch user token balance with enhanced debugging
   const { data: tokenBalance, isLoading: isLoadingBalance, error: tokenError } = useQuery({
     queryKey: ['tokens', user?.id],
     queryFn: async () => {
       if (!user) {
-        console.log('No user provided to useTokens');
+        console.log('useTokens: No user provided');
         return null;
       }
       
-      console.log('Fetching tokens for user:', user.id);
+      console.log('useTokens: Fetching tokens for user:', user.id);
       
       const { data, error } = await supabase
         .from('user_tokens')
@@ -51,12 +51,30 @@ export const useTokens = (user: SupabaseUser | null) => {
         .eq('user_id', user.id)
         .single();
 
+      console.log('useTokens: Query result:', { data, error });
+
       if (error) {
-        console.error('Error fetching token balance:', error);
+        console.error('useTokens: Error fetching token balance:', error);
         
-        // If no record found, try to create one
+        // If no record found, try to create one with retry logic
         if (error.code === 'PGRST116') {
-          console.log('No token record found, creating initial balance...');
+          console.log('useTokens: No token record found, attempting to create...');
+          
+          // Wait a bit and try again first (in case record is being created)
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          const { data: retryData, error: retryError } = await supabase
+            .from('user_tokens')
+            .select('balance, total_purchased, total_consumed')
+            .eq('user_id', user.id)
+            .single();
+            
+          if (!retryError && retryData) {
+            console.log('useTokens: Found tokens on retry:', retryData);
+            return retryData as TokenBalance;
+          }
+          
+          console.log('useTokens: Still no record, creating initial balance...');
           const { data: insertData, error: insertError } = await supabase
             .from('user_tokens')
             .insert({
@@ -69,29 +87,31 @@ export const useTokens = (user: SupabaseUser | null) => {
             .single();
 
           if (insertError) {
-            console.error('Error creating initial token balance:', insertError);
+            console.error('useTokens: Error creating initial token balance:', insertError);
             return { balance: 0, total_purchased: 0, total_consumed: 0 };
           }
           
-          console.log('Created initial token balance:', insertData);
+          console.log('useTokens: Created initial token balance:', insertData);
           return insertData as TokenBalance;
         }
         
         return { balance: 0, total_purchased: 0, total_consumed: 0 };
       }
 
-      console.log('Token balance fetched successfully:', data);
+      console.log('useTokens: Token balance fetched successfully:', data);
       return data as TokenBalance;
     },
     enabled: !!user,
-    staleTime: 30000, // Consider data fresh for 30 seconds
+    staleTime: 10000, // Reduced to 10 seconds for better responsiveness
     refetchOnWindowFocus: true,
+    retry: 3, // Add retry logic
+    retryDelay: 1000, // Wait 1 second between retries
   });
 
   // Log any token errors
   useEffect(() => {
     if (tokenError) {
-      console.error('Token query error:', tokenError);
+      console.error('useTokens: Token query error:', tokenError);
     }
   }, [tokenError]);
 
