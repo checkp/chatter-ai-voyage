@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import type { AIPlatform } from '@/types/chat';
 
@@ -8,6 +8,7 @@ export const useFreeMode = () => {
   const [freeModeMessageLimit, setFreeModeMessageLimit] = useState(100);
   const [freeModeMessageCount, setFreeModeMessageCount] = useState(0);
   const [isFreeModeRunning, setIsFreeModeRunning] = useState(false);
+  const freeModeRunningRef = useRef(false);
 
   const startFreeMode = useCallback(async (
     activeChatId: string | null,
@@ -28,21 +29,25 @@ export const useFreeMode = () => {
 
     setIsFreeMode(true);
     setIsFreeModeRunning(true);
+    freeModeRunningRef.current = true;
     setFreeModeMessageCount(0);
     
     toast.success(`Free mode started! Agents will discuss for up to ${freeModeMessageLimit} messages.`);
 
-    // Start the autonomous conversation
-    try {
-      await runFreeModeConversation(activeChatId, enabledPlatforms, callAIAPI, sendSingleAgentMessage);
-    } catch (error) {
-      console.error('Error in free mode:', error);
-      toast.error('Free mode encountered an error');
-      stopFreeMode();
-    }
+    // Start the autonomous conversation in a separate execution context
+    setTimeout(async () => {
+      try {
+        await runFreeModeConversation(activeChatId, enabledPlatforms, callAIAPI, sendSingleAgentMessage);
+      } catch (error) {
+        console.error('Error in free mode:', error);
+        toast.error('Free mode encountered an error');
+        stopFreeMode();
+      }
+    }, 100);
   }, [freeModeMessageLimit]);
 
   const stopFreeMode = useCallback(() => {
+    freeModeRunningRef.current = false;
     setIsFreeMode(false);
     setIsFreeModeRunning(false);
     toast.info(`Free mode stopped. ${freeModeMessageCount} messages generated.`);
@@ -68,10 +73,12 @@ export const useFreeMode = () => {
 
     const randomOpening = openingPrompts[Math.floor(Math.random() * openingPrompts.length)];
     
-    while (currentMessageCount < freeModeMessageLimit && isFreeModeRunning) {
+    while (currentMessageCount < freeModeMessageLimit && freeModeRunningRef.current) {
       const currentPlatform = enabledPlatforms[currentPlatformIndex];
       
       try {
+        console.log(`Free mode: Processing message ${currentMessageCount + 1}/${freeModeMessageLimit} with ${currentPlatform.name}`);
+        
         if (currentMessageCount === 0) {
           // First message is the opening prompt
           await sendSingleAgentMessage(chatId, randomOpening, currentPlatform.id);
@@ -87,16 +94,23 @@ export const useFreeMode = () => {
         // Move to next platform
         currentPlatformIndex = (currentPlatformIndex + 1) % enabledPlatforms.length;
 
-        // Add a small delay between messages to prevent overwhelming the APIs
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Add a delay between messages to prevent overwhelming the APIs and allow for proper processing
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
-        // Check if we should stop
-        if (!isFreeModeRunning) break;
+        // Check if we should stop (using ref for immediate check)
+        if (!freeModeRunningRef.current) {
+          console.log('Free mode stopped by user');
+          break;
+        }
 
       } catch (error) {
         console.error(`Error with ${currentPlatform.name} in free mode:`, error);
         // Skip this agent and continue with the next one
         currentPlatformIndex = (currentPlatformIndex + 1) % enabledPlatforms.length;
+        
+        // Still count this as an attempt to prevent infinite loops
+        currentMessageCount++;
+        setFreeModeMessageCount(currentMessageCount);
       }
     }
 
@@ -105,6 +119,7 @@ export const useFreeMode = () => {
       toast.success(`Free mode completed! Reached the limit of ${freeModeMessageLimit} messages.`);
     }
     
+    freeModeRunningRef.current = false;
     setIsFreeMode(false);
     setIsFreeModeRunning(false);
   };
