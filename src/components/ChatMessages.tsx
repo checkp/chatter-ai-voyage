@@ -47,15 +47,15 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
         <div key={message.id} className={`mb-4 flex flex-col ${message.sender === 'user' ? 'items-end' : 'items-start'}`}>
           <div className={`max-w-3xl rounded-lg p-4 text-sm ${message.sender === 'user'
             ? 'bg-primary text-primary-foreground'
-            : `bg-muted border-l-4 ${message.platform ? 
-                message.platform === 'openai' ? 'border-l-[#8FBC8F] bg-[#8FBC8F]/10' :
-                message.platform === 'anthropic' ? 'border-l-[#98D982] bg-[#98D982]/10' :
-                message.platform === 'deepseek' ? 'border-l-[#87CEEB] bg-[#87CEEB]/10' :
-                message.platform === 'grok' ? 'border-l-[#DDA0DD] bg-[#DDA0DD]/10' :
-                'border-l-gray-500 bg-gray-50'
-              : 'border-l-gray-500 bg-gray-50'}`
+            : `bg-card border-l-4 ${message.platform ? 
+                message.platform === 'openai' ? 'border-l-[#8FBC8F] bg-[#8FBC8F]/5' :
+                message.platform === 'anthropic' ? 'border-l-[#98D982] bg-[#98D982]/5' :
+                message.platform === 'deepseek' ? 'border-l-[#87CEEB] bg-[#87CEEB]/5' :
+                message.platform === 'grok' ? 'border-l-[#DDA0DD] bg-[#DDA0DD]/5' :
+                'border-l-border bg-muted/50'
+              : 'border-l-border bg-muted/50'}`
             }`}>
-            <div className="whitespace-pre-wrap leading-relaxed">
+            <div className="whitespace-pre-wrap leading-relaxed text-card-foreground">
               {message.content}
             </div>
             {message.sender === 'ai' && message.platform && (
@@ -64,21 +64,21 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                 message.platform === 'anthropic' ? 'text-[#7AC464]' :
                 message.platform === 'deepseek' ? 'text-[#69B7CD]' :
                 message.platform === 'grok' ? 'text-[#C082C0]' :
-                'text-gray-600'
+                'text-muted-foreground'
               }`}>
                 — {getPlatformName(message.platform)}
               </div>
             )}
           </div>
-          <div className="text-xs text-gray-500 mt-1">
+          <div className="text-xs text-muted-foreground mt-1">
             {new Date(message.created_at).toLocaleTimeString()}
           </div>
         </div>
       ))}
       {isLoadingResponse && (
         <div className="flex flex-col items-start mb-4">
-          <div className="bg-muted rounded-lg p-4 text-sm border-l-4 border-l-amber-400 bg-amber-50">
-            <div className="flex items-center gap-2">
+          <div className="bg-card rounded-lg p-4 text-sm border-l-4 border-l-amber-400 bg-amber-50/30">
+            <div className="flex items-center gap-2 text-card-foreground">
               <RefreshCw className="h-4 w-4 animate-spin" />
               AI assistants are responding...
             </div>

@@ -15,9 +15,11 @@ export const ModeToggle = () => {
     }
   };
 
+  const isDarkMode = theme === 'amber-dark';
+
   return (
     <Button variant="outline" size="icon" onClick={toggleDarkMode}>
-      {theme === 'amber-dark' ? (
+      {isDarkMode ? (
         <Sun className="h-4 w-4" />
       ) : (
         <Moon className="h-4 w-4" />

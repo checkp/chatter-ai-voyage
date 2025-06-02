@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @tailwind base;
 @tailwind components;
@@ -5,58 +6,58 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
+    --background: 50 60% 97%;
+    --foreground: 25 35% 15%;
+    --card: 50 60% 97%;
+    --card-foreground: 25 35% 15%;
+    --popover: 50 60% 97%;
+    --popover-foreground: 25 35% 15%;
+    --primary: 45 70% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 55 45% 90%;
+    --secondary-foreground: 25 35% 15%;
+    --muted: 55 40% 95%;
+    --muted-foreground: 45 20% 55%;
+    --accent: 55 45% 85%;
+    --accent-foreground: 25 35% 15%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --border: 50 30% 88%;
+    --input: 50 30% 88%;
+    --ring: 45 70% 60%;
+    --chart-1: 45 76% 61%;
+    --chart-2: 65 58% 45%;
+    --chart-3: 75 37% 35%;
+    --chart-4: 55 74% 66%;
+    --chart-5: 50 87% 67%;
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --background: 30 20% 8%;
+    --foreground: 50 30% 90%;
+    --card: 30 20% 8%;
+    --card-foreground: 50 30% 90%;
+    --popover: 30 20% 8%;
+    --popover-foreground: 50 30% 90%;
+    --primary: 45 85% 70%;
+    --primary-foreground: 30 20% 8%;
+    --secondary: 35 15% 12%;
+    --secondary-foreground: 50 30% 90%;
+    --muted: 35 15% 12%;
+    --muted-foreground: 40 20% 65%;
+    --accent: 35 15% 25%;
+    --accent-foreground: 50 30% 90%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --border: 35 15% 25%;
+    --input: 35 15% 25%;
+    --ring: 45 85% 70%;
+    --chart-1: 45 70% 60%;
+    --chart-2: 65 60% 55%;
+    --chart-3: 75 50% 45%;
+    --chart-4: 55 65% 60%;
+    --chart-5: 50 75% 65%;
   }
 }
 
@@ -70,253 +71,68 @@
 }
 
 @layer components {
-  /* Font Family */
   .font-inter {
     font-family: 'Inter', sans-serif;
   }
 
   /* Pastel Amber-Green Theme System */
   [data-theme="amber-warm"] {
-    --modern-accent-primary: 45 85% 70%;      /* Warm amber */
-    --modern-accent-secondary: 55 45% 85%;    /* Soft greenish yellow */
-    --modern-accent-tertiary: 65 35% 75%;     /* Muted green */
-    --modern-bg-primary: 50 60% 97%;          /* Very light amber */
-    --modern-bg-secondary: 55 40% 95%;        /* Light greenish tint */
-    --modern-text-primary: 25 35% 15%;        /* Dark amber-brown */
-    --modern-text-secondary: 35 25% 35%;      /* Medium amber-brown */
-    --modern-text-muted: 45 20% 55%;          /* Muted amber */
-    --modern-text-accent: 45 70% 45%;         /* Rich amber */
-    --modern-border: 50 30% 88%;              /* Soft amber border */
-  }
-
-  [data-theme="amber-cool"] {
-    --modern-accent-primary: 45 75% 65%;      /* Cool amber */
-    --modern-accent-secondary: 60 35% 85%;    /* Sage green */
-    --modern-accent-tertiary: 70 30% 75%;     /* Soft green */
-    --modern-bg-primary: 55 40% 98%;          /* Cool amber white */
-    --modern-bg-secondary: 60 30% 96%;        /* Sage tint */
-    --modern-text-primary: 30 25% 20%;        /* Cool dark */
-    --modern-text-secondary: 40 20% 40%;      /* Medium cool */
-    --modern-text-muted: 50 15% 60%;          /* Cool muted */
-    --modern-text-accent: 45 65% 50%;         /* Cool amber */
-    --modern-border: 55 25% 85%;              /* Cool border */
+    --background: 50 60% 97%;
+    --foreground: 25 35% 15%;
+    --card: 50 60% 97%;
+    --card-foreground: 25 35% 15%;
+    --popover: 50 60% 97%;
+    --popover-foreground: 25 35% 15%;
+    --primary: 45 70% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 55 45% 90%;
+    --secondary-foreground: 25 35% 15%;
+    --muted: 55 40% 95%;
+    --muted-foreground: 45 20% 55%;
+    --accent: 55 45% 85%;
+    --accent-foreground: 25 35% 15%;
+    --border: 50 30% 88%;
+    --input: 50 30% 88%;
+    --ring: 45 70% 60%;
   }
 
   [data-theme="amber-dark"] {
-    --modern-accent-primary: 45 80% 75%;      /* Bright amber */
-    --modern-accent-secondary: 65 25% 35%;    /* Dark sage */
-    --modern-accent-tertiary: 55 40% 65%;     /* Medium green */
-    --modern-bg-primary: 30 20% 8%;           /* Dark amber */
-    --modern-bg-secondary: 35 15% 12%;        /* Slightly lighter */
-    --modern-text-primary: 50 30% 90%;        /* Light amber */
-    --modern-text-secondary: 45 25% 80%;      /* Medium light */
-    --modern-text-muted: 40 20% 65%;          /* Muted light */
-    --modern-text-accent: 45 85% 70%;         /* Bright accent */
-    --modern-border: 35 15% 25%;              /* Dark border */
+    --background: 30 20% 8%;
+    --foreground: 50 30% 90%;
+    --card: 30 20% 8%;
+    --card-foreground: 50 30% 90%;
+    --popover: 30 20% 8%;
+    --popover-foreground: 50 30% 90%;
+    --primary: 45 85% 70%;
+    --primary-foreground: 30 20% 8%;
+    --secondary: 35 15% 12%;
+    --secondary-foreground: 50 30% 90%;
+    --muted: 35 15% 12%;
+    --muted-foreground: 40 20% 65%;
+    --accent: 35 15% 25%;
+    --accent-foreground: 50 30% 90%;
+    --border: 35 15% 25%;
+    --input: 35 15% 25%;
+    --ring: 45 85% 70%;
   }
 
-  [data-theme="amber-minimal"] {
-    --modern-accent-primary: 45 70% 60%;      /* Clean amber */
-    --modern-accent-secondary: 60 20% 92%;    /* Minimal sage */
-    --modern-accent-tertiary: 50 30% 80%;     /* Soft accent */
-    --modern-bg-primary: 0 0% 100%;           /* Pure white */
-    --modern-bg-secondary: 55 15% 98%;        /* Barely tinted */
-    --modern-text-primary: 25 20% 15%;        /* Clean dark */
-    --modern-text-secondary: 35 15% 35%;      /* Medium clean */
-    --modern-text-muted: 45 10% 55%;          /* Clean muted */
-    --modern-text-accent: 45 75% 45%;         /* Clean accent */
-    --modern-border: 50 15% 90%;              /* Minimal border */
-  }
+  /* Agent Colors - Greenish Amber Hues */
+  .agent-openai { color: #8FBC8F; }
+  .agent-anthropic { color: #98D982; }
+  .agent-deepseek { color: #87CEEB; }
+  .agent-grok { color: #DDA0DD; }
 
-  [data-theme="blue-cool"] {
-    --modern-accent-primary: 210 85% 65%;     /* Cool blue */
-    --modern-accent-secondary: 220 30% 85%;   /* Light blue-gray */
-    --modern-accent-tertiary: 200 40% 75%;    /* Soft blue */
-    --modern-bg-primary: 220 40% 98%;         /* Cool white */
-    --modern-bg-secondary: 215 30% 96%;       /* Blue tint */
-    --modern-text-primary: 215 25% 15%;       /* Cool dark */
-    --modern-text-secondary: 210 20% 30%;     /* Medium cool */
-    --modern-text-muted: 205 15% 50%;         /* Cool muted */
-    --modern-text-accent: 210 75% 45%;        /* Blue accent */
-    --modern-border: 215 20% 85%;             /* Cool border */
-  }
+  .bg-agent-openai { background-color: #8FBC8F; }
+  .bg-agent-anthropic { background-color: #98D982; }
+  .bg-agent-deepseek { background-color: #87CEEB; }
+  .bg-agent-grok { background-color: #DDA0DD; }
 
-  /* Modern Base Styles */
-  .modern-bg-primary { background-color: hsl(var(--modern-bg-primary)); }
-  .modern-bg-secondary { background-color: hsl(var(--modern-bg-secondary)); }
-  .modern-text-primary { color: hsl(var(--modern-text-primary)); }
-  .modern-text-secondary { color: hsl(var(--modern-text-secondary)); }
-  .modern-text-muted { color: hsl(var(--modern-text-muted)); }
-  .modern-text-accent { color: hsl(var(--modern-text-accent)); }
-  .modern-border { border-color: hsl(var(--modern-border)); }
-  .modern-border-r { border-right: 1px solid hsl(var(--modern-border)); }
-  .modern-border-b { border-bottom: 1px solid hsl(var(--modern-border)); }
-  .modern-border-t { border-top: 1px solid hsl(var(--modern-border)); }
+  .border-agent-openai { border-color: #8FBC8F; }
+  .border-agent-anthropic { border-color: #98D982; }
+  .border-agent-deepseek { border-color: #87CEEB; }
+  .border-agent-grok { border-color: #DDA0DD; }
 
-  /* Pastel Agent Colors - Greenish Amber Hues */
-  .modern-bg-agent-openai { background-color: #8FBC8F; }  /* Dark Sea Green */
-  .modern-agent-openai { color: #8FBC8F; }
-  .modern-border-agent-openai { border-color: #8FBC8F; }
-  
-  .modern-bg-agent-anthropic { background-color: #98D982; }  /* Light Green */
-  .modern-agent-anthropic { color: #98D982; }
-  .modern-border-agent-anthropic { border-color: #98D982; }
-  
-  .modern-bg-agent-deepseek { background-color: #87CEEB; }  /* Sky Blue with green tint */
-  .modern-agent-deepseek { color: #87CEEB; }
-  .modern-border-agent-deepseek { border-color: #87CEEB; }
-  
-  .modern-bg-agent-grok { background-color: #DDA0DD; }  /* Plum with green undertone */
-  .modern-agent-grok { color: #DDA0DD; }
-  .modern-border-agent-grok { border-color: #DDA0DD; }
-
-  /* Glass Morphism */
-  .glass-morphism {
-    backdrop-filter: blur(16px);
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-  }
-
-  /* Modern Cards */
-  .modern-card {
-    background: hsl(var(--modern-bg-primary));
-    border: 1px solid hsl(var(--modern-border));
-    border-radius: 16px;
-    backdrop-filter: blur(8px);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-  }
-
-  .modern-card-elevated {
-    background: hsl(var(--modern-bg-primary));
-    border: 1px solid hsl(var(--modern-border));
-    border-radius: 20px;
-    backdrop-filter: blur(12px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  }
-
-  .modern-card-selected {
-    background: linear-gradient(135deg, 
-      hsl(var(--modern-accent-primary) / 0.1), 
-      hsl(var(--modern-accent-secondary) / 0.15)
-    );
-    border: 2px solid hsl(var(--modern-accent-primary) / 0.3);
-    box-shadow: 0 8px 32px hsl(var(--modern-accent-primary) / 0.15);
-  }
-
-  /* Modern Buttons */
-  .modern-btn-primary {
-    background: linear-gradient(135deg, 
-      hsl(var(--modern-accent-primary)), 
-      hsl(var(--modern-accent-tertiary))
-    );
-    color: white;
-    border: none;
-    border-radius: 16px;
-    font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 16px hsl(var(--modern-accent-primary) / 0.3);
-  }
-
-  .modern-btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px hsl(var(--modern-accent-primary) / 0.4);
-  }
-
-  .modern-btn-secondary {
-    background: hsl(var(--modern-bg-primary));
-    color: hsl(var(--modern-text-primary));
-    border: 1px solid hsl(var(--modern-border));
-    border-radius: 12px;
-    font-weight: 500;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .modern-btn-secondary:hover {
-    background: hsl(var(--modern-bg-secondary));
-    border-color: hsl(var(--modern-accent-primary) / 0.3);
-    transform: translateY(-1px);
-  }
-
-  .modern-btn-ghost {
-    background: transparent;
-    color: hsl(var(--modern-text-muted));
-    border: none;
-    border-radius: 12px;
-    font-weight: 500;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .modern-btn-ghost:hover {
-    background: hsl(var(--modern-bg-secondary));
-    color: hsl(var(--modern-text-primary));
-  }
-
-  /* Modern Input */
-  .modern-input {
-    background: hsl(var(--modern-bg-primary));
-    border: 2px solid hsl(var(--modern-border));
-    border-radius: 16px;
-    padding: 16px 20px;
-    font-size: 16px;
-    font-weight: 500;
-    color: hsl(var(--modern-text-primary));
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .modern-input:focus {
-    outline: none;
-    border-color: hsl(var(--modern-accent-primary));
-    box-shadow: 0 0 0 4px hsl(var(--modern-accent-primary) / 0.1);
-  }
-
-  /* Modern Dialog */
-  .modern-dialog {
-    background: hsl(var(--modern-bg-primary));
-    border: 1px solid hsl(var(--modern-border));
-    border-radius: 24px;
-    backdrop-filter: blur(16px);
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.12);
-  }
-
-  /* Avatar Ring */
-  .modern-avatar-ring {
-    position: relative;
-  }
-
-  .modern-avatar-ring::before {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    background: linear-gradient(135deg, 
-      hsl(var(--modern-accent-primary)), 
-      hsl(var(--modern-accent-tertiary))
-    );
-    border-radius: 50%;
-    z-index: -1;
-    filter: blur(0.5px);
-  }
-
-  /* Animations */
-  .modern-float {
-    animation: float 6s ease-in-out infinite;
-  }
-
-  .modern-glow {
-    filter: drop-shadow(0 0 20px hsl(var(--modern-accent-primary) / 0.3));
-  }
-
-  .modern-glow-hover {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .modern-glow-hover:hover {
-    filter: drop-shadow(0 0 24px hsl(var(--modern-accent-primary) / 0.4));
-  }
-
-  .modern-enter {
-    animation: slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
+  /* Animation Keyframes */
   @keyframes float {
     0%, 100% { transform: translateY(0px); }
     50% { transform: translateY(-10px); }
@@ -331,5 +147,13 @@
       opacity: 1;
       transform: translateY(0px);
     }
+  }
+
+  .modern-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .modern-enter {
+    animation: slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
