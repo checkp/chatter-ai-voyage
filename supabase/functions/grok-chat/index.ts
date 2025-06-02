@@ -25,19 +25,36 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    // SECURITY FIX: Extract user_id from authenticated session, not from request body
-    const { messages, model } = await req.json();
+    const { messages, model = 'grok-3' } = await req.json();
     const user_id = user.id;
     
-    // Check token balance
-    const { data: tokenData, error: tokenError } = await supabaseClient
+    // Check token balance - create if doesn't exist
+    let { data: tokenData, error: tokenError } = await supabaseClient
       .from('user_tokens')
       .select('balance, total_consumed')
       .eq('user_id', user_id)
       .single();
 
     if (tokenError || !tokenData) {
-      throw new Error('Unable to fetch token balance');
+      console.log('Creating initial token balance for user:', user_id);
+      // Create initial token balance
+      const { data: newTokenData, error: createError } = await supabaseClient
+        .from('user_tokens')
+        .insert({
+          user_id: user_id,
+          balance: 300,
+          total_purchased: 0,
+          total_consumed: 0
+        })
+        .select('balance, total_consumed')
+        .single();
+
+      if (createError) {
+        console.error('Error creating token balance:', createError);
+        throw new Error('Unable to initialize token balance');
+      }
+      
+      tokenData = newTokenData;
     }
 
     // Get pricing data for this model
@@ -49,7 +66,7 @@ serve(async (req) => {
       .single();
 
     if (pricingError || !pricingData) {
-      throw new Error('Pricing data not found for this model');
+      console.log('No pricing data found for model:', model, 'using default cost');
     }
 
     const grokApiKey = Deno.env.get("GROK_API_KEY");
@@ -83,11 +100,10 @@ serve(async (req) => {
     const completionTokens = data_response.usage?.completion_tokens || 0;
     const totalTokens = data_response.usage?.total_tokens || promptTokens + completionTokens;
 
-    // FIXED: Much more reasonable token calculation
-    // Our tokens are worth approximately $0.01 each (1 cent) but we'll multiply the cost by 10 to make it affordable
-    const apiCostPer1kTokens = pricingData.api_cost_per_1k_tokens;
+    // Calculate token cost - use default if no pricing data
+    const apiCostPer1kTokens = pricingData?.api_cost_per_1k_tokens || 0.002; // Default Grok cost
     const actualApiCost = (totalTokens / 1000) * apiCostPer1kTokens;
-    const tokensToDeduct = Math.ceil(actualApiCost * 10); // Multiply by 10 instead of dividing by 0.001
+    const tokensToDeduct = Math.max(1, Math.ceil(actualApiCost * 10)); // Minimum 1 token
 
     if (tokenData.balance < tokensToDeduct) {
       throw new Error('Insufficient tokens for this request');
@@ -104,7 +120,7 @@ serve(async (req) => {
       })
       .eq('user_id', user_id);
 
-    // Log transaction with detailed metadata (without sensitive info)
+    // Log transaction with detailed metadata
     await supabaseClient
       .from('token_transactions')
       .insert({
@@ -130,7 +146,6 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    // SECURITY FIX: Don't expose internal error details
     console.error('Grok function error:', error);
     return new Response(JSON.stringify({ error: 'Request failed' }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

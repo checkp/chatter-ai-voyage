@@ -49,18 +49,37 @@ serve(async (req) => {
 
     console.log('User authenticated successfully:', user.id)
 
-    const { messages, model = 'claude-3-5-haiku-20241022', user_id } = await req.json()
+    const { messages, model = 'claude-3-5-haiku-20241022' } = await req.json()
+    const user_id = user.id;
     console.log('Received messages:', messages?.length || 0, 'messages')
 
-    // Check token balance
-    const { data: tokenData, error: tokenError } = await supabaseClient
+    // Check token balance - create if doesn't exist
+    let { data: tokenData, error: tokenError } = await supabaseClient
       .from('user_tokens')
       .select('balance, total_consumed')
-      .eq('user_id', user_id || user.id)
+      .eq('user_id', user_id)
       .single();
 
     if (tokenError || !tokenData) {
-      throw new Error('Unable to fetch token balance');
+      console.log('Creating initial token balance for user:', user_id);
+      // Create initial token balance
+      const { data: newTokenData, error: createError } = await supabaseClient
+        .from('user_tokens')
+        .insert({
+          user_id: user_id,
+          balance: 300,
+          total_purchased: 0,
+          total_consumed: 0
+        })
+        .select('balance, total_consumed')
+        .single();
+
+      if (createError) {
+        console.error('Error creating token balance:', createError);
+        throw new Error('Unable to initialize token balance');
+      }
+      
+      tokenData = newTokenData;
     }
 
     // Get pricing data for this model
@@ -72,7 +91,7 @@ serve(async (req) => {
       .single();
 
     if (pricingError || !pricingData) {
-      throw new Error('Pricing data not found for this model');
+      console.log('No pricing data found for model:', model, 'using default cost');
     }
 
     // Use centralized Anthropic API key
@@ -119,11 +138,10 @@ serve(async (req) => {
     const outputTokens = data.usage?.output_tokens || 0;
     const totalTokens = inputTokens + outputTokens;
 
-    // FIXED: Much more reasonable token calculation
-    // Our tokens are worth approximately $0.01 each (1 cent) but we'll multiply the cost by 10 to make it affordable
-    const apiCostPer1kTokens = pricingData.api_cost_per_1k_tokens;
+    // Calculate token cost - use default if no pricing data
+    const apiCostPer1kTokens = pricingData?.api_cost_per_1k_tokens || 0.001; // Default Claude cost
     const actualApiCost = (totalTokens / 1000) * apiCostPer1kTokens;
-    const tokensToDeduct = Math.ceil(actualApiCost * 10); // Multiply by 10 instead of dividing by 0.001
+    const tokensToDeduct = Math.max(1, Math.ceil(actualApiCost * 10)); // Minimum 1 token
 
     console.log(`Claude API usage: ${totalTokens} tokens, cost: $${actualApiCost}, deducting: ${tokensToDeduct} tokens`);
 
@@ -140,13 +158,13 @@ serve(async (req) => {
         balance: newBalance,
         total_consumed: (tokenData.total_consumed || 0) + tokensToDeduct
       })
-      .eq('user_id', user_id || user.id);
+      .eq('user_id', user_id);
 
     // Log transaction with detailed metadata
     await supabaseClient
       .from('token_transactions')
       .insert({
-        user_id: user_id || user.id,
+        user_id: user_id,
         transaction_type: 'consumption',
         amount: -tokensToDeduct,
         balance_after: newBalance,
