@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from '@/components/ui/badge';
-import { Settings, RefreshCw, Bot, Brain, Search, Zap } from 'lucide-react';
+import { Settings, X, Bot, Brain, Search, Zap } from 'lucide-react';
 import FreeModeControls from '@/components/FreeModeControls';
 import BotHistoryDialog from '@/components/BotHistoryDialog';
 import TokenBalance from '@/components/TokenBalance';
@@ -194,7 +194,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
               size="icon" 
               onClick={() => setActiveTab(activeTab === 'chat' ? 'settings' : 'chat')}
             >
-              {activeTab === 'chat' ? <Settings className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
+              {activeTab === 'chat' ? <Settings className="h-4 w-4" /> : <X className="h-4 w-4" />}
             </Button>
             <Avatar>
               <AvatarImage src={`https://avatar.vercel.sh/${user.email}.png`} />
