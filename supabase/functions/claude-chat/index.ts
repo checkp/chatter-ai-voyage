@@ -119,12 +119,11 @@ serve(async (req) => {
     const outputTokens = data.usage?.output_tokens || 0;
     const totalTokens = inputTokens + outputTokens;
 
-    // FIXED: More reasonable token calculation
-    // Our tokens are worth approximately $0.01 each (1 cent)
-    // This means 1000 tokens = $10 worth of API usage
+    // FIXED: Much more reasonable token calculation
+    // Our tokens are worth approximately $0.001 each (1/10th of a cent)
     const apiCostPer1kTokens = pricingData.api_cost_per_1k_tokens;
     const actualApiCost = (totalTokens / 1000) * apiCostPer1kTokens;
-    const tokensToDeduct = Math.ceil(actualApiCost / 0.01); // Changed from 0.001 to 0.01
+    const tokensToDeduct = Math.ceil(actualApiCost / 0.001); // Changed from 0.01 to 0.001
 
     console.log(`Claude API usage: ${totalTokens} tokens, cost: $${actualApiCost}, deducting: ${tokensToDeduct} tokens`);
 
