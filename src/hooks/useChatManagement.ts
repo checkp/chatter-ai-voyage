@@ -9,7 +9,7 @@ import { generateChatId } from '@/utils/chatUtils';
 export const useChatManagement = (user: SupabaseUser | null) => {
   const queryClient = useQueryClient();
 
-  // Fetch conversations
+  // Fetch conversations with message counts
   const {
     data: chats = [],
     isLoading: isLoadingChats,
@@ -33,7 +33,25 @@ export const useChatManagement = (user: SupabaseUser | null) => {
       }
 
       console.log('Loaded conversations:', conversations?.length || 0);
-      return conversations || [];
+      
+      // Fetch message counts for each conversation
+      const conversationsWithCounts = await Promise.all(
+        (conversations || []).map(async (conv) => {
+          const { count, error: countError } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('conversation_id', conv.id);
+
+          if (countError) {
+            console.error('Error counting messages for conversation:', conv.id, countError);
+            return { ...conv, messageCount: 0 };
+          }
+
+          return { ...conv, messageCount: count || 0 };
+        })
+      );
+
+      return conversationsWithCounts;
     },
     enabled: !!user?.id,
   });
@@ -129,7 +147,7 @@ export const useChatManagement = (user: SupabaseUser | null) => {
         throw error;
       }
 
-      return newChat;
+      return { ...newChat, messageCount: 0 };
     },
     onSuccess: (newChat) => {
       console.log('Chat created successfully:', newChat.id);

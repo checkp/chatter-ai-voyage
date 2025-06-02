@@ -16,7 +16,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import type { Chat } from '@/types/chat';
+
+interface Chat {
+  id: string;
+  title: string;
+  messageCount?: number;
+  messages?: any[];
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+}
 
 interface ChatSidebarProps {
   chats: Chat[] | undefined;
@@ -99,7 +108,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     <span className="font-medium text-sm truncate pr-8">{chat.title}</span>
                   </div>
                   <div className="text-xs text-muted-foreground/70">
-                    {chat.messages?.length || 0} messages
+                    {chat.messageCount !== undefined ? chat.messageCount : (chat.messages?.length || 0)} messages
                   </div>
                 </div>
               </Button>
