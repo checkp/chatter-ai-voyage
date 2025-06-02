@@ -8,7 +8,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -16,10 +15,9 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', // Use service role key for edge functions
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
-    // Get the authorization header
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       console.error('No authorization header provided')
@@ -34,7 +32,6 @@ serve(async (req) => {
 
     console.log('Authorization header received:', authHeader.substring(0, 20) + '...')
 
-    // Get the user from the JWT token
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
       authHeader.replace('Bearer ', '')
     )
@@ -52,44 +49,40 @@ serve(async (req) => {
 
     console.log('User authenticated successfully:', user.id)
 
-    const { messages } = await req.json()
+    const { messages, model = 'claude-3-5-haiku-20241022', user_id } = await req.json()
     console.log('Received messages:', messages?.length || 0, 'messages')
 
-    // Get user's Claude API key from the database using service role
-    console.log('Fetching Claude API key for user:', user.id)
-    const { data: apiKeyData, error: keyError } = await supabaseClient
-      .from('user_api_keys')
-      .select('encrypted_key')
-      .eq('user_id', user.id)
+    // Check token balance
+    const { data: tokenData, error: tokenError } = await supabaseClient
+      .from('user_tokens')
+      .select('balance, total_consumed')
+      .eq('user_id', user_id || user.id)
+      .single();
+
+    if (tokenError || !tokenData) {
+      throw new Error('Unable to fetch token balance');
+    }
+
+    // Get pricing data for this model
+    const { data: pricingData, error: pricingError } = await supabaseClient
+      .from('model_pricing')
+      .select('api_cost_per_1k_tokens')
       .eq('platform', 'anthropic')
-      .maybeSingle() // Use maybeSingle instead of single to avoid errors when no rows
+      .eq('model_id', model)
+      .single();
 
-    if (keyError) {
-      console.error('Database error fetching API key:', keyError)
-      return new Response(
-        JSON.stringify({ error: 'Database error: ' + keyError.message }), 
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+    if (pricingError || !pricingData) {
+      throw new Error('Pricing data not found for this model');
     }
 
-    if (!apiKeyData?.encrypted_key) {
-      console.error('No Claude API key found for user:', user.id)
-      return new Response(
-        JSON.stringify({ error: 'Claude API key not found. Please add your API key in settings.' }), 
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+    // Use centralized Anthropic API key
+    const claudeApiKey = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!claudeApiKey) {
+      throw new Error("Anthropic API key not configured");
     }
 
-    const claudeApiKey = apiKeyData.encrypted_key
-    console.log('Using Claude API key:', claudeApiKey.substring(0, 10) + '...')
+    console.log('Using Anthropic API key:', claudeApiKey.substring(0, 10) + '...')
 
-    // Call Claude API
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -98,7 +91,7 @@ serve(async (req) => {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
+        model: model,
         max_tokens: 1000,
         messages: messages
       })
@@ -120,6 +113,53 @@ serve(async (req) => {
 
     const data = await response.json()
     console.log('Claude API response received successfully')
+
+    // Calculate actual token cost based on usage
+    const inputTokens = data.usage?.input_tokens || 0;
+    const outputTokens = data.usage?.output_tokens || 0;
+    const totalTokens = inputTokens + outputTokens;
+
+    // Calculate cost in our token system
+    const apiCostPer1kTokens = pricingData.api_cost_per_1k_tokens;
+    const actualApiCost = (totalTokens / 1000) * apiCostPer1kTokens;
+    const tokensToDeduct = Math.ceil(actualApiCost / 0.001);
+
+    console.log(`Claude API usage: ${totalTokens} tokens, cost: $${actualApiCost}, deducting: ${tokensToDeduct} tokens`);
+
+    if (tokenData.balance < tokensToDeduct) {
+      throw new Error('Insufficient tokens for this request');
+    }
+
+    // Deduct tokens after successful response
+    const newBalance = tokenData.balance - tokensToDeduct;
+    
+    await supabaseClient
+      .from('user_tokens')
+      .update({ 
+        balance: newBalance,
+        total_consumed: (tokenData.total_consumed || 0) + tokensToDeduct
+      })
+      .eq('user_id', user_id || user.id);
+
+    // Log transaction with detailed metadata
+    await supabaseClient
+      .from('token_transactions')
+      .insert({
+        user_id: user_id || user.id,
+        transaction_type: 'consumption',
+        amount: -tokensToDeduct,
+        balance_after: newBalance,
+        description: `Claude ${model} API call - ${totalTokens} tokens`,
+        metadata: { 
+          platform: 'anthropic', 
+          model: model,
+          input_tokens: inputTokens,
+          output_tokens: outputTokens,
+          total_tokens: totalTokens,
+          api_cost_dollars: actualApiCost,
+          api_cost_per_1k_tokens: apiCostPer1kTokens
+        }
+      });
     
     return new Response(
       JSON.stringify({ content: data.content[0].text }), 

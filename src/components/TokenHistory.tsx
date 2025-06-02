@@ -134,9 +134,22 @@ const TokenHistory: React.FC<TokenHistoryProps> = ({ user }) => {
                           {transaction.description}
                         </div>
                         {transaction.metadata && (
-                          <div className="text-xs text-muted-foreground">
-                            {transaction.metadata.model && `Model: ${transaction.metadata.model}`}
-                            {transaction.metadata.platform && ` • Platform: ${transaction.metadata.platform}`}
+                          <div className="text-xs text-muted-foreground space-y-1">
+                            {transaction.metadata.model && (
+                              <div>Model: {transaction.metadata.model}</div>
+                            )}
+                            {transaction.metadata.platform && (
+                              <div>Platform: {transaction.metadata.platform}</div>
+                            )}
+                            {transaction.metadata.total_tokens && (
+                              <div>API Tokens: {transaction.metadata.total_tokens.toLocaleString()}</div>
+                            )}
+                            {transaction.metadata.api_cost_dollars && (
+                              <div>API Cost: ${transaction.metadata.api_cost_dollars.toFixed(4)}</div>
+                            )}
+                            {transaction.metadata.api_cost_per_1k_tokens && (
+                              <div>Rate: ${transaction.metadata.api_cost_per_1k_tokens}/1k tokens</div>
+                            )}
                           </div>
                         )}
                       </div>
