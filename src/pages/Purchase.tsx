@@ -21,11 +21,18 @@ const Purchase = () => {
 
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <h1 className="text-2xl font-bold mb-4">Please sign in to continue.</h1>
-        <Button onClick={() => navigate('/auth')}>
-          Go to Sign In
-        </Button>
+      <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <div className="flex flex-col items-center space-y-6">
+          <img 
+            src="/lovable-uploads/90258cc1-9b63-4dac-b077-ccc51f69f93e.png" 
+            alt="RoboHerd Logo" 
+            className="w-48 h-48 object-contain"
+          />
+          <h1 className="text-2xl font-bold text-center">Please sign in to continue.</h1>
+          <Button onClick={() => navigate('/auth')} className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700">
+            Go to Sign In
+          </Button>
+        </div>
       </div>
     );
   }
