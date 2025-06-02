@@ -29,11 +29,9 @@ interface UserWithTokens {
   full_name: string | null;
   is_admin: boolean;
   created_at: string;
-  user_tokens: Array<{
-    balance: number;
-    total_purchased: number;
-    total_consumed: number;
-  }>;
+  balance: number;
+  total_purchased: number;
+  total_consumed: number;
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
@@ -66,13 +64,31 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
           email,
           full_name,
           is_admin,
-          created_at,
-          user_tokens!inner(balance, total_purchased, total_consumed)
+          created_at
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as UserWithTokens[];
+
+      // Fetch token data separately for each user
+      const usersWithTokens = await Promise.all(
+        data.map(async (profile) => {
+          const { data: tokenData } = await supabase
+            .from('user_tokens')
+            .select('balance, total_purchased, total_consumed')
+            .eq('user_id', profile.id)
+            .single();
+
+          return {
+            ...profile,
+            balance: tokenData?.balance || 0,
+            total_purchased: tokenData?.total_purchased || 0,
+            total_consumed: tokenData?.total_consumed || 0,
+          };
+        })
+      );
+
+      return usersWithTokens as UserWithTokens[];
     },
     enabled: userProfile?.is_admin === true,
   });
@@ -288,7 +304,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
                           {user.full_name || 'No name provided'}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Balance: {user.user_tokens?.[0]?.balance || 0} tokens
+                          Balance: {user.balance || 0} tokens
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
