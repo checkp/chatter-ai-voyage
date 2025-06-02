@@ -1,13 +1,9 @@
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Coins, Zap, CreditCard } from 'lucide-react';
+import { Coins, Zap } from 'lucide-react';
 import { useTokens } from '@/hooks/useTokens';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import PayPalPurchaseButton from './PayPalPurchaseButton';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -17,29 +13,6 @@ interface TokenPurchaseProps {
 
 const TokenPurchase: React.FC<TokenPurchaseProps> = ({ user }) => {
   const { packages, isLoadingPackages } = useTokens(user);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'stripe' | 'paypal'>('stripe');
-
-  const handleStripePurchase = async (packageId: string) => {
-    try {
-      const response = await supabase.functions.invoke('create-token-checkout', {
-        body: { package_id: packageId },
-        headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-        },
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message || 'Failed to create checkout session');
-      }
-
-      if (response.data?.url) {
-        window.open(response.data.url, '_blank');
-      }
-    } catch (error: any) {
-      console.error('Stripe purchase error:', error);
-      toast.error('Failed to start Stripe purchase: ' + error.message);
-    }
-  };
 
   if (isLoadingPackages) {
     return (
@@ -67,7 +40,7 @@ const TokenPurchase: React.FC<TokenPurchaseProps> = ({ user }) => {
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-2">Purchase Tokens</h2>
         <p className="text-muted-foreground">
-          Choose a token package and payment method to continue using AI agents
+          Choose a token package to continue using AI agents
         </p>
       </div>
 
@@ -111,34 +84,10 @@ const TokenPurchase: React.FC<TokenPurchaseProps> = ({ user }) => {
                   {(pricePerToken / 100).toFixed(4)}¢ per token
                 </div>
 
-                <Tabs value={selectedPaymentMethod} onValueChange={(value) => setSelectedPaymentMethod(value as 'stripe' | 'paypal')} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-3">
-                    <TabsTrigger value="stripe" className="text-xs">
-                      <CreditCard className="w-3 h-3 mr-1" />
-                      Card
-                    </TabsTrigger>
-                    <TabsTrigger value="paypal" className="text-xs">
-                      PayPal
-                    </TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="stripe">
-                    <Button 
-                      onClick={() => handleStripePurchase(pkg.id)}
-                      className="w-full"
-                      variant={pkg.name.includes('Popular') ? 'default' : 'outline'}
-                    >
-                      Purchase with Card
-                    </Button>
-                  </TabsContent>
-                  
-                  <TabsContent value="paypal">
-                    <PayPalPurchaseButton
-                      packageId={pkg.id}
-                      packageName={pkg.name}
-                    />
-                  </TabsContent>
-                </Tabs>
+                <PayPalPurchaseButton
+                  packageId={pkg.id}
+                  packageName={pkg.name}
+                />
               </CardContent>
             </Card>
           );

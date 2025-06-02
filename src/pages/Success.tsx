@@ -14,40 +14,30 @@ const Success = () => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const paymentMethod = searchParams.get('payment_method');
   const orderId = searchParams.get('token'); // PayPal order ID
-  const sessionId = searchParams.get('session_id'); // Stripe session ID
 
   useEffect(() => {
     const processPayment = async () => {
-      if (isCompleted || isProcessing) return;
+      if (isCompleted || isProcessing || !orderId) return;
 
       setIsProcessing(true);
 
       try {
-        if (paymentMethod === 'paypal' && orderId) {
-          // Process PayPal payment
-          const response = await supabase.functions.invoke('capture-paypal-payment', {
-            body: { orderId },
-            headers: {
-              Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-            },
-          });
+        // Process PayPal payment
+        const response = await supabase.functions.invoke('capture-paypal-payment', {
+          body: { orderId },
+          headers: {
+            Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          },
+        });
 
-          if (response.error) {
-            throw new Error(response.error.message || 'Failed to process PayPal payment');
-          }
+        if (response.error) {
+          throw new Error(response.error.message || 'Failed to process PayPal payment');
+        }
 
-          if (response.data?.success) {
-            setIsCompleted(true);
-            toast.success(`Successfully added ${response.data.tokensAdded} tokens to your account!`);
-          }
-        } else if (sessionId) {
-          // For Stripe, the payment is already processed via webhooks or the existing flow
+        if (response.data?.success) {
           setIsCompleted(true);
-          toast.success('Payment processed successfully!');
-        } else {
-          setError('Invalid payment parameters');
+          toast.success(`Successfully added ${response.data.tokensAdded} tokens to your account!`);
         }
       } catch (error: any) {
         console.error('Payment processing error:', error);
@@ -59,7 +49,7 @@ const Success = () => {
     };
 
     processPayment();
-  }, [paymentMethod, orderId, sessionId, isCompleted, isProcessing]);
+  }, [orderId, isCompleted, isProcessing]);
 
   const handleReturnHome = () => {
     navigate('/');
@@ -85,7 +75,7 @@ const Success = () => {
         <CardContent className="text-center space-y-4">
           {isProcessing && (
             <p className="text-muted-foreground">
-              Please wait while we process your {paymentMethod === 'paypal' ? 'PayPal' : 'Stripe'} payment...
+              Please wait while we process your PayPal payment...
             </p>
           )}
           
