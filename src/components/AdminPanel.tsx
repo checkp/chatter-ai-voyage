@@ -16,6 +16,26 @@ interface AdminPanelProps {
   user: SupabaseUser;
 }
 
+interface TokenTransactionMetadata {
+  price_cents?: number;
+  platform?: string;
+  model?: string;
+  [key: string]: any;
+}
+
+interface UserWithTokens {
+  id: string;
+  email: string;
+  full_name: string | null;
+  is_admin: boolean;
+  created_at: string;
+  user_tokens: Array<{
+    balance: number;
+    total_purchased: number;
+    total_consumed: number;
+  }>;
+}
+
 const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
   const [selectedApiKey, setSelectedApiKey] = useState('');
   const [apiKeyValue, setApiKeyValue] = useState('');
@@ -52,7 +72,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as UserWithTokens[];
     },
     enabled: userProfile?.is_admin === true,
   });
@@ -79,14 +99,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
       data.forEach(transaction => {
         if (transaction.transaction_type === 'purchase') {
           stats.totalPurchased += transaction.amount;
-          if (transaction.metadata?.price_cents) {
-            stats.totalRevenue += transaction.metadata.price_cents;
+          const metadata = transaction.metadata as TokenTransactionMetadata;
+          if (metadata?.price_cents) {
+            stats.totalRevenue += metadata.price_cents;
           }
         } else if (transaction.transaction_type === 'consumption') {
           stats.totalConsumed += Math.abs(transaction.amount);
-          if (transaction.metadata?.platform) {
-            stats.platformUsage[transaction.metadata.platform] = 
-              (stats.platformUsage[transaction.metadata.platform] || 0) + Math.abs(transaction.amount);
+          const metadata = transaction.metadata as TokenTransactionMetadata;
+          if (metadata?.platform) {
+            stats.platformUsage[metadata.platform] = 
+              (stats.platformUsage[metadata.platform] || 0) + Math.abs(transaction.amount);
           }
         }
       });
