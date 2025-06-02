@@ -2,7 +2,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Coins, Plus } from 'lucide-react';
+import { Coins, Plus, RefreshCw } from 'lucide-react';
 import { useTokens } from '@/hooks/useTokens';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -23,8 +23,10 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({ user, onPurchaseClick }) =>
     );
   }
 
-  const balance = tokenBalance?.balance || 0;
+  const balance = tokenBalance?.balance ?? 0;
   const isLowBalance = balance < 50;
+
+  console.log('TokenBalance rendering:', { balance, tokenBalance, user: user?.id });
 
   const handleClick = () => {
     if (onPurchaseClick) {

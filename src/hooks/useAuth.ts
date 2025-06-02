@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -90,6 +91,52 @@ export const useAuth = () => {
     }
   };
 
+  const ensureDefaultAgentSettings = async (userId: string) => {
+    try {
+      // Check if user already has agent settings
+      const { data: existingSettings, error: fetchError } = await supabase
+        .from('user_agent_settings')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (fetchError) {
+        console.error('Error checking agent settings:', fetchError);
+        return;
+      }
+
+      // Default platforms to enable
+      const defaultPlatforms = ['openai', 'anthropic'];
+      const settingsToInsert = [];
+
+      for (const platform of defaultPlatforms) {
+        const existingSetting = existingSettings?.find(s => s.platform === platform);
+        if (!existingSetting) {
+          settingsToInsert.push({
+            user_id: userId,
+            platform: platform,
+            enabled: true,
+            model: platform === 'openai' ? 'gpt-4o-mini' : 'claude-3-5-haiku-20241022'
+          });
+        }
+      }
+
+      if (settingsToInsert.length > 0) {
+        console.log('Creating default agent settings for user:', userId);
+        const { error: insertError } = await supabase
+          .from('user_agent_settings')
+          .insert(settingsToInsert);
+
+        if (insertError) {
+          console.error('Error creating default agent settings:', insertError);
+        } else {
+          console.log('Successfully created default agent settings');
+        }
+      }
+    } catch (error) {
+      console.error('Error ensuring default agent settings:', error);
+    }
+  };
+
   const handleSignOut = async () => {
     try {
       console.log('Signing out user...');
@@ -140,6 +187,7 @@ export const useAuth = () => {
             if (mounted) {
               await ensureUserProfile(session.user);
               await ensureUserTokens(session.user.id);
+              await ensureDefaultAgentSettings(session.user.id);
               
               if (window.location.pathname === '/auth') {
                 console.log('Redirecting from auth page to main app');
@@ -187,6 +235,7 @@ export const useAuth = () => {
           if (session?.user) {
             await ensureUserProfile(session.user);
             await ensureUserTokens(session.user.id);
+            await ensureDefaultAgentSettings(session.user.id);
           }
         }
       } catch (error) {

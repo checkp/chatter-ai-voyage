@@ -35,10 +35,15 @@ export const useTokens = (user: SupabaseUser | null) => {
   const queryClient = useQueryClient();
 
   // Fetch user token balance with RLS protection
-  const { data: tokenBalance, isLoading: isLoadingBalance } = useQuery({
+  const { data: tokenBalance, isLoading: isLoadingBalance, error: tokenError } = useQuery({
     queryKey: ['tokens', user?.id],
     queryFn: async () => {
-      if (!user) return null;
+      if (!user) {
+        console.log('No user provided to useTokens');
+        return null;
+      }
+      
+      console.log('Fetching tokens for user:', user.id);
       
       const { data, error } = await supabase
         .from('user_tokens')
@@ -48,13 +53,47 @@ export const useTokens = (user: SupabaseUser | null) => {
 
       if (error) {
         console.error('Error fetching token balance:', error);
+        
+        // If no record found, try to create one
+        if (error.code === 'PGRST116') {
+          console.log('No token record found, creating initial balance...');
+          const { data: insertData, error: insertError } = await supabase
+            .from('user_tokens')
+            .insert({
+              user_id: user.id,
+              balance: 300,
+              total_purchased: 0,
+              total_consumed: 0
+            })
+            .select('balance, total_purchased, total_consumed')
+            .single();
+
+          if (insertError) {
+            console.error('Error creating initial token balance:', insertError);
+            return { balance: 0, total_purchased: 0, total_consumed: 0 };
+          }
+          
+          console.log('Created initial token balance:', insertData);
+          return insertData as TokenBalance;
+        }
+        
         return { balance: 0, total_purchased: 0, total_consumed: 0 };
       }
 
+      console.log('Token balance fetched successfully:', data);
       return data as TokenBalance;
     },
     enabled: !!user,
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    refetchOnWindowFocus: true,
   });
+
+  // Log any token errors
+  useEffect(() => {
+    if (tokenError) {
+      console.error('Token query error:', tokenError);
+    }
+  }, [tokenError]);
 
   // Fetch token transaction history with RLS protection
   const { data: transactions, isLoading: isLoadingTransactions } = useQuery({
@@ -130,9 +169,6 @@ export const useTokens = (user: SupabaseUser | null) => {
 
     return totalCost;
   };
-
-  // SECURITY: Removed the deductTokens function as it should only be handled server-side
-  // Token deductions now happen automatically in edge functions with proper validation
 
   return {
     tokenBalance,
