@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -15,7 +14,6 @@ import ChatHeader from '@/components/ChatHeader';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInput from '@/components/ChatInput';
 import SettingsPanel from '@/components/SettingsPanel';
-import AIStatusBar from '@/components/AIStatusBar';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -138,14 +136,7 @@ const Index = () => {
       />
 
       {/* Main Chat Area */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden">
-        <AIStatusBar 
-          platforms={platforms}
-          activeAIStatuses={activeAIStatuses}
-          currentChat={currentChat}
-          onSendMessage={handleSingleAgentMessage}
-        />
-        
+      <main className="flex-1 flex flex-col h-full overflow-hidden">        
         <ChatHeader 
           chats={chats}
           activeChatId={activeChatId}
