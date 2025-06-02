@@ -34,15 +34,15 @@ const PayPalPurchaseButton: React.FC<PayPalPurchaseButtonProps> = ({
       }
 
       if (response.data?.approvalUrl) {
-        // Open PayPal in a new tab
-        window.open(response.data.approvalUrl, '_blank');
+        // Redirect in the same window instead of opening a popup
+        window.location.href = response.data.approvalUrl;
       }
     } catch (error: any) {
       console.error('PayPal purchase error:', error);
       toast.error('Failed to start PayPal purchase: ' + error.message);
-    } finally {
       setIsLoading(false);
     }
+    // Note: We don't set isLoading to false in the success case because we're redirecting away
   };
 
   return (
@@ -55,7 +55,7 @@ const PayPalPurchaseButton: React.FC<PayPalPurchaseButtonProps> = ({
       {isLoading ? (
         <>
           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          Creating Order...
+          Redirecting to PayPal...
         </>
       ) : (
         <>
