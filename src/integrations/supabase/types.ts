@@ -68,6 +68,39 @@ export type Database = {
           },
         ]
       }
+      model_pricing: {
+        Row: {
+          api_cost_per_1k_tokens: number | null
+          cost_tier: string
+          created_at: string | null
+          id: string
+          model_id: string
+          platform: string
+          tokens_per_message: number
+          updated_at: string | null
+        }
+        Insert: {
+          api_cost_per_1k_tokens?: number | null
+          cost_tier: string
+          created_at?: string | null
+          id?: string
+          model_id: string
+          platform: string
+          tokens_per_message: number
+          updated_at?: string | null
+        }
+        Update: {
+          api_cost_per_1k_tokens?: number | null
+          cost_tier?: string
+          created_at?: string | null
+          id?: string
+          model_id?: string
+          platform?: string
+          tokens_per_message?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -75,6 +108,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          is_admin: boolean | null
           updated_at: string
         }
         Insert: {
@@ -83,6 +117,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          is_admin?: boolean | null
           updated_at?: string
         }
         Update: {
@@ -91,7 +126,74 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          is_admin?: boolean | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      token_packages: {
+        Row: {
+          bonus_percentage: number | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price_cents: number
+          sort_order: number | null
+          tokens: number
+        }
+        Insert: {
+          bonus_percentage?: number | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price_cents: number
+          sort_order?: number | null
+          tokens: number
+        }
+        Update: {
+          bonus_percentage?: number | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price_cents?: number
+          sort_order?: number | null
+          tokens?: number
+        }
+        Relationships: []
+      }
+      token_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          transaction_type: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          transaction_type: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          transaction_type?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -149,6 +251,36 @@ export type Database = {
           platform?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_tokens: {
+        Row: {
+          balance: number
+          created_at: string | null
+          id: string
+          total_consumed: number | null
+          total_purchased: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          balance?: number
+          created_at?: string | null
+          id?: string
+          total_consumed?: number | null
+          total_purchased?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          balance?: number
+          created_at?: string | null
+          id?: string
+          total_consumed?: number | null
+          total_purchased?: number | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

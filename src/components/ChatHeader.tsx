@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Settings, RefreshCw, Bot, Brain, Search, Zap } from 'lucide-react';
 import FreeModeControls from '@/components/FreeModeControls';
 import BotHistoryDialog from '@/components/BotHistoryDialog';
+import TokenBalance from '@/components/TokenBalance';
 import type { Chat, AIPlatform } from '@/types/chat';
 
 interface ChatHeaderProps {
@@ -185,6 +186,9 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           </div>
           
           <div className="flex items-center gap-4 ml-4">
+            {/* Token Balance */}
+            {user && <TokenBalance user={user} />}
+            
             <Button 
               variant="outline" 
               size="icon" 

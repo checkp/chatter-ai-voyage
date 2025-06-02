@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -14,7 +15,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       enabled: false, 
       color: 'bg-agent-openai border-agent-openai text-cyber-bg', 
       icon: '🤖',
-      hasApiKey: false,
+      hasApiKey: true, // Always true with centralized keys
       selectedModel: getDefaultModel('openai')
     },
     { 
@@ -23,7 +24,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       enabled: false,
       color: 'bg-agent-anthropic border-agent-anthropic text-cyber-bg', 
       icon: '🎭',
-      hasApiKey: false,
+      hasApiKey: true, // Always true with centralized keys
       selectedModel: getDefaultModel('anthropic')
     },
     { 
@@ -32,7 +33,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       enabled: false, 
       color: 'bg-agent-deepseek border-agent-deepseek text-cyber-bg', 
       icon: '🔍',
-      hasApiKey: false,
+      hasApiKey: true, // Always true with centralized keys
       selectedModel: getDefaultModel('deepseek')
     },
     { 
@@ -41,35 +42,10 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       enabled: false, 
       color: 'bg-agent-grok border-agent-grok text-cyber-bg', 
       icon: '🚀',
-      hasApiKey: false,
+      hasApiKey: true, // Always true with centralized keys
       selectedModel: getDefaultModel('grok')
     },
   ]);
-
-  const loadApiKeysStatus = async () => {
-    if (!user) return;
-
-    try {
-      const { data: apiKeys, error } = await supabase
-        .from('user_api_keys')
-        .select('platform')
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('Error loading API keys:', error);
-        return;
-      }
-
-      const platformsWithKeys = new Set((apiKeys || []).map(key => key.platform));
-      
-      setPlatforms(prev => prev.map(platform => ({
-        ...platform,
-        hasApiKey: platformsWithKeys.has(platform.id)
-      })));
-    } catch (error: any) {
-      console.error('Failed to load API keys status:', error);
-    }
-  };
 
   const loadAgentSettings = async () => {
     if (!user) return;
@@ -93,7 +69,8 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       setPlatforms(prev => prev.map(platform => ({
         ...platform,
         enabled: settingsMap.get(platform.id)?.enabled || false,
-        selectedModel: settingsMap.get(platform.id)?.model || getDefaultModel(platform.id)
+        selectedModel: settingsMap.get(platform.id)?.model || getDefaultModel(platform.id),
+        hasApiKey: true // Always true with centralized keys
       })));
     } catch (error: any) {
       console.error('Failed to load agent settings:', error);
@@ -101,7 +78,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
   };
 
   const reloadSettings = async () => {
-    await Promise.all([loadAgentSettings(), loadApiKeysStatus()]);
+    await loadAgentSettings();
   };
 
   const saveAgentSetting = async (platformId: string, enabled: boolean, model?: string) => {
@@ -142,11 +119,6 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     
     if (!platform) {
       console.log('Platform not found');
-      return;
-    }
-    
-    if (!platform.hasApiKey) {
-      toast.error('Please add an API key for this platform first');
       return;
     }
 
@@ -244,7 +216,6 @@ Your goal: Contribute meaningfully to this multi-agent conversation as ${platfor
   useEffect(() => {
     if (user) {
       loadAgentSettings();
-      loadApiKeysStatus();
     }
   }, [user]);
 
@@ -253,7 +224,6 @@ Your goal: Contribute meaningfully to this multi-agent conversation as ${platfor
     setPlatforms,
     togglePlatform,
     callAIAPI,
-    loadApiKeysStatus,
     reloadSettings
   };
 };

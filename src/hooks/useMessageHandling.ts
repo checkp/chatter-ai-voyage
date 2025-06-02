@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { AIPlatform } from '@/types/chat';
 import { useMessageQueue } from './useMessageQueue';
+import { useTokens } from './useTokens';
 
 const generateChatTitle = (message: string): string => {
   // Remove extra whitespace and limit length
@@ -41,6 +42,8 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
   const [processingSentMessageId, setProcessingSentMessageId] = useState<string | null>(null);
   const [activeAIStatuses, setActiveAIStatuses] = useState<Record<string, 'thinking' | 'responding' | 'completed' | 'error'>>({});
 
+  const { calculateTokenCost, checkTokenBalance } = useTokens(user);
+
   const {
     messageQueue,
     isProcessing,
@@ -60,6 +63,19 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
       if (!user?.id) {
         console.error('User not authenticated');
         throw new Error('User not authenticated');
+      }
+
+      // Check token balance before proceeding
+      const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
+      const requiredTokens = await calculateTokenCost(enabledPlatforms);
+      
+      console.log('Required tokens for message:', requiredTokens);
+      
+      if (requiredTokens > 0) {
+        const hasEnoughTokens = await checkTokenBalance(requiredTokens);
+        if (!hasEnoughTokens) {
+          throw new Error(`Insufficient tokens. You need ${requiredTokens} tokens but don't have enough. Please purchase more tokens.`);
+        }
       }
 
       const newMessageId = uuidv4();
@@ -262,6 +278,9 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
         toast.success(`${successfulResponses} AI agent${successfulResponses > 1 ? 's' : ''} responded successfully`);
       }
 
+      // Refresh token balance after AI responses
+      queryClient.invalidateQueries({ queryKey: ['tokens', user?.id] });
+
     } catch (error: any) {
       console.error('Error in AI response processing:', error);
       toast.error('Error processing AI responses: ' + error.message);
@@ -281,6 +300,15 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
     }
 
     try {
+      // Check token balance for single platform
+      const requiredTokens = await calculateTokenCost([platform]);
+      const hasEnoughTokens = await checkTokenBalance(requiredTokens);
+      
+      if (!hasEnoughTokens) {
+        toast.error(`Insufficient tokens. You need ${requiredTokens} tokens.`);
+        return;
+      }
+
       const newMessageId = uuidv4();
       const timestamp = new Date().toISOString();
 
@@ -352,6 +380,9 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
       await queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
       await queryClient.invalidateQueries({ queryKey: ['chat-messages', chatId] });
       console.log('Messages refreshed after AI response from agent dialog');
+
+      // Refresh token balance
+      queryClient.invalidateQueries({ queryKey: ['tokens', user?.id] });
 
       toast.success(`${platform.name} responded successfully`);
 

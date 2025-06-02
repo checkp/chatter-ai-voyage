@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -8,45 +9,28 @@ export const callOpenAI = async (
 ): Promise<string> => {
   console.log('Calling OpenAI API...');
   
-  const { data: apiKeyData, error } = await supabase
-    .from('user_api_keys')
-    .select('encrypted_key')
-    .eq('user_id', user.id)
-    .eq('platform', 'openai')
-    .single();
-
-  if (error) {
-    console.error('OpenAI API key error:', error);
-    throw new Error('OpenAI API key not found. Please add your API key in settings.');
-  }
-
-  if (!apiKeyData?.encrypted_key) {
-    throw new Error('OpenAI API key is empty. Please add your API key in settings.');
-  }
-
-  console.log('Making OpenAI request with key:', apiKeyData.encrypted_key.substring(0, 10) + '...');
-
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKeyData.encrypted_key}`
-    },
-    body: JSON.stringify({
+  const response = await supabase.functions.invoke('openai-chat', {
+    body: { 
+      messages: conversationHistory, 
       model: model,
-      messages: conversationHistory,
-      max_tokens: 1000
-    })
+      user_id: user.id 
+    },
+    headers: {
+      Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+    },
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('OpenAI API response error:', response.status, errorText);
-    throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+  if (response.error) {
+    console.error('OpenAI function error:', response.error);
+    throw new Error(response.error.message || 'OpenAI API call failed');
   }
 
-  const data = await response.json();
-  return data.choices[0].message.content;
+  if (!response.data?.content) {
+    console.error('OpenAI function missing content:', response.data);
+    throw new Error('OpenAI API returned empty response');
+  }
+
+  return response.data.content;
 };
 
 export const callDeepSeek = async (
@@ -56,45 +40,28 @@ export const callDeepSeek = async (
 ): Promise<string> => {
   console.log('Calling DeepSeek API...');
   
-  const { data: apiKeyData, error } = await supabase
-    .from('user_api_keys')
-    .select('encrypted_key')
-    .eq('user_id', user.id)
-    .eq('platform', 'deepseek')
-    .single();
-
-  if (error) {
-    console.error('DeepSeek API key error:', error);
-    throw new Error('DeepSeek API key not found. Please add your API key in settings.');
-  }
-
-  if (!apiKeyData?.encrypted_key) {
-    throw new Error('DeepSeek API key is empty. Please add your API key in settings.');
-  }
-
-  console.log('Making DeepSeek request with key:', apiKeyData.encrypted_key.substring(0, 10) + '...');
-
-  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKeyData.encrypted_key}`
-    },
-    body: JSON.stringify({
+  const response = await supabase.functions.invoke('deepseek-chat', {
+    body: { 
+      messages: conversationHistory, 
       model: model,
-      messages: conversationHistory,
-      max_tokens: 1000
-    })
+      user_id: user.id 
+    },
+    headers: {
+      Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+    },
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('DeepSeek API response error:', response.status, errorText);
-    throw new Error(`DeepSeek API error: ${response.status} - ${errorText}`);
+  if (response.error) {
+    console.error('DeepSeek function error:', response.error);
+    throw new Error(response.error.message || 'DeepSeek API call failed');
   }
 
-  const data = await response.json();
-  return data.choices[0].message.content;
+  if (!response.data?.content) {
+    console.error('DeepSeek function missing content:', response.data);
+    throw new Error('DeepSeek API returned empty response');
+  }
+
+  return response.data.content;
 };
 
 export const callGrokAPI = async (
@@ -104,45 +71,28 @@ export const callGrokAPI = async (
 ): Promise<string> => {
   console.log('Calling Grok API...');
   
-  const { data: apiKeyData, error } = await supabase
-    .from('user_api_keys')
-    .select('encrypted_key')
-    .eq('user_id', user.id)
-    .eq('platform', 'grok')
-    .single();
-
-  if (error) {
-    console.error('Grok API key error:', error);
-    throw new Error('Grok API key not found. Please add your API key in settings.');
-  }
-
-  if (!apiKeyData?.encrypted_key) {
-    throw new Error('Grok API key is empty. Please add your API key in settings.');
-  }
-
-  console.log('Making Grok request with key:', apiKeyData.encrypted_key.substring(0, 10) + '...');
-
-  const response = await fetch('https://api.x.ai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKeyData.encrypted_key}`
-    },
-    body: JSON.stringify({
+  const response = await supabase.functions.invoke('grok-chat', {
+    body: { 
+      messages: conversationHistory, 
       model: model,
-      messages: conversationHistory,
-      max_tokens: 1000
-    })
+      user_id: user.id 
+    },
+    headers: {
+      Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+    },
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Grok API response error:', response.status, errorText);
-    throw new Error(`Grok API error: ${response.status} - ${errorText}`);
+  if (response.error) {
+    console.error('Grok function error:', response.error);
+    throw new Error(response.error.message || 'Grok API call failed');
   }
 
-  const data = await response.json();
-  return data.choices[0].message.content;
+  if (!response.data?.content) {
+    console.error('Grok function missing content:', response.data);
+    throw new Error('Grok API returned empty response');
+  }
+
+  return response.data.content;
 };
 
 export const callClaudeAPI = async (
@@ -176,9 +126,8 @@ export const callClaudeAPI = async (
         console.error(`Claude function error (attempt ${attempt}):`, response.error);
         lastError = new Error(response.error.message || 'Claude API call failed');
         
-        // If this is not the last attempt, wait before retrying
         if (attempt < maxRetries) {
-          const delay = Math.pow(2, attempt - 1) * 1000; // Exponential backoff: 1s, 2s, 4s
+          const delay = Math.pow(2, attempt - 1) * 1000;
           console.log(`Retrying in ${delay}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
@@ -190,7 +139,6 @@ export const callClaudeAPI = async (
         console.error(`Claude function missing content (attempt ${attempt}):`, response.data);
         lastError = new Error('Claude API returned empty response');
         
-        // If this is not the last attempt, wait before retrying
         if (attempt < maxRetries) {
           const delay = Math.pow(2, attempt - 1) * 1000;
           console.log(`Retrying in ${delay}ms...`);
@@ -207,9 +155,8 @@ export const callClaudeAPI = async (
       console.error(`Claude API error (attempt ${attempt}):`, error);
       lastError = error instanceof Error ? error : new Error('Unknown error occurred');
       
-      // If this is not the last attempt, wait before retrying
       if (attempt < maxRetries) {
-        const delay = Math.pow(2, attempt - 1) * 1000; // Exponential backoff
+        const delay = Math.pow(2, attempt - 1) * 1000;
         console.log(`Retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
@@ -217,6 +164,5 @@ export const callClaudeAPI = async (
     }
   }
 
-  // If we get here, all retries failed
   throw lastError || new Error('Claude API call failed after all retries');
 };
