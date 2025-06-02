@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from '@/components/ui/badge';
 import { Settings, X, Bot, Brain, Search, Zap, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import FreeModeControls from '@/components/FreeModeControls';
 import BotHistoryDialog from '@/components/BotHistoryDialog';
 import TokenBalance from '@/components/TokenBalance';
@@ -51,6 +51,16 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
 }) => {
   const [selectedAgent, setSelectedAgent] = useState<AIPlatform | null>(null);
   const [isAgentDialogOpen, setIsAgentDialogOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handlePurchaseClick = () => {
+    navigate('/purchase');
+  };
+
+  const handleAgentClick = (platform: AIPlatform) => {
+    setSelectedAgent(platform);
+    setIsAgentDialogOpen(true);
+  };
 
   const getPlatformName = (platformId: string) => {
     return platforms.find(p => p.id === platformId)?.name || platformId;
@@ -117,11 +127,6 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
       default:
         return '';
     }
-  };
-
-  const handleAgentClick = (platform: AIPlatform) => {
-    setSelectedAgent(platform);
-    setIsAgentDialogOpen(true);
   };
 
   const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
@@ -191,7 +196,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           
           <div className="flex items-center gap-4 ml-4">
             {/* Token Balance */}
-            {user && <TokenBalance user={user} />}
+            {user && <TokenBalance user={user} onPurchaseClick={handlePurchaseClick} />}
             
             <Button 
               variant="outline" 

@@ -26,20 +26,27 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({ user, onPurchaseClick }) =>
   const balance = tokenBalance?.balance || 0;
   const isLowBalance = balance < 50;
 
+  const handleClick = () => {
+    if (onPurchaseClick) {
+      onPurchaseClick();
+    }
+  };
+
   return (
     <div className="flex items-center gap-2">
       <Coins className={`w-4 h-4 ${isLowBalance ? 'text-orange-500' : 'text-muted-foreground'}`} />
       <Badge 
         variant={isLowBalance ? 'destructive' : 'secondary'}
-        className="font-mono"
+        className="font-mono cursor-pointer hover:bg-opacity-80 transition-colors"
+        onClick={handleClick}
       >
         {balance.toLocaleString()} tokens
       </Badge>
-      {isLowBalance && onPurchaseClick && (
+      {isLowBalance && (
         <Button
           size="sm"
           variant="outline"
-          onClick={onPurchaseClick}
+          onClick={handleClick}
           className="flex items-center gap-1"
         >
           <Plus className="w-3 h-3" />
