@@ -45,67 +45,68 @@ export const useTokens = (user: SupabaseUser | null) => {
       
       console.log('useTokens: Fetching tokens for user:', user.id);
       
+      // First try to get the token balance
       const { data, error } = await supabase
         .from('user_tokens')
         .select('balance, total_purchased, total_consumed')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no record exists
 
       console.log('useTokens: Query result:', { data, error });
 
       if (error) {
         console.error('useTokens: Error fetching token balance:', error);
-        
-        // If no record found, try to create one with retry logic
-        if (error.code === 'PGRST116') {
-          console.log('useTokens: No token record found, attempting to create...');
-          
-          // Wait a bit and try again first (in case record is being created)
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const { data: retryData, error: retryError } = await supabase
-            .from('user_tokens')
-            .select('balance, total_purchased, total_consumed')
-            .eq('user_id', user.id)
-            .single();
-            
-          if (!retryError && retryData) {
-            console.log('useTokens: Found tokens on retry:', retryData);
-            return retryData as TokenBalance;
-          }
-          
-          console.log('useTokens: Still no record, creating initial balance...');
-          const { data: insertData, error: insertError } = await supabase
-            .from('user_tokens')
-            .insert({
-              user_id: user.id,
-              balance: 300,
-              total_purchased: 0,
-              total_consumed: 0
-            })
-            .select('balance, total_purchased, total_consumed')
-            .single();
+        return { balance: 0, total_purchased: 0, total_consumed: 0 };
+      }
 
-          if (insertError) {
-            console.error('useTokens: Error creating initial token balance:', insertError);
-            return { balance: 0, total_purchased: 0, total_consumed: 0 };
-          }
+      // If no record found, the user should have a record created by the auth trigger
+      // But let's check if we need to create one manually
+      if (!data) {
+        console.log('useTokens: No token record found, this should not happen with the auth trigger');
+        console.log('useTokens: Checking if user has a profile...');
+        
+        // Check if user profile exists
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', user.id)
+          .single();
           
-          console.log('useTokens: Created initial token balance:', insertData);
-          return insertData as TokenBalance;
+        if (!profile) {
+          console.log('useTokens: No profile found either, user setup incomplete');
+          return { balance: 0, total_purchased: 0, total_consumed: 0 };
+        }
+
+        // Try to create the token record manually since it's missing
+        console.log('useTokens: Attempting to create missing token record...');
+        const { data: insertData, error: insertError } = await supabase
+          .from('user_tokens')
+          .insert({
+            user_id: user.id,
+            balance: 300,
+            total_purchased: 0,
+            total_consumed: 0
+          })
+          .select('balance, total_purchased, total_consumed')
+          .single();
+
+        if (insertError) {
+          console.error('useTokens: Error creating token record:', insertError);
+          return { balance: 0, total_purchased: 0, total_consumed: 0 };
         }
         
-        return { balance: 0, total_purchased: 0, total_consumed: 0 };
+        console.log('useTokens: Successfully created token record:', insertData);
+        return insertData as TokenBalance;
       }
 
       console.log('useTokens: Token balance fetched successfully:', data);
       return data as TokenBalance;
     },
     enabled: !!user,
-    staleTime: 10000, // Reduced to 10 seconds for better responsiveness
+    staleTime: 5000, // Reduced for better responsiveness
     refetchOnWindowFocus: true,
-    retry: 3, // Add retry logic
-    retryDelay: 1000, // Wait 1 second between retries
+    retry: 2,
+    retryDelay: 500,
   });
 
   // Log any token errors

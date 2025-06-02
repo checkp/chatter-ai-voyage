@@ -18,7 +18,8 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({ user, onPurchaseClick }) =>
     balance: tokenBalance?.balance, 
     tokenBalance, 
     user: user?.id,
-    isLoadingBalance 
+    isLoadingBalance,
+    hasTokenBalance: !!tokenBalance 
   });
 
   if (isLoadingBalance) {
@@ -30,8 +31,27 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({ user, onPurchaseClick }) =>
     );
   }
 
-  const balance = tokenBalance?.balance ?? 0;
+  // Handle the case where tokenBalance is null (user not found or error)
+  if (!tokenBalance) {
+    console.log('TokenBalance: No token balance data available');
+    return (
+      <div className="flex items-center gap-2">
+        <Coins className="w-4 h-4 text-orange-500" />
+        <Badge variant="destructive" className="font-mono">
+          Error loading tokens
+        </Badge>
+      </div>
+    );
+  }
+
+  const balance = tokenBalance.balance ?? 0;
   const isLowBalance = balance < 50;
+
+  console.log('TokenBalance: Final balance calculation:', { 
+    rawBalance: tokenBalance.balance, 
+    finalBalance: balance,
+    isLowBalance 
+  });
 
   const handleClick = () => {
     if (onPurchaseClick) {
