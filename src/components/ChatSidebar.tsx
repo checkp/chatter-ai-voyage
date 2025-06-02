@@ -45,78 +45,96 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   };
 
   return (
-    <aside className="w-64 border-r bg-secondary border-border flex flex-col h-full">
-      <div className="p-4 flex items-center justify-between flex-shrink-0">
-        <h2 className="text-lg font-semibold">Chats</h2>
+    <aside className="w-72 border-r bg-card/50 backdrop-blur-sm border-border/40 flex flex-col h-full shadow-sm">
+      <div className="p-4 flex items-center justify-between flex-shrink-0 border-b border-border/20">
+        <h2 className="text-lg font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Conversations</h2>
         <ModeToggle />
       </div>
 
-      <Button 
-        variant="ghost" 
-        className="justify-start rounded-none hover:bg-accent hover:text-accent-foreground flex-shrink-0" 
-        onClick={onCreateChat}
-        disabled={isCreatingChat}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        {isCreatingChat ? 'Creating...' : 'New Chat'}
-      </Button>
+      <div className="p-3 flex-shrink-0">
+        <Button 
+          variant="outline" 
+          className="w-full justify-start gap-2 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all duration-200 font-medium" 
+          onClick={onCreateChat}
+          disabled={isCreatingChat}
+        >
+          <Plus className="w-4 h-4" />
+          {isCreatingChat ? 'Creating...' : 'New Conversation'}
+        </Button>
+      </div>
 
       <ScrollArea className="flex-1">
-        <div className="py-2">
+        <div className="px-3 pb-3 space-y-1">
           {isLoadingChats && (
-            <div className="px-4 py-2">
-              <Skeleton className="h-9 w-full" />
+            <div className="space-y-2">
+              {[...Array(3)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full rounded-lg" />
+              ))}
             </div>
           )}
           {!isLoadingChats && (!chats || chats.length === 0) && (
-            <div className="px-4 py-2 text-center text-muted-foreground">
-              <p className="text-sm">Creating your first chat...</p>
+            <div className="text-center text-muted-foreground py-8">
+              <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3">
+                <Plus className="w-6 h-6" />
+              </div>
+              <p className="text-sm font-medium">No conversations yet</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">Start a new conversation to get started</p>
             </div>
           )}
           {!isLoadingChats && chats?.map((chat) => (
             <div
               key={chat.id}
-              className={`group flex items-center hover:bg-accent hover:text-accent-foreground ${
-                activeChatId === chat.id ? 'bg-accent text-accent-foreground' : ''
+              className={`group relative flex items-center rounded-lg transition-all duration-200 hover:bg-accent/60 ${
+                activeChatId === chat.id ? 'bg-accent text-accent-foreground shadow-sm ring-1 ring-border/50' : ''
               }`}
             >
               <Button
                 variant="ghost"
-                className="flex-1 justify-start rounded-none h-auto py-2 px-4"
+                className="flex-1 justify-start rounded-lg h-auto py-3 px-3 text-left hover:bg-transparent"
                 onClick={() => setActiveChatId(chat.id)}
               >
-                <span className="truncate">{chat.title}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-2 h-2 rounded-full bg-primary/60 flex-shrink-0"></div>
+                    <span className="font-medium text-sm truncate pr-8">{chat.title}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground/70">
+                    {chat.messages?.length || 0} messages
+                  </div>
+                </div>
               </Button>
               
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-0 group-hover:opacity-100 h-8 w-8 mr-2 hover:bg-destructive hover:text-destructive-foreground"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Chat</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete "{chat.title}"? This action cannot be undone and will permanently delete the chat and all its messages.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={(e) => handleDeleteChat(chat.id, e)}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="opacity-0 group-hover:opacity-100 h-7 w-7 hover:bg-destructive/20 hover:text-destructive transition-all duration-200"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="max-w-md">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-lg">Delete Conversation</AlertDialogTitle>
+                      <AlertDialogDescription className="text-sm">
+                        Are you sure you want to delete "<span className="font-medium">{chat.title}</span>"? This action cannot be undone and will permanently delete the conversation and all its messages.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="text-sm">Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={(e) => handleDeleteChat(chat.id, e)}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90 text-sm"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
           ))}
         </div>
