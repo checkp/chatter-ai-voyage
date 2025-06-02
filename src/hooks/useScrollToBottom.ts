@@ -6,30 +6,28 @@ export const useScrollToBottom = () => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
-    // Try scrolling the ScrollArea viewport first
+    // Try multiple approaches to ensure scrolling works
     const scrollArea = document.querySelector('[data-radix-scroll-area-viewport]');
     if (scrollArea) {
+      // Force scroll to bottom immediately
       scrollArea.scrollTop = scrollArea.scrollHeight;
-      return;
     }
     
-    // Fallback to the ref element
+    // Also try the ref element as backup
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
   }, []);
 
   const scrollToBottomImmediate = useCallback(() => {
-    // Try scrolling the ScrollArea viewport first
+    // Force immediate scroll without animation
     const scrollArea = document.querySelector('[data-radix-scroll-area-viewport]');
     if (scrollArea) {
       scrollArea.scrollTop = scrollArea.scrollHeight;
-      return;
     }
     
-    // Fallback to the ref element
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
+      messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
     }
   }, []);
 

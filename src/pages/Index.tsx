@@ -68,12 +68,10 @@ const Index = () => {
   // Handle scrolling when messages change
   useEffect(() => {
     if (messages && messages.length > previousMessageCountRef.current) {
-      // New messages added - smooth scroll with proper timing
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          scrollToBottom();
-        }, 50);
-      });
+      // New messages added - ensure scroll happens after render
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
       previousMessageCountRef.current = messages.length;
     } else if (messages) {
       previousMessageCountRef.current = messages.length;
@@ -83,12 +81,10 @@ const Index = () => {
   // Handle initial scroll when chat loads or changes
   useEffect(() => {
     if (messages && !isLoadingMessages && activeChatId) {
-      // Chat loaded - immediate scroll to bottom with proper timing
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          scrollToBottomImmediate();
-        }, 150);
-      });
+      // Chat loaded - scroll to bottom after content is rendered
+      setTimeout(() => {
+        scrollToBottomImmediate();
+      }, 200);
     }
   }, [activeChatId, isLoadingMessages, messages, scrollToBottomImmediate]);
 
@@ -185,7 +181,7 @@ const Index = () => {
                     platforms={platforms}
                   />
                 </div>
-                <div ref={messagesEndRef} className="h-1" />
+                <div ref={messagesEndRef} className="h-4" />
               </div>
             </ScrollArea>
           )}
