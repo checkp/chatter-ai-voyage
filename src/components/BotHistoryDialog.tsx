@@ -38,7 +38,6 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
   // Auto-scroll when dialog opens, messages change, or platform changes
   useEffect(() => {
     if (open && currentChat && platform) {
-      // Use a longer timeout to ensure the dialog has fully rendered
       setTimeout(scrollToBottom, 200);
     }
   }, [open, currentChat?.messages?.length, platform]);
@@ -52,20 +51,25 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
 
   if (!platform || !currentChat) return null;
 
-  // Extract messages relevant to this platform with the new structure
+  // Extract messages relevant to this platform - fixed logic
   const getBotMessages = () => {
     console.log('getBotMessages called for platform:', platform.name);
     console.log('Total messages in chat:', currentChat.messages?.length || 0);
     
-    const botMessages: Array<{content: string, timestamp: Date, isUser: boolean}> = [];
+    const conversationMessages: Array<{content: string, timestamp: Date, isUser: boolean, platform?: string}> = [];
     
-    if (!currentChat.messages) return botMessages;
+    if (!currentChat.messages) return conversationMessages;
     
-    currentChat.messages.forEach((message, index) => {
+    // Sort messages by creation time to maintain chronological order
+    const sortedMessages = [...currentChat.messages].sort((a, b) => 
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    
+    sortedMessages.forEach((message, index) => {
       console.log(`Message ${index}:`, { 
         sender: message.sender, 
         platform: message.platform, 
-        content: message.content.substring(0, 100) + '...'
+        content: message.content.substring(0, 50) + '...'
       });
       
       // Handle timestamp - convert from string if needed, or use current date as fallback
@@ -74,24 +78,26 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
         : new Date(message.created_at);
       
       if (message.sender === 'user') {
-        botMessages.push({
+        // Include ALL user messages in every agent's conversation view
+        conversationMessages.push({
           content: message.content,
           timestamp,
           isUser: true
         });
       } else if (message.sender === 'ai' && message.platform === platform.id) {
-        // This is a platform-specific message
-        console.log('Found platform-specific message for', platform.name);
-        botMessages.push({
+        // Only include AI messages from this specific platform
+        console.log('Found platform-specific AI message for', platform.name);
+        conversationMessages.push({
           content: message.content,
           timestamp,
-          isUser: false
+          isUser: false,
+          platform: message.platform
         });
       }
     });
     
-    console.log('Final bot messages for', platform.name, ':', botMessages.length);
-    return botMessages;
+    console.log('Final conversation messages for', platform.name, ':', conversationMessages.length);
+    return conversationMessages;
   };
 
   const getAgentColorClasses = (platformId: string) => {
@@ -132,13 +138,20 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || !onSendMessage || isSending) return;
     
+    const messageToSend = inputMessage.trim();
+    setInputMessage('');
     setIsSending(true);
+    
     try {
-      await onSendMessage(inputMessage, platform.id);
-      setInputMessage('');
+      console.log('Sending message from agent dialog:', messageToSend, 'to platform:', platform.id);
+      await onSendMessage(messageToSend, platform.id);
       
       // Auto-scroll after sending message
       setTimeout(scrollToBottom, 100);
+    } catch (error) {
+      console.error('Error sending message from agent dialog:', error);
+      // Restore input on error
+      setInputMessage(messageToSend);
     } finally {
       setIsSending(false);
     }
@@ -187,7 +200,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
             ) : (
               botMessages.map((message, index) => (
                 <div
-                  key={index}
+                  key={`${message.timestamp.getTime()}-${index}`}
                   className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
                 >
                   <div className={`max-w-[85%] ${message.isUser ? 'order-2' : 'order-1'}`}>

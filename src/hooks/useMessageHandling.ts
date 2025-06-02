@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
@@ -305,6 +306,7 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
 
       // Refresh messages to show the user message immediately
       await queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+      console.log('Messages refreshed after user message from agent dialog');
 
       // Set AI status to thinking
       setActiveAIStatuses({ [platform.id]: 'thinking' });
@@ -346,8 +348,9 @@ export const useMessageHandling = (user: any, platforms: AIPlatform[], callAIAPI
 
       setActiveAIStatuses(prev => ({ ...prev, [platform.id]: 'completed' }));
       
-      // Refresh messages
+      // Refresh messages again to show the AI response
       await queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+      console.log('Messages refreshed after AI response from agent dialog');
 
       toast.success(`${platform.name} responded successfully`);
 
