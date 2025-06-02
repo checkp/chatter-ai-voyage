@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -7,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Square } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import type { AIPlatform, Chat } from '@/types/chat';
 
 interface BotHistoryDialogProps {
@@ -29,6 +30,41 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
+  // Fetch messages for the current chat directly
+  const { data: chatMessages = [] } = useQuery({
+    queryKey: ['messages', currentChat?.id],
+    queryFn: async () => {
+      if (!currentChat?.id) return [];
+
+      console.log('BotHistoryDialog: Fetching messages for chat:', currentChat.id);
+      
+      const { data: messages, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', currentChat.id)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error loading messages:', error);
+        return [];
+      }
+
+      const formattedMessages = (messages || []).map(msg => ({
+        id: msg.id,
+        content: msg.content,
+        sender: msg.sender as 'user' | 'ai',
+        platform: msg.platform,
+        created_at: msg.created_at,
+        conversation_id: msg.conversation_id,
+        timestamp: new Date(msg.created_at)
+      }));
+
+      console.log('BotHistoryDialog: Loaded', formattedMessages.length, 'messages for chat', currentChat.id);
+      return formattedMessages;
+    },
+    enabled: !!currentChat?.id && open,
+  });
+
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -40,35 +76,35 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
     if (open && currentChat && platform) {
       setTimeout(scrollToBottom, 200);
     }
-  }, [open, currentChat?.messages?.length, platform]);
+  }, [open, chatMessages?.length, platform]);
 
   // Auto-scroll when new messages are added
   useEffect(() => {
-    if (open && currentChat?.messages) {
+    if (open && chatMessages) {
       setTimeout(scrollToBottom, 100);
     }
-  }, [currentChat?.messages, open]);
+  }, [chatMessages, open]);
 
   if (!platform || !currentChat) {
     console.log('BotHistoryDialog: Missing required props', { 
       hasPlatform: !!platform, 
       hasCurrentChat: !!currentChat,
       currentChatId: currentChat?.id,
-      messagesCount: currentChat?.messages?.length 
+      messagesCount: chatMessages?.length 
     });
     return null;
   }
 
-  // Fixed message filtering logic
+  // Fixed message filtering logic using the fetched messages
   const getBotMessages = () => {
     console.log('=== getBotMessages DEBUG ===');
     console.log('Platform:', platform.name, 'ID:', platform.id);
     console.log('Current chat ID:', currentChat.id);
-    console.log('Current chat messages count:', currentChat.messages?.length || 0);
+    console.log('Fetched messages count:', chatMessages?.length || 0);
     
     // Log first few messages for debugging
-    if (currentChat.messages && currentChat.messages.length > 0) {
-      console.log('Sample messages:', currentChat.messages.slice(0, 3).map(m => ({
+    if (chatMessages && chatMessages.length > 0) {
+      console.log('Sample messages:', chatMessages.slice(0, 3).map(m => ({
         id: m.id,
         sender: m.sender,
         platform: m.platform,
@@ -78,13 +114,13 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
     
     const conversationMessages: Array<{content: string, timestamp: Date, isUser: boolean, platform?: string}> = [];
     
-    if (!currentChat.messages || currentChat.messages.length === 0) {
+    if (!chatMessages || chatMessages.length === 0) {
       console.log('No messages found in chat');
       return conversationMessages;
     }
     
     // Sort messages by creation time to maintain chronological order
-    const sortedMessages = [...currentChat.messages].sort((a, b) => 
+    const sortedMessages = [...chatMessages].sort((a, b) => 
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
     
@@ -233,13 +269,13 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
                 <div className="mt-4 text-sm modern-text-muted">
                   <p>Debug info:</p>
                   <p>Current chat ID: {currentChat?.id}</p>
-                  <p>Total messages in chat: {currentChat?.messages?.length || 0}</p>
+                  <p>Total messages fetched: {chatMessages?.length || 0}</p>
                   <p>Platform ID: {platform?.id}</p>
                   <p>Chat title: {currentChat?.title}</p>
-                  {currentChat?.messages && currentChat.messages.length > 0 && (
+                  {chatMessages && chatMessages.length > 0 && (
                     <div className="mt-2">
-                      <p>Message senders: {[...new Set(currentChat.messages.map(m => m.sender))].join(', ')}</p>
-                      <p>Message platforms: {[...new Set(currentChat.messages.map(m => m.platform).filter(Boolean))].join(', ')}</p>
+                      <p>Message senders: {[...new Set(chatMessages.map(m => m.sender))].join(', ')}</p>
+                      <p>Message platforms: {[...new Set(chatMessages.map(m => m.platform).filter(Boolean))].join(', ')}</p>
                     </div>
                   )}
                 </div>

@@ -1,106 +1,152 @@
 
-import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { Chat, Message } from '@/types/chat';
+import { generateChatId } from '@/utils/chatUtils';
 
-export const useChatManagement = (user: any) => {
+export const useChatManagement = (user: SupabaseUser | null) => {
   const queryClient = useQueryClient();
-  const [activeChatId, setActiveChatId] = useState<string | null>(null);
-  const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
 
-  const { data: chats, isLoading: isLoadingChats } = useQuery({
+  // Fetch conversations
+  const {
+    data: chats = [],
+    isLoading: isLoadingChats,
+    isSuccess: isInitialLoadComplete
+  } = useQuery({
     queryKey: ['conversations', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
 
-      const { data, error } = await supabase
+      console.log('Fetching conversations for user:', user.id);
+      
+      const { data: conversations, error } = await supabase
         .from('conversations')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('updated_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching conversations:', error);
+        console.error('Error loading conversations:', error);
         throw error;
       }
 
-      return (data || []).map(conv => ({
-        ...conv,
-        messages: [] as Message[],
-        createdAt: new Date(conv.created_at),
-        lastUpdated: new Date(conv.updated_at)
-      }));
+      console.log('Loaded conversations:', conversations?.length || 0);
+      return conversations || [];
     },
     enabled: !!user?.id,
   });
 
-  const { data: messages, isLoading: isLoadingMessages } = useQuery({
-    queryKey: ['messages', activeChatId],
+  // Fetch messages for active chat
+  const { 
+    data: messages = [], 
+    isLoading: isLoadingMessages 
+  } = useQuery({
+    queryKey: ['messages', chats?.[0]?.id],
     queryFn: async () => {
-      if (!activeChatId) return [];
+      const activeChatId = chats?.[0]?.id;
+      if (!activeChatId) {
+        console.log('No active chat ID for message fetching');
+        return [];
+      }
 
-      const { data, error } = await supabase
+      console.log('Fetching messages for chat:', activeChatId);
+      
+      const { data: messages, error } = await supabase
         .from('messages')
         .select('*')
         .eq('conversation_id', activeChatId)
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('Error fetching messages:', error);
+        console.error('Error loading messages for chat:', activeChatId, error);
         throw error;
       }
 
-      return (data || []).map(msg => ({
-        ...msg,
+      const formattedMessages = (messages || []).map(msg => ({
+        id: msg.id,
+        content: msg.content,
         sender: msg.sender as 'user' | 'ai',
-        timestamp: new Date(msg.created_at),
-        status: 'sent' as const,
-        seenBy: []
+        platform: msg.platform,
+        created_at: msg.created_at,
+        conversation_id: msg.conversation_id,
+        timestamp: new Date(msg.created_at)
       }));
+
+      console.log('Loaded messages for chat', activeChatId, ':', formattedMessages.length);
+      return formattedMessages;
     },
-    enabled: !!activeChatId,
+    enabled: !!chats?.[0]?.id,
   });
+
+  const activeChatId = chats?.[0]?.id || null;
+
+  const setActiveChatId = (chatId: string | null) => {
+    if (!chatId) return;
+    
+    // Find the chat and move it to the front of the array
+    const chatIndex = chats.findIndex(chat => chat.id === chatId);
+    if (chatIndex > 0) {
+      const updatedChats = [...chats];
+      const [selectedChat] = updatedChats.splice(chatIndex, 1);
+      updatedChats.unshift(selectedChat);
+      
+      // Update the conversations query cache
+      queryClient.setQueryData(['conversations', user?.id], updatedChats);
+    }
+    
+    // Invalidate messages for the new active chat
+    queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
+  };
 
   const createChatMutation = useMutation({
     mutationFn: async (title: string) => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      const newChatId = uuidv4();
-      const { data, error } = await supabase
+      const newChat: Chat = {
+        id: generateChatId(),
+        title,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        user_id: user.id
+      };
+
+      console.log('Creating new chat:', newChat.id);
+
+      const { error } = await supabase
         .from('conversations')
-        .insert([{ 
-          id: newChatId,
-          user_id: user.id, 
-          title,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }])
-        .select('*')
-        .single();
+        .insert([{
+          id: newChat.id,
+          user_id: newChat.user_id,
+          title: newChat.title,
+          created_at: newChat.created_at,
+          updated_at: newChat.updated_at
+        }]);
 
       if (error) {
-        console.error('Error creating conversation:', error);
+        console.error('Error creating chat:', error);
         throw error;
       }
 
-      return {
-        ...data,
-        messages: [] as Message[],
-        createdAt: new Date(data.created_at),
-        lastUpdated: new Date(data.updated_at)
-      } as Chat;
+      return newChat;
     },
     onSuccess: (newChat) => {
-      queryClient.invalidateQueries({ queryKey: ['conversations', user?.id] });
-      setActiveChatId(newChat.id);
-      console.log('New chat created successfully:', newChat.id);
+      console.log('Chat created successfully:', newChat.id);
+      
+      // Add the new chat to the beginning of the list
+      const currentChats = queryClient.getQueryData(['conversations', user?.id]) as Chat[] || [];
+      const updatedChats = [newChat, ...currentChats];
+      queryClient.setQueryData(['conversations', user?.id], updatedChats);
+      
+      // Initialize empty messages for the new chat
+      queryClient.setQueryData(['messages', newChat.id], []);
+      
+      toast.success('New chat created');
     },
     onError: (error: any) => {
-      console.error('Failed to create conversation:', error);
-      toast.error('Failed to create conversation: ' + error.message);
+      console.error('Failed to create chat:', error);
+      toast.error('Failed to create chat: ' + (error.message || 'Unknown error'));
     },
   });
 
@@ -108,7 +154,9 @@ export const useChatManagement = (user: any) => {
     mutationFn: async (chatId: string) => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      // First delete all messages for this conversation
+      console.log('Deleting chat:', chatId);
+
+      // Delete messages first
       const { error: messagesError } = await supabase
         .from('messages')
         .delete()
@@ -134,37 +182,23 @@ export const useChatManagement = (user: any) => {
       return chatId;
     },
     onSuccess: (deletedChatId) => {
-      queryClient.invalidateQueries({ queryKey: ['conversations', user?.id] });
+      console.log('Chat deleted successfully:', deletedChatId);
       
-      // If the deleted chat was active, switch to another chat or clear selection
-      if (activeChatId === deletedChatId) {
-        const remainingChats = chats?.filter(chat => chat.id !== deletedChatId);
-        if (remainingChats && remainingChats.length > 0) {
-          setActiveChatId(remainingChats[0].id);
-        } else {
-          setActiveChatId(null);
-        }
-      }
+      // Remove the chat from the list
+      const currentChats = queryClient.getQueryData(['conversations', user?.id]) as Chat[] || [];
+      const updatedChats = currentChats.filter(chat => chat.id !== deletedChatId);
+      queryClient.setQueryData(['conversations', user?.id], updatedChats);
+      
+      // Clear messages cache for the deleted chat
+      queryClient.removeQueries({ queryKey: ['messages', deletedChatId] });
       
       toast.success('Chat deleted successfully');
-      console.log('Chat deleted successfully:', deletedChatId);
     },
     onError: (error: any) => {
       console.error('Failed to delete chat:', error);
-      toast.error('Failed to delete chat: ' + error.message);
+      toast.error('Failed to delete chat: ' + (error.message || 'Unknown error'));
     },
   });
-
-  useEffect(() => {
-    // Auto-create first chat if user has no conversations
-    if (chats && chats.length === 0 && !activeChatId && !isLoadingChats && user) {
-      console.log('No chats found, creating first chat automatically');
-      createChatMutation.mutate('Welcome Chat');
-    } else if (chats && chats.length > 0 && !activeChatId) {
-      setActiveChatId(chats[0].id);
-      setIsInitialLoadComplete(true);
-    }
-  }, [chats, activeChatId, isLoadingChats, user]);
 
   return {
     chats,

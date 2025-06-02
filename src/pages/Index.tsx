@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -84,6 +85,9 @@ const Index = () => {
     await sendSingleAgentMessage(activeChatId, message, platformId);
   };
 
+  // Find the current chat object for AIStatusBar
+  const currentChat = chats?.find(chat => chat.id === activeChatId);
+
   // Show loading while auth is being determined
   if (loading) {
     return (
@@ -123,7 +127,7 @@ const Index = () => {
         <AIStatusBar 
           platforms={platforms}
           activeAIStatuses={activeAIStatuses}
-          currentChat={chats?.find(chat => chat.id === activeChatId)}
+          currentChat={currentChat}
           onSendMessage={handleSingleAgentMessage}
         />
         
