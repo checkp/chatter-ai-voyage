@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from '@/components/ui/badge';
 import { Settings, RefreshCw } from 'lucide-react';
+import FreeModeControls from '@/components/FreeModeControls';
 import type { Chat, AIPlatform } from '@/types/chat';
 
 interface ChatHeaderProps {
@@ -14,6 +15,14 @@ interface ChatHeaderProps {
   activeTab: 'chat' | 'settings';
   setActiveTab: (tab: 'chat' | 'settings') => void;
   user: any;
+  // Free mode props
+  isFreeMode: boolean;
+  isFreeModeRunning: boolean;
+  freeModeMessageLimit: number;
+  freeModeMessageCount: number;
+  onStartFreeMode: () => void;
+  onStopFreeMode: () => void;
+  onUpdateFreeModeLimit: (limit: number) => void;
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -23,7 +32,14 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   platforms,
   activeTab,
   setActiveTab,
-  user
+  user,
+  isFreeMode,
+  isFreeModeRunning,
+  freeModeMessageLimit,
+  freeModeMessageCount,
+  onStartFreeMode,
+  onStopFreeMode,
+  onUpdateFreeModeLimit
 }) => {
   const getPlatformName = (platformId: string) => {
     return platforms.find(p => p.id === platformId)?.name || platformId;
@@ -50,13 +66,28 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   return (
     <header className="border-b bg-secondary border-border p-4 flex items-center justify-between flex-shrink-0">
       <div className="flex-1">
-        <h1 className="text-lg font-semibold">
-          {chats?.find(chat => chat.id === activeChatId)?.title || 'Select a chat'}
-        </h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-lg font-semibold">
+            {chats?.find(chat => chat.id === activeChatId)?.title || 'Select a chat'}
+          </h1>
+          
+          {/* Free Mode Controls */}
+          {activeTab === 'chat' && (
+            <FreeModeControls
+              isFreeMode={isFreeMode}
+              isFreeModeRunning={isFreeModeRunning}
+              freeModeMessageLimit={freeModeMessageLimit}
+              freeModeMessageCount={freeModeMessageCount}
+              onStart={onStartFreeMode}
+              onStop={onStopFreeMode}
+              onUpdateLimit={onUpdateFreeModeLimit}
+            />
+          )}
+        </div>
         
         {/* AI Status Bar */}
         {Object.keys(activeAIStatuses).length > 0 && (
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">AI Status:</span>
             {Object.entries(activeAIStatuses).map(([platformId, status]) => (
               <Badge 

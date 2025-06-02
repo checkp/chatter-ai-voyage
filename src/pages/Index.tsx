@@ -9,6 +9,7 @@ import { useScrollToBottom } from '@/hooks/useScrollToBottom';
 import { useChatManagement } from '@/hooks/useChatManagement';
 import { useMessageHandling } from '@/hooks/useMessageHandling';
 import { useUIState } from '@/hooks/useUIState';
+import { useFreeMode } from '@/hooks/useFreeMode';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatHeader from '@/components/ChatHeader';
 import ChatMessages from '@/components/ChatMessages';
@@ -56,6 +57,16 @@ const Index = () => {
     setActiveTab
   } = useUIState();
 
+  const {
+    isFreeMode,
+    freeModeMessageLimit,
+    freeModeMessageCount,
+    isFreeModeRunning,
+    startFreeMode,
+    stopFreeMode,
+    updateMessageLimit
+  } = useFreeMode();
+
   useEffect(() => {
     // Only scroll if we have more messages than before
     if (messages && messages.length > previousMessageCountRef.current) {
@@ -83,6 +94,10 @@ const Index = () => {
   const handleSingleAgentMessage = async (message: string, platformId: string) => {
     if (!activeChatId) return;
     await sendSingleAgentMessage(activeChatId, message, platformId);
+  };
+
+  const handleStartFreeMode = () => {
+    startFreeMode(activeChatId, platforms, callAIAPI, sendSingleAgentMessage);
   };
 
   // Find the current chat object for AIStatusBar
@@ -139,6 +154,13 @@ const Index = () => {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           user={user}
+          isFreeMode={isFreeMode}
+          isFreeModeRunning={isFreeModeRunning}
+          freeModeMessageLimit={freeModeMessageLimit}
+          freeModeMessageCount={freeModeMessageCount}
+          onStartFreeMode={handleStartFreeMode}
+          onStopFreeMode={stopFreeMode}
+          onUpdateFreeModeLimit={updateMessageLimit}
         />
 
         {/* Chat Messages Area */}
@@ -175,6 +197,8 @@ const Index = () => {
             isPending={sendMessageMutation.isPending}
             canStop={canStop}
             pendingCount={getPendingCount}
+            isFreeMode={isFreeMode}
+            isFreeModeRunning={isFreeModeRunning}
           />
         )}
       </main>
