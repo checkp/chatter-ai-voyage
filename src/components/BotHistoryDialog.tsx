@@ -49,13 +49,32 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
     }
   }, [currentChat?.messages, open]);
 
-  if (!platform || !currentChat) return null;
+  if (!platform || !currentChat) {
+    console.log('BotHistoryDialog: Missing required props', { 
+      hasPlatform: !!platform, 
+      hasCurrentChat: !!currentChat,
+      currentChatId: currentChat?.id,
+      messagesCount: currentChat?.messages?.length 
+    });
+    return null;
+  }
 
   // Fixed message filtering logic
   const getBotMessages = () => {
     console.log('=== getBotMessages DEBUG ===');
     console.log('Platform:', platform.name, 'ID:', platform.id);
+    console.log('Current chat ID:', currentChat.id);
     console.log('Current chat messages count:', currentChat.messages?.length || 0);
+    
+    // Log first few messages for debugging
+    if (currentChat.messages && currentChat.messages.length > 0) {
+      console.log('Sample messages:', currentChat.messages.slice(0, 3).map(m => ({
+        id: m.id,
+        sender: m.sender,
+        platform: m.platform,
+        content: m.content.substring(0, 50) + '...'
+      })));
+    }
     
     const conversationMessages: Array<{content: string, timestamp: Date, isUser: boolean, platform?: string}> = [];
     
@@ -213,8 +232,16 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
                 <p className="text-base">Start chatting to see the conversation here.</p>
                 <div className="mt-4 text-sm modern-text-muted">
                   <p>Debug info:</p>
+                  <p>Current chat ID: {currentChat?.id}</p>
                   <p>Total messages in chat: {currentChat?.messages?.length || 0}</p>
                   <p>Platform ID: {platform?.id}</p>
+                  <p>Chat title: {currentChat?.title}</p>
+                  {currentChat?.messages && currentChat.messages.length > 0 && (
+                    <div className="mt-2">
+                      <p>Message senders: {[...new Set(currentChat.messages.map(m => m.sender))].join(', ')}</p>
+                      <p>Message platforms: {[...new Set(currentChat.messages.map(m => m.platform).filter(Boolean))].join(', ')}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
