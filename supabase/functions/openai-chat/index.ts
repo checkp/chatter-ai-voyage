@@ -82,10 +82,10 @@ serve(async (req) => {
     const totalTokens = data_response.usage?.total_tokens || promptTokens + completionTokens;
 
     // FIXED: Much more reasonable token calculation
-    // Our tokens are worth approximately $0.001 each (1/10th of a cent)
+    // Our tokens are worth approximately $0.01 each (1 cent) but we'll multiply the cost by 10 to make it affordable
     const apiCostPer1kTokens = pricingData.api_cost_per_1k_tokens;
     const actualApiCost = (totalTokens / 1000) * apiCostPer1kTokens;
-    const tokensToDeduct = Math.ceil(actualApiCost / 0.001); // Changed from 0.01 to 0.001
+    const tokensToDeduct = Math.ceil(actualApiCost * 10); // Multiply by 10 instead of dividing by 0.001
 
     console.log(`API usage: ${totalTokens} tokens, cost: $${actualApiCost}, deducting: ${tokensToDeduct} tokens`);
 
