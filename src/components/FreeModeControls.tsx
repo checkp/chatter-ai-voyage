@@ -42,7 +42,7 @@ const FreeModeControls: React.FC<FreeModeControlsProps> = ({
           className="flex items-center gap-2"
         >
           <Play className="h-4 w-4" />
-          Free Mode
+          Conversation Mode
         </Button>
       ) : (
         <Button
