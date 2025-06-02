@@ -61,17 +61,6 @@ export const useFreeMode = () => {
   ) => {
     let currentMessageCount = 0;
     let currentPlatformIndex = 0;
-
-    // Start with an opening statement from the first agent
-    const openingPrompts = [
-      "Let's have an interesting discussion! What topic would you all like to explore today?",
-      "I'm curious about everyone's thoughts on the future of technology. What are your perspectives?",
-      "Let's discuss something fascinating. What's been on your minds lately?",
-      "I'd love to hear different viewpoints on innovation and creativity. What do you all think?",
-      "Let's have a collaborative conversation about ideas that inspire us. Who wants to start?"
-    ];
-
-    const randomOpening = openingPrompts[Math.floor(Math.random() * openingPrompts.length)];
     
     while (currentMessageCount < freeModeMessageLimit && freeModeRunningRef.current) {
       const currentPlatform = enabledPlatforms[currentPlatformIndex];
@@ -79,14 +68,9 @@ export const useFreeMode = () => {
       try {
         console.log(`Free mode: Processing message ${currentMessageCount + 1}/${freeModeMessageLimit} with ${currentPlatform.name}`);
         
-        if (currentMessageCount === 0) {
-          // First message is the opening prompt
-          await sendSingleAgentMessage(chatId, randomOpening, currentPlatform.id);
-        } else {
-          // For subsequent messages, let the AI respond naturally to the conversation
-          const contextPrompt = `Continue this multi-agent discussion naturally. Build upon what others have said, add your unique perspective, ask questions, or introduce related ideas. Keep the conversation flowing and engaging.`;
-          await sendSingleAgentMessage(chatId, contextPrompt, currentPlatform.id);
-        }
+        // Let the AI respond naturally to the existing conversation context
+        const contextPrompt = `Continue this conversation naturally. Build upon what others have said, add your unique perspective, ask questions, or introduce related ideas. Keep the conversation flowing and engaging.`;
+        await sendSingleAgentMessage(chatId, contextPrompt, currentPlatform.id);
 
         currentMessageCount++;
         setFreeModeMessageCount(currentMessageCount);
