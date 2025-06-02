@@ -29,7 +29,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   isFreeMode = false,
   isFreeModeRunning = false
 }) => {
-  const isDisabled = isLoadingResponse || isPending || isFreeModeRunning;
+  const isDisabled = isLoadingResponse || isPending;
 
   return (
     <footer className="border-t bg-secondary border-border p-4 flex-shrink-0">
@@ -45,11 +45,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               }
             }
           }}
-          placeholder={
-            isFreeModeRunning 
-              ? "Free mode is running - user input disabled..." 
-              : "Type your message here..."
-          }
+          placeholder="Type your message here..."
           className="flex-1 resize-none"
           disabled={isDisabled}
         />
