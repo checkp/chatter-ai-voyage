@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,7 +33,7 @@ interface TokenPackage {
 export const useTokens = (user: SupabaseUser | null) => {
   const queryClient = useQueryClient();
 
-  // Fetch user token balance with enhanced debugging
+  // Fetch user token balance with enhanced debugging and duplicate handling
   const { data: tokenBalance, isLoading: isLoadingBalance, error: tokenError } = useQuery({
     queryKey: ['tokens', user?.id],
     queryFn: async () => {
@@ -45,40 +44,24 @@ export const useTokens = (user: SupabaseUser | null) => {
       
       console.log('useTokens: Fetching tokens for user:', user.id);
       
-      // First try to get the token balance
-      const { data, error } = await supabase
+      // First, get all token records for this user to check for duplicates
+      const { data: allRecords, error: selectError } = await supabase
         .from('user_tokens')
-        .select('balance, total_purchased, total_consumed')
+        .select('id, balance, total_purchased, total_consumed, created_at')
         .eq('user_id', user.id)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no record exists
+        .order('created_at', { ascending: true }); // Get oldest first
 
-      console.log('useTokens: Query result:', { data, error });
+      console.log('useTokens: All token records:', { allRecords, selectError });
 
-      if (error) {
-        console.error('useTokens: Error fetching token balance:', error);
+      if (selectError) {
+        console.error('useTokens: Error fetching token records:', selectError);
         return { balance: 0, total_purchased: 0, total_consumed: 0 };
       }
 
-      // If no record found, the user should have a record created by the auth trigger
-      // But let's check if we need to create one manually
-      if (!data) {
-        console.log('useTokens: No token record found, this should not happen with the auth trigger');
-        console.log('useTokens: Checking if user has a profile...');
+      // If no records found, create initial record
+      if (!allRecords || allRecords.length === 0) {
+        console.log('useTokens: No token records found, creating initial record');
         
-        // Check if user profile exists
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', user.id)
-          .single();
-          
-        if (!profile) {
-          console.log('useTokens: No profile found either, user setup incomplete');
-          return { balance: 0, total_purchased: 0, total_consumed: 0 };
-        }
-
-        // Try to create the token record manually since it's missing
-        console.log('useTokens: Attempting to create missing token record...');
         const { data: insertData, error: insertError } = await supabase
           .from('user_tokens')
           .insert({
@@ -99,11 +82,41 @@ export const useTokens = (user: SupabaseUser | null) => {
         return insertData as TokenBalance;
       }
 
-      console.log('useTokens: Token balance fetched successfully:', data);
-      return data as TokenBalance;
+      // If multiple records found, clean up duplicates
+      if (allRecords.length > 1) {
+        console.log('useTokens: Multiple token records found, cleaning up duplicates');
+        
+        // Keep the first record (oldest), delete the rest
+        const recordToKeep = allRecords[0];
+        const recordsToDelete = allRecords.slice(1);
+        
+        for (const record of recordsToDelete) {
+          console.log('useTokens: Deleting duplicate record:', record.id);
+          await supabase
+            .from('user_tokens')
+            .delete()
+            .eq('id', record.id);
+        }
+        
+        console.log('useTokens: Using record:', recordToKeep);
+        return {
+          balance: recordToKeep.balance,
+          total_purchased: recordToKeep.total_purchased,
+          total_consumed: recordToKeep.total_consumed
+        } as TokenBalance;
+      }
+
+      // Single record found - normal case
+      const record = allRecords[0];
+      console.log('useTokens: Single token record found:', record);
+      return {
+        balance: record.balance,
+        total_purchased: record.total_purchased,
+        total_consumed: record.total_consumed
+      } as TokenBalance;
     },
     enabled: !!user,
-    staleTime: 5000, // Reduced for better responsiveness
+    staleTime: 5000,
     refetchOnWindowFocus: true,
     retry: 2,
     retryDelay: 500,
