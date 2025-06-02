@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -104,24 +103,30 @@ export const useAuth = () => {
         return;
       }
 
-      // Default platforms to enable
-      const defaultPlatforms = ['openai', 'anthropic'];
+      // Enable all 4 platforms by default
+      const defaultPlatforms = [
+        { platform: 'openai', model: 'gpt-4o-mini' },
+        { platform: 'anthropic', model: 'claude-3-5-haiku-20241022' },
+        { platform: 'deepseek', model: 'deepseek-chat' },
+        { platform: 'grok', model: 'grok-3' }
+      ];
+      
       const settingsToInsert = [];
 
-      for (const platform of defaultPlatforms) {
+      for (const { platform, model } of defaultPlatforms) {
         const existingSetting = existingSettings?.find(s => s.platform === platform);
         if (!existingSetting) {
           settingsToInsert.push({
             user_id: userId,
             platform: platform,
             enabled: true,
-            model: platform === 'openai' ? 'gpt-4o-mini' : 'claude-3-5-haiku-20241022'
+            model: model
           });
         }
       }
 
       if (settingsToInsert.length > 0) {
-        console.log('Creating default agent settings for user:', userId);
+        console.log('Creating default agent settings for user:', userId, settingsToInsert);
         const { error: insertError } = await supabase
           .from('user_agent_settings')
           .insert(settingsToInsert);
@@ -129,7 +134,7 @@ export const useAuth = () => {
         if (insertError) {
           console.error('Error creating default agent settings:', insertError);
         } else {
-          console.log('Successfully created default agent settings');
+          console.log('Successfully created default agent settings for all 4 platforms');
         }
       }
     } catch (error) {
