@@ -150,6 +150,11 @@ const Index = () => {
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
+      <img 
+          src="/lovable-uploads/90258cc1-9b63-4dac-b077-ccc51f69f93e.png" 
+          alt="AI Chat Logo" 
+          className="w-full max-w-2xl h-auto object-contain"
+        />
         <h1 className="text-2xl font-bold mb-4">Please sign in to continue.</h1>
         <Button onClick={() => window.location.href = '/auth'}>
           Go to Sign In
