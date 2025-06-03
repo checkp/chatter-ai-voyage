@@ -17,13 +17,13 @@ export const useFreeMode = () => {
     sendSingleAgentMessage: any
   ) => {
     if (!activeChatId) {
-      toast.error('Please select a chat to start free mode');
+      toast.error('Please select a chat to start conversation mode');
       return;
     }
 
     const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
     if (enabledPlatforms.length < 2) {
-      toast.error('Need at least 2 enabled AI agents for free mode');
+      toast.error('Need at least 2 enabled AI agents for conversation mode');
       return;
     }
 
@@ -32,15 +32,15 @@ export const useFreeMode = () => {
     freeModeRunningRef.current = true;
     setFreeModeMessageCount(0);
     
-    toast.success(`Free mode started! Agents will discuss for up to ${freeModeMessageLimit} messages.`);
+    toast.success(`Conversation mode started! Agents will discuss for up to ${freeModeMessageLimit} messages.`);
 
     // Start the autonomous conversation in a separate execution context
     setTimeout(async () => {
       try {
         await runFreeModeConversation(activeChatId, enabledPlatforms, callAIAPI, sendSingleAgentMessage);
       } catch (error) {
-        console.error('Error in free mode:', error);
-        toast.error('Free mode encountered an error');
+        console.error('Error in conversation mode:', error);
+        toast.error('Conversation mode encountered an error');
         stopFreeMode();
       }
     }, 100);
@@ -50,7 +50,7 @@ export const useFreeMode = () => {
     freeModeRunningRef.current = false;
     setIsFreeMode(false);
     setIsFreeModeRunning(false);
-    toast.info(`Free mode stopped. ${freeModeMessageCount} messages generated.`);
+    toast.info(`Conversation mode stopped. ${freeModeMessageCount} messages generated.`);
   }, [freeModeMessageCount]);
 
   const runFreeModeConversation = async (
@@ -66,7 +66,7 @@ export const useFreeMode = () => {
       const currentPlatform = enabledPlatforms[currentPlatformIndex];
       
       try {
-        console.log(`Free mode: Processing message ${currentMessageCount + 1}/${freeModeMessageLimit} with ${currentPlatform.name}`);
+        console.log(`Conversation mode: Processing message ${currentMessageCount + 1}/${freeModeMessageLimit} with ${currentPlatform.name}`);
         
         // Let the AI respond naturally to the existing conversation without any prompting
         await sendSingleAgentMessage(chatId, '', currentPlatform.id);
@@ -82,12 +82,12 @@ export const useFreeMode = () => {
 
         // Check if we should stop (using ref for immediate check)
         if (!freeModeRunningRef.current) {
-          console.log('Free mode stopped by user');
+          console.log('Conversation mode stopped by user');
           break;
         }
 
       } catch (error) {
-        console.error(`Error with ${currentPlatform.name} in free mode:`, error);
+        console.error(`Error with ${currentPlatform.name} in conversation mode:`, error);
         // Skip this agent and continue with the next one
         currentPlatformIndex = (currentPlatformIndex + 1) % enabledPlatforms.length;
         
@@ -97,9 +97,9 @@ export const useFreeMode = () => {
       }
     }
 
-    // Stop free mode when limit reached or error occurred
+    // Stop conversation mode when limit reached or error occurred
     if (currentMessageCount >= freeModeMessageLimit) {
-      toast.success(`Free mode completed! Reached the limit of ${freeModeMessageLimit} messages.`);
+      toast.success(`Conversation mode completed! Reached the limit of ${freeModeMessageLimit} messages.`);
     }
     
     freeModeRunningRef.current = false;

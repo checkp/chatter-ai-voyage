@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Github } from 'lucide-react';
 
 const AuthPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -142,7 +142,7 @@ const AuthPage = () => {
     }
   };
 
-  const handleAppleAuth = async () => {
+  const handleGitHubAuth = async () => {
     setLoading(true);
     try {
       cleanupAuthState();
@@ -155,19 +155,19 @@ const AuthPage = () => {
       }
       
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'apple',
+        provider: 'github',
         options: {
           redirectTo: `${window.location.origin}/`,
         }
       });
       
       if (error) {
-        console.error('Apple auth error:', error);
+        console.error('GitHub auth error:', error);
         throw error;
       }
     } catch (error: any) {
-      console.error('Apple auth error:', error);
-      toast.error(error.message || 'An error occurred with Apple authentication');
+      console.error('GitHub auth error:', error);
+      toast.error(error.message || 'An error occurred with GitHub authentication');
       setLoading(false);
     }
   };
@@ -176,9 +176,16 @@ const AuthPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            {isSignUp ? 'Create Account' : 'Welcome Back'}
-          </CardTitle>
+          <div className="flex items-center justify-center space-x-3 mb-4">
+            <img 
+              src="/lovable-uploads/90258cc1-9b63-4dac-b077-ccc51f69f93e.png" 
+              alt="AI Chat Logo" 
+              className="h-10 w-10 object-contain"
+            />
+            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              {isSignUp ? 'Create Account' : 'Please sign in to continue'}
+            </CardTitle>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleEmailAuth} className="space-y-4">
@@ -265,14 +272,12 @@ const AuthPage = () => {
             
             <Button 
               variant="outline" 
-              onClick={handleAppleAuth}
+              onClick={handleGitHubAuth}
               disabled={loading}
               className="w-full"
             >
-              <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12.017 2.078c.893-.842 2.267-.842 3.16 0 .893.842.893 2.207 0 3.049-.893.842-2.267.842-3.16 0-.893-.842-.893-2.207 0-3.049zM8.68 8.063c1.196-1.397 2.993-2.206 4.867-2.206s3.671.809 4.867 2.206c1.196 1.397 1.196 3.66 0 5.057-1.196 1.397-2.993 2.206-4.867 2.206s-3.671-.809-4.867-2.206c-1.196-1.397-1.196-3.66 0-5.057z"/>
-              </svg>
-              Apple
+              <Github className="mr-2 h-4 w-4" />
+              GitHub
             </Button>
           </div>
 
