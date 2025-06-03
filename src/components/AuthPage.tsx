@@ -173,11 +173,11 @@ const AuthPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4">
-      <div className="flex flex-col items-center space-y-8 max-w-4xl w-full">
+      <div className="flex flex-col items-center space-y-8 max-w-7xl w-full">
         <img 
           src="/lovable-uploads/90258cc1-9b63-4dac-b077-ccc51f69f93e.png" 
           alt="AI Chat Logo" 
-          className="w-full max-w-3xl h-auto object-contain"
+          className="w-full max-w-7xl h-auto object-contain"
         />
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
