@@ -22,15 +22,15 @@ const Purchase = () => {
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4">
-        <div className="flex flex-col items-center space-y-8 max-w-2xl w-full">
+        <div className="flex flex-col items-center space-y-8 max-w-4xl w-full">
           <img 
             src="/lovable-uploads/90258cc1-9b63-4dac-b077-ccc51f69f93e.png" 
             alt="AI Chat Logo" 
-            className="w-3/4 max-w-lg h-auto object-contain"
+            className="w-full max-w-3xl h-auto object-contain"
           />
           <div className="text-center space-y-6">
-            <h1 className="text-3xl font-bold text-gray-800">Please sign in to continue</h1>
-            <p className="text-lg text-gray-600">Access your account to purchase tokens and manage your AI chat experience.</p>
+            <h1 className="text-4xl font-bold text-gray-800">Please sign in to continue</h1>
+            <p className="text-xl text-gray-600 max-w-2xl">Access your account to purchase tokens and manage your AI chat experience.</p>
             <Button 
               onClick={() => navigate('/auth')} 
               size="lg"
