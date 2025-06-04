@@ -11,44 +11,47 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     { 
       id: 'openai', 
       name: 'ChatGPT', 
-      enabled: true, // Default enabled for new users
+      enabled: true,
       color: 'bg-agent-openai border-agent-openai text-cyber-bg', 
       icon: '🤖',
-      hasApiKey: true, // Always true with centralized keys
-      selectedModel: getDefaultModel('openai')
+      hasApiKey: true,
+      selectedModel: getDefaultModel('openai'),
+      displayOrder: 1
     },
     { 
       id: 'anthropic', 
       name: 'Claude', 
-      enabled: true, // Default enabled for new users
+      enabled: true,
       color: 'bg-agent-anthropic border-agent-anthropic text-cyber-bg', 
       icon: '🎭',
-      hasApiKey: true, // Always true with centralized keys
-      selectedModel: getDefaultModel('anthropic')
+      hasApiKey: true,
+      selectedModel: getDefaultModel('anthropic'),
+      displayOrder: 2
     },
     { 
       id: 'deepseek', 
       name: 'DeepSeek', 
-      enabled: true, // Default enabled for new users
+      enabled: true,
       color: 'bg-agent-deepseek border-agent-deepseek text-cyber-bg', 
       icon: '🔍',
-      hasApiKey: true, // Always true with centralized keys
-      selectedModel: getDefaultModel('deepseek')
+      hasApiKey: true,
+      selectedModel: getDefaultModel('deepseek'),
+      displayOrder: 3
     },
     { 
       id: 'grok', 
       name: 'Grok', 
-      enabled: true, // Default enabled for new users
+      enabled: true,
       color: 'bg-agent-grok border-agent-grok text-cyber-bg', 
       icon: '🚀',
-      hasApiKey: true, // Always true with centralized keys
-      selectedModel: getDefaultModel('grok')
+      hasApiKey: true,
+      selectedModel: getDefaultModel('grok'),
+      displayOrder: 4
     },
   ]);
 
   const loadAgentSettings = async () => {
     if (!user) {
-      // For non-authenticated users, keep defaults (all enabled)
       console.log('No user authenticated, using default platform settings');
       return;
     }
@@ -56,15 +59,14 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     try {
       const { data: settings, error } = await supabase
         .from('user_agent_settings')
-        .select('platform, enabled, model')
+        .select('platform, enabled, model, display_order')
         .eq('user_id', user.id);
 
       if (error) {
         console.error('Error loading agent settings:', error);
-        // Don't return early - keep defaults if there's an error
+        return;
       }
 
-      // If no settings exist, user gets the defaults (all enabled)
       if (!settings || settings.length === 0) {
         console.log('No agent settings found for user, keeping defaults (all enabled)');
         return;
@@ -72,18 +74,22 @@ export const usePlatforms = (user: SupabaseUser | null) => {
 
       const settingsMap = new Map((settings || []).map(setting => [
         setting.platform, 
-        { enabled: setting.enabled, model: setting.model }
+        { 
+          enabled: setting.enabled, 
+          model: setting.model,
+          displayOrder: setting.display_order
+        }
       ]));
       
       setPlatforms(prev => prev.map(platform => ({
         ...platform,
-        enabled: settingsMap.has(platform.id) ? settingsMap.get(platform.id)?.enabled || false : true, // Default to enabled if no setting
+        enabled: settingsMap.has(platform.id) ? settingsMap.get(platform.id)?.enabled || false : true,
         selectedModel: settingsMap.get(platform.id)?.model || getDefaultModel(platform.id),
-        hasApiKey: true // Always true with centralized keys
+        displayOrder: settingsMap.get(platform.id)?.displayOrder || platform.displayOrder,
+        hasApiKey: true
       })));
     } catch (error: any) {
       console.error('Failed to load agent settings:', error);
-      // Keep defaults on error
     }
   };
 
@@ -91,7 +97,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     await loadAgentSettings();
   };
 
-  const saveAgentSetting = async (platformId: string, enabled: boolean, model?: string) => {
+  const saveAgentSetting = async (platformId: string, enabled: boolean, model?: string, displayOrder?: number) => {
     if (!user) {
       console.log('Cannot save settings without authenticated user');
       return;
@@ -109,6 +115,10 @@ export const usePlatforms = (user: SupabaseUser | null) => {
         updateData.model = model;
       }
 
+      if (displayOrder !== undefined) {
+        updateData.display_order = displayOrder;
+      }
+
       const { error } = await supabase
         .from('user_agent_settings')
         .upsert(updateData, {
@@ -122,6 +132,37 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     } catch (error: any) {
       console.error('Failed to save agent setting:', error);
       toast.error('Failed to save agent setting');
+    }
+  };
+
+  const updateAgentOrder = async (reorderedPlatforms: AIPlatform[]) => {
+    console.log('Updating agent order:', reorderedPlatforms.map(p => p.name));
+    
+    // Update local state immediately for better UX
+    setPlatforms(prev => {
+      const newPlatforms = [...prev];
+      reorderedPlatforms.forEach((platform, index) => {
+        const platformIndex = newPlatforms.findIndex(p => p.id === platform.id);
+        if (platformIndex !== -1) {
+          newPlatforms[platformIndex] = { ...newPlatforms[platformIndex], displayOrder: index + 1 };
+        }
+      });
+      return newPlatforms.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+    });
+
+    // Save to database
+    try {
+      const promises = reorderedPlatforms.map((platform, index) => 
+        saveAgentSetting(platform.id, platform.enabled, platform.selectedModel, index + 1)
+      );
+      
+      await Promise.all(promises);
+      toast.success('Agent order updated');
+    } catch (error) {
+      console.error('Failed to save agent order:', error);
+      toast.error('Failed to save agent order');
+      // Reload settings to restore correct order
+      await loadAgentSettings();
     }
   };
 
@@ -142,7 +183,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       p.id === platformId ? { ...p, enabled: newEnabled } : p
     ));
 
-    await saveAgentSetting(platformId, newEnabled);
+    await saveAgentSetting(platformId, newEnabled, platform.selectedModel, platform.displayOrder);
     console.log('Platform toggle saved to database');
   };
 
@@ -235,6 +276,7 @@ Your goal: Contribute meaningfully to this multi-agent conversation as ${platfor
     setPlatforms,
     togglePlatform,
     callAIAPI,
-    reloadSettings
+    reloadSettings,
+    updateAgentOrder
   };
 };

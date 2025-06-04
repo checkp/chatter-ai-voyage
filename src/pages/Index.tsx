@@ -20,7 +20,7 @@ import WelcomeScreen from '@/components/WelcomeScreen';
 const Index = () => {
   const { user, loading, handleSignOut } = useAuth();
   const { theme } = useTheme();
-  const { platforms, togglePlatform, callAIAPI, reloadSettings } = usePlatforms(user);
+  const { platforms, togglePlatform, callAIAPI, reloadSettings, updateAgentOrder } = usePlatforms(user);
   const { messagesEndRef, scrollAreaRef, scrollToBottom, scrollToBottomImmediate } = useScrollToBottom();
   const previousMessageCountRef = useRef(0);
 
@@ -203,6 +203,7 @@ const Index = () => {
           onStopFreeMode={stopFreeMode}
           onUpdateFreeModeLimit={updateMessageLimit}
           onSendSingleAgentMessage={handleSingleAgentMessage}
+          onUpdateAgentOrder={updateAgentOrder}
           onSignOut={handleSignOut}
         />
 

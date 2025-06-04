@@ -32,4 +32,5 @@ export interface AIPlatform {
   hasApiKey?: boolean;
   endpoint?: string;
   selectedModel?: string;
+  displayOrder?: number;
 }

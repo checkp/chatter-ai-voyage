@@ -203,6 +203,7 @@ export type Database = {
       user_agent_settings: {
         Row: {
           created_at: string
+          display_order: number | null
           enabled: boolean
           id: string
           model: string | null
@@ -212,6 +213,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          display_order?: number | null
           enabled?: boolean
           id?: string
           model?: string | null
@@ -221,6 +223,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          display_order?: number | null
           enabled?: boolean
           id?: string
           model?: string | null
