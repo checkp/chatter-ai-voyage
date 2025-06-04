@@ -2,12 +2,13 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Settings, X, LogOut } from 'lucide-react';
+import { Settings, X, LogOut, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import FreeModeControls from '@/components/FreeModeControls';
 import BotHistoryDialog from '@/components/BotHistoryDialog';
 import TokenBalance from '@/components/TokenBalance';
 import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
+import ChangelogDialog from '@/components/ChangelogDialog';
 import type { Chat, AIPlatform } from '@/types/chat';
 
 interface ChatHeaderProps {
@@ -55,6 +56,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
 }) => {
   const [selectedAgent, setSelectedAgent] = useState<AIPlatform | null>(null);
   const [isAgentDialogOpen, setIsAgentDialogOpen] = useState(false);
+  const [isChangelogOpen, setIsChangelogOpen] = useState(false);
   const navigate = useNavigate();
 
   const handlePurchaseClick = () => {
@@ -114,6 +116,16 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             {/* Token Balance */}
             {user && <TokenBalance user={user} onPurchaseClick={handlePurchaseClick} />}
             
+            {/* What's New Button */}
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => setIsChangelogOpen(true)}
+              title="What's New?"
+            >
+              <Sparkles className="h-4 w-4" />
+            </Button>
+            
             <Button 
               variant="outline" 
               size="icon" 
@@ -146,6 +158,12 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         platform={selectedAgent}
         currentChat={currentChat || null}
         onSendMessage={onSendSingleAgentMessage}
+      />
+
+      {/* Changelog Dialog */}
+      <ChangelogDialog
+        open={isChangelogOpen}
+        onOpenChange={setIsChangelogOpen}
       />
     </>
   );
