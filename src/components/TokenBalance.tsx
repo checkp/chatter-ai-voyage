@@ -66,7 +66,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({ user, onPurchaseClick }) =>
       <div className="flex items-center gap-1">
         <Coins className={`w-4 h-4 ${isLowBalance ? 'text-orange-500' : 'text-muted-foreground'}`} />
         {isNearDailyLimit && (
-          <Gift className="w-3 h-3 text-green-500" title="You get 300 free tokens daily (max 1000)" />
+          <Gift className="w-3 h-3 text-green-500" />
         )}
       </div>
       <Badge 
