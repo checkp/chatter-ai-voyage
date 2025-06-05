@@ -2,7 +2,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Coins, Plus, RefreshCw } from 'lucide-react';
+import { Coins, Plus, RefreshCw, Gift } from 'lucide-react';
 import { useTokens } from '@/hooks/useTokens';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -46,11 +46,13 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({ user, onPurchaseClick }) =>
 
   const balance = tokenBalance.balance ?? 0;
   const isLowBalance = balance < 50;
+  const isNearDailyLimit = balance >= 700; // Close to the 1000 daily limit
 
   console.log('TokenBalance: Final balance calculation:', { 
     rawBalance: tokenBalance.balance, 
     finalBalance: balance,
-    isLowBalance 
+    isLowBalance,
+    isNearDailyLimit
   });
 
   const handleClick = () => {
@@ -61,11 +63,17 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({ user, onPurchaseClick }) =>
 
   return (
     <div className="flex items-center gap-2">
-      <Coins className={`w-4 h-4 ${isLowBalance ? 'text-orange-500' : 'text-muted-foreground'}`} />
+      <div className="flex items-center gap-1">
+        <Coins className={`w-4 h-4 ${isLowBalance ? 'text-orange-500' : 'text-muted-foreground'}`} />
+        {isNearDailyLimit && (
+          <Gift className="w-3 h-3 text-green-500" title="You get 300 free tokens daily (max 1000)" />
+        )}
+      </div>
       <Badge 
         variant={isLowBalance ? 'destructive' : 'secondary'}
         className="font-mono cursor-pointer hover:bg-opacity-80 transition-colors"
         onClick={handleClick}
+        title={`You receive 300 free tokens daily (max balance: 1000)`}
       >
         {balance.toLocaleString()} tokens
       </Badge>

@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.3.0",
+    date: "2025-06-05",
+    title: "Daily Free Tokens",
+    description: "Introducing daily free tokens! Get 300 tokens every day automatically, with a maximum balance of 1000 tokens.",
+    changes: [
+      {
+        type: "feature",
+        description: "Added automatic daily token distribution - 300 tokens per day"
+      },
+      {
+        type: "feature",
+        description: "Implemented 1000 token daily balance limit to ensure fair usage"
+      },
+      {
+        type: "improvement",
+        description: "Enhanced token balance display with daily token indicators"
+      }
+    ]
+  },
+  {
     version: "1.2.0",
     date: "2025-06-04",
     title: "Drag & Drop Agent Reordering",

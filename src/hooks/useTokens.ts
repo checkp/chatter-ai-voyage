@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -195,6 +196,23 @@ export const useTokens = (user: SupabaseUser | null) => {
     },
     enabled: !!user,
   });
+
+  // Check for recent daily token bonus and show notification
+  useEffect(() => {
+    if (transactions && transactions.length > 0) {
+      const latestTransaction = transactions[0];
+      const isRecentDailyBonus = 
+        latestTransaction.transaction_type === 'daily_bonus' && 
+        new Date(latestTransaction.created_at).getTime() > Date.now() - 24 * 60 * 60 * 1000; // Within last 24 hours
+      
+      if (isRecentDailyBonus && latestTransaction.amount > 0) {
+        const timeSinceBonus = Date.now() - new Date(latestTransaction.created_at).getTime();
+        if (timeSinceBonus < 60 * 1000) { // Show notification only if bonus was very recent (within 1 minute)
+          toast.success(`You received ${latestTransaction.amount} daily free tokens! 🎉`);
+        }
+      }
+    }
+  }, [transactions]);
 
   // Fetch available token packages (public read access)
   const { data: packages, isLoading: isLoadingPackages } = useQuery({
