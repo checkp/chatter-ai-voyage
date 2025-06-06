@@ -33,6 +33,42 @@ export type Database = {
         }
         Relationships: []
       }
+      generated_images: {
+        Row: {
+          created_at: string
+          file_name: string
+          id: string
+          image_url: string
+          model_used: string | null
+          prompt: string
+          size: string | null
+          tokens_used: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          id?: string
+          image_url: string
+          model_used?: string | null
+          prompt: string
+          size?: string | null
+          tokens_used?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          id?: string
+          image_url?: string
+          model_used?: string | null
+          prompt?: string
+          size?: string | null
+          tokens_used?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string

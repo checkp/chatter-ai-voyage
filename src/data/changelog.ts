@@ -1,4 +1,3 @@
-
 export interface ChangelogEntry {
   version: string;
   date: string;
@@ -11,6 +10,30 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "1.4.0",
+    date: "2025-06-06",
+    title: "AI Image Generation",
+    description: "Generate stunning images with AI using DALL-E models. Create, download, and share AI-generated artwork directly from the platform.",
+    changes: [
+      {
+        type: "feature",
+        description: "Added AI image generation with DALL-E 2, DALL-E 3, and GPT Image models"
+      },
+      {
+        type: "feature",
+        description: "Integrated image generation with token system - pay per generation"
+      },
+      {
+        type: "feature",
+        description: "Built-in image gallery to view, download, and manage generated images"
+      },
+      {
+        type: "feature",
+        description: "Multiple image sizes and model options for different quality levels"
+      }
+    ]
+  },
   {
     version: "1.3.0",
     date: "2025-06-05",
