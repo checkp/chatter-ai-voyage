@@ -176,7 +176,7 @@ const AuthPage = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
       <div className="flex flex-col items-center space-y-8 max-w-2xl w-full">
         <img 
-          src="/lovable-uploads/54d5eef1-510e-494d-80b4-058748fe6872.png" 
+          src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png" 
           alt="RoboHerd Logo" 
           className="w-full max-w-2xl h-auto object-contain"
         />

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -164,7 +163,7 @@ const Index = () => {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <img 
-          src="/lovable-uploads/54d5eef1-510e-494d-80b4-058748fe6872.png" 
+          src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png" 
           alt="RoboHerd Logo" 
           className="w-full max-w-2xl h-auto object-contain"
         />
