@@ -63,17 +63,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </Button>
         ) : (
           <div className="flex items-center gap-2">
-            {onSendAndStartConversation && (
-              <Button 
-                onClick={onSendAndStartConversation}
-                disabled={isDisabled || !input.trim() || isFreeModeRunning}
-                variant="outline"
-                className="flex items-center gap-2"
-                title="Send message and start conversation mode"
-              >
-                <Play className="h-4 w-4" />
-              </Button>
-            )}
             <Button 
               onClick={handleSend} 
               disabled={isDisabled || !input.trim()}
@@ -85,6 +74,17 @@ const ChatInput: React.FC<ChatInputProps> = ({
               )}
               Send
             </Button>
+            {onSendAndStartConversation && (
+              <Button 
+                onClick={onSendAndStartConversation}
+                disabled={isDisabled || !input.trim() || isFreeModeRunning}
+                variant="outline"
+                className="flex items-center gap-2"
+                title="Send message and start conversation mode"
+              >
+                <Play className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         )}
       </div>
