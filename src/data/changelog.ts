@@ -1,3 +1,4 @@
+
 export interface ChangelogEntry {
   version: string;
   date: string;
@@ -10,6 +11,34 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "1.5.0",
+    date: "2025-06-06",
+    title: "UI/UX Enhancements",
+    description: "Improved visual design with updated branding, enhanced conversation controls, and streamlined user interface elements.",
+    changes: [
+      {
+        type: "improvement",
+        description: "Updated application logo and branding across all pages"
+      },
+      {
+        type: "improvement",
+        description: "Applied consistent color theming to authentication page"
+      },
+      {
+        type: "improvement",
+        description: "Set default conversation mode message limit to 5 for better user experience"
+      },
+      {
+        type: "feature",
+        description: "Added play button for quick message send and conversation start"
+      },
+      {
+        type: "improvement",
+        description: "Reorganized chat input controls for better accessibility"
+      }
+    ]
+  },
   {
     version: "1.4.0",
     date: "2025-06-06",
