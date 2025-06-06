@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -116,6 +117,18 @@ const Index = () => {
     startFreeMode(activeChatId, platforms, callAIAPI, sendSingleAgentMessage);
   };
 
+  const handleSendAndStartConversation = () => {
+    if (!input.trim() || !activeChatId) return;
+    
+    // Send the message first
+    handleSend(activeChatId);
+    
+    // Start free mode conversation after a short delay to let the message send
+    setTimeout(() => {
+      handleStartFreeMode();
+    }, 1000);
+  };
+
   // Handle welcome screen completion
   const handleWelcomeComplete = async () => {
     await completeOnboarding();
@@ -150,9 +163,9 @@ const Index = () => {
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
-      <img 
-          src="/lovable-uploads/90258cc1-9b63-4dac-b077-ccc51f69f93e.png" 
-          alt="AI Chat Logo" 
+        <img 
+          src="/lovable-uploads/54d5eef1-510e-494d-80b4-058748fe6872.png" 
+          alt="RoboHerd Logo" 
           className="w-full max-w-2xl h-auto object-contain"
         />
         <h1 className="text-2xl font-bold mb-4">Please sign in to continue.</h1>
@@ -245,6 +258,7 @@ const Index = () => {
             pendingCount={getPendingCount}
             isFreeMode={isFreeMode}
             isFreeModeRunning={isFreeModeRunning}
+            onSendAndStartConversation={handleSendAndStartConversation}
           />
         )}
       </main>

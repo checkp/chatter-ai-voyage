@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -172,16 +173,16 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
       <div className="flex flex-col items-center space-y-8 max-w-2xl w-full">
         <img 
-          src="/lovable-uploads/90258cc1-9b63-4dac-b077-ccc51f69f93e.png" 
-          alt="AI Chat Logo" 
+          src="/lovable-uploads/54d5eef1-510e-494d-80b4-058748fe6872.png" 
+          alt="RoboHerd Logo" 
           className="w-full max-w-2xl h-auto object-contain"
         />
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md border-border bg-card">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <CardTitle className="text-2xl font-bold text-primary">
               {isSignUp ? 'Create Account' : 'Please sign in to continue'}
             </CardTitle>
           </CardHeader>
@@ -189,13 +190,13 @@ const AuthPage = () => {
             <form onSubmit={handleEmailAuth} className="space-y-4">
               <div className="space-y-2">
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="email"
                     placeholder="Email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-9"
+                    className="pl-9 bg-input border-border text-foreground"
                     required
                   />
                 </div>
@@ -203,19 +204,19 @@ const AuthPage = () => {
               
               <div className="space-y-2">
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-9 pr-9"
+                    className="pl-9 pr-9 bg-input border-border text-foreground"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -224,7 +225,7 @@ const AuthPage = () => {
               
               <Button 
                 type="submit" 
-                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                 disabled={loading}
               >
                 {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
@@ -233,10 +234,10 @@ const AuthPage = () => {
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <Separator className="w-full" />
+                <Separator className="w-full border-border" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
 
@@ -245,7 +246,7 @@ const AuthPage = () => {
                 variant="outline" 
                 onClick={handleGoogleAuth}
                 disabled={loading}
-                className="w-full"
+                className="w-full border-border bg-secondary hover:bg-secondary/80 text-secondary-foreground"
               >
                 <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                   <path
@@ -272,7 +273,7 @@ const AuthPage = () => {
                 variant="outline" 
                 onClick={handleGitHubAuth}
                 disabled={loading}
-                className="w-full"
+                className="w-full border-border bg-secondary hover:bg-secondary/80 text-secondary-foreground"
               >
                 <Github className="mr-2 h-4 w-4" />
                 GitHub
@@ -280,13 +281,13 @@ const AuthPage = () => {
             </div>
 
             <div className="text-center text-sm">
-              <span className="text-gray-500">
+              <span className="text-muted-foreground">
                 {isSignUp ? 'Already have an account?' : "Don't have an account?"}
               </span>
               <button
                 type="button"
                 onClick={() => setIsSignUp(!isSignUp)}
-                className="ml-1 text-blue-600 hover:underline"
+                className="ml-1 text-primary hover:underline"
               >
                 {isSignUp ? 'Sign in' : 'Sign up'}
               </button>
