@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Success from "./pages/Success";
 import Purchase from "./pages/Purchase";
+import ImageGenerationPage from "./pages/ImageGeneration";
 import AuthPage from "./components/AuthPage";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/purchase" element={<Purchase />} />
+            <Route path="/images" element={<ImageGenerationPage />} />
             <Route path="/success" element={<Success />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

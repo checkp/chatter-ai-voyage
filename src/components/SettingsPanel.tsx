@@ -5,7 +5,6 @@ import TokenPurchase from './TokenPurchase';
 import TokenHistory from './TokenHistory';
 import AgentSettings from './AgentSettings';
 import AdminPanel from './AdminPanel';
-import ImageGeneration from './ImageGeneration';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,7 +34,7 @@ const SettingsPanel = () => {
   const showAdminTab = isAdmin;
 
   // Determine grid columns based on whether admin tab is shown
-  const gridCols = showAdminTab ? 'grid-cols-5' : 'grid-cols-4';
+  const gridCols = showAdminTab ? 'grid-cols-4' : 'grid-cols-3';
 
   if (isLoadingProfile) {
     return (
@@ -52,7 +51,6 @@ const SettingsPanel = () => {
       <Tabs defaultValue="tokens" className="w-full">
         <TabsList className={`grid w-full ${gridCols}`}>
           <TabsTrigger value="tokens">Buy Tokens</TabsTrigger>
-          <TabsTrigger value="images">Generate Images</TabsTrigger>
           <TabsTrigger value="history">Usage History</TabsTrigger>
           <TabsTrigger value="agents">Agent Models</TabsTrigger>
           {showAdminTab && <TabsTrigger value="admin">Admin</TabsTrigger>}
@@ -60,10 +58,6 @@ const SettingsPanel = () => {
         
         <TabsContent value="tokens" className="mt-6">
           {user && <TokenPurchase user={user} />}
-        </TabsContent>
-
-        <TabsContent value="images" className="mt-6">
-          {user && <ImageGeneration user={user} />}
         </TabsContent>
         
         <TabsContent value="history" className="mt-6">

@@ -2,7 +2,9 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from "@/components/ui/textarea";
-import { Send, RefreshCw, Square, Play } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Send, RefreshCw, Square, Play, Image } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface ChatInputProps {
   input: string;
@@ -31,6 +33,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   isFreeModeRunning = false,
   onSendAndStartConversation
 }) => {
+  const navigate = useNavigate();
   const isDisabled = isLoadingResponse || isPending;
 
   return (
@@ -53,38 +56,74 @@ const ChatInput: React.FC<ChatInputProps> = ({
         />
         
         {canStop && handleStop ? (
-          <Button 
-            onClick={handleStop}
-            variant="destructive"
-            className="flex items-center gap-2"
-          >
-            <Square className="h-4 w-4" />
-            Stop
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                onClick={handleStop}
+                variant="destructive"
+                className="flex items-center gap-2"
+              >
+                <Square className="h-4 w-4" />
+                Stop
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Stop AI conversation</p>
+            </TooltipContent>
+          </Tooltip>
         ) : (
           <div className="flex items-center gap-2">
-            <Button 
-              onClick={handleSend} 
-              disabled={isDisabled || !input.trim()}
-            >
-              {(isLoadingResponse || isPending) ? (
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="mr-2 h-4 w-4" />
-              )}
-              Send
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  onClick={() => navigate('/images')}
+                  variant="outline"
+                  size="icon"
+                >
+                  <Image className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Generate AI Images</p>
+              </TooltipContent>
+            </Tooltip>
+            
             {onSendAndStartConversation && (
-              <Button 
-                onClick={onSendAndStartConversation}
-                disabled={isDisabled || !input.trim() || isFreeModeRunning}
-                variant="outline"
-                className="flex items-center gap-2"
-                title="Send message and start conversation mode"
-              >
-                <Play className="h-4 w-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={onSendAndStartConversation}
+                    disabled={isDisabled || !input.trim() || isFreeModeRunning}
+                    variant="outline"
+                    size="icon"
+                  >
+                    <Play className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Send and start conversation</p>
+                </TooltipContent>
+              </Tooltip>
             )}
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  onClick={handleSend} 
+                  disabled={isDisabled || !input.trim()}
+                  size="icon"
+                >
+                  {(isLoadingResponse || isPending) ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Send message</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         )}
       </div>
