@@ -21,8 +21,18 @@ const Index = () => {
   const { user, loading, handleSignOut } = useAuth();
   const { theme } = useTheme();
   const { platforms, togglePlatform, callAIAPI, reloadSettings, updateAgentOrder } = usePlatforms(user);
-  const { messagesEndRef, scrollAreaRef, scrollToBottom, scrollToBottomImmediate } = useScrollToBottom();
+  const { 
+    messagesEndRef, 
+    scrollAreaRef, 
+    scrollToBottom, 
+    scrollToBottomImmediate,
+    saveScrollPosition,
+    restoreScrollPosition,
+    setupScrollListener,
+    isUserScrolledUp
+  } = useScrollToBottom();
   const previousMessageCountRef = useRef(0);
+  const previousActiveTabRef = useRef('chat');
 
   // Add onboarding hook
   const { hasCompletedOnboarding, isLoading: isLoadingOnboarding, completeOnboarding, skipOnboarding } = useOnboarding(user);
@@ -70,28 +80,56 @@ const Index = () => {
     updateMessageLimit
   } = useFreeMode();
 
-  // Handle scrolling when messages change
+  // Set up scroll listener when chat tab is active
+  useEffect(() => {
+    if (activeTab === 'chat') {
+      const cleanup = setupScrollListener();
+      return cleanup;
+    }
+  }, [activeTab, setupScrollListener]);
+
+  // Handle tab switching with scroll position preservation
+  useEffect(() => {
+    // If switching from chat to another tab, save scroll position
+    if (previousActiveTabRef.current === 'chat' && activeTab !== 'chat') {
+      saveScrollPosition();
+    }
+    
+    // If switching back to chat from another tab, restore scroll position
+    if (previousActiveTabRef.current !== 'chat' && activeTab === 'chat') {
+      setTimeout(() => {
+        restoreScrollPosition();
+      }, 100);
+    }
+    
+    previousActiveTabRef.current = activeTab;
+  }, [activeTab, saveScrollPosition, restoreScrollPosition]);
+
+  // Handle scrolling when NEW messages are added (not just when messages array changes)
   useEffect(() => {
     if (messages && messages.length > previousMessageCountRef.current) {
-      // New messages added - ensure scroll happens after render
-      setTimeout(() => {
-        scrollToBottom();
-      }, 100);
+      // New messages added - only auto-scroll if user hasn't scrolled up
+      if (!isUserScrolledUp && activeTab === 'chat') {
+        setTimeout(() => {
+          scrollToBottom();
+        }, 100);
+      }
       previousMessageCountRef.current = messages.length;
     } else if (messages) {
       previousMessageCountRef.current = messages.length;
     }
-  }, [messages, scrollToBottom]);
+  }, [messages, scrollToBottom, isUserScrolledUp, activeTab]);
 
-  // Handle initial scroll when chat loads or changes
+  // Handle initial scroll when chat loads or changes (but only for new chats)
   useEffect(() => {
     if (messages && !isLoadingMessages && activeChatId) {
-      // Chat loaded - scroll to bottom after content is rendered
+      // Only auto-scroll to bottom for initial load of a new/different chat
+      // This prevents scrolling when returning to the same chat
       setTimeout(() => {
         scrollToBottomImmediate();
       }, 200);
     }
-  }, [activeChatId, isLoadingMessages, messages, scrollToBottomImmediate]);
+  }, [activeChatId, isLoadingMessages, scrollToBottomImmediate]);
 
   useEffect(() => {
     if (activeTab === 'chat' && user) {
