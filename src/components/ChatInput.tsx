@@ -76,15 +76,19 @@ const ChatInput: React.FC<ChatInputProps> = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
-                  onClick={() => navigate('/images')}
-                  variant="outline"
+                  onClick={handleSend} 
+                  disabled={isDisabled || !input.trim()}
                   size="icon"
                 >
-                  <Image className="h-4 w-4" />
+                  {(isLoadingResponse || isPending) ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Generate AI Images</p>
+                <p>Send message</p>
               </TooltipContent>
             </Tooltip>
             
@@ -109,19 +113,15 @@ const ChatInput: React.FC<ChatInputProps> = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
-                  onClick={handleSend} 
-                  disabled={isDisabled || !input.trim()}
+                  onClick={() => navigate('/images')}
+                  variant="outline"
                   size="icon"
                 >
-                  {(isLoadingResponse || isPending) ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
+                  <Image className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Send message</p>
+                <p>Generate AI Images</p>
               </TooltipContent>
             </Tooltip>
           </div>
