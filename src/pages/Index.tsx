@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -277,25 +278,25 @@ const Index = () => {
         {/* Chat Messages Area */}
         <div className="flex-1 overflow-hidden">
           {activeTab === 'chat' && (
-            <ScrollArea className="h-full" ref={scrollAreaRef}>
-              <div className="p-4 min-h-full flex flex-col">
-                <div className="flex-1">
-                  <ChatMessages 
-                    messages={messages}
-                    isLoadingMessages={isLoadingMessages}
-                    isLoadingResponse={isLoadingResponse}
-                    platforms={platforms}
-                  />
-                </div>
+            <ScrollArea className="h-full">
+              <div className="p-4">
+                <ChatMessages 
+                  messages={messages}
+                  isLoadingMessages={isLoadingMessages}
+                  isLoadingResponse={isLoadingResponse}
+                  platforms={platforms}
+                />
                 <div ref={messagesEndRef} className="h-4" />
               </div>
             </ScrollArea>
           )}
 
           {activeTab === 'settings' && (
-            <div className="h-full overflow-y-auto p-4">
-              <SettingsPanel />
-            </div>
+            <ScrollArea className="h-full">
+              <div className="p-4">
+                <SettingsPanel />
+              </div>
+            </ScrollArea>
           )}
         </div>
 
