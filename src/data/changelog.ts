@@ -1,4 +1,3 @@
-
 export interface ChangelogEntry {
   version: string;
   date: string;
@@ -11,6 +10,30 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "1.6.0",
+    date: "2025-06-08",
+    title: "Mobile Detection & UI Improvements",
+    description: "Added mobile browser detection with coming soon page and fixed chat interface scrolling issues for better user experience.",
+    changes: [
+      {
+        type: "feature",
+        description: "Added mobile browser detection with comprehensive device and screen size checking"
+      },
+      {
+        type: "feature",
+        description: "Implemented 'Mobile Support Coming Soon' page with option to continue in desktop view"
+      },
+      {
+        type: "bugfix",
+        description: "Fixed double scrollbar issue in main chat interface"
+      },
+      {
+        type: "improvement",
+        description: "Enhanced scroll behavior and positioning in chat messages area"
+      }
+    ]
+  },
   {
     version: "1.5.0",
     date: "2025-06-06",
