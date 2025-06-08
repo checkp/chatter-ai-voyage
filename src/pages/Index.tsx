@@ -10,16 +10,23 @@ import { useMessageHandling } from '@/hooks/useMessageHandling';
 import { useUIState } from '@/hooks/useUIState';
 import { useFreeMode } from '@/hooks/useFreeMode';
 import { useOnboarding } from '@/hooks/useOnboarding';
+import { useIsMobile } from '@/hooks/use-mobile';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatHeader from '@/components/ChatHeader';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInput from '@/components/ChatInput';
 import SettingsPanel from '@/components/SettingsPanel';
 import WelcomeScreen from '@/components/WelcomeScreen';
+import MobileComingSoon from '@/components/MobileComingSoon';
 
 const Index = () => {
   const { user, loading, handleSignOut } = useAuth();
   const { theme } = useTheme();
+  const isMobile = useIsMobile();
+  
+  // Check if user has forced desktop view
+  const forceDesktopView = localStorage.getItem('forceDesktopView') === 'true';
+
   const { platforms, togglePlatform, callAIAPI, reloadSettings, updateAgentOrder } = usePlatforms(user);
   const { 
     messagesEndRef, 
@@ -29,7 +36,8 @@ const Index = () => {
     saveScrollPosition,
     restoreScrollPosition,
     setupScrollListener,
-    isUserScrolledUp
+    isUserScrolledUp,
+    lastScrollPosition
   } = useScrollToBottom();
   const previousMessageCountRef = useRef(0);
   const previousActiveTabRef = useRef('chat');
@@ -95,41 +103,45 @@ const Index = () => {
       saveScrollPosition();
     }
     
-    // If switching back to chat from another tab, restore scroll position
-    if (previousActiveTabRef.current !== 'chat' && activeTab === 'chat') {
+    // If switching back to chat from another tab, restore scroll position if available
+    if (previousActiveTabRef.current !== 'chat' && activeTab === 'chat' && lastScrollPosition !== null) {
       setTimeout(() => {
         restoreScrollPosition();
       }, 100);
     }
     
     previousActiveTabRef.current = activeTab;
-  }, [activeTab, saveScrollPosition, restoreScrollPosition]);
+  }, [activeTab, saveScrollPosition, restoreScrollPosition, lastScrollPosition]);
 
-  // Handle scrolling when NEW messages are added (not just when messages array changes)
+  // Smart scrolling for new messages
   useEffect(() => {
-    if (messages && messages.length > previousMessageCountRef.current) {
-      // New messages added - only auto-scroll if user hasn't scrolled up
-      if (!isUserScrolledUp && activeTab === 'chat') {
-        setTimeout(() => {
-          scrollToBottom();
-        }, 100);
+    if (messages && messages.length > 0) {
+      const hasNewMessages = messages.length > previousMessageCountRef.current;
+      
+      if (hasNewMessages && activeTab === 'chat') {
+        // Only auto-scroll if user hasn't manually scrolled up or is near bottom
+        if (!isUserScrolledUp) {
+          setTimeout(() => {
+            scrollToBottom();
+          }, 100);
+        }
       }
-      previousMessageCountRef.current = messages.length;
-    } else if (messages) {
+      
       previousMessageCountRef.current = messages.length;
     }
   }, [messages, scrollToBottom, isUserScrolledUp, activeTab]);
 
-  // Handle initial scroll when chat loads or changes (but only for new chats)
+  // Handle initial scroll when switching to a different chat
   useEffect(() => {
-    if (messages && !isLoadingMessages && activeChatId) {
-      // Only auto-scroll to bottom for initial load of a new/different chat
-      // This prevents scrolling when returning to the same chat
-      setTimeout(() => {
-        scrollToBottomImmediate();
-      }, 200);
+    if (messages && !isLoadingMessages && activeChatId && activeTab === 'chat') {
+      // Only auto-scroll for initial chat load or when explicitly at bottom
+      if (lastScrollPosition === null || !isUserScrolledUp) {
+        setTimeout(() => {
+          scrollToBottomImmediate();
+        }, 200);
+      }
     }
-  }, [activeChatId, isLoadingMessages, scrollToBottomImmediate]);
+  }, [activeChatId, isLoadingMessages, scrollToBottomImmediate, activeTab, lastScrollPosition, isUserScrolledUp]);
 
   useEffect(() => {
     if (activeTab === 'chat' && user) {
@@ -185,6 +197,11 @@ const Index = () => {
 
   // Find the current chat object for AIStatusBar
   const currentChat = chats?.find(chat => chat.id === activeChatId);
+
+  // Show mobile coming soon page for mobile devices (unless forced desktop view)
+  if (isMobile && !forceDesktopView) {
+    return <MobileComingSoon />;
+  }
 
   // Show loading while auth is being determined
   if (loading || isLoadingOnboarding) {
