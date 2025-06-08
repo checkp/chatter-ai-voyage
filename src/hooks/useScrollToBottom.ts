@@ -88,6 +88,7 @@ export const useScrollToBottom = () => {
     saveScrollPosition,
     restoreScrollPosition,
     setupScrollListener,
-    isUserScrolledUp
+    isUserScrolledUp,
+    lastScrollPosition: savedScrollPosition
   };
 };
