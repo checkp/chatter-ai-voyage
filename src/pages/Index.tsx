@@ -17,7 +17,7 @@ import ChatMessages from '@/components/ChatMessages';
 import ChatInput from '@/components/ChatInput';
 import SettingsPanel from '@/components/SettingsPanel';
 import WelcomeScreen from '@/components/WelcomeScreen';
-import MobileComingSoon from '@/components/MobileComingSoon';
+import MobileLayout from '@/components/mobile/MobileLayout';
 import MobileInterface from '@/components/mobile/MobileInterface';
 
 const Index = () => {
@@ -25,9 +25,6 @@ const Index = () => {
   const { theme } = useTheme();
   const isMobile = useIsMobile();
   
-  // Check if user has forced desktop view
-  const forceDesktopView = localStorage.getItem('forceDesktopView') === 'true';
-
   const { platforms, togglePlatform, callAIAPI, reloadSettings, updateAgentOrder } = usePlatforms(user);
   const { 
     messagesEndRef, 
@@ -199,17 +196,6 @@ const Index = () => {
   // Find the current chat object for AIStatusBar
   const currentChat = chats?.find(chat => chat.id === activeChatId);
 
-  // Show mobile interface for mobile devices (unless forced desktop view)
-  if (isMobile && !forceDesktopView) {
-    // Show mobile coming soon page if not authenticated or onboarding not complete
-    if (!user || hasCompletedOnboarding === false) {
-      return <MobileComingSoon />;
-    }
-    
-    // Show mobile interface for authenticated users
-    return <MobileInterface />;
-  }
-
   // Show loading while auth is being determined
   if (loading || isLoadingOnboarding) {
     return (
@@ -247,7 +233,8 @@ const Index = () => {
     );
   }
 
-  return (
+  // Desktop interface wrapped with mobile layout
+  const DesktopInterface = () => (
     <div className="min-h-screen bg-background flex h-screen overflow-hidden">
       <ChatSidebar 
         chats={chats}
@@ -324,6 +311,12 @@ const Index = () => {
         )}
       </main>
     </div>
+  );
+
+  return (
+    <MobileLayout fallback={<MobileInterface />}>
+      <DesktopInterface />
+    </MobileLayout>
   );
 };
 
