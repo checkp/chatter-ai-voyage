@@ -1,3 +1,4 @@
+
 export interface ChangelogEntry {
   version: string;
   date: string;
@@ -10,6 +11,38 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "1.7.0",
+    date: "2025-06-09",
+    title: "Google Gemini Integration & Mobile Interface",
+    description: "Added Google Gemini as a new AI agent and introduced a comprehensive mobile interface for seamless multi-device experience.",
+    changes: [
+      {
+        type: "feature",
+        description: "Added Google Gemini AI agent with support for Gemini 1.5 Flash, Pro, and 2.0 Flash Experimental models"
+      },
+      {
+        type: "feature",
+        description: "Implemented complete mobile interface with touch-optimized navigation and chat experience"
+      },
+      {
+        type: "feature",
+        description: "Added mobile-specific components including MobileHeader, MobileSettings, and MobileChatSidebar"
+      },
+      {
+        type: "improvement",
+        description: "Enhanced agent status bar to support Google Gemini with proper styling and icons"
+      },
+      {
+        type: "improvement",
+        description: "Updated platform management to include Google services with secure API key handling"
+      },
+      {
+        type: "bugfix",
+        description: "Fixed pastel theme color application to ensure proper amber-green styling"
+      }
+    ]
+  },
   {
     version: "1.6.0",
     date: "2025-06-08",
