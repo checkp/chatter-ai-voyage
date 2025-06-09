@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -26,6 +25,7 @@ const AgentSettings = () => {
     { id: 'openai', name: 'ChatGPT (OpenAI)', icon: '🤖' },
     { id: 'deepseek', name: 'DeepSeek', icon: '🔍' },
     { id: 'grok', name: 'Grok (X.AI)', icon: '🚀' },
+    { id: 'google', name: 'Gemini (Google)', icon: '💎' },
   ];
 
   useEffect(() => {

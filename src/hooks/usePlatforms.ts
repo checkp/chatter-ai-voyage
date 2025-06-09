@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform, Message } from '@/types/chat';
-import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI } from '@/services/aiApiService';
+import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI, callGeminiAPI } from '@/services/aiApiService';
 import { getDefaultModel } from '@/config/aiModels';
 
 export const usePlatforms = (user: SupabaseUser | null) => {
@@ -47,6 +47,16 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       hasApiKey: true,
       selectedModel: getDefaultModel('grok'),
       displayOrder: 4
+    },
+    { 
+      id: 'google', 
+      name: 'Gemini', 
+      enabled: true,
+      color: 'bg-agent-google border-agent-google text-cyber-bg', 
+      icon: '💎',
+      hasApiKey: true,
+      selectedModel: getDefaultModel('google'),
+      displayOrder: 5
     },
   ]);
 
@@ -262,6 +272,8 @@ Your goal: Contribute meaningfully to this multi-agent conversation as ${platfor
         return await callDeepSeek(conversationHistory, user, selectedModel);
       case 'grok':
         return await callGrokAPI(conversationHistory, user, selectedModel);
+      case 'google':
+        return await callGeminiAPI(conversationHistory, user, selectedModel);
       default:
         throw new Error(`Unsupported platform: ${platform.id}`);
     }

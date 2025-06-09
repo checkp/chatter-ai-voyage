@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -19,6 +18,7 @@ import ChatInput from '@/components/ChatInput';
 import SettingsPanel from '@/components/SettingsPanel';
 import WelcomeScreen from '@/components/WelcomeScreen';
 import MobileComingSoon from '@/components/MobileComingSoon';
+import MobileInterface from '@/components/mobile/MobileInterface';
 
 const Index = () => {
   const { user, loading, handleSignOut } = useAuth();
@@ -199,9 +199,15 @@ const Index = () => {
   // Find the current chat object for AIStatusBar
   const currentChat = chats?.find(chat => chat.id === activeChatId);
 
-  // Show mobile coming soon page for mobile devices (unless forced desktop view)
+  // Show mobile interface for mobile devices (unless forced desktop view)
   if (isMobile && !forceDesktopView) {
-    return <MobileComingSoon />;
+    // Show mobile coming soon page if not authenticated or onboarding not complete
+    if (!user || hasCompletedOnboarding === false) {
+      return <MobileComingSoon />;
+    }
+    
+    // Show mobile interface for authenticated users
+    return <MobileInterface />;
   }
 
   // Show loading while auth is being determined

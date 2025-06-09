@@ -36,6 +36,7 @@ const PlatformStatus: React.FC<PlatformStatusProps> = ({ platform, status, error
           platform.id === 'anthropic' ? 'modern-border-agent-anthropic modern-agent-anthropic' :
           platform.id === 'deepseek' ? 'modern-border-agent-deepseek modern-agent-deepseek' :
           platform.id === 'grok' ? 'modern-border-agent-grok modern-agent-grok' :
+          platform.id === 'google' ? 'modern-border-agent-google modern-agent-google' :
           'modern-text-accent border-amber-300'
         }`;
       case 'completed':

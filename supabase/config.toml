@@ -3,3 +3,6 @@ project_id = "vczxurigjttwxwilosjz"
 
 [functions.claude-chat]
 verify_jwt = true
+
+[functions.gemini-chat]
+verify_jwt = true

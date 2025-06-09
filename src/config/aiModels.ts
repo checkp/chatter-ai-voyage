@@ -143,6 +143,35 @@ export const AI_MODELS: Record<string, ModelConfig[]> = {
       capabilities: ['text', 'reasoning'],
       speed: 'medium'
     }
+  ],
+  google: [
+    {
+      id: 'gemini-1.5-flash',
+      name: 'Gemini 1.5 Flash',
+      description: 'Fast and efficient model for everyday tasks',
+      maxTokens: 1000000,
+      costTier: 'low',
+      capabilities: ['text', 'reasoning', 'vision'],
+      speed: 'fast'
+    },
+    {
+      id: 'gemini-1.5-pro',
+      name: 'Gemini 1.5 Pro',
+      description: 'Most capable model with advanced reasoning',
+      maxTokens: 2000000,
+      costTier: 'medium',
+      capabilities: ['text', 'reasoning', 'vision', 'coding', 'analysis'],
+      speed: 'medium'
+    },
+    {
+      id: 'gemini-2.0-flash-exp',
+      name: 'Gemini 2.0 Flash (Experimental)',
+      description: 'Latest experimental model with enhanced capabilities',
+      maxTokens: 1000000,
+      costTier: 'medium',
+      capabilities: ['text', 'reasoning', 'vision', 'multimodal'],
+      speed: 'fast'
+    }
   ]
 };
 
@@ -158,7 +187,8 @@ export const getDefaultModel = (platformId: string): string => {
     openai: 'gpt-4o-mini',
     anthropic: 'claude-3-5-haiku-20241022',
     deepseek: 'deepseek-chat',
-    grok: 'grok-3'
+    grok: 'grok-3',
+    google: 'gemini-1.5-flash'
   };
   
   return defaults[platformId] || models[0].id;

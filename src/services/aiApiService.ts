@@ -166,3 +166,34 @@ export const callClaudeAPI = async (
 
   throw lastError || new Error('Claude API call failed after all retries');
 };
+
+export const callGeminiAPI = async (
+  conversationHistory: Array<{role: 'user' | 'assistant', content: string}>,
+  user: SupabaseUser,
+  model: string = 'gemini-1.5-flash'
+): Promise<string> => {
+  console.log('Calling Gemini API with centralized key...');
+  
+  const response = await supabase.functions.invoke('gemini-chat', {
+    body: { 
+      messages: conversationHistory, 
+      model: model,
+      user_id: user.id 
+    },
+    headers: {
+      Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+    },
+  });
+
+  if (response.error) {
+    console.error('Gemini function error:', response.error);
+    throw new Error(response.error.message || 'Gemini API call failed');
+  }
+
+  if (!response.data?.content) {
+    console.error('Gemini function missing content:', response.data);
+    throw new Error('Gemini API returned empty response');
+  }
+
+  return response.data.content;
+};
