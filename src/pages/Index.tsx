@@ -22,6 +22,7 @@ import MobileLayout from '@/components/mobile/MobileLayout';
 import MobileInterface from '@/components/mobile/MobileInterface';
 
 const Index = () => {
+  // ALL HOOKS MUST BE CALLED FIRST, BEFORE ANY CONDITIONAL LOGIC
   const { user, loading, handleSignOut } = useAuth();
   const { theme } = useTheme();
   const isMobile = useIsMobile();
@@ -38,10 +39,7 @@ const Index = () => {
     isUserScrolledUp,
     lastScrollPosition
   } = useScrollToBottom();
-  const previousMessageCountRef = useRef(0);
-  const previousActiveTabRef = useRef('chat');
-
-  // Add onboarding hook
+  
   const { hasCompletedOnboarding, isLoading: isLoadingOnboarding, completeOnboarding, skipOnboarding } = useOnboarding(user);
 
   const {
@@ -86,6 +84,111 @@ const Index = () => {
     stopFreeMode,
     updateMessageLimit
   } = useFreeMode();
+
+  // Memoize interfaces at the top with all other hooks - BEFORE any early returns
+  const DesktopInterface = useMemo(() => (
+    <div className="min-h-screen bg-background flex h-screen overflow-hidden">
+      <ChatSidebar 
+        chats={chats}
+        isLoadingChats={isLoadingChats}
+        activeChatId={activeChatId}
+        setActiveChatId={setActiveChatId}
+        onCreateChat={handleCreateChat}
+        onDeleteChat={handleDeleteChat}
+        isCreatingChat={createChatMutation.isPending}
+      />
+
+      {/* Main Chat Area */}
+      <main className="flex-1 flex flex-col h-full overflow-hidden">        
+        <ChatHeader 
+          chats={chats}
+          activeChatId={activeChatId}
+          activeAIStatuses={activeAIStatuses}
+          platforms={platforms}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          user={user}
+          isFreeMode={isFreeMode}
+          isFreeModeRunning={isFreeModeRunning}
+          freeModeMessageLimit={freeModeMessageLimit}
+          freeModeMessageCount={freeModeMessageCount}
+          onStartFreeMode={handleStartFreeMode}
+          onStopFreeMode={stopFreeMode}
+          onUpdateFreeModeLimit={updateMessageLimit}
+          onSendSingleAgentMessage={handleSingleAgentMessage}
+          onUpdateAgentOrder={updateAgentOrder}
+          onSignOut={handleSignOut}
+        />
+
+        {/* Chat Messages Area */}
+        <div className="flex-1 overflow-hidden">
+          {activeTab === 'chat' && (
+            <ScrollArea className="h-full">
+              <div className="p-4">
+                <ChatMessages 
+                  messages={messages}
+                  isLoadingMessages={isLoadingMessages}
+                  isLoadingResponse={isLoadingResponse}
+                  platforms={platforms}
+                />
+                <div ref={messagesEndRef} className="h-4" />
+              </div>
+            </ScrollArea>
+          )}
+
+          {activeTab === 'settings' && (
+            <ScrollArea className="h-full">
+              <div className="p-4">
+                <SettingsPanel />
+              </div>
+            </ScrollArea>
+          )}
+        </div>
+
+        {/* Chat Input */}
+        {activeTab === 'chat' && (
+          <ChatInput 
+            input={input}
+            setInput={setInput}
+            handleSend={() => handleSend(activeChatId)}
+            handleStop={handleStop}
+            isLoadingResponse={isLoadingResponse}
+            isPending={sendMessageMutation.isPending}
+            canStop={canStop}
+            pendingCount={getPendingCount}
+            isFreeMode={isFreeMode}
+            isFreeModeRunning={isFreeModeRunning}
+            onSendAndStartConversation={handleSendAndStartConversation}
+          />
+        )}
+      </main>
+    </div>
+  ), [
+    chats,
+    isLoadingChats,
+    activeChatId,
+    activeAIStatuses,
+    platforms,
+    activeTab,
+    user,
+    isFreeMode,
+    isFreeModeRunning,
+    freeModeMessageLimit,
+    freeModeMessageCount,
+    messages,
+    isLoadingMessages,
+    isLoadingResponse,
+    input,
+    canStop,
+    sendMessageMutation.isPending,
+    createChatMutation.isPending
+  ]);
+
+  const MobileInterfaceComponent = useMemo(() => <MobileInterface />, []);
+
+  // Refs for tracking state changes
+  const previousMessageCountRef = useRef(0);
+  const previousActiveTabRef = useRef('chat');
 
   // Set up scroll listener when chat tab is active
   useEffect(() => {
@@ -194,9 +297,8 @@ const Index = () => {
     }
   };
 
-  // Find the current chat object for AIStatusBar
-  const currentChat = chats?.find(chat => chat.id === activeChatId);
-
+  // NOW ALL CONDITIONAL LOGIC AND EARLY RETURNS COME AFTER ALL HOOKS
+  
   // Show loading while auth is being determined
   if (loading || isLoadingOnboarding) {
     return (
@@ -233,108 +335,6 @@ const Index = () => {
       />
     );
   }
-
-  // Memoize the desktop interface to prevent unnecessary re-renders - AFTER all early returns
-  const DesktopInterface = useMemo(() => (
-    <div className="min-h-screen bg-background flex h-screen overflow-hidden">
-      <ChatSidebar 
-        chats={chats}
-        isLoadingChats={isLoadingChats}
-        activeChatId={activeChatId}
-        setActiveChatId={setActiveChatId}
-        onCreateChat={handleCreateChat}
-        onDeleteChat={handleDeleteChat}
-        isCreatingChat={createChatMutation.isPending}
-      />
-
-      {/* Main Chat Area */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden">        
-        <ChatHeader 
-          chats={chats}
-          activeChatId={activeChatId}
-          activeAIStatuses={activeAIStatuses}
-          platforms={platforms}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          user={user}
-          isFreeMode={isFreeMode}
-          isFreeModeRunning={isFreeModeRunning}
-          freeModeMessageLimit={freeModeMessageLimit}
-          freeModeMessageCount={freeModeMessageCount}
-          onStartFreeMode={handleStartFreeMode}
-          onStopFreeMode={stopFreeMode}
-          onUpdateFreeModeLimit={updateMessageLimit}
-          onSendSingleAgentMessage={handleSingleAgentMessage}
-          onUpdateAgentOrder={updateAgentOrder}
-          onSignOut={handleSignOut}
-        />
-
-        {/* Chat Messages Area */}
-        <div className="flex-1 overflow-hidden">
-          {activeTab === 'chat' && (
-            <ScrollArea className="h-full">
-              <div className="p-4">
-                <ChatMessages 
-                  messages={messages}
-                  isLoadingMessages={isLoadingMessages}
-                  isLoadingResponse={isLoadingResponse}
-                  platforms={platforms}
-                />
-                <div ref={messagesEndRef} className="h-4" />
-              </div>
-            </ScrollArea>
-          )}
-
-          {activeTab === 'settings' && (
-            <ScrollArea className="h-full">
-              <div className="p-4">
-                <SettingsPanel />
-              </div>
-            </ScrollArea>
-          )}
-        </div>
-
-        {/* Chat Input */}
-        {activeTab === 'chat' && (
-          <ChatInput 
-            input={input}
-            setInput={setInput}
-            handleSend={() => handleSend(activeChatId)}
-            handleStop={handleStop}
-            isLoadingResponse={isLoadingResponse}
-            isPending={sendMessageMutation.isPending}
-            canStop={canStop}
-            pendingCount={getPendingCount}
-            isFreeMode={isFreeMode}
-            isFreeModeRunning={isFreeModeRunning}
-            onSendAndStartConversation={handleSendAndStartConversation}
-          />
-        )}
-      </main>
-    </div>
-  ), [
-    chats,
-    isLoadingChats,
-    activeChatId,
-    activeAIStatuses,
-    platforms,
-    activeTab,
-    user,
-    isFreeMode,
-    isFreeModeRunning,
-    freeModeMessageLimit,
-    freeModeMessageCount,
-    messages,
-    isLoadingMessages,
-    isLoadingResponse,
-    input,
-    canStop,
-    sendMessageMutation.isPending,
-    createChatMutation.isPending
-  ]);
-
-  // Memoize the mobile interface to prevent unnecessary re-renders - AFTER all early returns
-  const MobileInterfaceComponent = useMemo(() => <MobileInterface />, []);
 
   return (
     <MobileLayout fallback={MobileInterfaceComponent}>
