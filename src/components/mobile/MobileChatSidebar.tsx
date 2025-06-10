@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { Plus, MessageSquare, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Chat } from '@/types/chat';
@@ -55,54 +56,60 @@ const MobileChatSidebar: React.FC<MobileChatSidebarProps> = ({
 
       {/* Chat List */}
       <ScrollArea className="flex-1">
-        <div className="p-2 space-y-1">
+        <div className="p-2">
           {isLoadingChats ? (
             <div className="p-4 text-center text-muted-foreground">
               Loading chats...
             </div>
           ) : chats && chats.length > 0 ? (
-            chats.map((chat) => (
-              <div
-                key={chat.id}
-                className={`group relative p-3 rounded-lg cursor-pointer transition-colors ${
-                  activeChatId === chat.id
-                    ? 'bg-primary/10 border border-primary/20'
-                    : 'hover:bg-muted/50'
-                }`}
-                onClick={() => onChatSelect(chat.id)}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <MessageSquare className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span className="text-sm font-medium truncate">
-                        {chat.title}
-                      </span>
+            chats.map((chat, index) => (
+              <React.Fragment key={chat.id}>
+                <div
+                  className={`group relative p-3 rounded-lg cursor-pointer transition-colors ${
+                    activeChatId === chat.id
+                      ? 'bg-primary/10 border border-primary/20'
+                      : 'hover:bg-muted/50'
+                  }`}
+                  onClick={() => onChatSelect(chat.id)}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <MessageSquare className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-sm font-medium truncate">
+                          {chat.title}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatDate(chat.created_at)}
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {formatDate(chat.created_at)}
-                    </div>
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteChat(chat.id);
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
                   </div>
 
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteChat(chat.id);
-                    }}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                  {activeChatId === chat.id && (
+                    <Badge variant="secondary" className="absolute top-1 right-1 text-xs">
+                      Active
+                    </Badge>
+                  )}
                 </div>
-
-                {activeChatId === chat.id && (
-                  <Badge variant="secondary" className="absolute top-1 right-1 text-xs">
-                    Active
-                  </Badge>
+                
+                {/* Add separator between chat items, but not after the last one */}
+                {index < chats.length - 1 && (
+                  <Separator className="my-2" />
                 )}
-              </div>
+              </React.Fragment>
             ))
           ) : (
             <div className="p-4 text-center text-muted-foreground">
