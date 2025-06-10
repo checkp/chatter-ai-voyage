@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "1.7.1",
+    date: "2025-06-10",
+    title: "Mobile Interface Bug Fix",
+    description: "Fixed critical mobile interface rendering issue that prevented mobile users from accessing the mobile-optimized experience.",
+    changes: [
+      {
+        type: "bugfix",
+        description: "Fixed MobileLayout component logic that was incorrectly showing desktop interface on mobile devices"
+      },
+      {
+        type: "bugfix",
+        description: "Resolved React hooks rendering order issues that were causing blank screens"
+      },
+      {
+        type: "improvement",
+        description: "Enhanced mobile detection and interface switching reliability"
+      }
+    ]
+  },
+  {
     version: "1.7.0",
     date: "2025-06-09",
     title: "Google Gemini Integration & Mobile Interface",

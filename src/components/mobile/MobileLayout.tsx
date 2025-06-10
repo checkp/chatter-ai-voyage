@@ -13,7 +13,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children, fallback }) => {
 
   // Show mobile interface if on mobile and not forcing desktop
   if (isMobile && !forceDesktopView) {
-    return <>{fallback || children}</>;
+    return <>{fallback}</>;
   }
 
   // Default to desktop layout
