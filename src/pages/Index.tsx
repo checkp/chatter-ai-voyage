@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useTheme } from '@/contexts/ThemeContext';
@@ -233,8 +233,8 @@ const Index = () => {
     );
   }
 
-  // Desktop interface wrapped with mobile layout
-  const DesktopInterface = () => (
+  // Memoize the desktop interface to prevent unnecessary re-renders
+  const DesktopInterface = useMemo(() => (
     <div className="min-h-screen bg-background flex h-screen overflow-hidden">
       <ChatSidebar 
         chats={chats}
@@ -311,11 +311,33 @@ const Index = () => {
         )}
       </main>
     </div>
-  );
+  ), [
+    chats,
+    isLoadingChats,
+    activeChatId,
+    activeAIStatuses,
+    platforms,
+    activeTab,
+    user,
+    isFreeMode,
+    isFreeModeRunning,
+    freeModeMessageLimit,
+    freeModeMessageCount,
+    messages,
+    isLoadingMessages,
+    isLoadingResponse,
+    input,
+    canStop,
+    sendMessageMutation.isPending,
+    createChatMutation.isPending
+  ]);
+
+  // Memoize the mobile interface to prevent unnecessary re-renders
+  const MobileInterfaceComponent = useMemo(() => <MobileInterface />, []);
 
   return (
-    <MobileLayout fallback={<MobileInterface />}>
-      <DesktopInterface />
+    <MobileLayout fallback={MobileInterfaceComponent}>
+      {DesktopInterface}
     </MobileLayout>
   );
 };
