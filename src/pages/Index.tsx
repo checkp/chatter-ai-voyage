@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useTheme } from '@/contexts/ThemeContext';
@@ -85,8 +85,158 @@ const Index = () => {
     updateMessageLimit
   } = useFreeMode();
 
-  // Memoize interfaces at the top with all other hooks - BEFORE any early returns
-  const DesktopInterface = useMemo(() => (
+  // Refs for tracking state changes
+  const previousMessageCountRef = useRef(0);
+  const previousActiveTabRef = useRef('chat');
+
+  // Helper functions
+  const handleDeleteChat = (chatId: string) => {
+    deleteChatMutation.mutate(chatId);
+  };
+
+  const handleCreateChat = () => {
+    createChatMutation.mutate('New Chat');
+  };
+
+  const handleSingleAgentMessage = async (message: string, platformId: string) => {
+    if (!activeChatId) return;
+    await sendSingleAgentMessage(activeChatId, message, platformId);
+  };
+
+  const handleStartFreeMode = () => {
+    startFreeMode(activeChatId, platforms, callAIAPI, sendSingleAgentMessage);
+  };
+
+  const handleSendAndStartConversation = () => {
+    if (!input.trim() || !activeChatId) return;
+    
+    // Send the message first
+    handleSend(activeChatId);
+    
+    // Start free mode conversation after a short delay to let the message send
+    setTimeout(() => {
+      handleStartFreeMode();
+    }, 1000);
+  };
+
+  // Handle welcome screen completion
+  const handleWelcomeComplete = async () => {
+    await completeOnboarding();
+    // Create first chat if none exists
+    if (!chats || chats.length === 0) {
+      handleCreateChat();
+    }
+  };
+
+  const handleWelcomeSkip = async () => {
+    await skipOnboarding();
+    // Create first chat if none exists
+    if (!chats || chats.length === 0) {
+      handleCreateChat();
+    }
+  };
+
+  // Set up scroll listener when chat tab is active
+  useEffect(() => {
+    if (activeTab === 'chat') {
+      const cleanup = setupScrollListener();
+      return cleanup;
+    }
+  }, [activeTab, setupScrollListener]);
+
+  // Handle tab switching with scroll position preservation
+  useEffect(() => {
+    // If switching from chat to another tab, save scroll position
+    if (previousActiveTabRef.current === 'chat' && activeTab !== 'chat') {
+      saveScrollPosition();
+    }
+    
+    // If switching back to chat from another tab, restore scroll position if available
+    if (previousActiveTabRef.current !== 'chat' && activeTab === 'chat' && lastScrollPosition !== null) {
+      setTimeout(() => {
+        restoreScrollPosition();
+      }, 100);
+    }
+    
+    previousActiveTabRef.current = activeTab;
+  }, [activeTab, saveScrollPosition, restoreScrollPosition, lastScrollPosition]);
+
+  // Smart scrolling for new messages
+  useEffect(() => {
+    if (messages && messages.length > 0) {
+      const hasNewMessages = messages.length > previousMessageCountRef.current;
+      
+      if (hasNewMessages && activeTab === 'chat') {
+        // Only auto-scroll if user hasn't manually scrolled up or is near bottom
+        if (!isUserScrolledUp) {
+          setTimeout(() => {
+            scrollToBottom();
+          }, 100);
+        }
+      }
+      
+      previousMessageCountRef.current = messages.length;
+    }
+  }, [messages, scrollToBottom, isUserScrolledUp, activeTab]);
+
+  // Handle initial scroll when switching to a different chat
+  useEffect(() => {
+    if (messages && !isLoadingMessages && activeChatId && activeTab === 'chat') {
+      // Only auto-scroll for initial chat load or when explicitly at bottom
+      if (lastScrollPosition === null || !isUserScrolledUp) {
+        setTimeout(() => {
+          scrollToBottomImmediate();
+        }, 200);
+      }
+    }
+  }, [activeChatId, isLoadingMessages, scrollToBottomImmediate, activeTab, lastScrollPosition, isUserScrolledUp]);
+
+  useEffect(() => {
+    if (activeTab === 'chat' && user) {
+      reloadSettings();
+    }
+  }, [activeTab, user, reloadSettings]);
+
+  // NOW ALL CONDITIONAL LOGIC AND EARLY RETURNS COME AFTER ALL HOOKS
+  
+  // Show loading while auth is being determined
+  if (loading || isLoadingOnboarding) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // Show sign in prompt if not authenticated
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <img 
+          src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png" 
+          alt="RoboHerd Logo" 
+          className="w-full max-w-2xl h-auto object-contain"
+        />
+        <h1 className="text-2xl font-bold mb-4">Please sign in to continue.</h1>
+        <Button onClick={() => window.location.href = '/auth'}>
+          Go to Sign In
+        </Button>
+      </div>
+    );
+  }
+
+  // Show welcome screen for new users
+  if (hasCompletedOnboarding === false) {
+    return (
+      <WelcomeScreen 
+        onGetStarted={handleWelcomeComplete}
+        onSkip={handleWelcomeSkip}
+      />
+    );
+  }
+
+  const DesktopInterface = (
     <div className="min-h-screen bg-background flex h-screen overflow-hidden">
       <ChatSidebar 
         chats={chats}
@@ -163,178 +313,9 @@ const Index = () => {
         )}
       </main>
     </div>
-  ), [
-    chats,
-    isLoadingChats,
-    activeChatId,
-    activeAIStatuses,
-    platforms,
-    activeTab,
-    user,
-    isFreeMode,
-    isFreeModeRunning,
-    freeModeMessageLimit,
-    freeModeMessageCount,
-    messages,
-    isLoadingMessages,
-    isLoadingResponse,
-    input,
-    canStop,
-    sendMessageMutation.isPending,
-    createChatMutation.isPending
-  ]);
+  );
 
-  const MobileInterfaceComponent = useMemo(() => <MobileInterface />, []);
-
-  // Refs for tracking state changes
-  const previousMessageCountRef = useRef(0);
-  const previousActiveTabRef = useRef('chat');
-
-  // Set up scroll listener when chat tab is active
-  useEffect(() => {
-    if (activeTab === 'chat') {
-      const cleanup = setupScrollListener();
-      return cleanup;
-    }
-  }, [activeTab, setupScrollListener]);
-
-  // Handle tab switching with scroll position preservation
-  useEffect(() => {
-    // If switching from chat to another tab, save scroll position
-    if (previousActiveTabRef.current === 'chat' && activeTab !== 'chat') {
-      saveScrollPosition();
-    }
-    
-    // If switching back to chat from another tab, restore scroll position if available
-    if (previousActiveTabRef.current !== 'chat' && activeTab === 'chat' && lastScrollPosition !== null) {
-      setTimeout(() => {
-        restoreScrollPosition();
-      }, 100);
-    }
-    
-    previousActiveTabRef.current = activeTab;
-  }, [activeTab, saveScrollPosition, restoreScrollPosition, lastScrollPosition]);
-
-  // Smart scrolling for new messages
-  useEffect(() => {
-    if (messages && messages.length > 0) {
-      const hasNewMessages = messages.length > previousMessageCountRef.current;
-      
-      if (hasNewMessages && activeTab === 'chat') {
-        // Only auto-scroll if user hasn't manually scrolled up or is near bottom
-        if (!isUserScrolledUp) {
-          setTimeout(() => {
-            scrollToBottom();
-          }, 100);
-        }
-      }
-      
-      previousMessageCountRef.current = messages.length;
-    }
-  }, [messages, scrollToBottom, isUserScrolledUp, activeTab]);
-
-  // Handle initial scroll when switching to a different chat
-  useEffect(() => {
-    if (messages && !isLoadingMessages && activeChatId && activeTab === 'chat') {
-      // Only auto-scroll for initial chat load or when explicitly at bottom
-      if (lastScrollPosition === null || !isUserScrolledUp) {
-        setTimeout(() => {
-          scrollToBottomImmediate();
-        }, 200);
-      }
-    }
-  }, [activeChatId, isLoadingMessages, scrollToBottomImmediate, activeTab, lastScrollPosition, isUserScrolledUp]);
-
-  useEffect(() => {
-    if (activeTab === 'chat' && user) {
-      reloadSettings();
-    }
-  }, [activeTab, user, reloadSettings]);
-
-  const handleDeleteChat = (chatId: string) => {
-    deleteChatMutation.mutate(chatId);
-  };
-
-  const handleCreateChat = () => {
-    createChatMutation.mutate('New Chat');
-  };
-
-  const handleSingleAgentMessage = async (message: string, platformId: string) => {
-    if (!activeChatId) return;
-    await sendSingleAgentMessage(activeChatId, message, platformId);
-  };
-
-  const handleStartFreeMode = () => {
-    startFreeMode(activeChatId, platforms, callAIAPI, sendSingleAgentMessage);
-  };
-
-  const handleSendAndStartConversation = () => {
-    if (!input.trim() || !activeChatId) return;
-    
-    // Send the message first
-    handleSend(activeChatId);
-    
-    // Start free mode conversation after a short delay to let the message send
-    setTimeout(() => {
-      handleStartFreeMode();
-    }, 1000);
-  };
-
-  // Handle welcome screen completion
-  const handleWelcomeComplete = async () => {
-    await completeOnboarding();
-    // Create first chat if none exists
-    if (!chats || chats.length === 0) {
-      handleCreateChat();
-    }
-  };
-
-  const handleWelcomeSkip = async () => {
-    await skipOnboarding();
-    // Create first chat if none exists
-    if (!chats || chats.length === 0) {
-      handleCreateChat();
-    }
-  };
-
-  // NOW ALL CONDITIONAL LOGIC AND EARLY RETURNS COME AFTER ALL HOOKS
-  
-  // Show loading while auth is being determined
-  if (loading || isLoadingOnboarding) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-        <p>Loading...</p>
-      </div>
-    );
-  }
-
-  // Show sign in prompt if not authenticated
-  if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <img 
-          src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png" 
-          alt="RoboHerd Logo" 
-          className="w-full max-w-2xl h-auto object-contain"
-        />
-        <h1 className="text-2xl font-bold mb-4">Please sign in to continue.</h1>
-        <Button onClick={() => window.location.href = '/auth'}>
-          Go to Sign In
-        </Button>
-      </div>
-    );
-  }
-
-  // Show welcome screen for new users
-  if (hasCompletedOnboarding === false) {
-    return (
-      <WelcomeScreen 
-        onGetStarted={handleWelcomeComplete}
-        onSkip={handleWelcomeSkip}
-      />
-    );
-  }
+  const MobileInterfaceComponent = <MobileInterface />;
 
   return (
     <MobileLayout fallback={MobileInterfaceComponent}>
