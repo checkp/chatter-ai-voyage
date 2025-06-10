@@ -27,32 +27,23 @@ export const useAuth = () => {
 
   const ensureUserTokens = async (userId: string) => {
     try {
-      // Check if user already has tokens
-      const { data: existingTokens, error: fetchError } = await supabase
+      // Use upsert with ON CONFLICT to prevent duplicates
+      const { error } = await supabase
         .from('user_tokens')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
+        .upsert({
+          user_id: userId,
+          balance: 300,
+          total_purchased: 0,
+          total_consumed: 0
+        }, {
+          onConflict: 'user_id',
+          ignoreDuplicates: true
+        });
 
-      if (fetchError && fetchError.code === 'PGRST116') {
-        // No tokens found, create initial token balance
-        console.log('Creating initial token balance for user:', userId);
-        const { error: insertError } = await supabase
-          .from('user_tokens')
-          .insert({
-            user_id: userId,
-            balance: 300,
-            total_purchased: 0,
-            total_consumed: 0
-          });
-
-        if (insertError) {
-          console.error('Error creating initial tokens:', insertError);
-        } else {
-          console.log('Successfully created initial token balance of 300');
-        }
-      } else if (existingTokens) {
-        console.log('User already has token balance:', existingTokens.balance);
+      if (error) {
+        console.error('Error ensuring user tokens:', error);
+      } else {
+        console.log('Successfully ensured token balance for user:', userId);
       }
     } catch (error) {
       console.error('Error ensuring user tokens:', error);

@@ -34,7 +34,7 @@ interface TokenPackage {
 export const useTokens = (user: SupabaseUser | null) => {
   const queryClient = useQueryClient();
 
-  // Fetch user token balance with enhanced debugging and duplicate handling
+  // Fetch user token balance with simplified logic - no duplicate handling here
   const { data: tokenBalance, isLoading: isLoadingBalance, error: tokenError } = useQuery({
     queryKey: ['tokens', user?.id],
     queryFn: async () => {
@@ -59,89 +59,34 @@ export const useTokens = (user: SupabaseUser | null) => {
       }
       
       try {
-        // First, get all token records for this user to check for duplicates
-        const { data: allRecords, error: selectError } = await supabase
+        // Simply fetch the user's token record - don't create or handle duplicates here
+        const { data: tokenRecord, error: selectError } = await supabase
           .from('user_tokens')
-          .select('id, balance, total_purchased, total_consumed, created_at')
+          .select('balance, total_purchased, total_consumed')
           .eq('user_id', user.id)
-          .order('created_at', { ascending: true }); // Get oldest first
+          .single();
 
-        console.log('useTokens: Query result:', { allRecords, selectError });
+        console.log('useTokens: Query result:', { tokenRecord, selectError });
 
         if (selectError) {
-          console.error('useTokens: Error fetching token records:', selectError);
+          console.error('useTokens: Error fetching token record:', selectError);
           
           // If it's a 403 error, the user might not be properly authenticated
           if (selectError.code === 'PGRST301') {
             throw new Error('Access denied - user not authenticated');
           }
           
-          return { balance: 0, total_purchased: 0, total_consumed: 0 };
-        }
-
-        // If no records found, create initial record
-        if (!allRecords || allRecords.length === 0) {
-          console.log('useTokens: No token records found, creating initial record');
-          
-          const { data: insertData, error: insertError } = await supabase
-            .from('user_tokens')
-            .insert({
-              user_id: user.id,
-              balance: 300,
-              total_purchased: 0,
-              total_consumed: 0
-            })
-            .select('balance, total_purchased, total_consumed')
-            .single();
-
-          if (insertError) {
-            console.error('useTokens: Error creating token record:', insertError);
-            if (insertError.code === 'PGRST301') {
-              throw new Error('Access denied - cannot create token record');
-            }
+          // If no record found, return default values - let useAuth handle creation
+          if (selectError.code === 'PGRST116') {
+            console.log('useTokens: No token record found, returning defaults');
             return { balance: 0, total_purchased: 0, total_consumed: 0 };
           }
           
-          console.log('useTokens: Successfully created token record:', insertData);
-          return insertData as TokenBalance;
+          return { balance: 0, total_purchased: 0, total_consumed: 0 };
         }
 
-        // If multiple records found, clean up duplicates
-        if (allRecords.length > 1) {
-          console.log('useTokens: Multiple token records found, cleaning up duplicates');
-          
-          // Keep the first record (oldest), delete the rest
-          const recordToKeep = allRecords[0];
-          const recordsToDelete = allRecords.slice(1);
-          
-          for (const record of recordsToDelete) {
-            console.log('useTokens: Deleting duplicate record:', record.id);
-            const { error: deleteError } = await supabase
-              .from('user_tokens')
-              .delete()
-              .eq('id', record.id);
-              
-            if (deleteError) {
-              console.error('useTokens: Error deleting duplicate record:', deleteError);
-            }
-          }
-          
-          console.log('useTokens: Using record:', recordToKeep);
-          return {
-            balance: recordToKeep.balance,
-            total_purchased: recordToKeep.total_purchased,
-            total_consumed: recordToKeep.total_consumed
-          } as TokenBalance;
-        }
-
-        // Single record found - normal case
-        const record = allRecords[0];
-        console.log('useTokens: Single token record found:', record);
-        return {
-          balance: record.balance,
-          total_purchased: record.total_purchased,
-          total_consumed: record.total_consumed
-        } as TokenBalance;
+        console.log('useTokens: Token record found:', tokenRecord);
+        return tokenRecord as TokenBalance;
       } catch (error) {
         console.error('useTokens: Unexpected error:', error);
         throw error;
