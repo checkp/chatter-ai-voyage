@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -233,7 +234,7 @@ const Index = () => {
     );
   }
 
-  // Memoize the desktop interface to prevent unnecessary re-renders
+  // Memoize the desktop interface to prevent unnecessary re-renders - AFTER all early returns
   const DesktopInterface = useMemo(() => (
     <div className="min-h-screen bg-background flex h-screen overflow-hidden">
       <ChatSidebar 
@@ -332,7 +333,7 @@ const Index = () => {
     createChatMutation.isPending
   ]);
 
-  // Memoize the mobile interface to prevent unnecessary re-renders
+  // Memoize the mobile interface to prevent unnecessary re-renders - AFTER all early returns
   const MobileInterfaceComponent = useMemo(() => <MobileInterface />, []);
 
   return (
