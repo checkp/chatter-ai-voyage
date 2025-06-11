@@ -9,7 +9,8 @@ import BotHistoryDialog from '@/components/BotHistoryDialog';
 import TokenBalance from '@/components/TokenBalance';
 import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
 import ChangelogDialog from '@/components/ChangelogDialog';
-import type { Chat, AIPlatform } from '@/types/chat';
+import ChatModeSelector from '@/components/ChatModeSelector';
+import type { Chat, AIPlatform, ChatMode } from '@/types/chat';
 
 interface ChatHeaderProps {
   chats: Chat[] | undefined;
@@ -31,6 +32,9 @@ interface ChatHeaderProps {
   onSendSingleAgentMessage?: (message: string, platformId: string) => void;
   // Agent reordering
   onUpdateAgentOrder?: (reorderedPlatforms: AIPlatform[]) => void;
+  // Chat mode props
+  currentChatMode: ChatMode;
+  onChatModeChange: (mode: ChatMode) => void;
   // Logout function
   onSignOut: () => void;
 }
@@ -52,6 +56,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   onUpdateFreeModeLimit,
   onSendSingleAgentMessage,
   onUpdateAgentOrder,
+  currentChatMode,
+  onChatModeChange,
   onSignOut
 }) => {
   const [selectedAgent, setSelectedAgent] = useState<AIPlatform | null>(null);
@@ -83,9 +89,19 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <div className="flex items-center justify-between mb-3">
-              <h1 className="text-lg font-semibold">
-                {chats?.find(chat => chat.id === activeChatId)?.title || 'Select a chat'}
-              </h1>
+              <div className="flex items-center gap-4">
+                <h1 className="text-lg font-semibold">
+                  {chats?.find(chat => chat.id === activeChatId)?.title || 'Select a chat'}
+                </h1>
+                
+                {/* Chat Mode Selector */}
+                {activeTab === 'chat' && activeChatId && (
+                  <ChatModeSelector
+                    currentMode={currentChatMode}
+                    onModeChange={onChatModeChange}
+                  />
+                )}
+              </div>
               
               {/* Free Mode Controls */}
               {activeTab === 'chat' && (

@@ -2,7 +2,8 @@
 import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Grid3X3 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Grid3X3, Eye, EyeOff } from 'lucide-react';
 import ChatMessages from '@/components/ChatMessages';
 import type { Message, AIPlatform } from '@/types/chat';
 
@@ -11,13 +12,15 @@ interface AgentWindowProps {
   messages: Message[];
   isLoadingResponse: boolean;
   activeAIStatuses: Record<string, boolean>;
+  onToggle: (platformId: string) => void;
 }
 
 const AgentWindow: React.FC<AgentWindowProps> = ({
   platform,
   messages,
   isLoadingResponse,
-  activeAIStatuses
+  activeAIStatuses,
+  onToggle
 }) => {
   // Filter messages for this specific agent (user messages + this agent's responses)
   // Ensure messages is always an array before filtering
@@ -26,7 +29,7 @@ const AgentWindow: React.FC<AgentWindowProps> = ({
   );
 
   return (
-    <div className="flex flex-col h-full border rounded-lg bg-background">
+    <div className="flex flex-col h-full border rounded-lg bg-background min-w-80">
       {/* Agent Header */}
       <div className={`p-3 border-b ${platform.color} flex items-center justify-between`}>
         <div className="flex items-center gap-2">
@@ -34,6 +37,14 @@ const AgentWindow: React.FC<AgentWindowProps> = ({
           <span className="font-medium text-white">{platform.name}</span>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onToggle(platform.id)}
+            className="h-6 w-6 p-0 text-white hover:bg-white/20"
+          >
+            {platform.enabled ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+          </Button>
           {activeAIStatuses[platform.id] && (
             <Badge variant="secondary" className="text-xs animate-pulse">
               Responding...
@@ -63,17 +74,19 @@ interface SideBySideLayoutProps {
   messages: Message[] | undefined;
   isLoadingResponse: boolean;
   activeAIStatuses: Record<string, boolean>;
+  onTogglePlatform: (platformId: string) => void;
 }
 
 const SideBySideLayout: React.FC<SideBySideLayoutProps> = ({
   enabledPlatforms,
   messages,
   isLoadingResponse,
-  activeAIStatuses
+  activeAIStatuses,
+  onTogglePlatform
 }) => {
-  const activePlatforms = enabledPlatforms.filter(p => p.enabled);
+  const visiblePlatforms = enabledPlatforms.filter(p => p.enabled);
   
-  if (activePlatforms.length === 0) {
+  if (visiblePlatforms.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">
         <div className="text-center">
@@ -89,17 +102,20 @@ const SideBySideLayout: React.FC<SideBySideLayoutProps> = ({
   const safeMessages = messages || [];
 
   return (
-    <div className={`grid gap-4 h-full p-4 grid-cols-${Math.min(activePlatforms.length, 4)}`}>
-      {activePlatforms.map((platform) => (
-        <AgentWindow
-          key={platform.id}
-          platform={platform}
-          messages={safeMessages}
-          isLoadingResponse={isLoadingResponse}
-          activeAIStatuses={activeAIStatuses}
-        />
-      ))}
-    </div>
+    <ScrollArea className="h-full">
+      <div className="flex gap-4 h-full p-4" style={{ minWidth: `${visiblePlatforms.length * 320}px` }}>
+        {visiblePlatforms.map((platform) => (
+          <AgentWindow
+            key={platform.id}
+            platform={platform}
+            messages={safeMessages}
+            isLoadingResponse={isLoadingResponse}
+            activeAIStatuses={activeAIStatuses}
+            onToggle={onTogglePlatform}
+          />
+        ))}
+      </div>
+    </ScrollArea>
   );
 };
 

@@ -293,17 +293,9 @@ const Index = () => {
           onSendSingleAgentMessage={handleSingleAgentMessage}
           onUpdateAgentOrder={updateAgentOrder}
           onSignOut={handleSignOut}
+          currentChatMode={activeChatMode}
+          onChatModeChange={handleChatModeChange}
         />
-
-        {/* Chat Mode Selector */}
-        {activeTab === 'chat' && activeChatId && (
-          <div className="border-b px-4 py-2">
-            <ChatModeSelector
-              currentMode={activeChatMode}
-              onModeChange={handleChatModeChange}
-            />
-          </div>
-        )}
 
         {/* Chat Messages Area */}
         <div className="flex-1 overflow-hidden">
@@ -315,6 +307,7 @@ const Index = () => {
                   messages={messages}
                   isLoadingResponse={isLoadingResponse}
                   activeAIStatuses={activeAIStatuses}
+                  onTogglePlatform={togglePlatform}
                 />
               ) : (
                 <ScrollArea className="h-full" ref={scrollAreaRef}>

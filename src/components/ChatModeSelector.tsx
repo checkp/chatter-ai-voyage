@@ -44,9 +44,10 @@ const ChatModeSelector: React.FC<ChatModeSelectorProps> = ({
   const currentModeInfo = modes.find(mode => mode.value === currentMode);
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div className={`flex items-center gap-3 ${className}`}>
+      <span className="text-sm font-medium text-muted-foreground">Mode:</span>
       <Select value={currentMode} onValueChange={onModeChange}>
-        <SelectTrigger className="w-48">
+        <SelectTrigger className="w-52">
           <SelectValue>
             <div className="flex items-center gap-2">
               {currentModeInfo && <currentModeInfo.icon className="h-4 w-4" />}
