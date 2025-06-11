@@ -29,6 +29,7 @@ const MobileInterface = () => {
     messages,
     isLoadingMessages,
     activeChatId,
+    activeChatMode,
     setActiveChatId,
     createChatMutation,
     deleteChatMutation
@@ -44,10 +45,10 @@ const MobileInterface = () => {
     handleStop,
     canStop,
     getPendingCount
-  } = useMessageHandling(user, platforms, callAIAPI);
+  } = useMessageHandling(user, platforms, callAIAPI, activeChatMode);
 
   const handleCreateChat = () => {
-    createChatMutation.mutate('New Chat');
+    createChatMutation.mutate({ title: 'New Chat', chatMode: 'discussion' });
     setIsSidebarOpen(false);
   };
 
@@ -68,6 +69,12 @@ const MobileInterface = () => {
     }
   }, [messages, scrollToBottom]);
 
+  // Transform activeAIStatuses to match expected type
+  const transformedStatuses = Object.entries(activeAIStatuses).reduce((acc, [key, value]) => {
+    acc[key] = value ? 'responding' : 'completed';
+    return acc;
+  }, {} as Record<string, 'thinking' | 'responding' | 'completed' | 'error'>);
+
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Mobile Header */}
@@ -76,7 +83,7 @@ const MobileInterface = () => {
         onSettingsClick={() => setActiveView(activeView === 'settings' ? 'chat' : 'settings')}
         activeView={activeView}
         platforms={platforms}
-        activeAIStatuses={activeAIStatuses}
+        activeAIStatuses={transformedStatuses}
       />
 
       {/* Main Content Area */}
@@ -104,7 +111,7 @@ const MobileInterface = () => {
                 isLoadingResponse={isLoadingResponse}
                 isPending={sendMessageMutation.isPending}
                 canStop={canStop}
-                pendingCount={getPendingCount}
+                pendingCount={getPendingCount()}
                 isFreeMode={false}
                 isFreeModeRunning={false}
                 onSendAndStartConversation={() => {}}

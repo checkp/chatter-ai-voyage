@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -155,6 +156,12 @@ const Index = () => {
   // Get effective chat mode (mobile fallback)
   const effectiveChatMode = isMobile && activeChatMode === 'side-by-side' ? 'isolated' : activeChatMode;
 
+  // Transform activeAIStatuses to match expected type
+  const transformedStatuses = Object.entries(activeAIStatuses).reduce((acc, [key, value]) => {
+    acc[key] = value ? 'responding' : 'completed';
+    return acc;
+  }, {} as Record<string, 'thinking' | 'responding' | 'completed' | 'error'>);
+
   // Set up scroll listener when chat tab is active
   useEffect(() => {
     if (activeTab === 'chat') {
@@ -272,7 +279,7 @@ const Index = () => {
         <ChatHeader 
           chats={chats}
           activeChatId={activeChatId}
-          activeAIStatuses={activeAIStatuses}
+          activeAIStatuses={transformedStatuses}
           platforms={platforms}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -308,7 +315,7 @@ const Index = () => {
                   enabledPlatforms={platforms}
                   messages={messages}
                   isLoadingResponse={isLoadingResponse}
-                  activeAIStatuses={activeAIStatuses}
+                  activeAIStatuses={transformedStatuses}
                 />
               ) : (
                 <ScrollArea className="h-full" ref={scrollAreaRef}>
@@ -345,7 +352,7 @@ const Index = () => {
             isLoadingResponse={isLoadingResponse}
             isPending={sendMessageMutation.isPending}
             canStop={canStop}
-            pendingCount={getPendingCount}
+            pendingCount={getPendingCount()}
             isFreeMode={isFreeMode}
             isFreeModeRunning={isFreeModeRunning}
             onSendAndStartConversation={handleSendAndStartConversation}
