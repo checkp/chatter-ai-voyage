@@ -20,7 +20,8 @@ const AgentWindow: React.FC<AgentWindowProps> = ({
   activeAIStatuses
 }) => {
   // Filter messages for this specific agent (user messages + this agent's responses)
-  const agentMessages = messages.filter(msg => 
+  // Ensure messages is always an array before filtering
+  const agentMessages = (messages || []).filter(msg => 
     msg.sender === 'user' || msg.platform === platform.id
   );
 
@@ -59,7 +60,7 @@ const AgentWindow: React.FC<AgentWindowProps> = ({
 
 interface SideBySideLayoutProps {
   enabledPlatforms: AIPlatform[];
-  messages: Message[];
+  messages: Message[] | undefined;
   isLoadingResponse: boolean;
   activeAIStatuses: Record<string, boolean>;
 }
@@ -84,13 +85,16 @@ const SideBySideLayout: React.FC<SideBySideLayoutProps> = ({
     );
   }
 
+  // Provide default empty array if messages is undefined
+  const safeMessages = messages || [];
+
   return (
     <div className={`grid gap-4 h-full p-4 grid-cols-${Math.min(activePlatforms.length, 4)}`}>
       {activePlatforms.map((platform) => (
         <AgentWindow
           key={platform.id}
           platform={platform}
-          messages={messages}
+          messages={safeMessages}
           isLoadingResponse={isLoadingResponse}
           activeAIStatuses={activeAIStatuses}
         />
