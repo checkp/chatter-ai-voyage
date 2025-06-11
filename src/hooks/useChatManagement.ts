@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
-import type { Chat, Message } from '@/types/chat';
+import type { Chat, Message, ChatMode } from '@/types/chat';
 import { generateChatId } from '@/utils/chatUtils';
 
 export const useChatManagement = (user: SupabaseUser | null) => {
@@ -44,10 +44,18 @@ export const useChatManagement = (user: SupabaseUser | null) => {
 
           if (countError) {
             console.error('Error counting messages for conversation:', conv.id, countError);
-            return { ...conv, messageCount: 0 };
+            return { 
+              ...conv, 
+              messageCount: 0,
+              chat_mode: conv.chat_mode || 'discussion' as ChatMode
+            };
           }
 
-          return { ...conv, messageCount: count || 0 };
+          return { 
+            ...conv, 
+            messageCount: count || 0,
+            chat_mode: conv.chat_mode || 'discussion' as ChatMode
+          };
         })
       );
 
@@ -99,6 +107,7 @@ export const useChatManagement = (user: SupabaseUser | null) => {
   });
 
   const activeChatId = chats?.[0]?.id || null;
+  const activeChatMode = chats?.[0]?.chat_mode || 'discussion';
 
   const setActiveChatId = (chatId: string | null) => {
     if (!chatId) return;
@@ -119,7 +128,7 @@ export const useChatManagement = (user: SupabaseUser | null) => {
   };
 
   const createChatMutation = useMutation({
-    mutationFn: async (title: string) => {
+    mutationFn: async ({ title, chatMode = 'discussion' }: { title: string; chatMode?: ChatMode }) => {
       if (!user?.id) throw new Error('User not authenticated');
 
       const newChat: Chat = {
@@ -127,10 +136,11 @@ export const useChatManagement = (user: SupabaseUser | null) => {
         title,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        user_id: user.id
+        user_id: user.id,
+        chat_mode: chatMode
       };
 
-      console.log('Creating new chat:', newChat.id);
+      console.log('Creating new chat:', newChat.id, 'with mode:', chatMode);
 
       const { error } = await supabase
         .from('conversations')
@@ -138,6 +148,7 @@ export const useChatManagement = (user: SupabaseUser | null) => {
           id: newChat.id,
           user_id: newChat.user_id,
           title: newChat.title,
+          chat_mode: newChat.chat_mode,
           created_at: newChat.created_at,
           updated_at: newChat.updated_at
         }]);
@@ -165,6 +176,48 @@ export const useChatManagement = (user: SupabaseUser | null) => {
     onError: (error: any) => {
       console.error('Failed to create chat:', error);
       toast.error('Failed to create chat: ' + (error.message || 'Unknown error'));
+    },
+  });
+
+  const updateChatModeMutation = useMutation({
+    mutationFn: async ({ chatId, chatMode }: { chatId: string; chatMode: ChatMode }) => {
+      if (!user?.id) throw new Error('User not authenticated');
+
+      console.log('Updating chat mode for:', chatId, 'to:', chatMode);
+
+      const { error } = await supabase
+        .from('conversations')
+        .update({ 
+          chat_mode: chatMode,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', chatId)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error updating chat mode:', error);
+        throw error;
+      }
+
+      return { chatId, chatMode };
+    },
+    onSuccess: ({ chatId, chatMode }) => {
+      console.log('Chat mode updated successfully:', chatId, chatMode);
+      
+      // Update the chat in the list
+      const currentChats = queryClient.getQueryData(['conversations', user?.id]) as Chat[] || [];
+      const updatedChats = currentChats.map(chat => 
+        chat.id === chatId 
+          ? { ...chat, chat_mode: chatMode, updated_at: new Date().toISOString() }
+          : chat
+      );
+      queryClient.setQueryData(['conversations', user?.id], updatedChats);
+      
+      toast.success(`Chat mode changed to ${chatMode}`);
+    },
+    onError: (error: any) => {
+      console.error('Failed to update chat mode:', error);
+      toast.error('Failed to update chat mode: ' + (error.message || 'Unknown error'));
     },
   });
 
@@ -224,8 +277,10 @@ export const useChatManagement = (user: SupabaseUser | null) => {
     messages,
     isLoadingMessages,
     activeChatId,
+    activeChatMode,
     setActiveChatId,
     createChatMutation,
+    updateChatModeMutation,
     deleteChatMutation,
     isInitialLoadComplete
   };

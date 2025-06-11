@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -18,8 +17,11 @@ import ChatMessages from '@/components/ChatMessages';
 import ChatInput from '@/components/ChatInput';
 import SettingsPanel from '@/components/SettingsPanel';
 import WelcomeScreen from '@/components/WelcomeScreen';
+import ChatModeSelector from '@/components/ChatModeSelector';
+import SideBySideLayout from '@/components/SideBySideLayout';
 import MobileLayout from '@/components/mobile/MobileLayout';
 import MobileInterface from '@/components/mobile/MobileInterface';
+import type { ChatMode } from '@/types/chat';
 
 const Index = () => {
   // ALL HOOKS MUST BE CALLED FIRST, BEFORE ANY CONDITIONAL LOGIC
@@ -48,8 +50,10 @@ const Index = () => {
     messages,
     isLoadingMessages,
     activeChatId,
+    activeChatMode,
     setActiveChatId,
     createChatMutation,
+    updateChatModeMutation,
     deleteChatMutation,
     isInitialLoadComplete
   } = useChatManagement(user);
@@ -66,7 +70,7 @@ const Index = () => {
     getPendingCount,
     canStop,
     sendSingleAgentMessage
-  } = useMessageHandling(user, platforms, callAIAPI);
+  } = useMessageHandling(user, platforms, callAIAPI, activeChatMode);
 
   const {
     isDrawerOpen,
@@ -94,8 +98,20 @@ const Index = () => {
     deleteChatMutation.mutate(chatId);
   };
 
-  const handleCreateChat = () => {
-    createChatMutation.mutate('New Chat');
+  const handleCreateChat = (chatMode: ChatMode = 'discussion') => {
+    createChatMutation.mutate({ title: 'New Chat', chatMode });
+  };
+
+  const handleChatModeChange = (mode: ChatMode) => {
+    if (!activeChatId) return;
+    
+    // On mobile, side-by-side falls back to isolated
+    const effectiveMode = isMobile && mode === 'side-by-side' ? 'isolated' : mode;
+    
+    updateChatModeMutation.mutate({ 
+      chatId: activeChatId, 
+      chatMode: effectiveMode 
+    });
   };
 
   const handleSingleAgentMessage = async (message: string, platformId: string) => {
@@ -135,6 +151,9 @@ const Index = () => {
       handleCreateChat();
     }
   };
+
+  // Get effective chat mode (mobile fallback)
+  const effectiveChatMode = isMobile && activeChatMode === 'side-by-side' ? 'isolated' : activeChatMode;
 
   // Set up scroll listener when chat tab is active
   useEffect(() => {
@@ -243,7 +262,7 @@ const Index = () => {
         isLoadingChats={isLoadingChats}
         activeChatId={activeChatId}
         setActiveChatId={setActiveChatId}
-        onCreateChat={handleCreateChat}
+        onCreateChat={() => handleCreateChat()}
         onDeleteChat={handleDeleteChat}
         isCreatingChat={createChatMutation.isPending}
       />
@@ -270,20 +289,41 @@ const Index = () => {
           onSignOut={handleSignOut}
         />
 
+        {/* Chat Mode Selector */}
+        {activeTab === 'chat' && activeChatId && (
+          <div className="border-b px-4 py-2">
+            <ChatModeSelector
+              currentMode={activeChatMode}
+              onModeChange={handleChatModeChange}
+            />
+          </div>
+        )}
+
         {/* Chat Messages Area */}
         <div className="flex-1 overflow-hidden">
           {activeTab === 'chat' && (
-            <ScrollArea className="h-full">
-              <div className="p-4">
-                <ChatMessages 
+            <>
+              {effectiveChatMode === 'side-by-side' && !isMobile ? (
+                <SideBySideLayout
+                  enabledPlatforms={platforms}
                   messages={messages}
-                  isLoadingMessages={isLoadingMessages}
                   isLoadingResponse={isLoadingResponse}
-                  platforms={platforms}
+                  activeAIStatuses={activeAIStatuses}
                 />
-                <div ref={messagesEndRef} className="h-4" />
-              </div>
-            </ScrollArea>
+              ) : (
+                <ScrollArea className="h-full" ref={scrollAreaRef}>
+                  <div className="p-4">
+                    <ChatMessages 
+                      messages={messages}
+                      isLoadingMessages={isLoadingMessages}
+                      isLoadingResponse={isLoadingResponse}
+                      platforms={platforms}
+                    />
+                    <div ref={messagesEndRef} className="h-4" />
+                  </div>
+                </ScrollArea>
+              )}
+            </>
           )}
 
           {activeTab === 'settings' && (

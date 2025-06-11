@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
-import type { AIPlatform, Message } from '@/types/chat';
+import type { AIPlatform, Message, ChatMode } from '@/types/chat';
 import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI, callGeminiAPI } from '@/services/aiApiService';
 import { getDefaultModel } from '@/config/aiModels';
 
@@ -197,7 +197,12 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     console.log('Platform toggle saved to database');
   };
 
-  const buildConversationForPlatform = (messages: Message[], platformId: string, enabledPlatforms: AIPlatform[]): Array<{role: 'user' | 'assistant', content: string}> => {
+  const buildConversationForPlatform = (
+    messages: Message[], 
+    platformId: string, 
+    enabledPlatforms: AIPlatform[],
+    chatMode: ChatMode = 'discussion'
+  ): Array<{role: 'user' | 'assistant', content: string}> => {
     const conversationHistory: Array<{role: 'user' | 'assistant', content: string}> = [];
     
     // Take the last 15 messages to maintain context but avoid token limits
@@ -210,37 +215,62 @@ export const usePlatforms = (user: SupabaseUser | null) => {
           content: message.content 
         });
       } else if (message.sender === 'ai') {
-        // FIXED: Skip the current platform's own messages completely
-        if (message.platform === platformId) {
-          console.log(`Skipping ${platformId}'s own message:`, message.content.substring(0, 50));
-          return;
-        }
-        
-        // Include other AI agents' responses as system context
-        if (message.platform && message.platform !== platformId) {
-          const otherPlatform = enabledPlatforms.find(p => p.id === message.platform);
-          const platformName = otherPlatform?.name || message.platform;
+        // Handle different chat modes
+        if (chatMode === 'isolated' || chatMode === 'side-by-side') {
+          // In isolated modes, skip ALL other AI responses
+          if (message.platform !== platformId) {
+            return;
+          }
+          // Include this platform's own responses
           conversationHistory.push({ 
-            role: 'user', 
-            content: `[${platformName} responded]: ${message.content}` 
+            role: 'assistant', 
+            content: message.content 
           });
+        } else {
+          // Discussion mode - original behavior
+          // Skip the current platform's own messages completely
+          if (message.platform === platformId) {
+            console.log(`Skipping ${platformId}'s own message:`, message.content.substring(0, 50));
+            return;
+          }
+          
+          // Include other AI agents' responses as system context
+          if (message.platform && message.platform !== platformId) {
+            const otherPlatform = enabledPlatforms.find(p => p.id === message.platform);
+            const platformName = otherPlatform?.name || message.platform;
+            conversationHistory.push({ 
+              role: 'user', 
+              content: `[${platformName} responded]: ${message.content}` 
+            });
+          }
         }
       }
     });
     
-    console.log(`Built conversation for ${platformId} with ${conversationHistory.length} messages`);
+    console.log(`Built conversation for ${platformId} in ${chatMode} mode with ${conversationHistory.length} messages`);
     return conversationHistory;
   };
 
-  const callAIAPI = async (platform: AIPlatform, messages: Message[], enabledPlatforms: AIPlatform[]): Promise<string> => {
+  const callAIAPI = async (
+    platform: AIPlatform, 
+    messages: Message[], 
+    enabledPlatforms: AIPlatform[],
+    chatMode: ChatMode = 'discussion'
+  ): Promise<string> => {
     if (!user) throw new Error('User not authenticated');
 
-    const conversationHistory = buildConversationForPlatform(messages, platform.id, enabledPlatforms);
+    const conversationHistory = buildConversationForPlatform(messages, platform.id, enabledPlatforms, chatMode);
     
-    // Enhanced multi-agent context instructions
-    const otherAIs = enabledPlatforms.filter(p => p.id !== platform.id && p.enabled && p.hasApiKey);
-    if (otherAIs.length > 0) {
-      const contextMessage = `You are ${platform.name} in a multi-AI conversation with: ${otherAIs.map(p => p.name).join(', ')}.
+    // Enhanced context instructions based on chat mode
+    let contextMessage = '';
+    
+    if (chatMode === 'isolated' || chatMode === 'side-by-side') {
+      contextMessage = `You are ${platform.name} in isolated mode. You can only see user messages and your own previous responses. Respond naturally and helpfully to the user's messages without referencing other AI agents.`;
+    } else {
+      // Discussion mode - multi-agent context
+      const otherAIs = enabledPlatforms.filter(p => p.id !== platform.id && p.enabled && p.hasApiKey);
+      if (otherAIs.length > 0) {
+        contextMessage = `You are ${platform.name} in a multi-AI conversation with: ${otherAIs.map(p => p.name).join(', ')}.
 
 IMPORTANT INSTRUCTIONS:
 - You can see responses from other AI agents marked with [Agent Name responded]
@@ -253,13 +283,14 @@ IMPORTANT INSTRUCTIONS:
 - DO NOT reference or build upon your own previous responses
 
 Your goal: Contribute meaningfully to this multi-agent conversation as ${platform.name}.`;
-      
-      conversationHistory.unshift({ role: 'user', content: contextMessage });
-    } else {
-      conversationHistory.unshift({ role: 'user', content: `You are ${platform.name}. Respond to the conversation naturally without referencing your previous responses.` });
+      } else {
+        contextMessage = `You are ${platform.name}. Respond to the conversation naturally without referencing your previous responses.`;
+      }
     }
+    
+    conversationHistory.unshift({ role: 'user', content: contextMessage });
 
-    console.log(`Calling ${platform.name} API with ${conversationHistory.length} messages and model: ${platform.selectedModel}`);
+    console.log(`Calling ${platform.name} API in ${chatMode} mode with ${conversationHistory.length} messages and model: ${platform.selectedModel}`);
     
     const selectedModel = platform.selectedModel || getDefaultModel(platform.id);
     
