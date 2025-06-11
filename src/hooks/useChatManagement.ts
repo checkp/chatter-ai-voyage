@@ -58,10 +58,14 @@ export const useChatManagement = (user: any) => {
   } = useQuery({
     queryKey: ['chats', user?.id],
     queryFn: fetchChats,
-    onSuccess: () => {
+  });
+
+  // Use useEffect to handle the initial load completion
+  useEffect(() => {
+    if (chats) {
       setIsInitialLoadComplete(true);
     }
-  });
+  }, [chats]);
 
   const fetchMessages = async (chatId: string | null): Promise<Message[]> => {
     if (!chatId) return [];
@@ -78,7 +82,16 @@ export const useChatManagement = (user: any) => {
         throw error;
       }
 
-      return data || [];
+      // Transform the data to match our Message interface with proper type casting
+      return (data || []).map(msg => ({
+        id: msg.id,
+        content: msg.content,
+        sender: msg.sender as 'user' | 'ai', // Type cast the string to the union type
+        platform: msg.platform,
+        created_at: msg.created_at,
+        conversation_id: msg.conversation_id,
+        timestamp: new Date(msg.created_at)
+      }));
     } catch (error: any) {
       console.error('Failed to fetch messages:', error);
       throw error;

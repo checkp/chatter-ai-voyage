@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -156,7 +155,7 @@ const Index = () => {
   // Get effective chat mode (mobile fallback)
   const effectiveChatMode = isMobile && activeChatMode === 'side-by-side' ? 'isolated' : activeChatMode;
 
-  // Transform activeAIStatuses to match expected type
+  // Transform activeAIStatuses to match expected type - converting from boolean to specific status strings
   const transformedStatuses = Object.entries(activeAIStatuses).reduce((acc, [key, value]) => {
     acc[key] = value ? 'responding' : 'completed';
     return acc;
@@ -315,7 +314,7 @@ const Index = () => {
                   enabledPlatforms={platforms}
                   messages={messages}
                   isLoadingResponse={isLoadingResponse}
-                  activeAIStatuses={transformedStatuses}
+                  activeAIStatuses={activeAIStatuses}
                 />
               ) : (
                 <ScrollArea className="h-full" ref={scrollAreaRef}>
