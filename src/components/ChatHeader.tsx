@@ -21,6 +21,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Menu, Settings, User } from 'lucide-react';
 import AgentViewToggle from './AgentViewToggle';
 import ChatModeSelector from './ChatModeSelector';
+import AIStatusBar from './AIStatusBar';
 import type { Chat, AIPlatform, ChatMode } from '@/types/chat';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -86,94 +87,107 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   const chatTitle = activeChat?.title || 'RoboHeard Chat';
 
   return (
-    <header className={`bg-secondary border-b border-border h-16 flex items-center justify-between px-4 ${className}`}>
-      {/* Mobile Menu Button */}
-      {isMobile && (
-        <Button variant="ghost" size="icon" onClick={onToggleSidebar}>
-          <Menu className="h-5 w-5" />
-        </Button>
-      )}
+    <>
+      <header className={`bg-secondary border-b border-border h-16 flex items-center justify-between px-4 ${className}`}>
+        {/* Mobile Menu Button */}
+        {isMobile && (
+          <Button variant="ghost" size="icon" onClick={onToggleSidebar}>
+            <Menu className="h-5 w-5" />
+          </Button>
+        )}
 
-      {/* Chat Title */}
-      <h1 className="font-semibold text-lg truncate">{chatTitle}</h1>
+        {/* Chat Title */}
+        <h1 className="font-semibold text-lg truncate">{chatTitle}</h1>
 
-      {/* Desktop View: Agent Toggles and Settings */}
-      {!isMobile && (
-        <div className="flex items-center gap-4">
-          <AgentViewToggle 
-            platforms={platforms}
-            activeAIStatuses={activeAIStatuses}
-            onTogglePlatform={onTogglePlatform}
-            viewMode="grid"
-            onViewModeChange={() => {}}
-          />
-          
-          <ChatModeSelector 
-            currentMode={currentChatMode}
-            onModeChange={onChatModeChange || (() => {})}
-            isolatedMode={isolatedMode || false}
-            onIsolatedToggle={onIsolatedToggle || (() => {})}
-          />
+        {/* Desktop View: Agent Toggles and Settings */}
+        {!isMobile && (
+          <div className="flex items-center gap-4">
+            <AgentViewToggle 
+              platforms={platforms}
+              activeAIStatuses={activeAIStatuses}
+              onTogglePlatform={onTogglePlatform}
+              viewMode="grid"
+              onViewModeChange={() => {}}
+            />
+            
+            <ChatModeSelector 
+              currentMode={currentChatMode}
+              onModeChange={onChatModeChange || (() => {})}
+              isolatedMode={isolatedMode || false}
+              onIsolatedToggle={onIsolatedToggle || (() => {})}
+            />
 
-          <ModeToggle />
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <ModeToggle />
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>
+                  <User className="h-4 w-4 mr-2" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
+
+        {/* Mobile View: Settings Sheet */}
+        {isMobile && (
+          <Sheet>
+            <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
                 <Settings className="h-5 w-5" />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <User className="h-4 w-4 mr-2" />
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )}
-
-      {/* Mobile View: Settings Sheet */}
-      {isMobile && (
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Settings className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-96">
-            <SheetHeader>
-              <SheetTitle>Preferences</SheetTitle>
-              <SheetDescription>
-                Customize your chat experience.
-              </SheetDescription>
-            </SheetHeader>
-            
-            <div className="py-4">
-              <AgentViewToggle 
-                platforms={platforms}
-                activeAIStatuses={activeAIStatuses}
-                onTogglePlatform={onTogglePlatform}
-                viewMode="list"
-                onViewModeChange={() => {}}
-              />
+            </SheetTrigger>
+            <SheetContent side="right" className="w-96">
+              <SheetHeader>
+                <SheetTitle>Preferences</SheetTitle>
+                <SheetDescription>
+                  Customize your chat experience.
+                </SheetDescription>
+              </SheetHeader>
               
-              <ChatModeSelector 
-                currentMode={currentChatMode}
-                onModeChange={onChatModeChange || (() => {})}
-                isolatedMode={isolatedMode || false}
-                onIsolatedToggle={onIsolatedToggle || (() => {})}
-                className="mt-4"
-              />
-            </div>
-          </SheetContent>
-        </Sheet>
-      )}
-    </header>
+              <div className="py-4">
+                <AgentViewToggle 
+                  platforms={platforms}
+                  activeAIStatuses={activeAIStatuses}
+                  onTogglePlatform={onTogglePlatform}
+                  viewMode="list"
+                  onViewModeChange={() => {}}
+                />
+                
+                <ChatModeSelector 
+                  currentMode={currentChatMode}
+                  onModeChange={onChatModeChange || (() => {})}
+                  isolatedMode={isolatedMode || false}
+                  onIsolatedToggle={onIsolatedToggle || (() => {})}
+                  className="mt-4"
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
+      </header>
+
+      {/* AI Status Bar */}
+      <AIStatusBar
+        platforms={platforms}
+        activeAIStatuses={activeAIStatuses}
+        currentChat={chats?.find(chat => chat.id === activeChatId)}
+        currentMode={currentChatMode}
+        onModeChange={onChatModeChange || (() => {})}
+        onSendMessage={onSendSingleAgentMessage}
+        onUpdateAgentOrder={onUpdateAgentOrder}
+      />
+    </>
   );
 };
 
