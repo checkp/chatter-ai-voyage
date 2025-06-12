@@ -51,9 +51,11 @@ const Index = () => {
     isLoadingMessages,
     activeChatId,
     activeChatMode,
+    isolatedMode,
     setActiveChatId,
     createChatMutation,
     updateChatModeMutation,
+    updateIsolatedModeMutation,
     deleteChatMutation,
     isInitialLoadComplete
   } = useChatManagement(user);
@@ -105,12 +107,21 @@ const Index = () => {
   const handleChatModeChange = (mode: ChatMode) => {
     if (!activeChatId) return;
     
-    // On mobile, side-by-side falls back to isolated
-    const effectiveMode = isMobile && mode === 'side-by-side' ? 'isolated' : mode;
+    // On mobile, side-by-side modes fall back to discussion
+    const effectiveMode = isMobile && (mode === 'side-by-side' || mode === 'discussion-side-by-side') ? 'discussion' : mode;
     
     updateChatModeMutation.mutate({ 
       chatId: activeChatId, 
       chatMode: effectiveMode 
+    });
+  };
+
+  const handleIsolatedModeToggle = (isolated: boolean) => {
+    if (!activeChatId) return;
+    
+    updateIsolatedModeMutation.mutate({
+      chatId: activeChatId,
+      isolatedMode: isolated
     });
   };
 
@@ -153,7 +164,7 @@ const Index = () => {
   };
 
   // Get effective chat mode (mobile fallback)
-  const effectiveChatMode = isMobile && activeChatMode === 'side-by-side' ? 'isolated' : activeChatMode;
+  const effectiveChatMode = isMobile && (activeChatMode === 'side-by-side' || activeChatMode === 'discussion-side-by-side') ? 'discussion' : activeChatMode;
 
   // Transform activeAIStatuses to match expected type - converting from boolean to specific status strings
   const transformedStatuses = Object.entries(activeAIStatuses).reduce((acc, [key, value]) => {
@@ -294,20 +305,24 @@ const Index = () => {
           onUpdateAgentOrder={updateAgentOrder}
           onSignOut={handleSignOut}
           currentChatMode={activeChatMode}
+          isolatedMode={isolatedMode}
           onChatModeChange={handleChatModeChange}
+          onIsolatedModeToggle={handleIsolatedModeToggle}
         />
 
         {/* Chat Messages Area */}
         <div className="flex-1 overflow-hidden">
           {activeTab === 'chat' && (
             <>
-              {effectiveChatMode === 'side-by-side' && !isMobile ? (
+              {(effectiveChatMode === 'side-by-side' || effectiveChatMode === 'discussion-side-by-side') && !isMobile ? (
                 <SideBySideLayout
                   enabledPlatforms={platforms}
                   messages={messages}
                   isLoadingResponse={isLoadingResponse}
                   activeAIStatuses={activeAIStatuses}
                   onTogglePlatform={togglePlatform}
+                  chatMode={effectiveChatMode}
+                  isolatedMode={isolatedMode}
                 />
               ) : (
                 <ScrollArea className="h-full" ref={scrollAreaRef}>

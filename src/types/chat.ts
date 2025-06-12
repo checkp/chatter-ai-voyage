@@ -1,5 +1,5 @@
 
-export type ChatMode = 'discussion' | 'isolated' | 'side-by-side';
+export type ChatMode = 'discussion' | 'isolated' | 'side-by-side' | 'discussion-side-by-side';
 
 export interface Message {
   id: string;
@@ -21,6 +21,7 @@ export interface Chat {
   updated_at: string;
   user_id: string;
   chat_mode?: ChatMode;
+  isolated_mode?: boolean;
   messages?: Message[];
   createdAt?: Date;
   lastUpdated?: Date;

@@ -1,14 +1,18 @@
+
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Bot, Brain, Search, Zap, Gem } from 'lucide-react';
-import type { AIPlatform, Chat } from '@/types/chat';
+import { Bot, Brain, Search, Zap, Gem, Grid3X3, Users, Layout } from 'lucide-react';
+import type { AIPlatform, Chat, ChatMode } from '@/types/chat';
 import BotHistoryDialog from './BotHistoryDialog';
 
 interface AIStatusBarProps {
   platforms: AIPlatform[];
   activeAIStatuses: Record<string, 'thinking' | 'responding' | 'completed' | 'error'>;
   currentChat?: Chat | null;
+  currentMode: ChatMode;
+  onModeChange: (mode: ChatMode) => void;
   onSendMessage?: (message: string, platformId: string) => void;
 }
 
@@ -16,6 +20,8 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
   platforms, 
   activeAIStatuses, 
   currentChat,
+  currentMode,
+  onModeChange,
   onSendMessage 
 }) => {
   const [selectedPlatform, setSelectedPlatform] = useState<AIPlatform | null>(null);
@@ -92,49 +98,94 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
     setIsDialogOpen(true);
   };
 
+  const getViewIcon = (mode: ChatMode) => {
+    switch (mode) {
+      case 'discussion':
+        return Users;
+      case 'side-by-side':
+        return Grid3X3;
+      case 'discussion-side-by-side':
+        return Layout;
+      default:
+        return Users;
+    }
+  };
+
+  const getNextMode = (current: ChatMode): ChatMode => {
+    const modes: ChatMode[] = ['discussion', 'side-by-side', 'discussion-side-by-side'];
+    const currentIndex = modes.indexOf(current);
+    return modes[(currentIndex + 1) % modes.length];
+  };
+
   const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
 
   if (enabledPlatforms.length === 0) {
     return null;
   }
 
+  const ViewIcon = getViewIcon(currentMode);
+
   return (
     <>
       <div className="bg-secondary/50 border-b border-border px-4 py-2">
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-muted-foreground">AI Agents:</span>
-          <div className="flex items-center gap-3">
-            <TooltipProvider>
-              {enabledPlatforms.map((platform) => {
-                const status = activeAIStatuses[platform.id];
-                const Icon = getPlatformIcon(platform.id);
-                
-                return (
-                  <Tooltip key={platform.id}>
-                    <TooltipTrigger asChild>
-                      <div 
-                        className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors"
-                        onClick={() => handlePlatformClick(platform)}
-                      >
-                        <div className="relative">
-                          <Icon className="w-4 h-4 text-muted-foreground" />
-                          <div 
-                            className={`absolute -top-1 -right-1 w-2 h-2 rounded-full ${getStatusColor(status || 'idle')} ${getStatusAnimation(status || 'idle')}`}
-                          />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-muted-foreground">AI Agents:</span>
+            <div className="flex items-center gap-3">
+              <TooltipProvider>
+                {enabledPlatforms.map((platform) => {
+                  const status = activeAIStatuses[platform.id];
+                  const Icon = getPlatformIcon(platform.id);
+                  
+                  return (
+                    <Tooltip key={platform.id}>
+                      <TooltipTrigger asChild>
+                        <div 
+                          className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors"
+                          onClick={() => handlePlatformClick(platform)}
+                        >
+                          <div className="relative">
+                            <Icon className="w-4 h-4 text-muted-foreground" />
+                            <div 
+                              className={`absolute -top-1 -right-1 w-2 h-2 rounded-full ${getStatusColor(status || 'idle')} ${getStatusAnimation(status || 'idle')}`}
+                            />
+                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            {platform.name}
+                          </Badge>
                         </div>
-                        <Badge variant="outline" className="text-xs">
-                          {platform.name}
-                        </Badge>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-sm">{getVerboseStatus(platform, status)}</p>
-                      <p className="text-xs text-muted-foreground mt-1">Click to view chat history</p>
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              })}
-            </TooltipProvider>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-sm">{getVerboseStatus(platform, status)}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Click to view chat history</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </TooltipProvider>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground">View:</span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onModeChange(getNextMode(currentMode))}
+                  className="flex items-center gap-2"
+                >
+                  <ViewIcon className="h-4 w-4" />
+                  <span className="hidden sm:inline capitalize">
+                    {currentMode.replace('-', ' ')}
+                  </span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Click to switch view mode</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
       </div>

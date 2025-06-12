@@ -7,6 +7,7 @@ import type { Chat, Message, ChatMode } from '@/types/chat';
 export const useChatManagement = (user: any) => {
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [activeChatMode, setActiveChatMode] = useState<ChatMode>('discussion');
+  const [isolatedMode, setIsolatedMode] = useState<boolean>(false);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const queryClient = useQueryClient();
 
@@ -23,6 +24,7 @@ export const useChatManagement = (user: any) => {
           updated_at,
           user_id,
           chat_mode,
+          isolated_mode,
           messages:messages(count)
         `)
         .eq('user_id', user.id)
@@ -40,7 +42,8 @@ export const useChatManagement = (user: any) => {
         created_at: chat.created_at,
         updated_at: chat.updated_at,
         user_id: chat.user_id,
-        chat_mode: chat.chat_mode as ChatMode, // Type cast the string to ChatMode
+        chat_mode: chat.chat_mode as ChatMode,
+        isolated_mode: chat.isolated_mode || false,
         messageCount: Array.isArray(chat.messages) ? chat.messages.length : 0
       }));
 
@@ -109,7 +112,7 @@ export const useChatManagement = (user: any) => {
   });
 
   const createChatMutation = useMutation({
-    mutationFn: async ({ title, chatMode = 'discussion' }: { title: string; chatMode?: ChatMode }) => {
+    mutationFn: async ({ title, chatMode = 'discussion', isolatedMode = false }: { title: string; chatMode?: ChatMode; isolatedMode?: boolean }) => {
       if (!user) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
@@ -117,17 +120,18 @@ export const useChatManagement = (user: any) => {
         .insert([{
           title,
           user_id: user.id,
-          chat_mode: chatMode
+          chat_mode: chatMode,
+          isolated_mode: isolatedMode
         }])
-        .select('id, title, created_at, updated_at, user_id, chat_mode')
+        .select('id, title, created_at, updated_at, user_id, chat_mode, isolated_mode')
         .single();
 
       if (error) throw error;
 
-      // Transform response with proper type casting
       return {
         ...data,
         chat_mode: data.chat_mode as ChatMode,
+        isolated_mode: data.isolated_mode || false,
         messageCount: 0
       } as Chat;
     },
@@ -135,6 +139,7 @@ export const useChatManagement = (user: any) => {
       queryClient.setQueryData(['chats', user?.id], (oldChats: Chat[] = []) => [newChat, ...oldChats]);
       setActiveChatId(newChat.id);
       setActiveChatMode(newChat.chat_mode || 'discussion');
+      setIsolatedMode(newChat.isolated_mode || false);
     },
     onError: (error: any) => {
       console.error('Failed to create chat:', error);
@@ -158,10 +163,8 @@ export const useChatManagement = (user: any) => {
       return { ...data, chat_mode: data.chat_mode as ChatMode };
     },
     onSuccess: (updatedChat) => {
-      // Update local state
       setActiveChatMode(updatedChat.chat_mode);
       
-      // Update query cache
       queryClient.setQueryData(['chats', user?.id], (oldChats: Chat[] = []) =>
         oldChats.map(chat =>
           chat.id === updatedChat.id
@@ -170,11 +173,45 @@ export const useChatManagement = (user: any) => {
         )
       );
       
-      toast.success(`Chat mode changed to ${updatedChat.chat_mode}`);
+      toast.success(`Chat view changed to ${updatedChat.chat_mode}`);
     },
     onError: (error: any) => {
       console.error('Failed to update chat mode:', error);
-      toast.error('Failed to update chat mode');
+      toast.error('Failed to update chat view');
+    }
+  });
+
+  const updateIsolatedModeMutation = useMutation({
+    mutationFn: async ({ chatId, isolatedMode }: { chatId: string; isolatedMode: boolean }) => {
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('conversations')
+        .update({ isolated_mode: isolatedMode })
+        .eq('id', chatId)
+        .eq('user_id', user.id)
+        .select('id, isolated_mode')
+        .single();
+
+      if (error) throw error;
+      return { ...data, isolated_mode: data.isolated_mode };
+    },
+    onSuccess: (updatedChat) => {
+      setIsolatedMode(updatedChat.isolated_mode || false);
+      
+      queryClient.setQueryData(['chats', user?.id], (oldChats: Chat[] = []) =>
+        oldChats.map(chat =>
+          chat.id === updatedChat.id
+            ? { ...chat, isolated_mode: updatedChat.isolated_mode }
+            : chat
+        )
+      );
+      
+      toast.success(`Isolated mode ${updatedChat.isolated_mode ? 'enabled' : 'disabled'}`);
+    },
+    onError: (error: any) => {
+      console.error('Failed to update isolated mode:', error);
+      toast.error('Failed to update isolated mode');
     }
   });
 
@@ -224,6 +261,7 @@ export const useChatManagement = (user: any) => {
       const activeChat = chats.find(chat => chat.id === activeChatId);
       if (activeChat) {
         setActiveChatMode(activeChat.chat_mode || 'discussion');
+        setIsolatedMode(activeChat.isolated_mode || false);
       }
     }
   }, [activeChatId, chats]);
@@ -235,10 +273,13 @@ export const useChatManagement = (user: any) => {
     isLoadingMessages,
     activeChatId,
     activeChatMode,
+    isolatedMode,
     setActiveChatId,
     setActiveChatMode,
+    setIsolatedMode,
     createChatMutation,
     updateChatModeMutation,
+    updateIsolatedModeMutation,
     deleteChatMutation,
     isInitialLoadComplete
   };
