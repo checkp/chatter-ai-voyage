@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Bot, Brain, Search, Zap, Gem, Grid3X3, Users, Layout } from 'lucide-react';
+import { Bot, Brain, Search, Zap, Gem, Grid3X3, Users } from 'lucide-react';
 import type { AIPlatform, Chat, ChatMode } from '@/types/chat';
 import BotHistoryDialog from './BotHistoryDialog';
 
@@ -104,15 +104,13 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
         return Users;
       case 'side-by-side':
         return Grid3X3;
-      case 'discussion-side-by-side':
-        return Layout;
       default:
         return Users;
     }
   };
 
   const getNextMode = (current: ChatMode): ChatMode => {
-    const modes: ChatMode[] = ['discussion', 'side-by-side', 'discussion-side-by-side'];
+    const modes: ChatMode[] = ['discussion', 'side-by-side'];
     const currentIndex = modes.indexOf(current);
     return modes[(currentIndex + 1) % modes.length];
   };
