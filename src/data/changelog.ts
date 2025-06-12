@@ -1,4 +1,3 @@
-
 export interface ChangelogEntry {
   version: string;
   date: string;
@@ -12,6 +11,23 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "2.1.1",
+    date: "2025-01-12",
+    title: "Enhanced Side-by-Side Mode & Agent Controls",
+    description: "Major improvements to side-by-side chat mode with better agent management and responsive design.",
+    type: "improvement",
+    changes: [
+      { type: "improvement", description: "🖥️ Enhanced Side-by-Side Layout: All enabled agents now display in one horizontal scrollable row" },
+      { type: "improvement", description: "📜 Scrollable Agent Windows: Each agent window now has proper scrolling for message history" },
+      { type: "feature", description: "👁️ Individual Agent Toggle: Quick enable/disable buttons directly in each agent window" },
+      { type: "improvement", description: "🎯 Improved Mode Selector: Chat mode selection moved to header for better accessibility" },
+      { type: "improvement", description: "🔄 Better Agent Synchronization: Agent status updates consistently across all views" },
+      { type: "improvement", description: "📱 Responsive Design: Side-by-side mode gracefully handles different screen sizes" },
+      { type: "bugfix", description: "🐛 Fixed Runtime Errors: Resolved undefined message filtering in isolated mode" },
+      { type: "improvement", description: "⚡ Performance Optimizations: Faster rendering of multiple agent windows" }
+    ]
+  },
   {
     version: "2.1.0",
     date: "2025-01-11",
