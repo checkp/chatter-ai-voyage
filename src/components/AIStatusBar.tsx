@@ -20,9 +20,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Bot, Brain, Search, Zap, Gem, Grid3X3, Users, GripVertical } from 'lucide-react';
+import { Bot, Brain, Search, Zap, Gem, GripVertical } from 'lucide-react';
 import type { AIPlatform, Chat, ChatMode } from '@/types/chat';
 import BotHistoryDialog from './BotHistoryDialog';
 
@@ -183,8 +182,6 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
   platforms, 
   activeAIStatuses, 
   currentChat,
-  currentMode,
-  onModeChange,
   onSendMessage,
   onUpdateAgentOrder
 }) => {
@@ -203,23 +200,6 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
       setSelectedPlatform(platform);
       setIsDialogOpen(true);
     }
-  };
-
-  const getViewIcon = (mode: ChatMode) => {
-    switch (mode) {
-      case 'discussion':
-        return Users;
-      case 'side-by-side':
-        return Grid3X3;
-      default:
-        return Users;
-    }
-  };
-
-  const getNextMode = (current: ChatMode): ChatMode => {
-    const modes: ChatMode[] = ['discussion', 'side-by-side'];
-    const currentIndex = modes.indexOf(current);
-    return modes[(currentIndex + 1) % modes.length];
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -253,63 +233,37 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
     return null;
   }
 
-  const ViewIcon = getViewIcon(currentMode);
-
   return (
     <>
       <div className="bg-secondary/50 border-b border-border px-4 py-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-muted-foreground">AI Agents:</span>
-            <div className="flex items-center gap-3">
-              <TooltipProvider>
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium text-muted-foreground">AI Agents:</span>
+          <div className="flex items-center gap-3">
+            <TooltipProvider>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={sortedPlatforms.map(p => p.id)}
+                  strategy={horizontalListSortingStrategy}
                 >
-                  <SortableContext
-                    items={sortedPlatforms.map(p => p.id)}
-                    strategy={horizontalListSortingStrategy}
-                  >
-                    {sortedPlatforms.map((platform) => {
-                      const status = activeAIStatuses[platform.id];
-                      
-                      return (
-                        <SortableAgent
-                          key={platform.id}
-                          platform={platform}
-                          status={status || 'idle'}
-                          onPlatformClick={handlePlatformClick}
-                        />
-                      );
-                    })}
-                  </SortableContext>
-                </DndContext>
-              </TooltipProvider>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-muted-foreground">View:</span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onModeChange(getNextMode(currentMode))}
-                  className="flex items-center gap-2"
-                >
-                  <ViewIcon className="h-4 w-4" />
-                  <span className="hidden sm:inline capitalize">
-                    {currentMode.replace('-', ' ')}
-                  </span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Click to switch view mode</p>
-              </TooltipContent>
-            </Tooltip>
+                  {sortedPlatforms.map((platform) => {
+                    const status = activeAIStatuses[platform.id];
+                    
+                    return (
+                      <SortableAgent
+                        key={platform.id}
+                        platform={platform}
+                        status={status || 'idle'}
+                        onPlatformClick={handlePlatformClick}
+                      />
+                    );
+                  })}
+                </SortableContext>
+              </DndContext>
+            </TooltipProvider>
           </div>
         </div>
       </div>
