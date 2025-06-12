@@ -95,7 +95,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-4">
                 <h1 className="text-lg font-semibold">
-                  {chats?.find(chat => chat.id === activeChatId)?.title || 'Select a chat'}
+                  {chats?.find(chat => chat.id === activeChatId)?.title || 'RoboHeard'}
                 </h1>
                 
                 {/* Chat Mode Selector */}

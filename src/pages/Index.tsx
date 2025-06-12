@@ -251,7 +251,7 @@ const Index = () => {
       <div className="flex flex-col items-center justify-center h-screen">
         <img 
           src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png" 
-          alt="RoboHerd Logo" 
+          alt="RoboHeard Logo" 
           className="w-full max-w-2xl h-auto object-contain"
         />
         <h1 className="text-2xl font-bold mb-4">Please sign in to continue.</h1>
