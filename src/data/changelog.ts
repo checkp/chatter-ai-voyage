@@ -13,6 +13,21 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.1.2",
+    date: "2025-01-12",
+    title: "UI Improvements & User Feedback",
+    description: "Enhanced user interface with better notification positioning and added contact functionality.",
+    type: "improvement",
+    changes: [
+      { type: "feature", description: "📧 Contact Us Button: Added convenient feedback button in bottom-left corner" },
+      { type: "feature", description: "💬 Feedback Dialog: Easy-to-use contact form for suggestions and issue reporting" },
+      { type: "improvement", description: "🔔 Improved Toast Positioning: Notifications now appear higher to avoid covering controls" },
+      { type: "improvement", description: "👁️ Better Drag Handle Visibility: Made draggable AI status bar handles much more visible" },
+      { type: "bugfix", description: "🎯 Fixed LED Status Positioning: Status indicators no longer cover agent icons" },
+      { type: "improvement", description: "✨ Enhanced Visual Feedback: Better contrast and positioning throughout the interface" }
+    ]
+  },
+  {
     version: "2.1.1",
     date: "2025-01-12",
     title: "Enhanced Side-by-Side Mode & Agent Controls",
