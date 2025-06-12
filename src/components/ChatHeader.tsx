@@ -1,26 +1,27 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Settings, X, LogOut, Sparkles } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import FreeModeControls from '@/components/FreeModeControls';
-import BotHistoryDialog from '@/components/BotHistoryDialog';
-import TokenBalance from '@/components/TokenBalance';
-import AgentViewToggle from '@/components/AgentViewToggle';
-import ChangelogDialog from '@/components/ChangelogDialog';
-import ChatModeSelector from '@/components/ChatModeSelector';
-import type { Chat, AIPlatform, ChatMode } from '@/types/chat';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Settings, MessageSquare, User, LogOut, Sparkles } from 'lucide-react';
+import { ModeToggle } from './ModeToggle';
+import TokenBalance from './TokenBalance';
+import ChatModeSelector from './ChatModeSelector';
+import FreeModeControls from './FreeModeControls';
+import ChangelogDialog from './ChangelogDialog';
+import type { Chat, ChatMode, AIPlatform } from '@/types/chat';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface ChatHeaderProps {
   chats: Chat[] | undefined;
   activeChatId: string | null;
   activeAIStatuses: Record<string, 'thinking' | 'responding' | 'completed' | 'error'>;
   platforms: AIPlatform[];
-  activeTab: 'chat' | 'settings';
-  setActiveTab: (tab: 'chat' | 'settings') => void;
-  user: any;
-  // Free mode props
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  user: SupabaseUser;
   isFreeMode: boolean;
   isFreeModeRunning: boolean;
   freeModeMessageLimit: number;
@@ -28,19 +29,14 @@ interface ChatHeaderProps {
   onStartFreeMode: () => void;
   onStopFreeMode: () => void;
   onUpdateFreeModeLimit: (limit: number) => void;
-  // Single agent messaging
-  onSendSingleAgentMessage?: (message: string, platformId: string) => void;
-  // Agent reordering
-  onUpdateAgentOrder?: (reorderedPlatforms: AIPlatform[]) => void;
-  // Chat mode props
+  onSendSingleAgentMessage: (message: string, platformId: string) => void;
+  onUpdateAgentOrder: (reorderedPlatforms: AIPlatform[]) => void;
+  onSignOut: () => void;
   currentChatMode: ChatMode;
   isolatedMode: boolean;
   onChatModeChange: (mode: ChatMode) => void;
   onIsolatedModeToggle: (isolated: boolean) => void;
-  // Logout function
-  onSignOut: () => void;
-  // Platform toggle
-  onTogglePlatform?: (platformId: string) => void;
+  onTogglePlatform: (platformId: string) => void;
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -60,132 +56,106 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   onUpdateFreeModeLimit,
   onSendSingleAgentMessage,
   onUpdateAgentOrder,
+  onSignOut,
   currentChatMode,
   isolatedMode,
   onChatModeChange,
   onIsolatedModeToggle,
-  onSignOut,
   onTogglePlatform
 }) => {
-  const [selectedAgent, setSelectedAgent] = useState<AIPlatform | null>(null);
-  const [isAgentDialogOpen, setIsAgentDialogOpen] = useState(false);
-  const [isChangelogOpen, setIsChangelogOpen] = useState(false);
-  const [agentViewMode, setAgentViewMode] = useState<'grid' | 'list'>('list');
-  const navigate = useNavigate();
-
-  const handlePurchaseClick = () => {
-    navigate('/purchase');
-  };
-
-  const handleAgentClick = (platform: AIPlatform) => {
-    setSelectedAgent(platform);
-    setIsAgentDialogOpen(true);
-  };
-
-  const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
-  const currentChat = chats?.find(chat => chat.id === activeChatId);
+  const [showChangelog, setShowChangelog] = useState(false);
+  
+  const activeChat = chats?.find(chat => chat.id === activeChatId);
 
   return (
     <>
-      <header className="border-b bg-secondary border-border p-4 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-4">
-                <h1 className="text-lg font-semibold">
-                  {chats?.find(chat => chat.id === activeChatId)?.title || 'RoboHeard'}
-                </h1>
-                
-                {/* Chat Mode Selector */}
-                {activeTab === 'chat' && activeChatId && (
-                  <ChatModeSelector
-                    currentMode={currentChatMode}
-                    onModeChange={onChatModeChange}
-                    isolatedMode={isolatedMode}
-                    onIsolatedToggle={onIsolatedModeToggle}
-                  />
-                )}
-              </div>
-              
-              {/* Free Mode Controls */}
-              {activeTab === 'chat' && (
-                <FreeModeControls
-                  isFreeMode={isFreeMode}
-                  isFreeModeRunning={isFreeModeRunning}
-                  freeModeMessageLimit={freeModeMessageLimit}
-                  freeModeMessageCount={freeModeMessageCount}
-                  onStart={onStartFreeMode}
-                  onStop={onStopFreeMode}
-                  onUpdateLimit={onUpdateFreeModeLimit}
-                />
-              )}
-            </div>
-            
-            {/* Agent View Toggle */}
-            {enabledPlatforms.length > 0 && activeTab === 'chat' && (
-              <AgentViewToggle
-                platforms={platforms}
-                activeAIStatuses={activeAIStatuses}
-                onTogglePlatform={onTogglePlatform || (() => {})}
-                onAgentClick={handleAgentClick}
-                viewMode={agentViewMode}
-                onViewModeChange={setAgentViewMode}
-              />
+      <header className="flex items-center justify-between p-4 bg-background border-b border-border">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-semibold text-foreground">
+              {activeChat?.title || 'RoboHerd'}
+            </h1>
+            {activeChat && (
+              <Badge variant="outline" className="text-xs">
+                {currentChatMode} {isolatedMode && '• isolated'}
+              </Badge>
             )}
           </div>
-          
-          <div className="flex items-center gap-4 ml-4">
-            {/* Token Balance */}
-            {user && <TokenBalance user={user} onPurchaseClick={handlePurchaseClick} />}
+
+          {/* Chat Mode Selector - only show when on chat tab */}
+          {activeTab === 'chat' && activeChatId && (
+            <ChatModeSelector
+              currentMode={currentChatMode}
+              onModeChange={onChatModeChange}
+              isolatedMode={isolatedMode}
+              onIsolatedToggle={onIsolatedModeToggle}
+            />
+          )}
+        </div>
+
+        <div className="flex items-center gap-4">
+          {/* Free Mode Controls - only show when on chat tab */}
+          {activeTab === 'chat' && activeChatId && (
+            <FreeModeControls
+              isFreeMode={isFreeMode}
+              isFreeModeRunning={isFreeModeRunning}
+              freeModeMessageLimit={freeModeMessageLimit}
+              freeModeMessageCount={freeModeMessageCount}
+              onStart={onStartFreeMode}
+              onStop={onStopFreeMode}
+              onUpdateLimit={onUpdateFreeModeLimit}
+            />
+          )}
+
+          {/* Tab Navigation */}
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="chat" className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                <span className="hidden sm:inline">Chat</span>
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Settings</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {/* User Menu */}
+          <div className="flex items-center gap-2">
+            <TokenBalance user={user} onPurchaseClick={() => setActiveTab('settings')} />
+            <ModeToggle />
             
-            {/* What's New Button */}
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={() => setIsChangelogOpen(true)}
-              title="What's New?"
-            >
-              <Sparkles className="h-4 w-4" />
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={() => setActiveTab(activeTab === 'chat' ? 'settings' : 'chat')}
-            >
-              {activeTab === 'chat' ? <Settings className="h-4 w-4" /> : <X className="h-4 w-4" />}
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={onSignOut}
-              title="Sign Out"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
-            
-            <Avatar>
-              <AvatarImage src={`https://avatar.vercel.sh/${user.email}.png`} />
-              <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
-            </Avatar>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.user_metadata?.avatar_url} />
+                    <AvatarFallback>
+                      <User className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setShowChangelog(true)}>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  What's New?
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
 
-      {/* Agent Chat Dialog */}
-      <BotHistoryDialog
-        open={isAgentDialogOpen}
-        onOpenChange={setIsAgentDialogOpen}
-        platform={selectedAgent}
-        currentChat={currentChat || null}
-        onSendMessage={onSendSingleAgentMessage}
-      />
-
-      {/* Changelog Dialog */}
-      <ChangelogDialog
-        open={isChangelogOpen}
-        onOpenChange={setIsChangelogOpen}
+      <ChangelogDialog 
+        open={showChangelog} 
+        onOpenChange={setShowChangelog} 
       />
     </>
   );
