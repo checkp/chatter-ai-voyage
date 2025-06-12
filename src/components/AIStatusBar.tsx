@@ -1,9 +1,28 @@
 
 import React, { useState } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Bot, Brain, Search, Zap, Gem, Grid3X3, Users } from 'lucide-react';
+import { Bot, Brain, Search, Zap, Gem, Grid3X3, Users, GripVertical } from 'lucide-react';
 import type { AIPlatform, Chat, ChatMode } from '@/types/chat';
 import BotHistoryDialog from './BotHistoryDialog';
 
@@ -14,18 +33,30 @@ interface AIStatusBarProps {
   currentMode: ChatMode;
   onModeChange: (mode: ChatMode) => void;
   onSendMessage?: (message: string, platformId: string) => void;
+  onUpdateAgentOrder?: (reorderedPlatforms: AIPlatform[]) => void;
 }
 
-const AIStatusBar: React.FC<AIStatusBarProps> = ({ 
-  platforms, 
-  activeAIStatuses, 
-  currentChat,
-  currentMode,
-  onModeChange,
-  onSendMessage 
-}) => {
-  const [selectedPlatform, setSelectedPlatform] = useState<AIPlatform | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+interface SortableAgentProps {
+  platform: AIPlatform;
+  status: string;
+  onPlatformClick: (platform: AIPlatform) => void;
+}
+
+const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onPlatformClick }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: platform.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   const getPlatformIcon = (platformId: string) => {
     switch (platformId) {
@@ -93,6 +124,69 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
     }
   };
 
+  const Icon = getPlatformIcon(platform.id);
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-2 group"
+      {...attributes}
+    >
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors">
+            <div
+              {...listeners}
+              className="flex items-center gap-1 cursor-grab active:cursor-grabbing"
+            >
+              <GripVertical className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            
+            <div 
+              className="flex items-center gap-2"
+              onClick={() => onPlatformClick(platform)}
+            >
+              <div className="relative">
+                <Icon className="w-4 h-4 text-muted-foreground" />
+                <div 
+                  className={`absolute -top-1 -right-1 w-2 h-2 rounded-full ${getStatusColor(status)} ${getStatusAnimation(status)}`}
+                />
+              </div>
+              <Badge variant="outline" className="text-xs">
+                {platform.name}
+              </Badge>
+            </div>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="text-sm">{getVerboseStatus(platform, status)}</p>
+          <p className="text-xs text-muted-foreground mt-1">Click to view chat history • Drag to reorder</p>
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  );
+};
+
+const AIStatusBar: React.FC<AIStatusBarProps> = ({ 
+  platforms, 
+  activeAIStatuses, 
+  currentChat,
+  currentMode,
+  onModeChange,
+  onSendMessage,
+  onUpdateAgentOrder
+}) => {
+  const [selectedPlatform, setSelectedPlatform] = useState<AIPlatform | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const handlePlatformClick = (platform: AIPlatform) => {
     setSelectedPlatform(platform);
     setIsDialogOpen(true);
@@ -115,7 +209,21 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
     return modes[(currentIndex + 1) % modes.length];
   };
 
-  const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id && onUpdateAgentOrder) {
+      const oldIndex = enabledPlatforms.findIndex(p => p.id === active.id);
+      const newIndex = enabledPlatforms.findIndex(p => p.id === over?.id);
+      
+      const reorderedPlatforms = arrayMove(enabledPlatforms, oldIndex, newIndex);
+      onUpdateAgentOrder(reorderedPlatforms);
+    }
+  };
+
+  const enabledPlatforms = platforms
+    .filter(p => p.enabled && p.hasApiKey)
+    .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
 
   if (enabledPlatforms.length === 0) {
     return null;
@@ -131,35 +239,29 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
             <span className="text-sm font-medium text-muted-foreground">AI Agents:</span>
             <div className="flex items-center gap-3">
               <TooltipProvider>
-                {enabledPlatforms.map((platform) => {
-                  const status = activeAIStatuses[platform.id];
-                  const Icon = getPlatformIcon(platform.id);
-                  
-                  return (
-                    <Tooltip key={platform.id}>
-                      <TooltipTrigger asChild>
-                        <div 
-                          className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors"
-                          onClick={() => handlePlatformClick(platform)}
-                        >
-                          <div className="relative">
-                            <Icon className="w-4 h-4 text-muted-foreground" />
-                            <div 
-                              className={`absolute -top-1 -right-1 w-2 h-2 rounded-full ${getStatusColor(status || 'idle')} ${getStatusAnimation(status || 'idle')}`}
-                            />
-                          </div>
-                          <Badge variant="outline" className="text-xs">
-                            {platform.name}
-                          </Badge>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-sm">{getVerboseStatus(platform, status)}</p>
-                        <p className="text-xs text-muted-foreground mt-1">Click to view chat history</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  );
-                })}
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={enabledPlatforms.map(p => p.id)}
+                    strategy={horizontalListSortingStrategy}
+                  >
+                    {enabledPlatforms.map((platform) => {
+                      const status = activeAIStatuses[platform.id];
+                      
+                      return (
+                        <SortableAgent
+                          key={platform.id}
+                          platform={platform}
+                          status={status || 'idle'}
+                          onPlatformClick={handlePlatformClick}
+                        />
+                      );
+                    })}
+                  </SortableContext>
+                </DndContext>
               </TooltipProvider>
             </div>
           </div>
