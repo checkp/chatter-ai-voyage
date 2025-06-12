@@ -75,7 +75,9 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onPlatf
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string, isEnabled: boolean) => {
+    if (!isEnabled) return 'bg-gray-300';
+    
     switch (status) {
       case 'thinking':
         return 'bg-yellow-400';
@@ -90,7 +92,9 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onPlatf
     }
   };
 
-  const getStatusAnimation = (status: string) => {
+  const getStatusAnimation = (status: string, isEnabled: boolean) => {
+    if (!isEnabled) return '';
+    
     switch (status) {
       case 'thinking':
         return 'animate-pulse';
@@ -106,8 +110,12 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onPlatf
   };
 
   const getVerboseStatus = (platform: AIPlatform, status?: string) => {
+    if (!platform.enabled) {
+      return `${platform.name} is disabled`;
+    }
+    
     if (!status) {
-      return `${platform.name} is ${platform.enabled ? 'enabled and ready' : 'disabled'}`;
+      return `${platform.name} is enabled and ready`;
     }
 
     switch (status) {
@@ -125,17 +133,18 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onPlatf
   };
 
   const Icon = getPlatformIcon(platform.id);
+  const isEnabled = platform.enabled && platform.hasApiKey;
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-2 group"
+      className={`flex items-center gap-2 group ${!isEnabled ? 'opacity-50' : ''}`}
       {...attributes}
     >
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors">
+          <div className={`flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors ${!isEnabled ? 'cursor-not-allowed' : ''}`}>
             <div
               {...listeners}
               className="flex items-center gap-1 cursor-grab active:cursor-grabbing"
@@ -145,15 +154,15 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onPlatf
             
             <div 
               className="flex items-center gap-2"
-              onClick={() => onPlatformClick(platform)}
+              onClick={() => isEnabled && onPlatformClick(platform)}
             >
               <div className="relative">
-                <Icon className="w-4 h-4 text-muted-foreground" />
+                <Icon className={`w-4 h-4 ${isEnabled ? 'text-muted-foreground' : 'text-gray-400'}`} />
                 <div 
-                  className={`absolute -top-1 -right-1 w-2 h-2 rounded-full ${getStatusColor(status)} ${getStatusAnimation(status)}`}
+                  className={`absolute -top-1 -right-1 w-2 h-2 rounded-full ${getStatusColor(status, isEnabled)} ${getStatusAnimation(status, isEnabled)}`}
                 />
               </div>
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className={`text-xs ${!isEnabled ? 'bg-gray-100 text-gray-400 border-gray-300' : ''}`}>
                 {platform.name}
               </Badge>
             </div>
@@ -161,7 +170,9 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onPlatf
         </TooltipTrigger>
         <TooltipContent>
           <p className="text-sm">{getVerboseStatus(platform, status)}</p>
-          <p className="text-xs text-muted-foreground mt-1">Click to view chat history • Drag to reorder</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {isEnabled ? 'Click to view chat history • Drag to reorder' : 'Agent is disabled'}
+          </p>
         </TooltipContent>
       </Tooltip>
     </div>
@@ -188,8 +199,10 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
   );
 
   const handlePlatformClick = (platform: AIPlatform) => {
-    setSelectedPlatform(platform);
-    setIsDialogOpen(true);
+    if (platform.enabled && platform.hasApiKey) {
+      setSelectedPlatform(platform);
+      setIsDialogOpen(true);
+    }
   };
 
   const getViewIcon = (mode: ChatMode) => {
@@ -213,19 +226,28 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
     const { active, over } = event;
 
     if (active.id !== over?.id && onUpdateAgentOrder) {
-      const oldIndex = enabledPlatforms.findIndex(p => p.id === active.id);
-      const newIndex = enabledPlatforms.findIndex(p => p.id === over?.id);
+      console.log('Drag end - reordering agents');
       
-      const reorderedPlatforms = arrayMove(enabledPlatforms, oldIndex, newIndex);
-      onUpdateAgentOrder(reorderedPlatforms);
+      // Sort platforms by display order for consistent ordering
+      const sortedPlatforms = [...platforms].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+      
+      const oldIndex = sortedPlatforms.findIndex(p => p.id === active.id);
+      const newIndex = sortedPlatforms.findIndex(p => p.id === over?.id);
+      
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reorderedPlatforms = arrayMove(sortedPlatforms, oldIndex, newIndex);
+        console.log('Calling onUpdateAgentOrder with:', reorderedPlatforms.map(p => p.name));
+        onUpdateAgentOrder(reorderedPlatforms);
+      }
     }
   };
 
-  const enabledPlatforms = platforms
-    .filter(p => p.enabled && p.hasApiKey)
+  // Show all platforms, sorted by display order
+  const sortedPlatforms = [...platforms]
+    .filter(p => p.hasApiKey)
     .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
 
-  if (enabledPlatforms.length === 0) {
+  if (sortedPlatforms.length === 0) {
     return null;
   }
 
@@ -245,10 +267,10 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
                   onDragEnd={handleDragEnd}
                 >
                   <SortableContext
-                    items={enabledPlatforms.map(p => p.id)}
+                    items={sortedPlatforms.map(p => p.id)}
                     strategy={horizontalListSortingStrategy}
                   >
-                    {enabledPlatforms.map((platform) => {
+                    {sortedPlatforms.map((platform) => {
                       const status = activeAIStatuses[platform.id];
                       
                       return (
