@@ -70,7 +70,7 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onAgent
   };
 
   const getStatusColor = (status: string, isEnabled: boolean) => {
-    if (!isEnabled) return 'bg-gray-300';
+    if (!isEnabled) return 'bg-gray-400';
     
     switch (status) {
       case 'thinking':
@@ -110,7 +110,7 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onAgent
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-2 group ${!isEnabled ? 'opacity-50' : ''}`}
+      className={`flex items-center gap-2 group ${!isEnabled ? 'opacity-60' : ''}`}
       {...attributes}
     >
       <div
@@ -124,7 +124,7 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onAgent
         <div className="relative">
           <Icon className={`w-4 h-4 ${isEnabled ? 'text-muted-foreground' : 'text-gray-400'}`} />
           <div 
-            className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${getStatusColor(status, isEnabled)} ${getStatusAnimation(status, isEnabled)}`}
+            className={`absolute -top-1 -right-1 w-4 h-4 rounded-full ${getStatusColor(status, isEnabled)} ${getStatusAnimation(status, isEnabled)}`}
           />
         </div>
         <Badge 
