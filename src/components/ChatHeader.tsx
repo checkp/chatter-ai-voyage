@@ -19,8 +19,8 @@ import {
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Menu, Settings, User } from 'lucide-react';
-import { AgentViewToggle } from './AgentViewToggle';
-import { ChatModeSelector } from './ChatModeSelector';
+import AgentViewToggle from './AgentViewToggle';
+import ChatModeSelector from './ChatModeSelector';
 import type { Chat, AIPlatform, ChatMode } from '@/types/chat';
 
 interface ChatHeaderProps {
