@@ -32,7 +32,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           <Menu className="h-5 w-5" />
         </Button>
         <h1 className="text-lg font-semibold">
-          {activeView === 'chat' ? 'RoboHerd' : 'Settings'}
+          {activeView === 'chat' ? 'RoboHeard' : 'Settings'}
         </h1>
       </div>
 
