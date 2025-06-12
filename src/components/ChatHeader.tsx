@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -19,7 +18,6 @@ import {
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Menu, Settings, User } from 'lucide-react';
-import AgentViewToggle from './AgentViewToggle';
 import ChatModeSelector from './ChatModeSelector';
 import AIStatusBar from './AIStatusBar';
 import type { Chat, AIPlatform, ChatMode } from '@/types/chat';
@@ -99,17 +97,9 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         {/* Chat Title */}
         <h1 className="font-semibold text-lg truncate">{chatTitle}</h1>
 
-        {/* Desktop View: Agent Toggles and Settings */}
+        {/* Desktop View: Settings */}
         {!isMobile && (
           <div className="flex items-center gap-4">
-            <AgentViewToggle 
-              platforms={platforms}
-              activeAIStatuses={activeAIStatuses}
-              onTogglePlatform={onTogglePlatform}
-              viewMode="grid"
-              onViewModeChange={() => {}}
-            />
-            
             <ChatModeSelector 
               currentMode={currentChatMode}
               onModeChange={onChatModeChange || (() => {})}
@@ -156,14 +146,6 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
               </SheetHeader>
               
               <div className="py-4">
-                <AgentViewToggle 
-                  platforms={platforms}
-                  activeAIStatuses={activeAIStatuses}
-                  onTogglePlatform={onTogglePlatform}
-                  viewMode="list"
-                  onViewModeChange={() => {}}
-                />
-                
                 <ChatModeSelector 
                   currentMode={currentChatMode}
                   onModeChange={onChatModeChange || (() => {})}
