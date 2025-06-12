@@ -460,7 +460,7 @@ const Index = () => {
           currentChatMode={activeChatMode}
           isolatedMode={isolatedMode}
           onChatModeChange={handleChatModeChange}
-          onIsolatedModeToggle={handleIsolatedModeToggle}
+          onIsolatedToggle={handleIsolatedModeToggle}
           onTogglePlatform={togglePlatform}
         />
 
