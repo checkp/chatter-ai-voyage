@@ -235,9 +235,9 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
 
   return (
     <>
-      <div className="bg-secondary/50 border-b border-border px-4 py-2">
+      <div className="bg-amber-50 border-b border-amber-200 px-4 py-2">
         <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-muted-foreground">AI Agents:</span>
+          <span className="text-sm font-medium text-amber-700">AI Agents:</span>
           <div className="flex items-center gap-3">
             <TooltipProvider>
               <DndContext
