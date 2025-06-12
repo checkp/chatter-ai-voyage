@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -194,10 +195,10 @@ export const useChatManagement = (user: any) => {
         .single();
 
       if (error) throw error;
-      return { ...data, isolated_mode: data.isolated_mode };
+      return { ...data, isolated_mode: data.isolated_mode || false };
     },
     onSuccess: (updatedChat) => {
-      setIsolatedMode(updatedChat.isolated_mode || false);
+      setIsolatedMode(updatedChat.isolated_mode);
       
       queryClient.setQueryData(['chats', user?.id], (oldChats: Chat[] = []) =>
         oldChats.map(chat =>
