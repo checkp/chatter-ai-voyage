@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   DndContext,
@@ -121,10 +120,10 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onAgent
       </div>
       
       <div className="flex items-center gap-2" onClick={() => isEnabled && onAgentClick(platform)}>
-        <div className="relative">
+        <div className="flex items-center gap-1">
           <Icon className={`w-4 h-4 ${isEnabled ? 'text-muted-foreground' : 'text-gray-400'}`} />
           <div 
-            className={`absolute -top-1 -right-1 w-4 h-4 rounded-full ${getStatusColor(status, isEnabled)} ${getStatusAnimation(status, isEnabled)}`}
+            className={`w-2 h-2 rounded-full ${getStatusColor(status, isEnabled)} ${getStatusAnimation(status, isEnabled)}`}
           />
         </div>
         <Badge 
