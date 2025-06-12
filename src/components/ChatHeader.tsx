@@ -22,20 +22,35 @@ import { Menu, Settings, User } from 'lucide-react';
 import AgentViewToggle from './AgentViewToggle';
 import ChatModeSelector from './ChatModeSelector';
 import type { Chat, AIPlatform, ChatMode } from '@/types/chat';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface ChatHeaderProps {
   activeChatId: string | null;
   chats: Chat[] | undefined;
-  onToggleSidebar: () => void;
+  onToggleSidebar?: () => void;
   platforms: AIPlatform[];
   onTogglePlatform: (platformId: string) => void;
-  chatMode: ChatMode;
-  onChatModeChange: (mode: ChatMode) => void;
-  isolatedMode: boolean;
-  onIsolatedToggle: (isolated: boolean) => void;
-  isLoadingResponse: boolean;
+  chatMode?: ChatMode;
+  onChatModeChange?: (mode: ChatMode) => void;
+  isolatedMode?: boolean;
+  onIsolatedToggle?: (isolated: boolean) => void;
+  isLoadingResponse?: boolean;
   activeAIStatuses: Record<string, 'thinking' | 'responding' | 'completed' | 'error'>;
   className?: string;
+  activeTab: 'chat' | 'settings';
+  setActiveTab: (tab: 'chat' | 'settings') => void;
+  user: SupabaseUser | null;
+  isFreeMode: boolean;
+  isFreeModeRunning: boolean;
+  freeModeMessageLimit: number;
+  freeModeMessageCount: number;
+  onStartFreeMode: () => void;
+  onStopFreeMode: () => void;
+  onUpdateFreeModeLimit: (limit: number) => void;
+  onSendSingleAgentMessage: (message: string, platformId: string) => Promise<void>;
+  onUpdateAgentOrder: (platforms: AIPlatform[]) => void;
+  onSignOut: () => void;
+  currentChatMode: ChatMode;
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -50,7 +65,21 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   onIsolatedToggle,
   isLoadingResponse,
   activeAIStatuses,
-  className = ""
+  className = "",
+  activeTab,
+  setActiveTab,
+  user,
+  isFreeMode,
+  isFreeModeRunning,
+  freeModeMessageLimit,
+  freeModeMessageCount,
+  onStartFreeMode,
+  onStopFreeMode,
+  onUpdateFreeModeLimit,
+  onSendSingleAgentMessage,
+  onUpdateAgentOrder,
+  onSignOut,
+  currentChatMode
 }) => {
   const isMobile = useIsMobile();
   const activeChat = chats?.find(chat => chat.id === activeChatId);
@@ -80,10 +109,10 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           />
           
           <ChatModeSelector 
-            currentMode={chatMode}
-            onModeChange={onChatModeChange}
-            isolatedMode={isolatedMode}
-            onIsolatedToggle={onIsolatedToggle}
+            currentMode={currentChatMode}
+            onModeChange={onChatModeChange || (() => {})}
+            isolatedMode={isolatedMode || false}
+            onIsolatedToggle={onIsolatedToggle || (() => {})}
           />
 
           <ModeToggle />
@@ -134,10 +163,10 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
               />
               
               <ChatModeSelector 
-                currentMode={chatMode}
-                onModeChange={onChatModeChange}
-                isolatedMode={isolatedMode}
-                onIsolatedToggle={onIsolatedToggle}
+                currentMode={currentChatMode}
+                onModeChange={onChatModeChange || (() => {})}
+                isolatedMode={isolatedMode || false}
+                onIsolatedToggle={onIsolatedToggle || (() => {})}
                 className="mt-4"
               />
             </div>
