@@ -159,7 +159,7 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onPlatf
               <div className="relative">
                 <Icon className={`w-4 h-4 ${isEnabled ? 'text-muted-foreground' : 'text-gray-400'}`} />
                 <div 
-                  className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${getStatusColor(status, isEnabled)} ${getStatusAnimation(status, isEnabled)}`}
+                  className={`absolute -top-1 -right-1 w-4 h-4 rounded-full ${getStatusColor(status, isEnabled)} ${getStatusAnimation(status, isEnabled)}`}
                 />
               </div>
               <Badge variant="outline" className={`text-xs ${!isEnabled ? 'bg-gray-100 text-gray-400 border-gray-300' : ''}`}>
