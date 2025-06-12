@@ -117,7 +117,7 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onAgent
         {...listeners}
         className="flex items-center gap-1 cursor-grab active:cursor-grabbing hover:bg-muted/50 p-1 rounded transition-colors"
       >
-        <GripVertical className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+        <GripVertical className="w-3 h-3 text-foreground/80 group-hover:text-foreground transition-colors" />
       </div>
       
       <div className="flex items-center gap-2" onClick={() => isEnabled && onAgentClick(platform)}>
