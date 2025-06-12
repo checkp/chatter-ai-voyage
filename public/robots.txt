@@ -7,7 +7,7 @@ Allow: /purchase
 Allow: /images
 
 # Sitemap
-Sitemap: https://roboherd.com/sitemap.xml
+Sitemap: https://roboheard.ai/sitemap.xml
 
 # Crawl-delay for polite crawling
 Crawl-delay: 1

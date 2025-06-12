@@ -91,10 +91,10 @@ const Landing = () => {
           <div className="flex items-center gap-2">
             <img 
               src="/lovable-uploads/8f377fa8-bfb6-4d05-b000-3d477e975e49.png" 
-              alt="RoboHerd" 
+              alt="RoboHeard" 
               className="h-8 w-8" 
             />
-            <h1 className="text-2xl font-bold">RoboHerd</h1>
+            <h1 className="text-2xl font-bold">RoboHeard</h1>
           </div>
           <Button onClick={() => navigate('/auth')}>
             Get Started <ArrowRight className="ml-2 h-4 w-4" />
@@ -201,7 +201,7 @@ const Landing = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-4 py-20 text-center">
+      <section className="container mx-auto px-20 text-center">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-4xl font-bold mb-6">Ready to Build Your AI Team?</h2>
           <p className="text-xl text-muted-foreground mb-8">
@@ -221,13 +221,13 @@ const Landing = () => {
             <div className="flex items-center gap-2 mb-4 md:mb-0">
               <img 
                 src="/lovable-uploads/8f377fa8-bfb6-4d05-b000-3d477e975e49.png" 
-                alt="RoboHerd" 
+                alt="RoboHeard" 
                 className="h-6 w-6" 
               />
-              <span className="font-semibold">RoboHerd</span>
+              <span className="font-semibold">RoboHeard</span>
             </div>
             <p className="text-muted-foreground text-center">
-              © 2025 RoboHerd. Train your AI army with collaborative conversations.
+              © 2025 RoboHeard. Train your AI army with collaborative conversations.
             </p>
           </div>
         </div>

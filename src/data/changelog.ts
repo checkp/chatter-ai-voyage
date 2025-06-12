@@ -1,3 +1,4 @@
+
 export interface ChangelogEntry {
   version: string;
   date: string;
@@ -91,7 +92,7 @@ export const changelog: ChangelogEntry[] = [
   {
     version: "2.0.0",
     date: "2025-01-07",
-    title: "RoboHerd 2.0 - Multi-Agent Platform",
+    title: "RoboHeard 2.0 - Multi-Agent Platform",
     description: "Complete redesign introducing multiple AI agents working together in collaborative conversations.",
     type: "feature",
     changes: [
