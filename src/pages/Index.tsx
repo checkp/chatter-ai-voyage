@@ -25,6 +25,7 @@ import MobileInterface from '@/components/mobile/MobileInterface';
 import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
 import { MessageSquare, Users, Zap, Bot, Star, ArrowRight } from 'lucide-react';
 import type { ChatMode } from '@/types/chat';
+import ContactUsButton from '@/components/ContactUsButton';
 
 const aiTestimonials = [
   {
@@ -532,6 +533,9 @@ const Index = () => {
           />
         )}
       </main>
+
+      {/* Contact Us Button */}
+      <ContactUsButton />
     </div>
   );
 
