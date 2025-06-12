@@ -100,27 +100,28 @@ const AgentViewToggle: React.FC<AgentViewToggleProps> = ({
                   className={`w-2 h-2 rounded-full ${getStatusColor(status)}`}
                   title={status}
                 />
-                
-                {/* Toggle Button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full bg-background border shadow-sm hover:bg-muted"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onTogglePlatform(platform.id);
-                  }}
-                  title={isActive ? 'Disable agent' : 'Enable agent'}
-                >
-                  {isActive ? (
-                    <Eye className="h-3 w-3" />
-                  ) : (
-                    <EyeOff className="h-3 w-3" />
-                  )}
-                </Button>
-              </div>
-            );
-          })}
+              </Button>
+              
+              {/* Toggle Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full bg-background border shadow-sm hover:bg-muted"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onTogglePlatform(platform.id);
+                }}
+                title={isActive ? 'Disable agent' : 'Enable agent'}
+              >
+                {isActive ? (
+                  <Eye className="h-3 w-3" />
+                ) : (
+                  <EyeOff className="h-3 w-3" />
+                )}
+              </Button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
