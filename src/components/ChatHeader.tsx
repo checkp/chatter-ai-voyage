@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import FreeModeControls from '@/components/FreeModeControls';
 import BotHistoryDialog from '@/components/BotHistoryDialog';
 import TokenBalance from '@/components/TokenBalance';
-import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
+import AgentViewToggle from '@/components/AgentViewToggle';
 import ChangelogDialog from '@/components/ChangelogDialog';
 import ChatModeSelector from '@/components/ChatModeSelector';
 import type { Chat, AIPlatform, ChatMode } from '@/types/chat';
@@ -39,6 +39,8 @@ interface ChatHeaderProps {
   onIsolatedModeToggle: (isolated: boolean) => void;
   // Logout function
   onSignOut: () => void;
+  // Platform toggle
+  onTogglePlatform?: (platformId: string) => void;
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -62,11 +64,13 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   isolatedMode,
   onChatModeChange,
   onIsolatedModeToggle,
-  onSignOut
+  onSignOut,
+  onTogglePlatform
 }) => {
   const [selectedAgent, setSelectedAgent] = useState<AIPlatform | null>(null);
   const [isAgentDialogOpen, setIsAgentDialogOpen] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
+  const [agentViewMode, setAgentViewMode] = useState<'grid' | 'list'>('list');
   const navigate = useNavigate();
 
   const handlePurchaseClick = () => {
@@ -76,12 +80,6 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   const handleAgentClick = (platform: AIPlatform) => {
     setSelectedAgent(platform);
     setIsAgentDialogOpen(true);
-  };
-
-  const handleAgentReorder = (reorderedPlatforms: AIPlatform[]) => {
-    if (onUpdateAgentOrder) {
-      onUpdateAgentOrder(reorderedPlatforms);
-    }
   };
 
   const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
@@ -123,13 +121,15 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
               )}
             </div>
             
-            {/* Draggable AI Agents Status */}
-            {enabledPlatforms.length > 0 && (
-              <DraggableAIStatusBar
+            {/* Agent View Toggle */}
+            {enabledPlatforms.length > 0 && activeTab === 'chat' && (
+              <AgentViewToggle
                 platforms={platforms}
                 activeAIStatuses={activeAIStatuses}
-                onReorder={handleAgentReorder}
+                onTogglePlatform={onTogglePlatform || (() => {})}
                 onAgentClick={handleAgentClick}
+                viewMode={agentViewMode}
+                onViewModeChange={setAgentViewMode}
               />
             )}
           </div>

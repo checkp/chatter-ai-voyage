@@ -3,7 +3,7 @@ import React from 'react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { MessageCircle, Users, Grid3X3, Layout } from 'lucide-react';
+import { MessageCircle, Users, Grid3X3 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { ChatMode } from '@/types/chat';
@@ -37,13 +37,6 @@ const ChatModeSelector: React.FC<ChatModeSelectorProps> = ({
       label: 'Side-by-Side',
       icon: Grid3X3,
       description: 'Separate windows (desktop only)',
-      disabled: isMobile
-    },
-    {
-      value: 'discussion-side-by-side' as ChatMode,
-      label: 'Discussion S×S',
-      icon: Layout,
-      description: 'Discussion in separate windows (desktop only)',
       disabled: isMobile
     }
   ];
