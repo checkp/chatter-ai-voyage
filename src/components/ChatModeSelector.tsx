@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { MessageCircle, Users, Grid3X3 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { ChatMode } from '@/types/chat';
 
@@ -24,62 +24,51 @@ const ChatModeSelector: React.FC<ChatModeSelectorProps> = ({
       value: 'discussion' as ChatMode,
       label: 'Discussion',
       icon: Users,
-      description: 'Agents see all messages and can build on each other\'s responses'
+      description: 'Agents see all messages'
     },
     {
       value: 'isolated' as ChatMode,
       label: 'Isolated',
       icon: MessageCircle,
-      description: 'Each agent only sees user messages and their own responses'
+      description: 'Each agent only sees user messages'
     },
     {
       value: 'side-by-side' as ChatMode,
       label: 'Side-by-Side',
       icon: Grid3X3,
-      description: 'Isolated mode with separate windows (desktop only)',
+      description: 'Separate windows (desktop only)',
       disabled: isMobile
     }
   ];
 
-  const currentModeInfo = modes.find(mode => mode.value === currentMode);
-
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <span className="text-sm font-medium text-muted-foreground">Mode:</span>
-      <Select value={currentMode} onValueChange={onModeChange}>
-        <SelectTrigger className="w-52">
-          <SelectValue>
-            <div className="flex items-center gap-2">
-              {currentModeInfo && <currentModeInfo.icon className="h-4 w-4" />}
-              <span>{currentModeInfo?.label}</span>
-              {isMobile && currentMode === 'side-by-side' && (
-                <Badge variant="secondary" className="text-xs">Isolated</Badge>
+      <ToggleGroup 
+        type="single" 
+        value={currentMode} 
+        onValueChange={(value) => value && onModeChange(value as ChatMode)}
+        className="gap-1"
+      >
+        {modes.map((mode) => {
+          const Icon = mode.icon;
+          return (
+            <ToggleGroupItem 
+              key={mode.value} 
+              value={mode.value}
+              disabled={mode.disabled}
+              className="flex items-center gap-2 px-3 py-2 text-sm"
+              title={mode.description}
+            >
+              <Icon className="h-4 w-4" />
+              <span className="hidden sm:inline">{mode.label}</span>
+              {mode.disabled && currentMode === mode.value && (
+                <Badge variant="secondary" className="text-xs ml-1">Isolated</Badge>
               )}
-            </div>
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {modes.map((mode) => {
-            const Icon = mode.icon;
-            return (
-              <SelectItem 
-                key={mode.value} 
-                value={mode.value}
-                disabled={mode.disabled}
-              >
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2">
-                    <Icon className="h-4 w-4" />
-                    <span>{mode.label}</span>
-                    {mode.disabled && <Badge variant="outline" className="text-xs">Desktop Only</Badge>}
-                  </div>
-                  <span className="text-xs text-muted-foreground">{mode.description}</span>
-                </div>
-              </SelectItem>
-            );
-          })}
-        </SelectContent>
-      </Select>
+            </ToggleGroupItem>
+          );
+        })}
+      </ToggleGroup>
     </div>
   );
 };
