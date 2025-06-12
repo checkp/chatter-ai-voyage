@@ -20,7 +20,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Badge } from '@/components/ui/badge';
-import { GripVertical, Bot, Brain, Search, Zap } from 'lucide-react';
+import { GripVertical, Bot, Brain, Search, Zap, Gem } from 'lucide-react';
 import type { AIPlatform } from '@/types/chat';
 
 interface DraggableAIStatusBarProps {
@@ -62,27 +62,16 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onAgent
         return Search;
       case 'grok':
         return Zap;
+      case 'google':
+        return Gem;
       default:
         return Bot;
     }
   };
 
-  const getPlatformColor = (platformId: string) => {
-    switch (platformId) {
-      case 'openai':
-        return 'modern-bg-agent-openai';
-      case 'anthropic':
-        return 'modern-bg-agent-anthropic';
-      case 'deepseek':
-        return 'modern-bg-agent-deepseek';
-      case 'grok':
-        return 'modern-bg-agent-grok';
-      default:
-        return 'bg-gray-500';
-    }
-  };
-
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string, isEnabled: boolean) => {
+    if (!isEnabled) return 'bg-gray-300';
+    
     switch (status) {
       case 'thinking':
         return 'bg-yellow-400';
@@ -97,7 +86,9 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onAgent
     }
   };
 
-  const getStatusAnimation = (status: string) => {
+  const getStatusAnimation = (status: string, isEnabled: boolean) => {
+    if (!isEnabled) return '';
+    
     switch (status) {
       case 'thinking':
         return 'animate-pulse';
@@ -113,12 +104,13 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onAgent
   };
 
   const Icon = getPlatformIcon(platform.id);
+  const isEnabled = platform.enabled && platform.hasApiKey;
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-2 group"
+      className={`flex items-center gap-2 group ${!isEnabled ? 'opacity-50' : ''}`}
       {...attributes}
     >
       <div
@@ -128,25 +120,25 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onAgent
         <GripVertical className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
       
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" onClick={() => isEnabled && onAgentClick(platform)}>
         <div className="relative">
-          <Icon className="w-4 h-4 text-muted-foreground" />
+          <Icon className={`w-4 h-4 ${isEnabled ? 'text-muted-foreground' : 'text-gray-400'}`} />
           <div 
-            className={`absolute -top-1 -right-1 w-2 h-2 rounded-full ${getStatusColor(status)} ${getStatusAnimation(status)}`}
+            className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${getStatusColor(status, isEnabled)} ${getStatusAnimation(status, isEnabled)}`}
           />
         </div>
         <Badge 
           variant="outline"
           className={`text-xs cursor-pointer hover:opacity-80 transition-opacity ${
+            !isEnabled ? 'bg-gray-100 text-gray-400 border-gray-300' :
             status === 'thinking' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
-            status === 'responding' ? `${getPlatformColor(platform.id)} text-white border-transparent` :
+            status === 'responding' ? 'bg-blue-100 text-blue-800 border-blue-300' :
             status === 'completed' ? 'bg-green-100 text-green-800 border-green-300' :
             status === 'error' ? 'bg-red-100 text-red-800 border-red-300' :
             'text-muted-foreground'
           }`}
-          onClick={() => onAgentClick(platform)}
         >
-          {platform.name}: {status}
+          {platform.name}: {isEnabled ? status : 'disabled'}
         </Badge>
       </div>
     </div>
@@ -166,23 +158,26 @@ const DraggableAIStatusBar: React.FC<DraggableAIStatusBarProps> = ({
     })
   );
 
-  const enabledPlatforms = platforms
-    .filter(p => p.enabled && p.hasApiKey)
+  // Show all platforms with API keys, sorted by display order
+  const sortedPlatforms = platforms
+    .filter(p => p.hasApiKey)
     .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (active.id !== over?.id) {
-      const oldIndex = enabledPlatforms.findIndex(p => p.id === active.id);
-      const newIndex = enabledPlatforms.findIndex(p => p.id === over?.id);
+      const oldIndex = sortedPlatforms.findIndex(p => p.id === active.id);
+      const newIndex = sortedPlatforms.findIndex(p => p.id === over?.id);
       
-      const reorderedPlatforms = arrayMove(enabledPlatforms, oldIndex, newIndex);
-      onReorder(reorderedPlatforms);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reorderedPlatforms = arrayMove(sortedPlatforms, oldIndex, newIndex);
+        onReorder(reorderedPlatforms);
+      }
     }
   };
 
-  if (enabledPlatforms.length === 0) {
+  if (sortedPlatforms.length === 0) {
     return null;
   }
 
@@ -196,11 +191,11 @@ const DraggableAIStatusBar: React.FC<DraggableAIStatusBarProps> = ({
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={enabledPlatforms.map(p => p.id)}
+          items={sortedPlatforms.map(p => p.id)}
           strategy={horizontalListSortingStrategy}
         >
           <div className="flex items-center gap-3 flex-wrap">
-            {enabledPlatforms.map((platform) => {
+            {sortedPlatforms.map((platform) => {
               const status = activeAIStatuses[platform.id] || 'idle';
               
               return (

@@ -159,7 +159,7 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onPlatf
               <div className="relative">
                 <Icon className={`w-4 h-4 ${isEnabled ? 'text-muted-foreground' : 'text-gray-400'}`} />
                 <div 
-                  className={`absolute -top-1 -right-1 w-2 h-2 rounded-full ${getStatusColor(status, isEnabled)} ${getStatusAnimation(status, isEnabled)}`}
+                  className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${getStatusColor(status, isEnabled)} ${getStatusAnimation(status, isEnabled)}`}
                 />
               </div>
               <Badge variant="outline" className={`text-xs ${!isEnabled ? 'bg-gray-100 text-gray-400 border-gray-300' : ''}`}>
@@ -229,7 +229,9 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
       console.log('Drag end - reordering agents');
       
       // Sort platforms by display order for consistent ordering
-      const sortedPlatforms = [...platforms].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+      const sortedPlatforms = [...platforms]
+        .filter(p => p.hasApiKey)
+        .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
       
       const oldIndex = sortedPlatforms.findIndex(p => p.id === active.id);
       const newIndex = sortedPlatforms.findIndex(p => p.id === over?.id);
@@ -242,7 +244,7 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
     }
   };
 
-  // Show all platforms, sorted by display order
+  // Show all platforms with API keys, sorted by display order - both enabled and disabled
   const sortedPlatforms = [...platforms]
     .filter(p => p.hasApiKey)
     .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));

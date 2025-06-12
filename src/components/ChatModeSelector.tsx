@@ -58,7 +58,7 @@ const ChatModeSelector: React.FC<ChatModeSelectorProps> = ({
                 key={mode.value} 
                 value={mode.value}
                 disabled={mode.disabled}
-                className="flex items-center gap-2 px-3 py-2 text-sm"
+                className="flex items-center gap-2 px-3 py-2 text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground border border-input hover:bg-accent hover:text-accent-foreground"
                 title={mode.description}
               >
                 <Icon className="h-4 w-4" />
