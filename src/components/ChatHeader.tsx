@@ -34,7 +34,9 @@ interface ChatHeaderProps {
   onUpdateAgentOrder?: (reorderedPlatforms: AIPlatform[]) => void;
   // Chat mode props
   currentChatMode: ChatMode;
+  isolatedMode: boolean;
   onChatModeChange: (mode: ChatMode) => void;
+  onIsolatedModeToggle: (isolated: boolean) => void;
   // Logout function
   onSignOut: () => void;
 }
@@ -57,7 +59,9 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   onSendSingleAgentMessage,
   onUpdateAgentOrder,
   currentChatMode,
+  isolatedMode,
   onChatModeChange,
+  onIsolatedModeToggle,
   onSignOut
 }) => {
   const [selectedAgent, setSelectedAgent] = useState<AIPlatform | null>(null);
@@ -99,6 +103,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
                   <ChatModeSelector
                     currentMode={currentChatMode}
                     onModeChange={onChatModeChange}
+                    isolatedMode={isolatedMode}
+                    onIsolatedToggle={onIsolatedModeToggle}
                   />
                 )}
               </div>
