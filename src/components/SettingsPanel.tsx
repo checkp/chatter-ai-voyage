@@ -38,22 +38,22 @@ const SettingsPanel = () => {
 
   if (isLoadingProfile) {
     return (
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-6 settings-panel">
         <div className="flex items-center justify-center py-8">
-          <div className="text-center">Loading...</div>
+          <div className="text-center modern-text-primary">Loading...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="max-w-6xl mx-auto p-6 settings-panel">
       <Tabs defaultValue="tokens" className="w-full">
-        <TabsList className={`grid w-full ${gridCols}`}>
-          <TabsTrigger value="tokens">Buy Tokens</TabsTrigger>
-          <TabsTrigger value="history">Usage History</TabsTrigger>
-          <TabsTrigger value="agents">Agent Models</TabsTrigger>
-          {showAdminTab && <TabsTrigger value="admin">Admin</TabsTrigger>}
+        <TabsList className={`grid w-full ${gridCols} modern-bg-surface modern-border`}>
+          <TabsTrigger value="tokens" className="modern-text-primary">Buy Tokens</TabsTrigger>
+          <TabsTrigger value="history" className="modern-text-primary">Usage History</TabsTrigger>
+          <TabsTrigger value="agents" className="modern-text-primary">Agent Models</TabsTrigger>
+          {showAdminTab && <TabsTrigger value="admin" className="modern-text-primary">Admin</TabsTrigger>}
         </TabsList>
         
         <TabsContent value="tokens" className="mt-6">

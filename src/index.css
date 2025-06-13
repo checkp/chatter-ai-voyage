@@ -99,11 +99,25 @@
   }
 
   [data-theme="amber-dark"] {
-    --background: 85 15% 8%;
-    --foreground: 45 100% 96%;
+    --background: 222 25% 7%;
+    --foreground: 210 40% 95%;
+    --card: 222 23% 11%;
+    --card-foreground: 210 40% 95%;
+    --popover: 222 23% 11%;
+    --popover-foreground: 210 40% 95%;
     --primary: 42 70% 60%;
-    --secondary: 85 15% 20%;
-    --accent: 85 20% 25%;
+    --primary-foreground: 222 25% 7%;
+    --secondary: 222 20% 20%;
+    --secondary-foreground: 210 40% 95%;
+    --muted: 222 20% 20%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 222 20% 25%;
+    --accent-foreground: 210 40% 95%;
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 210 40% 95%;
+    --border: 222 20% 20%;
+    --input: 222 20% 20%;
+    --ring: 42 70% 60%;
   }
 
   [data-theme="amber-minimal"] {
@@ -133,7 +147,7 @@
   }
 }
 
-/* Modern styling utilities with pastel theme */
+/* Modern styling utilities with proper theme support */
 .modern-text-primary {
   color: hsl(var(--foreground));
 }
@@ -321,4 +335,28 @@
 .cyber-glow-hover:hover {
   box-shadow: 0 0 20px hsl(var(--cyber-accent) / 0.7);
   transition: box-shadow 0.3s ease;
+}
+
+/* Message styling for better theme support */
+.message-user {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.message-ai {
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border: 1px solid hsl(var(--border));
+}
+
+/* Settings panel styling */
+.settings-panel {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.settings-card {
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border: 1px solid hsl(var(--border));
 }
