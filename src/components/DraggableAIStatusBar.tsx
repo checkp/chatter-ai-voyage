@@ -66,36 +66,25 @@ const DraggableAIStatusBar: React.FC<DraggableAIStatusBarProps> = ({
   };
 
   const handlePlatformClick = (platform: AIPlatform) => {
-    console.log('DraggableAIStatusBar: handlePlatformClick called with:', platform.name);
-    console.log('DraggableAIStatusBar: Current chat passed to dialog:', {
-      id: currentChat?.id,
-      title: currentChat?.title,
-      hasMessages: !!currentChat?.messages,
-      messageCount: currentChat?.messages?.length || 0,
-      messagesSample: currentChat?.messages?.slice(0, 2)?.map(m => ({
-        id: m.id,
-        sender: m.sender,
-        platform: m.platform,
-        contentPreview: m.content.substring(0, 50) + '...'
-      }))
-    });
-    
     if (platform.enabled && platform.hasApiKey) {
-      console.log('DraggableAIStatusBar: Setting selected platform and opening dialog');
-      setSelectedPlatform(platform);
-      setIsDialogOpen(true);
+      // Close any existing dialog first
+      setIsDialogOpen(false);
+      setSelectedPlatform(null);
+      
+      // Then open the new dialog
+      setTimeout(() => {
+        setSelectedPlatform(platform);
+        setIsDialogOpen(true);
+      }, 100);
       
       // Also call the external onAgentClick if provided
       if (onAgentClick) {
         onAgentClick(platform);
       }
-    } else {
-      console.log('DraggableAIStatusBar: Platform not enabled or no API key');
     }
   };
 
   const handleDialogOpenChange = (open: boolean) => {
-    console.log('DraggableAIStatusBar: Dialog open state changing to:', open);
     setIsDialogOpen(open);
     if (!open) {
       setSelectedPlatform(null);
@@ -138,13 +127,15 @@ const DraggableAIStatusBar: React.FC<DraggableAIStatusBarProps> = ({
         </DndContext>
       </div>
 
-      <BotHistoryDialog
-        open={isDialogOpen}
-        onOpenChange={handleDialogOpenChange}
-        platform={selectedPlatform}
-        currentChat={currentChat}
-        onSendMessage={onSendMessage}
-      />
+      {selectedPlatform && (
+        <BotHistoryDialog
+          open={isDialogOpen}
+          onOpenChange={handleDialogOpenChange}
+          platform={selectedPlatform}
+          currentChat={currentChat}
+          onSendMessage={onSendMessage}
+        />
+      )}
     </>
   );
 };

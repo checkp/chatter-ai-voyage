@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,13 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
 }) => {
   const [message, setMessage] = useState('');
 
+  // Reset message when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setMessage('');
+    }
+  }, [open]);
+
   if (!platform) return null;
 
   const getPlatformIcon = (platformId: string) => {
@@ -46,7 +53,6 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
 
   // Get all messages and create a chronological conversation
   const allMessages = currentChat?.messages || [];
-  console.log('BotHistoryDialog: All messages before filtering:', allMessages.length);
   
   // Create a chronological conversation including user messages and this platform's responses
   const conversationMessages: Message[] = [];
@@ -60,7 +66,6 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
   sortedMessages.forEach(msg => {
     // Avoid duplicates
     if (seenMessageIds.has(msg.id)) {
-      console.log('BotHistoryDialog: Skipping duplicate message:', msg.id);
       return;
     }
     
@@ -68,21 +73,16 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
     if (msg.sender === 'user') {
       conversationMessages.push(msg);
       seenMessageIds.add(msg.id);
-      console.log('BotHistoryDialog: Added user message:', msg.id);
     }
     // Include only THIS platform's AI responses
     else if (msg.sender === 'ai' && msg.platform === platform.id) {
       conversationMessages.push(msg);
       seenMessageIds.add(msg.id);
-      console.log('BotHistoryDialog: Added AI message from', platform.id, ':', msg.id);
     }
   });
 
-  console.log('BotHistoryDialog: Final conversation messages:', conversationMessages.length);
-
   const handleSendMessage = () => {
     if (message.trim() && onSendMessage) {
-      console.log('BotHistoryDialog: Sending message to', platform.id, ':', message.trim());
       onSendMessage(message.trim(), platform.id);
       setMessage('');
     }
