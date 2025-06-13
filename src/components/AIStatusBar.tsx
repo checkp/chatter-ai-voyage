@@ -51,9 +51,22 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
   );
 
   const handlePlatformClick = (platform: AIPlatform) => {
+    console.log('AIStatusBar: handlePlatformClick called with:', platform.name);
+    
     if (platform.enabled && platform.hasApiKey) {
+      console.log('AIStatusBar: Setting selected platform and opening dialog');
       setSelectedPlatform(platform);
       setIsDialogOpen(true);
+    } else {
+      console.log('AIStatusBar: Platform not enabled or no API key');
+    }
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    console.log('AIStatusBar: Dialog open state changing to:', open);
+    setIsDialogOpen(open);
+    if (!open) {
+      setSelectedPlatform(null);
     }
   };
 
@@ -87,6 +100,8 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
   if (sortedPlatforms.length === 0) {
     return null;
   }
+
+  console.log('AIStatusBar: Rendering with dialog state:', { isDialogOpen, selectedPlatform: selectedPlatform?.name });
 
   return (
     <>
@@ -132,7 +147,7 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
 
       <BotHistoryDialog
         open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
+        onOpenChange={handleDialogOpenChange}
         platform={selectedPlatform}
         currentChat={currentChat}
         onSendMessage={onSendMessage}
