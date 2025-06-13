@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -29,7 +30,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
       {/* Header with Logo */}
       <div className="p-4 border-b border-border flex items-center gap-3">
         <Logo size="sm" />
-        <h2 className="font-semibold text-foreground">RoboHeard</h2>
+        <h2 className="font-semibold text-foreground">RoboHerd</h2>
       </div>
 
       {/* New Chat Button */}
