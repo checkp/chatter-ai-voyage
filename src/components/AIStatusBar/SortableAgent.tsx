@@ -33,19 +33,19 @@ const getPlatformIcon = (platformId: string) => {
 };
 
 const getStatusColor = (status: string, isEnabled: boolean) => {
-  if (!isEnabled) return 'bg-gray-300';
+  if (!isEnabled) return 'bg-gray-400 border-gray-300';
   
   switch (status) {
     case 'thinking':
-      return 'bg-yellow-400';
+      return 'bg-yellow-400 border-yellow-500 shadow-yellow-400/50';
     case 'responding':
-      return 'bg-blue-400';
+      return 'bg-blue-400 border-blue-500 shadow-blue-400/50';
     case 'completed':
-      return 'bg-green-400';
+      return 'bg-green-400 border-green-500 shadow-green-400/50';
     case 'error':
-      return 'bg-red-400';
+      return 'bg-red-400 border-red-500 shadow-red-400/50';
     default:
-      return 'bg-gray-400';
+      return 'bg-gray-400 border-gray-500';
   }
 };
 
@@ -122,17 +122,17 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onPlatf
               {...listeners}
               className="flex items-center gap-1 cursor-grab active:cursor-grabbing"
             >
-              <GripVertical className="w-3 h-3 text-gray-700 opacity-60 group-hover:opacity-100 transition-opacity" />
+              <GripVertical className="w-3 h-3 text-gray-600 opacity-40 group-hover:opacity-100 transition-opacity" />
             </div>
             
             <div 
               className="flex items-center gap-2"
               onClick={() => isEnabled && onPlatformClick(platform)}
             >
-              <div className="relative">
+              <div className="relative flex items-center">
                 <Icon className={`w-4 h-4 ${isEnabled ? 'text-muted-foreground' : 'text-gray-400'}`} />
                 <div 
-                  className={`absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full ${getStatusColor(status, isEnabled)} ${getStatusAnimation(status, isEnabled)}`}
+                  className={`ml-1 w-2 h-2 border rounded-sm shadow-sm ${getStatusColor(status, isEnabled)} ${getStatusAnimation(status, isEnabled)}`}
                 />
               </div>
               <Badge variant="outline" className={`text-xs ${!isEnabled ? 'bg-gray-100 text-gray-400 border-gray-300' : ''}`}>
