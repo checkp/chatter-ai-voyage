@@ -232,14 +232,32 @@ const Index = () => {
     return acc;
   }, {} as Record<string, 'thinking' | 'responding' | 'completed' | 'error'>);
 
-  // Get current chat with messages
-  const currentChatWithMessages = chats?.find(chat => chat.id === activeChatId) || null;
-  console.log('Index: Current chat with messages:', {
-    id: currentChatWithMessages?.id,
-    title: currentChatWithMessages?.title,
-    hasMessages: !!currentChatWithMessages?.messages,
-    messageCount: currentChatWithMessages?.messages?.length || 0
-  });
+  // Get current chat with messages - THIS IS THE KEY FIX
+  const currentChatWithMessages = React.useMemo(() => {
+    const foundChat = chats?.find(chat => chat.id === activeChatId);
+    if (!foundChat) return null;
+    
+    // Create a complete chat object with messages from the messages array
+    const chatWithMessages = {
+      ...foundChat,
+      messages: messages || []
+    };
+    
+    console.log('Index: Creating current chat with messages:', {
+      id: chatWithMessages.id,
+      title: chatWithMessages.title,
+      hasMessages: !!chatWithMessages.messages,
+      messageCount: chatWithMessages.messages.length,
+      messagesPreview: chatWithMessages.messages.slice(0, 3).map(m => ({
+        id: m.id,
+        sender: m.sender,
+        platform: m.platform,
+        content: m.content.substring(0, 50) + '...'
+      }))
+    });
+    
+    return chatWithMessages;
+  }, [chats, activeChatId, messages]);
 
   // Set up scroll listener when chat tab is active
   useEffect(() => {
