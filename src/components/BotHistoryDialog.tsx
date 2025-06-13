@@ -44,37 +44,41 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
     }
   };
 
-  // Debug logging
-  console.log('BotHistoryDialog: Rendering with platform:', platform.name);
-  console.log('BotHistoryDialog: Current chat object:', {
-    id: currentChat?.id,
-    title: currentChat?.title,
-    messagesCount: currentChat?.messages?.length || 0,
-    fullMessagesArray: currentChat?.messages
-  });
-
-  // Filter messages for this specific platform - include user messages and this platform's responses
+  // Get all messages and create a chronological conversation
   const allMessages = currentChat?.messages || [];
   console.log('BotHistoryDialog: All messages before filtering:', allMessages.length);
   
-  const platformMessages = allMessages.filter(msg => {
-    const isUserMessage = msg.sender === 'user';
-    const isPlatformMessage = msg.sender === 'ai' && msg.platform === platform.id;
+  // Create a chronological conversation including user messages and this platform's responses
+  const conversationMessages: Message[] = [];
+  const seenMessageIds = new Set<string>();
+  
+  // Sort messages by creation time to ensure chronological order
+  const sortedMessages = [...allMessages].sort((a, b) => 
+    new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+  
+  sortedMessages.forEach(msg => {
+    // Avoid duplicates
+    if (seenMessageIds.has(msg.id)) {
+      console.log('BotHistoryDialog: Skipping duplicate message:', msg.id);
+      return;
+    }
     
-    console.log('BotHistoryDialog: Message filter check:', {
-      messageId: msg.id,
-      sender: msg.sender,
-      platform: msg.platform,
-      targetPlatform: platform.id,
-      isUserMessage,
-      isPlatformMessage,
-      willInclude: isUserMessage || isPlatformMessage
-    });
-    
-    return isUserMessage || isPlatformMessage;
+    // Include user messages (everyone sees these)
+    if (msg.sender === 'user') {
+      conversationMessages.push(msg);
+      seenMessageIds.add(msg.id);
+      console.log('BotHistoryDialog: Added user message:', msg.id);
+    }
+    // Include only THIS platform's AI responses
+    else if (msg.sender === 'ai' && msg.platform === platform.id) {
+      conversationMessages.push(msg);
+      seenMessageIds.add(msg.id);
+      console.log('BotHistoryDialog: Added AI message from', platform.id, ':', msg.id);
+    }
   });
 
-  console.log('BotHistoryDialog: Filtered platform messages:', platformMessages.length);
+  console.log('BotHistoryDialog: Final conversation messages:', conversationMessages.length);
 
   const handleSendMessage = () => {
     if (message.trim() && onSendMessage) {
@@ -101,27 +105,24 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
             <Icon className="w-5 h-5" />
             Chat with {platform.name}
             <Badge variant="outline" className="ml-2">
-              {platformMessages.filter(m => m.sender === 'ai' && m.platform === platform.id).length} responses
+              {conversationMessages.filter(m => m.sender === 'ai' && m.platform === platform.id).length} responses
             </Badge>
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 flex flex-col gap-4">
           <ScrollArea className="flex-1 modern-bg-surface rounded-lg p-4">
-            {platformMessages.length === 0 ? (
+            {conversationMessages.length === 0 ? (
               <div className="flex items-center justify-center h-full modern-text-muted">
                 <div className="text-center">
                   <Icon className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No conversation history with {platform.name}</p>
                   <p className="text-sm mt-2">Start a conversation below</p>
-                  <p className="text-xs mt-2 text-muted-foreground">
-                    Chat ID: {currentChat?.id || 'None'} | Total messages: {allMessages.length}
-                  </p>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
-                {platformMessages.map((msg) => (
+                {conversationMessages.map((msg) => (
                   <div
                     key={msg.id}
                     className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
