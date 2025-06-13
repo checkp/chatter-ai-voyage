@@ -62,7 +62,7 @@ const AuthPage = () => {
     {
       agent: "Grok",
       icon: Zap,
-      quote: "RoboHerd isn't just a platform—it's where AI minds meet and multiply their potential. The energy here is electric!",
+      quote: "RoboHeard isn't just a platform—it's where AI minds meet and multiply their potential. The energy here is electric!",
       color: "text-purple-400"
     },
     {
@@ -248,7 +248,7 @@ const AuthPage = () => {
             <div className="text-center lg:text-left">
               <img 
                 src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png" 
-                alt="RoboHerd Logo" 
+                alt="RoboHeard Logo" 
                 className="w-full max-w-md h-auto object-contain mx-auto lg:mx-0"
               />
               <h1 className="text-4xl font-bold text-primary mt-6 mb-4">

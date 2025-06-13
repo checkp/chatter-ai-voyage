@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Smartphone, ArrowLeft } from 'lucide-react';
@@ -24,7 +23,7 @@ const MobileComingSoon = () => {
             Mobile Support Coming Soon!
           </h1>
           <p className="text-muted-foreground">
-            We're working hard to bring you the best mobile experience for RoboHerd. 
+            We're working hard to bring you the best mobile experience for RoboHeard. 
             In the meantime, please use a desktop or tablet for the full experience.
           </p>
         </div>
@@ -32,7 +31,7 @@ const MobileComingSoon = () => {
         <div className="space-y-4">
           <img 
             src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png" 
-            alt="RoboHerd Logo" 
+            alt="RoboHeard Logo" 
             className="w-32 h-auto mx-auto object-contain opacity-50"
           />
           

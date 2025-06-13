@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -73,7 +72,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-semibold text-foreground">
-              {activeChat?.title || 'RoboHerd'}
+              {activeChat?.title || 'RoboHeard'}
             </h1>
             {activeChat && (
               <Badge variant="outline" className="text-xs">

@@ -53,7 +53,7 @@ const MobileSettings: React.FC<MobileSettingsProps> = ({
         <h3 className="text-lg font-medium mb-2">About</h3>
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">
-            RoboHerd allows you to chat with multiple AI agents simultaneously. 
+            RoboHeard allows you to chat with multiple AI agents simultaneously. 
             Enable or disable agents above to customize your experience.
           </p>
         </Card>
