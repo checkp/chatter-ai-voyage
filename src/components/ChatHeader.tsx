@@ -236,6 +236,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         platforms={platforms}
         activeAIStatuses={activeAIStatuses}
         currentChat={chats?.find(chat => chat.id === activeChatId)}
+        currentMode={currentChatMode}
+        onModeChange={onChatModeChange || (() => {})}
         onSendMessage={onSendSingleAgentMessage}
         onUpdateAgentOrder={onUpdateAgentOrder}
       />
