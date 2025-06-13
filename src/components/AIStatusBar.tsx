@@ -1,281 +1,135 @@
 
-import React, { useState } from 'react';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  horizontalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import {
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import React from 'react';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Bot, Brain, Search, Zap, Gem, GripVertical } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Send, Loader2, Settings } from 'lucide-react';
+import { useState } from 'react';
 import type { AIPlatform, Chat, ChatMode } from '@/types/chat';
-import BotHistoryDialog from './BotHistoryDialog';
 
 interface AIStatusBarProps {
   platforms: AIPlatform[];
   activeAIStatuses: Record<string, 'thinking' | 'responding' | 'completed' | 'error'>;
-  currentChat?: Chat | null;
+  currentChat?: Chat;
   currentMode: ChatMode;
   onModeChange: (mode: ChatMode) => void;
-  onSendMessage?: (message: string, platformId: string) => void;
-  onUpdateAgentOrder?: (reorderedPlatforms: AIPlatform[]) => void;
+  onSendMessage: (message: string, platformId: string) => Promise<void>;
+  onUpdateAgentOrder: (platforms: AIPlatform[]) => void;
 }
 
-interface SortableAgentProps {
-  platform: AIPlatform;
-  status: string;
-  onPlatformClick: (platform: AIPlatform) => void;
-}
-
-const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onPlatformClick }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: platform.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  const getPlatformIcon = (platformId: string) => {
-    switch (platformId) {
-      case 'openai':
-        return Bot;
-      case 'anthropic':
-        return Brain;
-      case 'deepseek':
-        return Search;
-      case 'grok':
-        return Zap;
-      case 'google':
-        return Gem;
-      default:
-        return Bot;
-    }
-  };
-
-  const getStatusColor = (status: string, isEnabled: boolean) => {
-    if (!isEnabled) return 'bg-gray-300';
-    
-    switch (status) {
-      case 'thinking':
-        return 'bg-yellow-400';
-      case 'responding':
-        return 'bg-blue-400';
-      case 'completed':
-        return 'bg-green-400';
-      case 'error':
-        return 'bg-red-400';
-      default:
-        return 'bg-gray-400';
-    }
-  };
-
-  const getStatusAnimation = (status: string, isEnabled: boolean) => {
-    if (!isEnabled) return '';
-    
-    switch (status) {
-      case 'thinking':
-        return 'animate-pulse';
-      case 'responding':
-        return 'animate-ping';
-      case 'completed':
-        return '';
-      case 'error':
-        return 'animate-bounce';
-      default:
-        return '';
-    }
-  };
-
-  const getVerboseStatus = (platform: AIPlatform, status?: string) => {
-    if (!platform.enabled) {
-      return `${platform.name} is disabled`;
-    }
-    
-    if (!status) {
-      return `${platform.name} is enabled and ready`;
-    }
-
-    switch (status) {
-      case 'thinking':
-        return `${platform.name} is analyzing your message and preparing a response...`;
-      case 'responding':
-        return `${platform.name} is actively generating a response for you`;
-      case 'completed':
-        return `${platform.name} has successfully completed its response`;
-      case 'error':
-        return `${platform.name} encountered an error while processing your request`;
-      default:
-        return `${platform.name} status: ${status}`;
-    }
-  };
-
-  const Icon = getPlatformIcon(platform.id);
-  const isEnabled = platform.enabled && platform.hasApiKey;
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`flex items-center gap-2 group ${!isEnabled ? 'opacity-50' : ''}`}
-      {...attributes}
-    >
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className={`flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors ${!isEnabled ? 'cursor-not-allowed' : ''}`}>
-            <div
-              {...listeners}
-              className="flex items-center gap-1 cursor-grab active:cursor-grabbing"
-            >
-              <GripVertical className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            
-            <div 
-              className="flex items-center gap-2"
-              onClick={() => isEnabled && onPlatformClick(platform)}
-            >
-              <div className="relative">
-                <Icon className={`w-4 h-4 ${isEnabled ? 'text-muted-foreground' : 'text-gray-400'}`} />
-                <div 
-                  className={`absolute -top-1 -right-1 w-4 h-4 rounded-full ${getStatusColor(status, isEnabled)} ${getStatusAnimation(status, isEnabled)}`}
-                />
-              </div>
-              <Badge variant="outline" className={`text-xs ${!isEnabled ? 'bg-gray-100 text-gray-400 border-gray-300' : ''}`}>
-                {platform.name}
-              </Badge>
-            </div>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p className="text-sm">{getVerboseStatus(platform, status)}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {isEnabled ? 'Click to view chat history • Drag to reorder' : 'Agent is disabled'}
-          </p>
-        </TooltipContent>
-      </Tooltip>
-    </div>
-  );
-};
-
-const AIStatusBar: React.FC<AIStatusBarProps> = ({ 
-  platforms, 
-  activeAIStatuses, 
+const AIStatusBar: React.FC<AIStatusBarProps> = ({
+  platforms,
+  activeAIStatuses,
   currentChat,
+  currentMode,
+  onModeChange,
   onSendMessage,
   onUpdateAgentOrder
 }) => {
-  const [selectedPlatform, setSelectedPlatform] = useState<AIPlatform | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<string>('');
+  const [privateMessage, setPrivateMessage] = useState<string>('');
+  const [isSendingPrivate, setIsSendingPrivate] = useState<boolean>(false);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+  const enabledPlatforms = platforms.filter(p => p.enabled);
 
-  const handlePlatformClick = (platform: AIPlatform) => {
-    if (platform.enabled && platform.hasApiKey) {
-      setSelectedPlatform(platform);
-      setIsDialogOpen(true);
+  const handlePrivateMessageSend = async () => {
+    if (!privateMessage.trim() || !selectedAgent || !currentChat) return;
+    
+    setIsSendingPrivate(true);
+    try {
+      await onSendMessage(privateMessage.trim(), selectedAgent);
+      setPrivateMessage('');
+    } catch (error) {
+      console.error('Error sending private message:', error);
+    } finally {
+      setIsSendingPrivate(false);
     }
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (active.id !== over?.id && onUpdateAgentOrder) {
-      console.log('Drag end - reordering agents');
-      
-      // Sort platforms by display order for consistent ordering
-      const sortedPlatforms = [...platforms]
-        .filter(p => p.hasApiKey)
-        .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
-      
-      const oldIndex = sortedPlatforms.findIndex(p => p.id === active.id);
-      const newIndex = sortedPlatforms.findIndex(p => p.id === over?.id);
-      
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const reorderedPlatforms = arrayMove(sortedPlatforms, oldIndex, newIndex);
-        console.log('Calling onUpdateAgentOrder with:', reorderedPlatforms.map(p => p.name));
-        onUpdateAgentOrder(reorderedPlatforms);
-      }
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handlePrivateMessageSend();
     }
   };
 
-  // Show all platforms with API keys, sorted by display order - both enabled and disabled
-  const sortedPlatforms = [...platforms]
-    .filter(p => p.hasApiKey)
-    .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
-
-  if (sortedPlatforms.length === 0) {
+  if (enabledPlatforms.length === 0) {
     return null;
   }
 
   return (
-    <>
-      <div className="bg-amber-50 border-b border-amber-200 px-4 py-2">
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-amber-700">AI Agents:</span>
-          <div className="flex items-center gap-3">
-            <TooltipProvider>
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={sortedPlatforms.map(p => p.id)}
-                  strategy={horizontalListSortingStrategy}
-                >
-                  {sortedPlatforms.map((platform) => {
-                    const status = activeAIStatuses[platform.id];
-                    
-                    return (
-                      <SortableAgent
-                        key={platform.id}
-                        platform={platform}
-                        status={status || 'idle'}
-                        onPlatformClick={handlePlatformClick}
-                      />
-                    );
-                  })}
-                </SortableContext>
-              </DndContext>
-            </TooltipProvider>
+    <div className="bg-amber-50 border-b border-amber-200 p-4">
+      <div className="flex flex-wrap items-center gap-4 mb-4">
+        <div className="text-sm font-medium text-amber-800">Active AI Agents:</div>
+        {enabledPlatforms.map((platform) => {
+          const status = activeAIStatuses[platform.id] || 'completed';
+          const isActive = status === 'responding' || status === 'thinking';
+          
+          return (
+            <Badge
+              key={platform.id}
+              variant={isActive ? 'default' : 'secondary'}
+              className={`flex items-center gap-1 ${
+                platform.id === 'openai' ? 'bg-[#8FBC8F] text-white' :
+                platform.id === 'anthropic' ? 'bg-[#98D982] text-white' :
+                platform.id === 'deepseek' ? 'bg-[#87CEEB] text-white' :
+                platform.id === 'grok' ? 'bg-[#DDA0DD] text-white' :
+                'bg-gray-500 text-white'
+              }`}
+            >
+              {isActive && <Loader2 className="h-3 w-3 animate-spin" />}
+              {platform.name}
+            </Badge>
+          );
+        })}
+      </div>
+
+      <Separator className="my-3" />
+
+      {/* Private Chat Section */}
+      <div className="space-y-3">
+        <div className="text-sm font-medium text-amber-800">Chat Privately with Agent:</div>
+        <div className="flex gap-2">
+          <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Select an agent" />
+            </SelectTrigger>
+            <SelectContent>
+              {enabledPlatforms.map((platform) => (
+                <SelectItem key={platform.id} value={platform.id}>
+                  {platform.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <div className="flex-1 flex gap-2">
+            <Input
+              value={privateMessage}
+              onChange={(e) => setPrivateMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Send a private message to the selected agent..."
+              disabled={!selectedAgent || isSendingPrivate}
+              className="flex-1"
+            />
+            <Button
+              onClick={handlePrivateMessageSend}
+              disabled={!privateMessage.trim() || !selectedAgent || isSendingPrivate}
+              size="icon"
+            >
+              {isSendingPrivate ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
           </div>
         </div>
       </div>
-
-      <BotHistoryDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        platform={selectedPlatform}
-        currentChat={currentChat}
-        onSendMessage={onSendMessage}
-      />
-    </>
+    </div>
   );
 };
 
