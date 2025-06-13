@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Coins, Zap } from 'lucide-react';
-import { useTokens } from '@/hooks/useTokens';
+import { useTokenPackages } from '@/hooks/useTokenPackages';
 import PayPalPurchaseButton from './PayPalPurchaseButton';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -12,7 +12,7 @@ interface TokenPurchaseProps {
 }
 
 const TokenPurchase: React.FC<TokenPurchaseProps> = ({ user }) => {
-  const { packages, isLoadingPackages } = useTokens(user);
+  const { packages, isLoadingPackages } = useTokenPackages();
 
   console.log('TokenPurchase: Loading packages:', { isLoadingPackages, packagesCount: packages?.length });
 
