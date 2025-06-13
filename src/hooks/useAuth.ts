@@ -27,6 +27,8 @@ export const useAuth = () => {
 
   const ensureUserTokens = async (userId: string) => {
     try {
+      console.log('ensureUserTokens: Starting for user:', userId);
+      
       // Use upsert with ON CONFLICT to prevent duplicates
       const { error } = await supabase
         .from('user_tokens')
@@ -41,17 +43,19 @@ export const useAuth = () => {
         });
 
       if (error) {
-        console.error('Error ensuring user tokens:', error);
+        console.error('ensureUserTokens: Error:', error);
       } else {
-        console.log('Successfully ensured token balance for user:', userId);
+        console.log('ensureUserTokens: Success for user:', userId);
       }
     } catch (error) {
-      console.error('Error ensuring user tokens:', error);
+      console.error('ensureUserTokens: Unexpected error:', error);
     }
   };
 
   const ensureUserProfile = async (user: SupabaseUser) => {
     try {
+      console.log('ensureUserProfile: Starting for user:', user.email);
+      
       // Check if user profile exists
       const { data: existingProfile, error: fetchError } = await supabase
         .from('profiles')
@@ -61,7 +65,7 @@ export const useAuth = () => {
 
       if (fetchError && fetchError.code === 'PGRST116') {
         // No profile found, create one
-        console.log('Creating user profile for:', user.email);
+        console.log('ensureUserProfile: Creating profile for:', user.email);
         const { error: insertError } = await supabase
           .from('profiles')
           .insert({
@@ -69,22 +73,28 @@ export const useAuth = () => {
             email: user.email,
             full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
             avatar_url: user.user_metadata?.avatar_url || null,
-            has_completed_onboarding: false // New users should see the welcome screen
+            has_completed_onboarding: false
           });
 
         if (insertError) {
-          console.error('Error creating user profile:', insertError);
+          console.error('ensureUserProfile: Insert error:', insertError);
         } else {
-          console.log('Successfully created user profile');
+          console.log('ensureUserProfile: Profile created successfully');
         }
+      } else if (fetchError) {
+        console.error('ensureUserProfile: Fetch error:', fetchError);
+      } else {
+        console.log('ensureUserProfile: Profile already exists');
       }
     } catch (error) {
-      console.error('Error ensuring user profile:', error);
+      console.error('ensureUserProfile: Unexpected error:', error);
     }
   };
 
   const ensureDefaultAgentSettings = async (userId: string) => {
     try {
+      console.log('ensureDefaultAgentSettings: Starting for user:', userId);
+      
       // Check if user already has agent settings
       const { data: existingSettings, error: fetchError } = await supabase
         .from('user_agent_settings')
@@ -92,7 +102,7 @@ export const useAuth = () => {
         .eq('user_id', userId);
 
       if (fetchError) {
-        console.error('Error checking agent settings:', fetchError);
+        console.error('ensureDefaultAgentSettings: Fetch error:', fetchError);
         return;
       }
 
@@ -119,27 +129,27 @@ export const useAuth = () => {
       }
 
       if (settingsToInsert.length > 0) {
-        console.log('Creating default agent settings for new user:', userId, settingsToInsert);
+        console.log('ensureDefaultAgentSettings: Creating settings:', settingsToInsert);
         const { error: insertError } = await supabase
           .from('user_agent_settings')
           .insert(settingsToInsert);
 
         if (insertError) {
-          console.error('Error creating default agent settings:', insertError);
+          console.error('ensureDefaultAgentSettings: Insert error:', insertError);
         } else {
-          console.log('Successfully created default agent settings - all 4 platforms enabled by default');
+          console.log('ensureDefaultAgentSettings: Settings created successfully');
         }
       } else {
-        console.log('User already has agent settings configured');
+        console.log('ensureDefaultAgentSettings: Settings already configured');
       }
     } catch (error) {
-      console.error('Error ensuring default agent settings:', error);
+      console.error('ensureDefaultAgentSettings: Unexpected error:', error);
     }
   };
 
   const handleSignOut = async () => {
     try {
-      console.log('Signing out user...');
+      console.log('handleSignOut: Starting sign out process');
       
       // Clean up auth state first
       cleanupAuthState();
@@ -148,16 +158,16 @@ export const useAuth = () => {
       try {
         const { error } = await supabase.auth.signOut({ scope: 'global' });
         if (error) {
-          console.error('Sign out error:', error);
+          console.error('handleSignOut: Sign out error:', error);
         }
       } catch (err) {
-        console.log('Sign out attempt completed');
+        console.log('handleSignOut: Sign out attempt completed');
       }
       
       // Force page redirect for clean state
       window.location.href = '/auth';
     } catch (error: any) {
-      console.error('Error during sign out:', error);
+      console.error('handleSignOut: Unexpected error:', error);
       toast.error('Error signing out: ' + error.message);
       // Still redirect even if there's an error
       window.location.href = '/auth';
