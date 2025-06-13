@@ -232,6 +232,15 @@ const Index = () => {
     return acc;
   }, {} as Record<string, 'thinking' | 'responding' | 'completed' | 'error'>);
 
+  // Get current chat with messages
+  const currentChatWithMessages = chats?.find(chat => chat.id === activeChatId) || null;
+  console.log('Index: Current chat with messages:', {
+    id: currentChatWithMessages?.id,
+    title: currentChatWithMessages?.title,
+    hasMessages: !!currentChatWithMessages?.messages,
+    messageCount: currentChatWithMessages?.messages?.length || 0
+  });
+
   // Set up scroll listener when chat tab is active
   useEffect(() => {
     if (activeTab === 'chat') {
@@ -473,7 +482,7 @@ const Index = () => {
             onAgentClick={(platform) => {
               console.log('Agent clicked:', platform.name);
             }}
-            currentChat={chats?.find(chat => chat.id === activeChatId) || null}
+            currentChat={currentChatWithMessages}
             onSendMessage={handleSingleAgentMessage}
           />
         </div>
