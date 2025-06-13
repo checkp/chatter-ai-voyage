@@ -67,12 +67,17 @@ const DraggableAIStatusBar: React.FC<DraggableAIStatusBarProps> = ({
 
   const handlePlatformClick = (platform: AIPlatform) => {
     console.log('DraggableAIStatusBar: handlePlatformClick called with:', platform.name);
-    console.log('DraggableAIStatusBar: Current chat object structure:', {
+    console.log('DraggableAIStatusBar: Current chat passed to dialog:', {
       id: currentChat?.id,
       title: currentChat?.title,
       hasMessages: !!currentChat?.messages,
       messageCount: currentChat?.messages?.length || 0,
-      messagesArray: currentChat?.messages
+      messagesSample: currentChat?.messages?.slice(0, 2)?.map(m => ({
+        id: m.id,
+        sender: m.sender,
+        platform: m.platform,
+        contentPreview: m.content.substring(0, 50) + '...'
+      }))
     });
     
     if (platform.enabled && platform.hasApiKey) {

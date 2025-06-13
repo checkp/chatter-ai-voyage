@@ -44,19 +44,37 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
     }
   };
 
+  // Debug logging
+  console.log('BotHistoryDialog: Rendering with platform:', platform.name);
+  console.log('BotHistoryDialog: Current chat object:', {
+    id: currentChat?.id,
+    title: currentChat?.title,
+    messagesCount: currentChat?.messages?.length || 0,
+    fullMessagesArray: currentChat?.messages
+  });
+
   // Filter messages for this specific platform - include user messages and this platform's responses
-  const platformMessages = currentChat?.messages?.filter(msg => {
-    console.log('BotHistoryDialog: Filtering message:', {
-      id: msg.id,
+  const allMessages = currentChat?.messages || [];
+  console.log('BotHistoryDialog: All messages before filtering:', allMessages.length);
+  
+  const platformMessages = allMessages.filter(msg => {
+    const isUserMessage = msg.sender === 'user';
+    const isPlatformMessage = msg.sender === 'ai' && msg.platform === platform.id;
+    
+    console.log('BotHistoryDialog: Message filter check:', {
+      messageId: msg.id,
       sender: msg.sender,
       platform: msg.platform,
-      targetPlatform: platform.id
+      targetPlatform: platform.id,
+      isUserMessage,
+      isPlatformMessage,
+      willInclude: isUserMessage || isPlatformMessage
     });
-    return msg.sender === 'user' || msg.platform === platform.id;
-  }) || [];
+    
+    return isUserMessage || isPlatformMessage;
+  });
 
-  console.log('BotHistoryDialog: Platform messages for', platform.name, ':', platformMessages.length);
-  console.log('BotHistoryDialog: All chat messages:', currentChat?.messages?.length || 0);
+  console.log('BotHistoryDialog: Filtered platform messages:', platformMessages.length);
 
   const handleSendMessage = () => {
     if (message.trim() && onSendMessage) {
@@ -83,7 +101,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
             <Icon className="w-5 h-5" />
             Chat with {platform.name}
             <Badge variant="outline" className="ml-2">
-              {platformMessages.filter(m => m.platform === platform.id).length} responses
+              {platformMessages.filter(m => m.sender === 'ai' && m.platform === platform.id).length} responses
             </Badge>
           </DialogTitle>
         </DialogHeader>
@@ -96,6 +114,9 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
                   <Icon className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No conversation history with {platform.name}</p>
                   <p className="text-sm mt-2">Start a conversation below</p>
+                  <p className="text-xs mt-2 text-muted-foreground">
+                    Chat ID: {currentChat?.id || 'None'} | Total messages: {allMessages.length}
+                  </p>
                 </div>
               </div>
             ) : (
