@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Coins, Plus, RefreshCw, Gift } from 'lucide-react';
@@ -11,12 +11,11 @@ interface TokenBalanceProps {
   onPurchaseClick?: () => void;
 }
 
-const TokenBalance: React.FC<TokenBalanceProps> = ({ user, onPurchaseClick }) => {
+const TokenBalance: React.FC<TokenBalanceProps> = memo(({ user, onPurchaseClick }) => {
   const { tokenBalance, isLoadingBalance } = useTokens(user);
 
   console.log('TokenBalance rendering:', { 
     balance: tokenBalance?.balance, 
-    tokenBalance, 
     user: user?.id,
     isLoadingBalance,
     hasTokenBalance: !!tokenBalance 
@@ -90,6 +89,8 @@ const TokenBalance: React.FC<TokenBalanceProps> = ({ user, onPurchaseClick }) =>
       )}
     </div>
   );
-};
+});
+
+TokenBalance.displayName = 'TokenBalance';
 
 export default TokenBalance;

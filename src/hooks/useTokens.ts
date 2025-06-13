@@ -34,7 +34,7 @@ interface TokenPackage {
 export const useTokens = (user: SupabaseUser | null) => {
   const queryClient = useQueryClient();
 
-  // Fetch user token balance with simplified logic - no duplicate handling here
+  // Fetch user token balance with optimized settings to reduce requests
   const { data: tokenBalance, isLoading: isLoadingBalance, error: tokenError } = useQuery({
     queryKey: ['tokens', user?.id],
     queryFn: async () => {
@@ -93,8 +93,11 @@ export const useTokens = (user: SupabaseUser | null) => {
       }
     },
     enabled: !!user,
-    staleTime: 5000,
-    refetchOnWindowFocus: true,
+    staleTime: 30000, // Increased from 5 seconds to 30 seconds
+    gcTime: 60000, // Cache for 1 minute
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnMount: false, // Don't refetch on component mount if data exists
+    refetchInterval: false, // Disable automatic refetching
     retry: (failureCount, error) => {
       // Don't retry on authentication errors
       if (error?.message?.includes('Access denied') || error?.message?.includes('not authenticated')) {
@@ -140,6 +143,8 @@ export const useTokens = (user: SupabaseUser | null) => {
       return data as TokenTransaction[];
     },
     enabled: !!user,
+    staleTime: 60000, // Cache for 1 minute
+    refetchOnWindowFocus: false,
   });
 
   // Check for recent daily token bonus and show notification
@@ -176,6 +181,8 @@ export const useTokens = (user: SupabaseUser | null) => {
 
       return data as TokenPackage[];
     },
+    staleTime: 300000, // Cache for 5 minutes
+    refetchOnWindowFocus: false,
   });
 
   // Check if user has sufficient tokens
@@ -211,6 +218,11 @@ export const useTokens = (user: SupabaseUser | null) => {
     return totalCost;
   };
 
+  // Function to manually refresh token balance (call this after sending messages)
+  const refreshTokenBalance = () => {
+    queryClient.invalidateQueries({ queryKey: ['tokens', user?.id] });
+  };
+
   return {
     tokenBalance,
     transactions,
@@ -220,5 +232,6 @@ export const useTokens = (user: SupabaseUser | null) => {
     isLoadingPackages,
     checkTokenBalance,
     calculateTokenCost,
+    refreshTokenBalance,
   };
 };
