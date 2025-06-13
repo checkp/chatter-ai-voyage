@@ -44,13 +44,23 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
     }
   };
 
-  // Filter messages for this specific platform
-  const platformMessages = currentChat?.messages?.filter(msg => 
-    msg.sender === 'user' || msg.platform === platform.id
-  ) || [];
+  // Filter messages for this specific platform - include user messages and this platform's responses
+  const platformMessages = currentChat?.messages?.filter(msg => {
+    console.log('BotHistoryDialog: Filtering message:', {
+      id: msg.id,
+      sender: msg.sender,
+      platform: msg.platform,
+      targetPlatform: platform.id
+    });
+    return msg.sender === 'user' || msg.platform === platform.id;
+  }) || [];
+
+  console.log('BotHistoryDialog: Platform messages for', platform.name, ':', platformMessages.length);
+  console.log('BotHistoryDialog: All chat messages:', currentChat?.messages?.length || 0);
 
   const handleSendMessage = () => {
     if (message.trim() && onSendMessage) {
+      console.log('BotHistoryDialog: Sending message to', platform.id, ':', message.trim());
       onSendMessage(message.trim(), platform.id);
       setMessage('');
     }
@@ -110,7 +120,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
                       )}
                       <div className="whitespace-pre-wrap">{msg.content}</div>
                       <div className="text-xs opacity-70 mt-1">
-                        {new Date(msg.timestamp).toLocaleTimeString()}
+                        {new Date(msg.timestamp || msg.created_at).toLocaleTimeString()}
                       </div>
                     </div>
                   </div>
