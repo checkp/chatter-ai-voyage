@@ -22,10 +22,11 @@ import ChatModeSelector from '@/components/ChatModeSelector';
 import SideBySideLayout from '@/components/SideBySideLayout';
 import MobileLayout from '@/components/mobile/MobileLayout';
 import MobileInterface from '@/components/mobile/MobileInterface';
-import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
+import AIStatusBar from '@/components/AIStatusBar';
 import { MessageSquare, Users, Zap, Bot, Star, ArrowRight } from 'lucide-react';
 import type { ChatMode } from '@/types/chat';
 import ContactUsButton from '@/components/ContactUsButton';
+import type { AIPlatform } from '@/types/chat';
 
 const aiTestimonials = [
   {
@@ -188,6 +189,12 @@ const Index = () => {
   const handleSingleAgentMessage = async (message: string, platformId: string) => {
     if (!activeChatId) return;
     await sendSingleAgentMessage(activeChatId, message, platformId);
+  };
+
+  const handleAgentClick = (platform: AIPlatform) => {
+    console.log('Index: handleAgentClick called with:', platform.name);
+    // This should trigger the bot history dialog
+    // We need to set up state for this dialog here or pass it through properly
   };
 
   const handleStartFreeMode = () => {
@@ -464,18 +471,16 @@ const Index = () => {
           onTogglePlatform={togglePlatform}
         />
 
-        {/* Add the Draggable AI Status Bar */}
-        <div className="bg-secondary/50 border-b border-border px-4 py-2">
-          <DraggableAIStatusBar
-            platforms={platforms}
-            activeAIStatuses={transformedStatuses}
-            onReorder={updateAgentOrder}
-            onAgentClick={(platform) => {
-              // Handle agent click - you can implement bot history dialog here if needed
-              console.log('Agent clicked:', platform.name);
-            }}
-          />
-        </div>
+        {/* Replace DraggableAIStatusBar with AIStatusBar directly */}
+        <AIStatusBar
+          platforms={platforms}
+          activeAIStatuses={transformedStatuses}
+          currentChat={chats?.find(chat => chat.id === activeChatId)}
+          currentMode={activeChatMode}
+          onModeChange={handleChatModeChange}
+          onSendMessage={handleSingleAgentMessage}
+          onUpdateAgentOrder={updateAgentOrder}
+        />
 
         {/* Chat Messages Area */}
         <div className="flex-1 overflow-hidden">
