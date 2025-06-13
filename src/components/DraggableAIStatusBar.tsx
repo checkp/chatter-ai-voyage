@@ -15,14 +15,9 @@ import {
   sortableKeyboardCoordinates,
   horizontalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import {
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { Badge } from '@/components/ui/badge';
-import { GripVertical, Bot, Brain, Search, Zap, Gem } from 'lucide-react';
 import type { AIPlatform, Chat } from '@/types/chat';
 import BotHistoryDialog from './BotHistoryDialog';
+import SortableAgent from './ai-status/SortableAgent';
 
 interface DraggableAIStatusBarProps {
   platforms: AIPlatform[];
@@ -32,128 +27,6 @@ interface DraggableAIStatusBarProps {
   currentChat?: Chat | null;
   onSendMessage?: (message: string, platformId: string) => void;
 }
-
-interface SortableAgentProps {
-  platform: AIPlatform;
-  status: string;
-  onAgentClick: (platform: AIPlatform) => void;
-}
-
-const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onAgentClick }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: platform.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  const getPlatformIcon = (platformId: string) => {
-    switch (platformId) {
-      case 'openai':
-        return Bot;
-      case 'anthropic':
-        return Brain;
-      case 'deepseek':
-        return Search;
-      case 'grok':
-        return Zap;
-      case 'google':
-        return Gem;
-      default:
-        return Bot;
-    }
-  };
-
-  const getStatusColor = (status: string, isEnabled: boolean) => {
-    if (!isEnabled) return 'bg-gray-400';
-    
-    switch (status) {
-      case 'thinking':
-        return 'bg-yellow-400';
-      case 'responding':
-        return 'bg-blue-400';
-      case 'completed':
-        return 'bg-green-400';
-      case 'error':
-        return 'bg-red-400';
-      default:
-        return 'bg-gray-400';
-    }
-  };
-
-  const getStatusAnimation = (status: string, isEnabled: boolean) => {
-    if (!isEnabled) return '';
-    
-    switch (status) {
-      case 'thinking':
-        return 'animate-pulse';
-      case 'responding':
-        return 'animate-ping';
-      case 'completed':
-        return '';
-      case 'error':
-        return 'animate-bounce';
-      default:
-        return '';
-    }
-  };
-
-  const Icon = getPlatformIcon(platform.id);
-  const isEnabled = platform.enabled && platform.hasApiKey;
-
-  const handleClick = (e: React.MouseEvent) => {
-    // Prevent click during drag
-    if (!isDragging && isEnabled) {
-      onAgentClick(platform);
-    }
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`flex items-center gap-2 group ${!isEnabled ? 'opacity-60' : ''}`}
-      {...attributes}
-    >
-      <div
-        {...listeners}
-        className="flex items-center gap-1 cursor-grab active:cursor-grabbing hover:bg-muted/50 p-1 rounded transition-colors"
-      >
-        <GripVertical className="w-3 h-3 text-foreground/80 group-hover:text-foreground transition-colors" />
-      </div>
-      
-      <div className="flex items-center gap-2" onClick={handleClick}>
-        <div className="flex items-center gap-1">
-          <Icon className={`w-4 h-4 ${isEnabled ? 'text-muted-foreground' : 'text-gray-400'}`} />
-          <div 
-            className={`w-2 h-2 rounded-full ${getStatusColor(status, isEnabled)} ${getStatusAnimation(status, isEnabled)}`}
-          />
-        </div>
-        <Badge 
-          variant="outline"
-          className={`text-xs cursor-pointer hover:opacity-80 transition-opacity ${
-            !isEnabled ? 'bg-gray-100 text-gray-400 border-gray-300' :
-            status === 'thinking' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
-            status === 'responding' ? 'bg-blue-100 text-blue-800 border-blue-300' :
-            status === 'completed' ? 'bg-green-100 text-green-800 border-green-300' :
-            status === 'error' ? 'bg-red-100 text-red-800 border-red-300' :
-            'text-muted-foreground'
-          }`}
-        >
-          {platform.name}: {isEnabled ? status : 'disabled'}
-        </Badge>
-      </div>
-    </div>
-  );
-};
 
 const DraggableAIStatusBar: React.FC<DraggableAIStatusBarProps> = ({
   platforms,
