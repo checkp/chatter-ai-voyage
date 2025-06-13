@@ -25,19 +25,13 @@ interface ThemeProviderProps {
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [theme, setTheme] = useState<ThemeVariant>(() => {
     const saved = localStorage.getItem('chat-theme');
-    return (saved as ThemeVariant) || 'blue-cool'; // Default to system-like theme
+    return (saved as ThemeVariant) || 'amber-warm';
   });
 
   const toggleTheme = () => {
     setTheme(prev => {
-      // Cycle through: system -> light -> dark -> system
-      if (prev === 'blue-cool') {
-        return 'amber-warm';
-      } else if (prev === 'amber-warm') {
-        return 'amber-dark';
-      } else {
-        return 'blue-cool';
-      }
+      const newTheme: ThemeVariant = prev === 'amber-warm' ? 'blue-cool' : 'amber-warm';
+      return newTheme;
     });
   };
 
