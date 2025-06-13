@@ -22,7 +22,7 @@ import ChatModeSelector from '@/components/ChatModeSelector';
 import SideBySideLayout from '@/components/SideBySideLayout';
 import MobileLayout from '@/components/mobile/MobileLayout';
 import MobileInterface from '@/components/mobile/MobileInterface';
-import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
+import AIStatusBar from '@/components/AIStatusBar';
 import { MessageSquare, Users, Zap, Bot, Star, ArrowRight } from 'lucide-react';
 import type { ChatMode } from '@/types/chat';
 import ContactUsButton from '@/components/ContactUsButton';
@@ -464,18 +464,16 @@ const Index = () => {
           onTogglePlatform={togglePlatform}
         />
 
-        {/* Add the Draggable AI Status Bar */}
-        <div className="bg-secondary/50 border-b border-border px-4 py-2">
-          <DraggableAIStatusBar
-            platforms={platforms}
-            activeAIStatuses={transformedStatuses}
-            onReorder={updateAgentOrder}
-            onAgentClick={(platform) => {
-              // Handle agent click - you can implement bot history dialog here if needed
-              console.log('Agent clicked:', platform.name);
-            }}
-          />
-        </div>
+        {/* Add the AI Status Bar */}
+        <AIStatusBar
+          platforms={platforms}
+          activeAIStatuses={transformedStatuses}
+          currentChat={chats?.find(c => c.id === activeChatId)}
+          currentMode={effectiveChatMode}
+          onModeChange={handleChatModeChange}
+          onSendMessage={handleSingleAgentMessage}
+          onUpdateAgentOrder={updateAgentOrder}
+        />
 
         {/* Chat Messages Area */}
         <div className="flex-1 overflow-hidden">
