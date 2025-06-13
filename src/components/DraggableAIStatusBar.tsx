@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -20,13 +21,16 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Badge } from '@/components/ui/badge';
 import { GripVertical, Bot, Brain, Search, Zap, Gem } from 'lucide-react';
-import type { AIPlatform } from '@/types/chat';
+import type { AIPlatform, Chat } from '@/types/chat';
+import BotHistoryDialog from './BotHistoryDialog';
 
 interface DraggableAIStatusBarProps {
   platforms: AIPlatform[];
   activeAIStatuses: Record<string, 'thinking' | 'responding' | 'completed' | 'error'>;
   onReorder: (reorderedPlatforms: AIPlatform[]) => void;
-  onAgentClick: (platform: AIPlatform) => void;
+  onAgentClick?: (platform: AIPlatform) => void;
+  currentChat?: Chat | null;
+  onSendMessage?: (message: string, platformId: string) => void;
 }
 
 interface SortableAgentProps {
@@ -105,6 +109,13 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onAgent
   const Icon = getPlatformIcon(platform.id);
   const isEnabled = platform.enabled && platform.hasApiKey;
 
+  const handleClick = (e: React.MouseEvent) => {
+    // Prevent click during drag
+    if (!isDragging && isEnabled) {
+      onAgentClick(platform);
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -119,7 +130,7 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onAgent
         <GripVertical className="w-3 h-3 text-foreground/80 group-hover:text-foreground transition-colors" />
       </div>
       
-      <div className="flex items-center gap-2" onClick={() => isEnabled && onAgentClick(platform)}>
+      <div className="flex items-center gap-2" onClick={handleClick}>
         <div className="flex items-center gap-1">
           <Icon className={`w-4 h-4 ${isEnabled ? 'text-muted-foreground' : 'text-gray-400'}`} />
           <div 
@@ -149,7 +160,12 @@ const DraggableAIStatusBar: React.FC<DraggableAIStatusBarProps> = ({
   activeAIStatuses,
   onReorder,
   onAgentClick,
+  currentChat,
+  onSendMessage,
 }) => {
+  const [selectedPlatform, setSelectedPlatform] = useState<AIPlatform | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -176,40 +192,75 @@ const DraggableAIStatusBar: React.FC<DraggableAIStatusBarProps> = ({
     }
   };
 
+  const handlePlatformClick = (platform: AIPlatform) => {
+    console.log('DraggableAIStatusBar: handlePlatformClick called with:', platform.name);
+    
+    if (platform.enabled && platform.hasApiKey) {
+      console.log('DraggableAIStatusBar: Setting selected platform and opening dialog');
+      setSelectedPlatform(platform);
+      setIsDialogOpen(true);
+      
+      // Also call the external onAgentClick if provided
+      if (onAgentClick) {
+        onAgentClick(platform);
+      }
+    } else {
+      console.log('DraggableAIStatusBar: Platform not enabled or no API key');
+    }
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    console.log('DraggableAIStatusBar: Dialog open state changing to:', open);
+    setIsDialogOpen(open);
+    if (!open) {
+      setSelectedPlatform(null);
+    }
+  };
+
   if (sortedPlatforms.length === 0) {
     return null;
   }
 
   return (
-    <div className="flex items-center gap-4">
-      <span className="text-sm font-medium text-muted-foreground">AI Agents:</span>
-      
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={sortedPlatforms.map(p => p.id)}
-          strategy={horizontalListSortingStrategy}
+    <>
+      <div className="flex items-center gap-4">
+        <span className="text-sm font-medium text-muted-foreground">AI Agents:</span>
+        
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
         >
-          <div className="flex items-center gap-3 flex-wrap">
-            {sortedPlatforms.map((platform) => {
-              const status = activeAIStatuses[platform.id] || 'idle';
-              
-              return (
-                <SortableAgent
-                  key={platform.id}
-                  platform={platform}
-                  status={status}
-                  onAgentClick={onAgentClick}
-                />
-              );
-            })}
-          </div>
-        </SortableContext>
-      </DndContext>
-    </div>
+          <SortableContext
+            items={sortedPlatforms.map(p => p.id)}
+            strategy={horizontalListSortingStrategy}
+          >
+            <div className="flex items-center gap-3 flex-wrap">
+              {sortedPlatforms.map((platform) => {
+                const status = activeAIStatuses[platform.id] || 'idle';
+                
+                return (
+                  <SortableAgent
+                    key={platform.id}
+                    platform={platform}
+                    status={status}
+                    onAgentClick={handlePlatformClick}
+                  />
+                );
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
+      </div>
+
+      <BotHistoryDialog
+        open={isDialogOpen}
+        onOpenChange={handleDialogOpenChange}
+        platform={selectedPlatform}
+        currentChat={currentChat}
+        onSendMessage={onSendMessage}
+      />
+    </>
   );
 };
 

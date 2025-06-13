@@ -471,9 +471,10 @@ const Index = () => {
             activeAIStatuses={transformedStatuses}
             onReorder={updateAgentOrder}
             onAgentClick={(platform) => {
-              // Handle agent click - you can implement bot history dialog here if needed
               console.log('Agent clicked:', platform.name);
             }}
+            currentChat={chats?.find(chat => chat.id === activeChatId) || null}
+            onSendMessage={handleSingleAgentMessage}
           />
         </div>
 
