@@ -13,6 +13,21 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.1.3",
+    date: "2025-01-13",
+    title: "Code Architecture Improvements",
+    description: "Major refactoring to improve code organization and maintainability with better component structure.",
+    type: "improvement",
+    changes: [
+      { type: "improvement", description: "🔧 Refactored AIStatusBar: Split large component into smaller, focused components for better maintainability" },
+      { type: "improvement", description: "🎨 CSS Architecture: Reorganized CSS into modular files (base, themes, components, agents) for better organization" },
+      { type: "improvement", description: "⚡ Better Code Organization: Improved component structure and separation of concerns" },
+      { type: "improvement", description: "🛠️ Enhanced Maintainability: Smaller, focused files make the codebase easier to navigate and modify" },
+      { type: "improvement", description: "🧹 Code Cleanup: Removed unused code and optimized imports for better performance" },
+      { type: "bugfix", description: "🎯 Fixed Theme Application: Resolved issues with theme switching and CSS variable application" }
+    ]
+  },
+  {
     version: "2.1.2",
     date: "2025-01-12",
     title: "UI Improvements & User Feedback",
