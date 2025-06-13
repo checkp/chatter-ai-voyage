@@ -148,7 +148,7 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onPlatf
               {...listeners}
               className="flex items-center gap-1 cursor-grab active:cursor-grabbing"
             >
-              <GripVertical className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              <GripVertical className="w-3 h-3 text-gray-700 opacity-60 group-hover:opacity-100 transition-opacity" />
             </div>
             
             <div 
@@ -158,7 +158,7 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onPlatf
               <div className="relative">
                 <Icon className={`w-4 h-4 ${isEnabled ? 'text-muted-foreground' : 'text-gray-400'}`} />
                 <div 
-                  className={`absolute -top-1 -right-1 w-4 h-4 rounded-full ${getStatusColor(status, isEnabled)} ${getStatusAnimation(status, isEnabled)}`}
+                  className={`absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full ${getStatusColor(status, isEnabled)} ${getStatusAnimation(status, isEnabled)}`}
                 />
               </div>
               <Badge variant="outline" className={`text-xs ${!isEnabled ? 'bg-gray-100 text-gray-400 border-gray-300' : ''}`}>
