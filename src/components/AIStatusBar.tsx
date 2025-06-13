@@ -87,9 +87,9 @@ const AIStatusBar: React.FC<AIStatusBarProps> = ({
 
   return (
     <>
-      <div className="bg-amber-50 border-b border-amber-200 px-4 py-2">
+      <div className="bg-gradient-to-r from-green-100/70 to-amber-100/70 border-b border-green-200/60 px-4 py-2">
         <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-amber-700">AI Agents:</span>
+          <span className="text-sm font-medium text-green-700">AI Agents:</span>
           <div className="flex items-center gap-3">
             <TooltipProvider>
               <DndContext

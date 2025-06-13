@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ModeToggle } from "@/components/ui/mode-toggle";
+import { ModeToggle } from "@/components/ModeToggle";
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Menu } from 'lucide-react';
 import ChatModeSelector from './ChatModeSelector';
@@ -67,7 +67,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
 
   return (
     <>
-      <header className={`bg-amber-100 border-b border-amber-200 h-16 flex items-center justify-between px-4 ${className}`}>
+      <header className={`bg-gradient-to-r from-green-50 to-amber-50 border-b border-green-200/50 h-16 flex items-center justify-between px-4 ${className}`}>
         {/* Mobile Menu Button */}
         {isMobile && (
           <Button variant="ghost" size="icon" onClick={onToggleSidebar}>
@@ -76,7 +76,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         )}
 
         {/* Chat Title */}
-        <h1 className="font-semibold text-lg truncate text-amber-900">{chatTitle}</h1>
+        <h1 className="font-semibold text-lg truncate text-green-800">{chatTitle}</h1>
 
         {/* Desktop View: Settings & User Menu */}
         {!isMobile && (
