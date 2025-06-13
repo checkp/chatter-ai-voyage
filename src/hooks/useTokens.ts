@@ -5,6 +5,7 @@ import { useTokenBalance } from './useTokenBalance';
 import { useTokenTransactions } from './useTokenTransactions';
 import { useTokenPackages } from './useTokenPackages';
 import { checkTokenBalance, calculateTokenCost } from '@/utils/tokenCalculations';
+import { useMemo, useCallback } from 'react';
 
 export const useTokens = (user: SupabaseUser | null) => {
   const queryClient = useQueryClient();
@@ -13,19 +14,20 @@ export const useTokens = (user: SupabaseUser | null) => {
   const { transactions, isLoadingTransactions } = useTokenTransactions(user);
   const { packages, isLoadingPackages } = useTokenPackages();
 
-  // Function to manually refresh token balance (call this after sending messages)
-  const refreshTokenBalance = () => {
+  // Memoize the refresh function to prevent unnecessary re-renders
+  const refreshTokenBalance = useCallback(() => {
     if (user?.id) {
       queryClient.invalidateQueries({ queryKey: ['tokens', user.id] });
     }
-  };
+  }, [user?.id, queryClient]);
 
-  // Wrapper functions to maintain the same API
-  const checkTokenBalanceWrapper = async (requiredTokens: number): Promise<boolean> => {
+  // Memoize the wrapper function to maintain stable references
+  const checkTokenBalanceWrapper = useCallback(async (requiredTokens: number): Promise<boolean> => {
     return checkTokenBalance(user, tokenBalance, requiredTokens);
-  };
+  }, [user, tokenBalance]);
 
-  return {
+  // Memoize the return object to prevent unnecessary re-renders
+  return useMemo(() => ({
     tokenBalance,
     transactions,
     packages,
@@ -35,5 +37,14 @@ export const useTokens = (user: SupabaseUser | null) => {
     checkTokenBalance: checkTokenBalanceWrapper,
     calculateTokenCost,
     refreshTokenBalance,
-  };
+  }), [
+    tokenBalance,
+    transactions,
+    packages,
+    isLoadingBalance,
+    isLoadingTransactions,
+    isLoadingPackages,
+    checkTokenBalanceWrapper,
+    refreshTokenBalance
+  ]);
 };

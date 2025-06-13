@@ -1,5 +1,5 @@
 
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Coins, Plus, RefreshCw, Gift } from 'lucide-react';
@@ -14,12 +14,29 @@ interface TokenBalanceProps {
 const TokenBalance: React.FC<TokenBalanceProps> = memo(({ user, onPurchaseClick }) => {
   const { tokenBalance, isLoadingBalance } = useTokens(user);
 
-  console.log('TokenBalance rendering:', { 
-    balance: tokenBalance?.balance, 
-    user: user?.id,
-    isLoadingBalance,
-    hasTokenBalance: !!tokenBalance 
-  });
+  // Memoize the balance calculations to prevent unnecessary re-renders
+  const balanceInfo = useMemo(() => {
+    if (!tokenBalance) return null;
+    
+    const balance = tokenBalance.balance ?? 0;
+    const isLowBalance = balance < 50;
+    const isNearDailyLimit = balance >= 700;
+    
+    return { balance, isLowBalance, isNearDailyLimit };
+  }, [tokenBalance?.balance]);
+
+  // Only log when there are actual changes, not on every render
+  const loggedBalance = useMemo(() => {
+    if (balanceInfo) {
+      console.log('TokenBalance: Balance updated:', { 
+        balance: balanceInfo.balance, 
+        user: user?.id,
+        isLoadingBalance,
+        hasTokenBalance: !!tokenBalance 
+      });
+    }
+    return balanceInfo?.balance;
+  }, [balanceInfo?.balance, user?.id, isLoadingBalance, tokenBalance]);
 
   if (isLoadingBalance) {
     return (
@@ -31,8 +48,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = memo(({ user, onPurchaseClick 
   }
 
   // Handle the case where tokenBalance is null (user not found or error)
-  if (!tokenBalance) {
-    console.log('TokenBalance: No token balance data available');
+  if (!tokenBalance || !balanceInfo) {
     return (
       <div className="flex items-center gap-2">
         <Coins className="w-4 h-4 text-orange-500" />
@@ -43,16 +59,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = memo(({ user, onPurchaseClick 
     );
   }
 
-  const balance = tokenBalance.balance ?? 0;
-  const isLowBalance = balance < 50;
-  const isNearDailyLimit = balance >= 700; // Close to the 1000 daily limit
-
-  console.log('TokenBalance: Final balance calculation:', { 
-    rawBalance: tokenBalance.balance, 
-    finalBalance: balance,
-    isLowBalance,
-    isNearDailyLimit
-  });
+  const { balance, isLowBalance, isNearDailyLimit } = balanceInfo;
 
   const handleClick = () => {
     if (onPurchaseClick) {
