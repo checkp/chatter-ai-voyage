@@ -36,18 +36,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    console.log('Setting theme to:', theme);
     localStorage.setItem('chat-theme', theme);
-    
-    // Apply theme to document element
     document.documentElement.setAttribute('data-theme', theme);
-    
-    // Also apply dark class for amber-dark theme
-    if (theme === 'amber-dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
   }, [theme]);
 
   return (
