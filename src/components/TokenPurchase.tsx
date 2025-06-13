@@ -14,6 +14,8 @@ interface TokenPurchaseProps {
 const TokenPurchase: React.FC<TokenPurchaseProps> = ({ user }) => {
   const { packages, isLoadingPackages } = useTokens(user);
 
+  console.log('TokenPurchase: Loading packages:', { isLoadingPackages, packagesCount: packages?.length });
+
   if (isLoadingPackages) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -35,6 +37,14 @@ const TokenPurchase: React.FC<TokenPurchaseProps> = ({ user }) => {
     );
   }
 
+  if (!packages || packages.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">No token packages available at the moment.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -45,7 +55,7 @@ const TokenPurchase: React.FC<TokenPurchaseProps> = ({ user }) => {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {packages?.map((pkg) => {
+        {packages.map((pkg) => {
           const effectiveTokens = pkg.tokens + Math.floor(pkg.tokens * pkg.bonus_percentage / 100);
           const pricePerToken = pkg.price_cents / effectiveTokens;
 

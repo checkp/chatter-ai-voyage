@@ -17,21 +17,8 @@ export const useTokenBalance = (user: SupabaseUser | null) => {
       
       console.log('useTokenBalance: Fetching tokens for user:', user.id);
       
-      // Check if user is authenticated with Supabase
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log('useTokenBalance: Current session:', { 
-        hasSession: !!session, 
-        userId: session?.user?.id, 
-        sessionError 
-      });
-      
-      if (!session || session.user.id !== user.id) {
-        console.error('useTokenBalance: User not properly authenticated');
-        throw new Error('User not authenticated');
-      }
-      
       try {
-        // Simply fetch the user's token record - don't create or handle duplicates here
+        // First try to fetch the user's token record
         const { data: tokenRecord, error: selectError } = await supabase
           .from('user_tokens')
           .select('balance, total_purchased, total_consumed')
@@ -43,15 +30,28 @@ export const useTokenBalance = (user: SupabaseUser | null) => {
         if (selectError) {
           console.error('useTokenBalance: Error fetching token record:', selectError);
           
-          // If it's a 403 error, the user might not be properly authenticated
-          if (selectError.code === 'PGRST301') {
-            throw new Error('Access denied - user not authenticated');
-          }
-          
-          // If no record found, return default values - let useAuth handle creation
+          // If no record found (PGRST116), try to create one
           if (selectError.code === 'PGRST116') {
-            console.log('useTokenBalance: No token record found, returning defaults');
-            return { balance: 0, total_purchased: 0, total_consumed: 0 };
+            console.log('useTokenBalance: No token record found, creating one');
+            
+            const { data: newRecord, error: insertError } = await supabase
+              .from('user_tokens')
+              .insert({
+                user_id: user.id,
+                balance: 300,
+                total_purchased: 0,
+                total_consumed: 0
+              })
+              .select('balance, total_purchased, total_consumed')
+              .single();
+
+            if (insertError) {
+              console.error('useTokenBalance: Error creating token record:', insertError);
+              return { balance: 0, total_purchased: 0, total_consumed: 0 };
+            }
+
+            console.log('useTokenBalance: Created new token record:', newRecord);
+            return newRecord as TokenBalance;
           }
           
           return { balance: 0, total_purchased: 0, total_consumed: 0 };
@@ -61,17 +61,16 @@ export const useTokenBalance = (user: SupabaseUser | null) => {
         return tokenRecord as TokenBalance;
       } catch (error) {
         console.error('useTokenBalance: Unexpected error:', error);
-        throw error;
+        return { balance: 0, total_purchased: 0, total_consumed: 0 };
       }
     },
     enabled: !!user,
-    staleTime: 30000, // Increased from 5 seconds to 30 seconds
-    gcTime: 60000, // Cache for 1 minute
-    refetchOnWindowFocus: false, // Don't refetch on window focus
-    refetchOnMount: false, // Don't refetch on component mount if data exists
-    refetchInterval: false, // Disable automatic refetching
+    staleTime: 30000,
+    gcTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
     retry: (failureCount, error) => {
-      // Don't retry on authentication errors
       if (error?.message?.includes('Access denied') || error?.message?.includes('not authenticated')) {
         return false;
       }
@@ -84,13 +83,6 @@ export const useTokenBalance = (user: SupabaseUser | null) => {
   useEffect(() => {
     if (tokenError) {
       console.error('useTokenBalance: Token query error:', tokenError);
-      
-      // Show user-friendly error messages
-      if (tokenError.message?.includes('Access denied')) {
-        toast.error('Please sign in again to access your token balance');
-      } else if (tokenError.message?.includes('not authenticated')) {
-        toast.error('Authentication required to view tokens');
-      }
     }
   }, [tokenError]);
 

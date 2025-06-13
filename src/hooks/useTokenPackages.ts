@@ -5,9 +5,11 @@ import type { TokenPackage } from '@/types/tokens';
 
 export const useTokenPackages = () => {
   // Fetch available token packages (public read access)
-  const { data: packages, isLoading: isLoadingPackages } = useQuery({
+  const { data: packages, isLoading: isLoadingPackages, error: packagesError } = useQuery({
     queryKey: ['token-packages'],
     queryFn: async () => {
+      console.log('useTokenPackages: Fetching token packages');
+      
       const { data, error } = await supabase
         .from('token_packages')
         .select('*')
@@ -16,9 +18,10 @@ export const useTokenPackages = () => {
 
       if (error) {
         console.error('Error fetching token packages:', error);
-        return [];
+        throw error;
       }
 
+      console.log('useTokenPackages: Found packages:', data);
       return data as TokenPackage[];
     },
     staleTime: 300000, // Cache for 5 minutes
@@ -27,6 +30,7 @@ export const useTokenPackages = () => {
 
   return {
     packages,
-    isLoadingPackages
+    isLoadingPackages,
+    packagesError
   };
 };
