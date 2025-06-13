@@ -105,6 +105,15 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onPlatf
     }
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isEnabled) {
+      console.log('Agent clicked:', platform.name);
+      onPlatformClick(platform);
+    }
+  };
+
   const Icon = getPlatformIcon(platform.id);
   const isEnabled = platform.enabled && platform.hasApiKey;
 
@@ -117,7 +126,7 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onPlatf
     >
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className={`flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors ${!isEnabled ? 'cursor-not-allowed' : ''}`}>
+          <div className={`flex items-center gap-2 ${isEnabled ? 'cursor-pointer' : 'cursor-not-allowed'} hover:bg-muted/50 p-2 rounded-md transition-colors`}>
             <div
               {...listeners}
               className="flex items-center gap-1 cursor-grab active:cursor-grabbing"
@@ -127,7 +136,7 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onPlatf
             
             <div 
               className="flex items-center gap-2"
-              onClick={() => isEnabled && onPlatformClick(platform)}
+              onClick={handleClick}
             >
               <div className="relative">
                 <Icon className={`w-4 h-4 ${isEnabled ? 'text-muted-foreground' : 'text-gray-400'}`} />
