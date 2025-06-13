@@ -6,12 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
 const AuthPage: React.FC = () => {
-  const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
@@ -21,6 +20,33 @@ const AuthPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    if (error) {
+      throw error;
+    }
+  };
+
+  const signUp = async (email: string, password: string) => {
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl
+      }
+    });
+    
+    if (error) {
+      throw error;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +67,7 @@ const AuthPage: React.FC = () => {
         await signUp(email, password);
         toast({
           title: "Success",
-          description: "Account created successfully!",
+          description: "Account created successfully! Please check your email to verify your account.",
         });
       } else {
         await signIn(email, password);
@@ -49,8 +75,8 @@ const AuthPage: React.FC = () => {
           title: "Success",
           description: "Signed in successfully!",
         });
+        navigate('/');
       }
-      navigate('/chat');
     } catch (error: any) {
       toast({
         title: "Error",
