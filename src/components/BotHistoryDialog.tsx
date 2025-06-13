@@ -99,9 +99,9 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="modern-dialog max-w-2xl h-[600px] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="modern-text-primary flex items-center gap-2">
+      <DialogContent className="max-w-4xl w-[90vw] h-[80vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle className="flex items-center gap-2">
             <Icon className="w-5 h-5" />
             Chat with {platform.name}
             <Badge variant="outline" className="ml-2">
@@ -110,10 +110,10 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 flex flex-col gap-4">
-          <ScrollArea className="flex-1 modern-bg-surface rounded-lg p-4">
+        <div className="flex-1 flex flex-col gap-4 min-h-0">
+          <ScrollArea className="flex-1 bg-muted/20 rounded-lg p-4">
             {conversationMessages.length === 0 ? (
-              <div className="flex items-center justify-center h-full modern-text-muted">
+              <div className="flex items-center justify-center h-full text-muted-foreground">
                 <div className="text-center">
                   <Icon className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No conversation history with {platform.name}</p>
@@ -128,20 +128,22 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
                     className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-lg p-3 ${
+                      className={`max-w-[75%] rounded-lg p-4 ${
                         msg.sender === 'user'
-                          ? 'modern-btn-primary text-right'
-                          : 'modern-bg-surface modern-border border modern-text-primary'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-background border shadow-sm'
                       }`}
                     >
                       {msg.sender === 'ai' && (
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-2 text-sm font-medium text-muted-foreground">
                           <Icon className="w-4 h-4" />
-                          <span className="text-sm font-medium">{platform.name}</span>
+                          <span>{platform.name}</span>
                         </div>
                       )}
-                      <div className="whitespace-pre-wrap">{msg.content}</div>
-                      <div className="text-xs opacity-70 mt-1">
+                      <div className="whitespace-pre-wrap break-words leading-relaxed">
+                        {msg.content}
+                      </div>
+                      <div className="text-xs opacity-70 mt-2">
                         {new Date(msg.timestamp || msg.created_at).toLocaleTimeString()}
                       </div>
                     </div>
@@ -151,7 +153,7 @@ const BotHistoryDialog: React.FC<BotHistoryDialogProps> = ({
             )}
           </ScrollArea>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <Input
               value={message}
               onChange={(e) => setMessage(e.target.value)}
