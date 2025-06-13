@@ -15,7 +15,9 @@ export const useTokens = (user: SupabaseUser | null) => {
 
   // Function to manually refresh token balance (call this after sending messages)
   const refreshTokenBalance = () => {
-    queryClient.invalidateQueries({ queryKey: ['tokens', user?.id] });
+    if (user?.id) {
+      queryClient.invalidateQueries({ queryKey: ['tokens', user.id] });
+    }
   };
 
   // Wrapper functions to maintain the same API

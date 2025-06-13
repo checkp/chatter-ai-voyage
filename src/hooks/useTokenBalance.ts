@@ -65,18 +65,21 @@ export const useTokenBalance = (user: SupabaseUser | null) => {
       }
     },
     enabled: !!user,
-    staleTime: 30000,
-    gcTime: 60000,
+    staleTime: 60000, // Increased to 1 minute to reduce requests
+    gcTime: 120000, // Increased cache time
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
+    refetchOnMount: true, // Only refetch on mount
+    refetchInterval: false, // Disable automatic refetching
     retry: (failureCount, error) => {
-      if (error?.message?.includes('Access denied') || error?.message?.includes('not authenticated')) {
+      // Don't retry on auth errors
+      if (error?.message?.includes('Access denied') || 
+          error?.message?.includes('not authenticated') ||
+          error?.message?.includes('infinite recursion')) {
         return false;
       }
-      return failureCount < 2;
+      return failureCount < 1; // Reduced retry attempts
     },
-    retryDelay: 500,
+    retryDelay: 2000, // Increased delay between retries
   });
 
   // Log any token errors with more detail

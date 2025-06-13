@@ -28,8 +28,18 @@ export const useTokenTransactions = (user: SupabaseUser | null) => {
       return data as TokenTransaction[];
     },
     enabled: !!user,
-    staleTime: 60000, // Cache for 1 minute
+    staleTime: 120000, // Cache for 2 minutes
     refetchOnWindowFocus: false,
+    refetchInterval: false, // Disable automatic refetching
+    retry: (failureCount, error) => {
+      // Don't retry on auth errors or recursion errors
+      if (error?.message?.includes('Access denied') || 
+          error?.message?.includes('not authenticated') ||
+          error?.message?.includes('infinite recursion')) {
+        return false;
+      }
+      return failureCount < 1;
+    },
   });
 
   // Check for recent daily token bonus and show notification
