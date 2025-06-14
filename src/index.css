@@ -99,25 +99,25 @@
   }
 
   [data-theme="amber-dark"] {
-    --background: 222 25% 7%;
-    --foreground: 210 40% 95%;
-    --card: 222 23% 11%;
-    --card-foreground: 210 40% 95%;
-    --popover: 222 23% 11%;
-    --popover-foreground: 210 40% 95%;
-    --primary: 42 70% 60%;
-    --primary-foreground: 222 25% 7%;
-    --secondary: 222 20% 20%;
-    --secondary-foreground: 210 40% 95%;
-    --muted: 222 20% 20%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 222 20% 25%;
-    --accent-foreground: 210 40% 95%;
+    --background: 30 15% 8%; /* Dark brown background */
+    --foreground: 42 60% 92%; /* Warm amber text */
+    --card: 30 18% 12%; /* Dark brown surface */
+    --card-foreground: 42 60% 92%;
+    --popover: 30 18% 12%;
+    --popover-foreground: 42 60% 92%;
+    --primary: 42 85% 65%; /* Bright amber */
+    --primary-foreground: 30 15% 8%;
+    --secondary: 30 12% 18%; /* Medium brown */
+    --secondary-foreground: 42 60% 92%;
+    --muted: 30 12% 18%;
+    --muted-foreground: 30 8% 55%; /* Muted brown */
+    --accent: 30 15% 22%; /* Accent brown */
+    --accent-foreground: 42 60% 92%;
     --destructive: 0 85% 60%;
-    --destructive-foreground: 210 40% 95%;
-    --border: 222 20% 20%;
-    --input: 222 20% 20%;
-    --ring: 42 70% 60%;
+    --destructive-foreground: 42 60% 92%;
+    --border: 30 12% 22%; /* Brown border */
+    --input: 30 12% 22%;
+    --ring: 42 85% 65%;
   }
 
   [data-theme="amber-minimal"] {
