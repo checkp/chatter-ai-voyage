@@ -1,4 +1,3 @@
-
 export interface ChangelogEntry {
   version: string;
   date: string;
@@ -12,6 +11,20 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "2.1.4",
+    date: "2025-01-14",
+    title: "Private Chat & Theme Improvements",
+    description: "Enhanced private agent chat functionality and improved dark theme with brownish color palette.",
+    type: "improvement",
+    changes: [
+      { type: "improvement", description: "🎨 Brownish Night Theme: Updated amber-dark theme with warm brown tones for better visual comfort" },
+      { type: "bugfix", description: "💬 Fixed Private Chat Windows: Resolved duplicate dialog windows appearing when clicking agent badges" },
+      { type: "improvement", description: "📱 Better Dialog Layout: Improved private chat window formatting and text wrapping" },
+      { type: "improvement", description: "🔧 Enhanced Dialog State Management: Better handling of dialog open/close states" },
+      { type: "improvement", description: "✨ Improved Visual Hierarchy: Better contrast and readability in dark mode" }
+    ]
+  },
   {
     version: "2.1.3",
     date: "2025-01-13",
