@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +20,7 @@ const AgentSettings = () => {
   const [selectedModels, setSelectedModels] = useState<Record<string, string>>({});
   const [enabledPlatforms, setEnabledPlatforms] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   const platforms = [
     { id: 'anthropic', name: 'Claude (Anthropic)', icon: '🎭' },
@@ -28,11 +30,12 @@ const AgentSettings = () => {
     { id: 'google', name: 'Gemini (Google)', icon: '💎' },
   ];
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
+  const loadSettings = useCallback(async () => {
+    if (hasLoaded) {
+      console.log('Settings already loaded, skipping');
+      return;
+    }
 
-  const loadSettings = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -67,11 +70,16 @@ const AgentSettings = () => {
 
       setSelectedModels(modelsMap);
       setEnabledPlatforms(enabledMap);
+      setHasLoaded(true);
     } catch (error: any) {
       console.error('Failed to load agent settings:', error);
       toast.error('Failed to load agent settings: ' + error.message);
     }
-  };
+  }, [hasLoaded]);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   const saveSettings = async () => {
     setLoading(true);
@@ -114,13 +122,13 @@ const AgentSettings = () => {
     }
   };
 
-  const handleModelChange = (platform: string, model: string) => {
+  const handleModelChange = useCallback((platform: string, model: string) => {
     setSelectedModels(prev => ({ ...prev, [platform]: model }));
-  };
+  }, []);
 
-  const handleToggleEnabled = (platform: string, enabled: boolean) => {
+  const handleToggleEnabled = useCallback((platform: string, enabled: boolean) => {
     setEnabledPlatforms(prev => ({ ...prev, [platform]: enabled }));
-  };
+  }, []);
 
   return (
     <div className="space-y-6">

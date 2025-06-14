@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
@@ -60,11 +60,29 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     },
   ]);
 
-  const loadAgentSettings = async () => {
+  const loadingRef = useRef(false);
+  const lastUserIdRef = useRef<string | null>(null);
+
+  const loadAgentSettings = useCallback(async () => {
     if (!user) {
       console.log('No user authenticated, using default platform settings');
       return;
     }
+
+    // Prevent multiple simultaneous loads
+    if (loadingRef.current) {
+      console.log('Already loading agent settings, skipping');
+      return;
+    }
+
+    // Skip if user hasn't changed
+    if (lastUserIdRef.current === user.id) {
+      console.log('User unchanged, skipping agent settings reload');
+      return;
+    }
+
+    loadingRef.current = true;
+    lastUserIdRef.current = user.id;
 
     try {
       const { data: settings, error } = await supabase
@@ -100,14 +118,18 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       })));
     } catch (error: any) {
       console.error('Failed to load agent settings:', error);
+    } finally {
+      loadingRef.current = false;
     }
-  };
+  }, [user]);
 
-  const reloadSettings = async () => {
+  const reloadSettings = useCallback(async () => {
+    // Force reload by resetting the user ID ref
+    lastUserIdRef.current = null;
     await loadAgentSettings();
-  };
+  }, [loadAgentSettings]);
 
-  const saveAgentSetting = async (platformId: string, enabled: boolean, model?: string, displayOrder?: number) => {
+  const saveAgentSetting = useCallback(async (platformId: string, enabled: boolean, model?: string, displayOrder?: number) => {
     if (!user) {
       console.log('Cannot save settings without authenticated user');
       return;
@@ -143,9 +165,9 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       console.error('Failed to save agent setting:', error);
       toast.error('Failed to save agent setting');
     }
-  };
+  }, [user]);
 
-  const updateAgentOrder = async (reorderedPlatforms: AIPlatform[]) => {
+  const updateAgentOrder = useCallback(async (reorderedPlatforms: AIPlatform[]) => {
     console.log('Updating agent order:', reorderedPlatforms.map(p => p.name));
     
     // Update local state immediately for better UX
@@ -174,9 +196,9 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       // Reload settings to restore correct order
       await loadAgentSettings();
     }
-  };
+  }, [saveAgentSetting, loadAgentSettings]);
 
-  const togglePlatform = async (platformId: string) => {
+  const togglePlatform = useCallback(async (platformId: string) => {
     console.log('togglePlatform called for:', platformId);
     const platform = platforms.find(p => p.id === platformId);
     console.log('Platform found:', platform);
@@ -195,7 +217,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
 
     await saveAgentSetting(platformId, newEnabled, platform.selectedModel, platform.displayOrder);
     console.log('Platform toggle saved to database');
-  };
+  }, [platforms, saveAgentSetting]);
 
   const buildConversationForPlatform = (
     messages: Message[], 
@@ -310,9 +332,10 @@ Your goal: Contribute meaningfully to this multi-agent conversation as ${platfor
     }
   };
 
+  // Load settings only when user changes and not already loading
   useEffect(() => {
     loadAgentSettings();
-  }, [user]);
+  }, [loadAgentSettings]);
 
   return {
     platforms,
