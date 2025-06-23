@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -11,6 +12,7 @@ import { useMessageHandling } from '@/hooks/useMessageHandling';
 import { useUIState } from '@/hooks/useUIState';
 import { useFreeMode } from '@/hooks/useFreeMode';
 import { useOnboarding } from '@/hooks/useOnboarding';
+import { useConductorDiscussion } from '@/hooks/useConductorDiscussion';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatHeader from '@/components/ChatHeader';
@@ -19,12 +21,13 @@ import ChatInput from '@/components/ChatInput';
 import SettingsPanel from '@/components/SettingsPanel';
 import WelcomeScreen from '@/components/WelcomeScreen';
 import ChatModeSelector from '@/components/ChatModeSelector';
+import ConductorDebugPanel from '@/components/ConductorDebugPanel';
 import SideBySideLayout from '@/components/SideBySideLayout';
 import MobileLayout from '@/components/mobile/MobileLayout';
 import MobileInterface from '@/components/mobile/MobileInterface';
 import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
-import { MessageSquare, Users, Zap, Bot, Star, ArrowRight } from 'lucide-react';
-import type { ChatMode } from '@/types/chat';
+import { MessageSquare, Users, Zap, Bot, Star, ArrowRight, Bug } from 'lucide-react';
+import type { ChatMode, Message } from '@/types/chat';
 import ContactUsButton from '@/components/ContactUsButton';
 
 const aiTestimonials = [
