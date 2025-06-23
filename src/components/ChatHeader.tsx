@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { Settings, MessageSquare, User, LogOut, Sparkles, Crown, Grid3X3, Users, Switch as SwitchIcon } from 'lucide-react';
+import { Settings, MessageSquare, User, LogOut, Sparkles, Crown, Grid3X3, Users, SwitchCamera } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { ModeToggle } from './ModeToggle';
 import TokenBalance from './TokenBalance';
