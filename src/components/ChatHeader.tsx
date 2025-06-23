@@ -1,10 +1,12 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, MessageSquare, User, LogOut, Sparkles } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { Settings, MessageSquare, User, LogOut, Sparkles, Crown } from 'lucide-react';
 import { ModeToggle } from './ModeToggle';
 import TokenBalance from './TokenBalance';
 import ChatModeSelector from './ChatModeSelector';
@@ -67,15 +69,16 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   const activeChat = chats?.find(chat => chat.id === activeChatId);
 
   return (
-    <>
+    <TooltipProvider>
       <header className="flex items-center justify-between p-4 bg-background border-b border-border">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold text-foreground">
+            <h1 className="text-xl font-semibold text-foreground truncate">
               {activeChat?.title || 'RoboHeard'}
             </h1>
             {activeChat && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs whitespace-nowrap">
+                {currentChatMode === 'conductor' && <Crown className="h-3 w-3 mr-1" />}
                 {currentChatMode} {isolatedMode && '• isolated'}
               </Badge>
             )}
@@ -83,32 +86,37 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
 
           {/* Chat Mode Selector - only show when on chat tab */}
           {activeTab === 'chat' && activeChatId && (
-            <ChatModeSelector
-              currentMode={currentChatMode}
-              onModeChange={onChatModeChange}
-              isolatedMode={isolatedMode}
-              onIsolatedToggle={onIsolatedModeToggle}
-            />
+            <div className="hidden lg:block">
+              <ChatModeSelector
+                currentMode={currentChatMode}
+                onModeChange={onChatModeChange}
+                isolatedMode={isolatedMode}
+                onIsolatedToggle={onIsolatedModeToggle}
+                className="scale-90"
+              />
+            </div>
           )}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           {/* Free Mode Controls - only show when on chat tab */}
           {activeTab === 'chat' && activeChatId && (
-            <FreeModeControls
-              isFreeMode={isFreeMode}
-              isFreeModeRunning={isFreeModeRunning}
-              freeModeMessageLimit={freeModeMessageLimit}
-              freeModeMessageCount={freeModeMessageCount}
-              onStart={onStartFreeMode}
-              onStop={onStopFreeMode}
-              onUpdateLimit={onUpdateFreeModeLimit}
-            />
+            <div className="hidden md:block">
+              <FreeModeControls
+                isFreeMode={isFreeMode}
+                isFreeModeRunning={isFreeModeRunning}
+                freeModeMessageLimit={freeModeMessageLimit}
+                freeModeMessageCount={freeModeMessageCount}
+                onStart={onStartFreeMode}
+                onStop={onStopFreeMode}
+                onUpdateLimit={onUpdateFreeModeLimit}
+              />
+            </div>
           )}
 
           {/* Tab Navigation */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList>
+            <TabsList className="grid w-fit grid-cols-2">
               <TabsTrigger value="chat" className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
                 <span className="hidden sm:inline">Chat</span>
@@ -121,9 +129,19 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           </Tabs>
 
           {/* User Menu */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <TokenBalance user={user} onPurchaseClick={() => setActiveTab('settings')} />
-            <ModeToggle />
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <ModeToggle />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Toggle theme</p>
+              </TooltipContent>
+            </Tooltip>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -156,7 +174,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         open={showChangelog} 
         onOpenChange={setShowChangelog} 
       />
-    </>
+    </TooltipProvider>
   );
 };
 
