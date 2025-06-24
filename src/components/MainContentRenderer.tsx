@@ -59,24 +59,17 @@ const MainContentRenderer: React.FC<MainContentRendererProps> = ({
   if (showWelcome) {
     return (
       <WelcomeScreen
-        onCreateChat={(title: string) => {
-          createChatMutation.mutate({ title });
+        onGetStarted={() => {
+          createChatMutation.mutate({ title: 'New Conversation' });
           setShowWelcome(false);
         }}
+        onSkip={() => setShowWelcome(false)}
       />
     );
   }
 
   if (activeTab === 'settings') {
-    return (
-      <SettingsPanel
-        platforms={platforms}
-        onUpdatePlatformSettings={() => {}}
-        onTogglePlatform={togglePlatform}
-        onUpdateAgentOrder={updateAgentOrder}
-        user={user}
-      />
-    );
+    return <SettingsPanel />;
   }
 
   if (activeTab === 'conductor' && activeChatMode === 'conductor') {
@@ -91,11 +84,17 @@ const MainContentRenderer: React.FC<MainContentRendererProps> = ({
   }
 
   if (activeChatMode === 'side-by-side') {
+    // Convert activeAIStatuses to boolean format for SideBySideLayout
+    const booleanStatuses: Record<string, boolean> = {};
+    Object.keys(activeAIStatuses).forEach(key => {
+      booleanStatuses[key] = activeAIStatuses[key] === 'thinking' || activeAIStatuses[key] === 'responding';
+    });
+
     return (
       <SideBySideLayout
         platforms={platforms}
         onSendMessage={(message: string, platformId: string) => handleSendMessage(message, [platformId])}
-        activeAIStatuses={activeAIStatuses}
+        activeAIStatuses={booleanStatuses}
       />
     );
   }

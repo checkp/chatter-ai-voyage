@@ -99,7 +99,7 @@ const Index = () => {
     setInput('');
   };
 
-  // Convert boolean statuses to proper type
+  // Convert activeAIStatuses to proper type for components that need it
   const transformActiveAIStatuses = (statuses: Record<string, 'thinking' | 'responding' | 'completed' | 'error'>): Record<string, 'thinking' | 'responding' | 'completed' | 'error'> => {
     return statuses;
   };
@@ -148,7 +148,7 @@ const Index = () => {
         onStopFreeMode={stopFreeMode}
         onUpdateFreeModeLimit={updateMessageLimit}
         onSendSingleAgentMessage={(message: string, platformId: string) => handleSendMessage(message, [platformId])}
-        onUpdateAgentOrder={updateAgentOrder}
+        onUpdateAgentOrder={(reorderedPlatforms: AIPlatform[]) => updateAgentOrder(reorderedPlatforms)}
         onSignOut={handleSignOut}
         currentChatMode={activeChatMode}
         isolatedMode={isolatedMode}
