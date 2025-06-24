@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +12,7 @@ import FreeModeControls from './FreeModeControls';
 import ChangelogDialog from './ChangelogDialog';
 import type { Chat, ChatMode, AIPlatform } from '@/types/chat';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+import { toast } from 'sonner';
 
 interface ChatHeaderProps {
   chats: Chat[] | undefined;
@@ -80,12 +80,32 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
 
   const ModeIcon = getChatModeIcon(currentChatMode);
 
-  const handleChatModeChange = (mode: ChatMode) => {
-    console.log('ChatHeader: Changing to mode:', mode);
+  const handleChatModeChange = async (mode: ChatMode) => {
+    console.log('ChatHeader: Attempting to change chat mode to:', mode);
+    console.log('ChatHeader: Current activeChatId:', activeChatId);
+    console.log('ChatHeader: Current chat mode:', currentChatMode);
+    
+    if (!activeChatId) {
+      console.error('ChatHeader: No active chat ID found');
+      toast.error('No active chat selected');
+      return;
+    }
+
     try {
-      onChatModeChange(mode);
+      console.log('ChatHeader: Calling onChatModeChange with mode:', mode);
+      await onChatModeChange(mode);
+      console.log('ChatHeader: Successfully changed chat mode to:', mode);
+      toast.success(`Switched to ${mode} mode`);
     } catch (error) {
       console.error('ChatHeader: Error changing chat mode:', error);
+      console.error('ChatHeader: Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace',
+        mode,
+        activeChatId,
+        currentChatMode
+      });
+      toast.error(`Failed to switch to ${mode} mode`);
     }
   };
 
