@@ -78,6 +78,7 @@ const Index = () => {
   } = useUIState();
 
   const [showWelcome, setShowWelcome] = useState(false);
+  const [input, setInput] = useState('');
 
   // Handle chat mode changes
   const handleChatModeChange = async (mode: ChatMode) => {
@@ -145,9 +146,16 @@ const Index = () => {
     
     sendMessageMutation.mutate({
       chatId: activeChatId,
-      message,
+      userMessage: message,
       platformIds: platformIds || platforms.filter(p => p.enabled).map(p => p.id)
     });
+  };
+
+  // Send function for ChatInput
+  const handleSend = () => {
+    if (!input.trim()) return;
+    handleSendMessage(input.trim());
+    setInput('');
   };
 
   // Auto-create first chat if none exists
@@ -173,13 +181,13 @@ const Index = () => {
       <MobileInterface
         user={user}
         platforms={platforms}
-        chats={chats}
-        messages={messages}
-        activeChatId={activeChatId}
+        chats={chats || []}
+        messages={messages || []}
+        activeChatId={activeChatId || ''}
         activeAIStatuses={activeAIStatuses}
         onSendMessage={handleSendMessage}
-        onCreateChat={(title) => createChatMutation.mutate({ title })}
-        onDeleteChat={(chatId) => deleteChatMutation.mutate(chatId)}
+        onCreateChat={(title: string) => createChatMutation.mutate({ title })}
+        onDeleteChat={(chatId: string) => deleteChatMutation.mutate(chatId)}
         onSelectChat={setActiveChatId}
         onSignOut={handleSignOut}
         onTogglePlatform={togglePlatform}
@@ -192,8 +200,7 @@ const Index = () => {
     if (showWelcome) {
       return (
         <WelcomeScreen
-          onDismiss={() => setShowWelcome(false)}
-          onCreateChat={(title) => {
+          onCreateChat={(title: string) => {
             createChatMutation.mutate({ title });
             setShowWelcome(false);
           }}
@@ -228,7 +235,7 @@ const Index = () => {
       return (
         <SideBySideLayout
           platforms={platforms}
-          onSendMessage={(message, platformId) => handleSendMessage(message, [platformId])}
+          onSendMessage={(message: string, platformId: string) => handleSendMessage(message, [platformId])}
           activeAIStatuses={activeAIStatuses}
         />
       );
@@ -245,9 +252,9 @@ const Index = () => {
           />
         </div>
         <ChatInput
-          input=""
-          setInput={() => {}}
-          handleSend={() => {}}
+          input={input}
+          setInput={setInput}
+          handleSend={handleSend}
           isLoadingResponse={sendMessageMutation.isPending}
           isPending={sendMessageMutation.isPending}
         />
@@ -269,10 +276,14 @@ const Index = () => {
         isFreeModeRunning={isFreeModeRunning}
         freeModeMessageLimit={freeModeMessageLimit}
         freeModeMessageCount={freeModeMessageCount}
-        onStartFreeMode={startFreeMode}
+        onStartFreeMode={() => {
+          if (activeChatId) {
+            startFreeMode(activeChatId, platforms, () => {}, () => {});
+          }
+        }}
         onStopFreeMode={stopFreeMode}
         onUpdateFreeModeLimit={updateMessageLimit}
-        onSendSingleAgentMessage={(message, platformId) => handleSendMessage(message, [platformId])}
+        onSendSingleAgentMessage={(message: string, platformId: string) => handleSendMessage(message, [platformId])}
         onUpdateAgentOrder={updateAgentOrder}
         onSignOut={handleSignOut}
         currentChatMode={activeChatMode}
@@ -289,9 +300,10 @@ const Index = () => {
           chats={chats}
           activeChatId={activeChatId}
           onSelectChat={setActiveChatId}
-          onCreateChat={(title) => createChatMutation.mutate({ title })}
-          onDeleteChat={(chatId) => deleteChatMutation.mutate(chatId)}
+          onCreateChat={(title: string) => createChatMutation.mutate({ title })}
+          onDeleteChat={(chatId: string) => deleteChatMutation.mutate(chatId)}
           isLoading={isLoadingChats}
+          isCreatingChat={createChatMutation.isPending}
         />
 
         <main className="flex-1 flex flex-col overflow-hidden">
