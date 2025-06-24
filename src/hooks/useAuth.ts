@@ -44,6 +44,10 @@ export const useAuth = () => {
 
       if (error) {
         console.error('ensureUserTokens: Error:', error);
+        // Don't show toast for connection errors, just log them
+        if (!error.message?.includes('Load failed')) {
+          toast.error('Failed to initialize user tokens');
+        }
       } else {
         console.log('ensureUserTokens: Success for user:', userId);
       }
@@ -78,11 +82,17 @@ export const useAuth = () => {
 
         if (insertError) {
           console.error('ensureUserProfile: Insert error:', insertError);
+          if (!insertError.message?.includes('Load failed')) {
+            toast.error('Failed to create user profile');
+          }
         } else {
           console.log('ensureUserProfile: Profile created successfully');
         }
       } else if (fetchError) {
         console.error('ensureUserProfile: Fetch error:', fetchError);
+        if (!fetchError.message?.includes('Load failed')) {
+          toast.error('Failed to fetch user profile');
+        }
       } else {
         console.log('ensureUserProfile: Profile already exists');
       }
@@ -103,6 +113,9 @@ export const useAuth = () => {
 
       if (fetchError) {
         console.error('ensureDefaultAgentSettings: Fetch error:', fetchError);
+        if (!fetchError.message?.includes('Load failed')) {
+          toast.error('Failed to fetch agent settings');
+        }
         return;
       }
 
@@ -136,6 +149,9 @@ export const useAuth = () => {
 
         if (insertError) {
           console.error('ensureDefaultAgentSettings: Insert error:', insertError);
+          if (!insertError.message?.includes('Load failed')) {
+            toast.error('Failed to create agent settings');
+          }
         } else {
           console.log('ensureDefaultAgentSettings: Settings created successfully');
         }
@@ -192,12 +208,17 @@ export const useAuth = () => {
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('User signed in successfully:', session.user.email);
           
-          // Defer additional setup to prevent deadlocks
+          // Defer additional setup to prevent deadlocks and handle connection errors gracefully
           setTimeout(async () => {
             if (mounted) {
-              await ensureUserProfile(session.user);
-              await ensureUserTokens(session.user.id);
-              await ensureDefaultAgentSettings(session.user.id);
+              try {
+                await ensureUserProfile(session.user);
+                await ensureUserTokens(session.user.id);
+                await ensureDefaultAgentSettings(session.user.id);
+              } catch (error) {
+                console.error('Error during user setup:', error);
+                // Don't show error toast for connection issues during setup
+              }
               
               if (window.location.pathname === '/auth') {
                 console.log('Redirecting from auth page to main app');
@@ -243,9 +264,14 @@ export const useAuth = () => {
 
           // Ensure user setup for existing sessions
           if (session?.user) {
-            await ensureUserProfile(session.user);
-            await ensureUserTokens(session.user.id);
-            await ensureDefaultAgentSettings(session.user.id);
+            try {
+              await ensureUserProfile(session.user);
+              await ensureUserTokens(session.user.id);
+              await ensureDefaultAgentSettings(session.user.id);
+            } catch (error) {
+              console.error('Error during initial user setup:', error);
+              // Don't show error toast for connection issues during initial setup
+            }
           }
         }
       } catch (error) {
