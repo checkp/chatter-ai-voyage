@@ -72,7 +72,10 @@ export const useIndexPageLogic = () => {
     
     try {
       const platform = platforms.find(p => p.id === platformId);
-      if (!platform) return;
+      if (!platform) {
+        console.error(`Platform not found: ${platformId}`);
+        return;
+      }
       
       const response = await callAIAPI(platform, messages || [], platforms, activeChatMode);
       
