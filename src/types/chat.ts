@@ -1,7 +1,4 @@
-
-export type ChatMode = 'discussion' | 'isolated' | 'side-by-side' | 'conductor';
-
-export type MessageType = 'user' | 'agent-direct' | 'agent-internal' | 'conductor-summary';
+export type ChatMode = 'discussion' | 'isolated' | 'side-by-side';
 
 export interface Message {
   id: string;
@@ -14,10 +11,6 @@ export interface Message {
   status?: 'sending' | 'sent' | 'seen';
   seenBy?: string[];
   roundNumber?: number;
-  messageType?: MessageType;
-  isInternal?: boolean;
-  conductorSummary?: string;
-  relatedInternalMessages?: string[];
 }
 
 export interface Chat {
@@ -28,7 +21,6 @@ export interface Chat {
   user_id: string;
   chat_mode?: ChatMode;
   isolated_mode?: boolean;
-  conductor_platform?: string;
   messages?: Message[];
   createdAt?: Date;
   lastUpdated?: Date;
@@ -44,14 +36,4 @@ export interface AIPlatform {
   endpoint?: string;
   selectedModel?: string;
   displayOrder?: number;
-  isConductor?: boolean;
-}
-
-export interface ConductorState {
-  isActive: boolean;
-  conductorPlatform: string | null;
-  internalConversation: Message[];
-  summaryTriggerCount: number;
-  discussionRounds: number;
-  maxRounds: number;
 }

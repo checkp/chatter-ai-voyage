@@ -11,11 +11,10 @@ export const useFreeMode = () => {
   const freeModeRunningRef = useRef(false);
 
   const startFreeMode = useCallback(async (
-    activeChatId: string,
-    conductorPlatform: string | null,
+    activeChatId: string | null,
     platforms: AIPlatform[],
     callAIAPI: any,
-    sendSingleAgentMessage: (message: string, platformId: string) => Promise<void>
+    sendSingleAgentMessage: any
   ) => {
     if (!activeChatId) {
       toast.error('Please select a chat to start conversation mode');
@@ -38,7 +37,7 @@ export const useFreeMode = () => {
     // Start the autonomous conversation in a separate execution context
     setTimeout(async () => {
       try {
-        await runFreeModeConversation(enabledPlatforms, sendSingleAgentMessage);
+        await runFreeModeConversation(activeChatId, enabledPlatforms, callAIAPI, sendSingleAgentMessage);
       } catch (error) {
         console.error('Error in conversation mode:', error);
         toast.error('Conversation mode encountered an error');
@@ -55,8 +54,10 @@ export const useFreeMode = () => {
   }, [freeModeMessageCount]);
 
   const runFreeModeConversation = async (
+    chatId: string,
     enabledPlatforms: AIPlatform[],
-    sendSingleAgentMessage: (message: string, platformId: string) => Promise<void>
+    callAIAPI: any,
+    sendSingleAgentMessage: any
   ) => {
     let currentMessageCount = 0;
     let currentPlatformIndex = 0;
@@ -68,7 +69,7 @@ export const useFreeMode = () => {
         console.log(`Conversation mode: Processing message ${currentMessageCount + 1}/${freeModeMessageLimit} with ${currentPlatform.name}`);
         
         // Let the AI respond naturally to the existing conversation without any prompting
-        await sendSingleAgentMessage('', currentPlatform.id);
+        await sendSingleAgentMessage(chatId, '', currentPlatform.id);
 
         currentMessageCount++;
         setFreeModeMessageCount(currentMessageCount);

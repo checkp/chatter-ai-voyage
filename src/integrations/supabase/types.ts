@@ -12,7 +12,6 @@ export type Database = {
       conversations: {
         Row: {
           chat_mode: string
-          conductor_platform: string | null
           created_at: string
           id: string
           isolated_mode: boolean | null
@@ -22,7 +21,6 @@ export type Database = {
         }
         Insert: {
           chat_mode?: string
-          conductor_platform?: string | null
           created_at?: string
           id?: string
           isolated_mode?: boolean | null
@@ -32,7 +30,6 @@ export type Database = {
         }
         Update: {
           chat_mode?: string
-          conductor_platform?: string | null
           created_at?: string
           id?: string
           isolated_mode?: boolean | null

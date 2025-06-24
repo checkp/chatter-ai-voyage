@@ -36,21 +36,16 @@ const MobileInterface = () => {
   } = useChatManagement(user);
 
   const {
+    input,
+    setInput,
+    isLoadingResponse,
     activeAIStatuses,
-    sendMessageMutation
+    sendMessageMutation,
+    handleSend,
+    handleStop,
+    canStop,
+    getPendingCount
   } = useMessageHandling(user, platforms, callAIAPI, activeChatMode);
-
-  const [input, setInput] = useState('');
-
-  const handleSend = () => {
-    if (!input.trim() || !activeChatId) return;
-    
-    sendMessageMutation.mutate({
-      chatId: activeChatId,
-      userMessage: input.trim()
-    });
-    setInput('');
-  };
 
   const handleCreateChat = () => {
     createChatMutation.mutate({ title: 'New Chat', chatMode: 'discussion' });
@@ -74,7 +69,7 @@ const MobileInterface = () => {
     }
   }, [messages, scrollToBottom]);
 
-  // Transform activeAIStatuses (boolean) to match expected type for header
+  // Transform activeAIStatuses to match expected type
   const transformedStatuses = Object.entries(activeAIStatuses).reduce((acc, [key, value]) => {
     acc[key] = value ? 'responding' : 'completed';
     return acc;
@@ -100,7 +95,7 @@ const MobileInterface = () => {
               <ChatMessages 
                 messages={messages}
                 isLoadingMessages={isLoadingMessages}
-                isLoadingResponse={sendMessageMutation.isPending}
+                isLoadingResponse={isLoadingResponse}
                 platforms={platforms}
               />
               <div ref={messagesEndRef} className="h-4" />
@@ -111,9 +106,15 @@ const MobileInterface = () => {
               <ChatInput 
                 input={input}
                 setInput={setInput}
-                handleSend={handleSend}
-                isLoadingResponse={sendMessageMutation.isPending}
+                handleSend={() => handleSend(activeChatId)}
+                handleStop={handleStop}
+                isLoadingResponse={isLoadingResponse}
                 isPending={sendMessageMutation.isPending}
+                canStop={canStop}
+                pendingCount={getPendingCount()}
+                isFreeMode={false}
+                isFreeModeRunning={false}
+                onSendAndStartConversation={() => {}}
               />
             </div>
           </>
