@@ -47,8 +47,7 @@ const MobileInterface = () => {
     
     sendMessageMutation.mutate({
       chatId: activeChatId,
-      content: input.trim(),
-      enabledPlatforms: platforms.filter(p => p.enabled && p.hasApiKey)
+      userMessage: input.trim()
     });
     setInput('');
   };
@@ -75,9 +74,9 @@ const MobileInterface = () => {
     }
   }, [messages, scrollToBottom]);
 
-  // Transform activeAIStatuses to match expected type
+  // Transform activeAIStatuses (boolean) to match expected type for header
   const transformedStatuses = Object.entries(activeAIStatuses).reduce((acc, [key, value]) => {
-    acc[key] = value === 'thinking' || value === 'responding' ? 'responding' : 'completed';
+    acc[key] = value ? 'responding' : 'completed';
     return acc;
   }, {} as Record<string, 'thinking' | 'responding' | 'completed' | 'error'>);
 
