@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,8 +27,7 @@ export const useChatManagement = (user: any) => {
           user_id,
           chat_mode,
           isolated_mode,
-          conductor_platform,
-          messages: messages(count)
+          conductor_platform
         `)
         .eq('user_id', user.id)
         .order('updated_at', { ascending: false });
@@ -47,7 +47,7 @@ export const useChatManagement = (user: any) => {
         chat_mode: chat.chat_mode as ChatMode,
         isolated_mode: chat.isolated_mode || false,
         conductor_platform: chat.conductor_platform,
-        messageCount: Array.isArray(chat.messages) ? chat.messages.length : 0
+        messageCount: 0 // We'll get the actual count separately if needed
       }));
 
       return transformedChats;
