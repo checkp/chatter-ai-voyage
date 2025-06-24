@@ -31,6 +31,7 @@ interface MainContentRendererProps {
   user: SupabaseUser;
   handleSendMessage: (message: string, platformIds?: string[]) => void;
   activeAIStatuses: Record<string, 'thinking' | 'responding' | 'completed' | 'error'>;
+  isolatedMode: boolean;
 }
 
 const MainContentRenderer: React.FC<MainContentRendererProps> = ({
@@ -54,7 +55,8 @@ const MainContentRenderer: React.FC<MainContentRendererProps> = ({
   updateAgentOrder,
   user,
   handleSendMessage,
-  activeAIStatuses
+  activeAIStatuses,
+  isolatedMode
 }) => {
   if (showWelcome) {
     return (
@@ -92,9 +94,13 @@ const MainContentRenderer: React.FC<MainContentRendererProps> = ({
 
     return (
       <SideBySideLayout
-        platforms={platforms}
-        onSendMessage={(message: string, platformId: string) => handleSendMessage(message, [platformId])}
+        enabledPlatforms={platforms}
+        messages={messages}
+        isLoadingResponse={sendMessageMutation.isPending}
         activeAIStatuses={booleanStatuses}
+        onTogglePlatform={togglePlatform}
+        chatMode={activeChatMode}
+        isolatedMode={isolatedMode}
       />
     );
   }

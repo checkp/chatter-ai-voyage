@@ -99,11 +99,6 @@ const Index = () => {
     setInput('');
   };
 
-  // Convert activeAIStatuses to proper type for components that need it
-  const transformActiveAIStatuses = (statuses: Record<string, 'thinking' | 'responding' | 'completed' | 'error'>): Record<string, 'thinking' | 'responding' | 'completed' | 'error'> => {
-    return statuses;
-  };
-
   // Auto-create first chat if none exists
   useEffect(() => {
     if (isInitialLoadComplete && user && (!chats || chats.length === 0)) {
@@ -131,7 +126,7 @@ const Index = () => {
       <ChatHeader
         chats={chats}
         activeChatId={activeChatId}
-        activeAIStatuses={transformActiveAIStatuses(activeAIStatuses)}
+        activeAIStatuses={activeAIStatuses}
         platforms={platforms}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -148,7 +143,7 @@ const Index = () => {
         onStopFreeMode={stopFreeMode}
         onUpdateFreeModeLimit={updateMessageLimit}
         onSendSingleAgentMessage={(message: string, platformId: string) => handleSendMessage(message, [platformId])}
-        onUpdateAgentOrder={(reorderedPlatforms: AIPlatform[]) => updateAgentOrder(reorderedPlatforms)}
+        onUpdateAgentOrder={updateAgentOrder}
         onSignOut={handleSignOut}
         currentChatMode={activeChatMode}
         isolatedMode={isolatedMode}
@@ -192,7 +187,8 @@ const Index = () => {
             updateAgentOrder={updateAgentOrder}
             user={user}
             handleSendMessage={handleSendMessage}
-            activeAIStatuses={transformActiveAIStatuses(activeAIStatuses)}
+            activeAIStatuses={activeAIStatuses}
+            isolatedMode={isolatedMode}
           />
         </main>
       </div>
@@ -201,7 +197,7 @@ const Index = () => {
         activeTab={activeTab}
         activeChatId={activeChatId}
         platforms={platforms}
-        activeAIStatuses={transformActiveAIStatuses(activeAIStatuses)}
+        activeAIStatuses={activeAIStatuses}
         updateAgentOrder={updateAgentOrder}
       />
     </div>
