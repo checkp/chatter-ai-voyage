@@ -5,6 +5,9 @@ import AuthPage from '@/components/AuthPage';
 import MobileInterface from '@/components/mobile/MobileInterface';
 import MainLayout from '@/components/layout/MainLayout';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 
 const Index = () => {
   const isMobile = useIsMobile();
@@ -53,6 +56,49 @@ const Index = () => {
 
   if (!user) {
     return <AuthPage />;
+  }
+
+  // Show connection error state if there are persistent issues
+  const hasConnectionIssues = createChatMutation.isError && 
+    createChatMutation.error?.message?.includes('Load failed');
+
+  if (hasConnectionIssues) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 p-3 rounded-full bg-yellow-100 dark:bg-yellow-900/20">
+              <AlertCircle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+            </div>
+            <CardTitle className="text-xl">Connection Issues</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-muted-foreground">
+              We're having trouble connecting to our servers. Your authentication is working, 
+              but some features may be temporarily unavailable.
+            </p>
+            
+            <div className="space-y-2">
+              <Button 
+                onClick={() => window.location.reload()} 
+                className="w-full"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Retry Connection
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={handleSignOut} 
+                className="w-full"
+              >
+                Sign Out
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   if (isMobile) {

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
@@ -8,6 +8,11 @@ export const useAuth = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [connectionError, setConnectionError] = useState(false);
+  
+  // Use refs to prevent multiple simultaneous setup attempts
+  const isSetupInProgress = useRef(false);
+  const hasInitialized = useRef(false);
 
   const cleanupAuthState = () => {
     // Remove all auth-related keys from localStorage
@@ -26,6 +31,11 @@ export const useAuth = () => {
   };
 
   const ensureUserTokens = async (userId: string) => {
+    if (isSetupInProgress.current) {
+      console.log('Setup already in progress, skipping tokens setup');
+      return;
+    }
+
     try {
       console.log('ensureUserTokens: Starting for user:', userId);
       
@@ -44,19 +54,27 @@ export const useAuth = () => {
 
       if (error) {
         console.error('ensureUserTokens: Error:', error);
+        setConnectionError(true);
         // Don't show toast for connection errors, just log them
         if (!error.message?.includes('Load failed')) {
           toast.error('Failed to initialize user tokens');
         }
       } else {
         console.log('ensureUserTokens: Success for user:', userId);
+        setConnectionError(false);
       }
     } catch (error) {
       console.error('ensureUserTokens: Unexpected error:', error);
+      setConnectionError(true);
     }
   };
 
   const ensureUserProfile = async (user: SupabaseUser) => {
+    if (isSetupInProgress.current) {
+      console.log('Setup already in progress, skipping profile setup');
+      return;
+    }
+
     try {
       console.log('ensureUserProfile: Starting for user:', user.email);
       
@@ -82,26 +100,36 @@ export const useAuth = () => {
 
         if (insertError) {
           console.error('ensureUserProfile: Insert error:', insertError);
+          setConnectionError(true);
           if (!insertError.message?.includes('Load failed')) {
             toast.error('Failed to create user profile');
           }
         } else {
           console.log('ensureUserProfile: Profile created successfully');
+          setConnectionError(false);
         }
       } else if (fetchError) {
         console.error('ensureUserProfile: Fetch error:', fetchError);
+        setConnectionError(true);
         if (!fetchError.message?.includes('Load failed')) {
           toast.error('Failed to fetch user profile');
         }
       } else {
         console.log('ensureUserProfile: Profile already exists');
+        setConnectionError(false);
       }
     } catch (error) {
       console.error('ensureUserProfile: Unexpected error:', error);
+      setConnectionError(true);
     }
   };
 
   const ensureDefaultAgentSettings = async (userId: string) => {
+    if (isSetupInProgress.current) {
+      console.log('Setup already in progress, skipping agent settings');
+      return;
+    }
+
     try {
       console.log('ensureDefaultAgentSettings: Starting for user:', userId);
       
@@ -113,6 +141,7 @@ export const useAuth = () => {
 
       if (fetchError) {
         console.error('ensureDefaultAgentSettings: Fetch error:', fetchError);
+        setConnectionError(true);
         if (!fetchError.message?.includes('Load failed')) {
           toast.error('Failed to fetch agent settings');
         }
@@ -149,17 +178,45 @@ export const useAuth = () => {
 
         if (insertError) {
           console.error('ensureDefaultAgentSettings: Insert error:', insertError);
+          setConnectionError(true);
           if (!insertError.message?.includes('Load failed')) {
             toast.error('Failed to create agent settings');
           }
         } else {
           console.log('ensureDefaultAgentSettings: Settings created successfully');
+          setConnectionError(false);
         }
       } else {
         console.log('ensureDefaultAgentSettings: Settings already configured');
+        setConnectionError(false);
       }
     } catch (error) {
       console.error('ensureDefaultAgentSettings: Unexpected error:', error);
+      setConnectionError(true);
+    }
+  };
+
+  const setupUserData = async (user: SupabaseUser) => {
+    if (isSetupInProgress.current) {
+      console.log('User setup already in progress, skipping');
+      return;
+    }
+
+    isSetupInProgress.current = true;
+    console.log('Starting user setup for:', user.email);
+
+    try {
+      await Promise.all([
+        ensureUserProfile(user),
+        ensureUserTokens(user.id),
+        ensureDefaultAgentSettings(user.id)
+      ]);
+      console.log('User setup completed for:', user.email);
+    } catch (error) {
+      console.error('Error during user setup:', error);
+      setConnectionError(true);
+    } finally {
+      isSetupInProgress.current = false;
     }
   };
 
@@ -205,20 +262,13 @@ export const useAuth = () => {
         setUser(session?.user ?? null);
         setLoading(false);
         
-        if (event === 'SIGNED_IN' && session?.user) {
+        if (event === 'SIGNED_IN' && session?.user && !isSetupInProgress.current) {
           console.log('User signed in successfully:', session.user.email);
           
-          // Defer additional setup to prevent deadlocks and handle connection errors gracefully
+          // Defer setup to prevent deadlocks and only do it once
           setTimeout(async () => {
-            if (mounted) {
-              try {
-                await ensureUserProfile(session.user);
-                await ensureUserTokens(session.user.id);
-                await ensureDefaultAgentSettings(session.user.id);
-              } catch (error) {
-                console.error('Error during user setup:', error);
-                // Don't show error toast for connection issues during setup
-              }
+            if (mounted && !isSetupInProgress.current) {
+              await setupUserData(session.user);
               
               if (window.location.pathname === '/auth') {
                 console.log('Redirecting from auth page to main app');
@@ -232,6 +282,8 @@ export const useAuth = () => {
           console.log('User signed out');
           // Clean up any remaining auth state
           cleanupAuthState();
+          isSetupInProgress.current = false;
+          setConnectionError(false);
           
           // Only redirect if we're not already on auth page
           if (window.location.pathname !== '/auth') {
@@ -246,14 +298,18 @@ export const useAuth = () => {
       }
     );
 
-    // Get initial session
+    // Get initial session only once
     const getInitialSession = async () => {
+      if (hasInitialized.current) return;
+      hasInitialized.current = true;
+
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error('Error getting initial session:', error);
           // Clean up potentially corrupted auth state
           cleanupAuthState();
+          setConnectionError(true);
         }
         
         if (mounted) {
@@ -263,21 +319,15 @@ export const useAuth = () => {
           setLoading(false);
 
           // Ensure user setup for existing sessions
-          if (session?.user) {
-            try {
-              await ensureUserProfile(session.user);
-              await ensureUserTokens(session.user.id);
-              await ensureDefaultAgentSettings(session.user.id);
-            } catch (error) {
-              console.error('Error during initial user setup:', error);
-              // Don't show error toast for connection issues during initial setup
-            }
+          if (session?.user && !isSetupInProgress.current) {
+            await setupUserData(session.user);
           }
         }
       } catch (error) {
         console.error('Error during initial session check:', error);
         if (mounted) {
           setLoading(false);
+          setConnectionError(true);
           cleanupAuthState();
         }
       }
@@ -291,5 +341,5 @@ export const useAuth = () => {
     };
   }, []);
 
-  return { user, session, loading, handleSignOut };
+  return { user, session, loading, connectionError, handleSignOut };
 };

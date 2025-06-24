@@ -84,7 +84,7 @@ export const useIndexPageLogic = () => {
     }
   };
 
-  // Wrapper for startFreeMode with proper parameters
+  // Wrapper for startFreeMode with proper parameters - Fix the parameter order
   const startFreeMode = () => {
     if (activeChatId) {
       startFreeModeOriginal(activeChatId, platforms, callAIAPI, sendSingleAgentMessage);
@@ -114,10 +114,14 @@ export const useIndexPageLogic = () => {
     setInput('');
   };
 
-  // Auto-create first chat if none exists
+  // Auto-create first chat if none exists - Add error handling to prevent infinite loops
   useEffect(() => {
     if (isInitialLoadComplete && user && (!chats || chats.length === 0)) {
-      createChatMutation.mutate({ title: 'New Conversation' });
+      // Only create chat if not already creating one
+      if (!createChatMutation.isPending) {
+        console.log('Auto-creating first chat for user');
+        createChatMutation.mutate({ title: 'New Conversation' });
+      }
     }
   }, [isInitialLoadComplete, user, chats, createChatMutation]);
 
