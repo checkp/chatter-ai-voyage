@@ -202,7 +202,7 @@ const Index = () => {
           platforms={platforms}
           onUpdatePlatformSettings={() => {}}
           onTogglePlatform={togglePlatform}
-          onUpdateAgentOrder={updateAgentOrder}
+          onUpdateAgentOrder={(reorderedPlatforms: AIPlatform[]) => updateAgentOrder(reorderedPlatforms)}
           user={user}
         />
       );
@@ -272,7 +272,7 @@ const Index = () => {
         onStopFreeMode={stopFreeMode}
         onUpdateFreeModeLimit={updateMessageLimit}
         onSendSingleAgentMessage={(message: string, platformId: string) => handleSendMessage(message, [platformId])}
-        onUpdateAgentOrder={updateAgentOrder}
+        onUpdateAgentOrder={(reorderedPlatforms: AIPlatform[]) => updateAgentOrder(reorderedPlatforms)}
         onSignOut={handleSignOut}
         currentChatMode={activeChatMode}
         isolatedMode={isolatedMode}
@@ -303,7 +303,7 @@ const Index = () => {
         <DraggableAIStatusBar
           platforms={platforms}
           activeAIStatuses={transformActiveAIStatuses(activeAIStatuses)}
-          onReorder={updateAgentOrder}
+          onReorder={(reorderedPlatforms: AIPlatform[]) => updateAgentOrder(reorderedPlatforms)}
         />
       )}
     </div>
