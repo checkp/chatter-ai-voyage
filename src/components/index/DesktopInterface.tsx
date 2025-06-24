@@ -9,7 +9,7 @@ import ChatMessages from '@/components/ChatMessages';
 import ChatInput from '@/components/ChatInput';
 import SettingsPanel from '@/components/SettingsPanel';
 import SideBySideLayout from '@/components/SideBySideLayout';
-import DraggableA statusBar from '@/components/DraggableAIStatusBar';
+import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
 import ContactUsButton from '@/components/ContactUsButton';
 import type { DesktopInterfaceProps } from './types';
 
