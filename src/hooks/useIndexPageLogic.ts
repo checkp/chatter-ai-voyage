@@ -1,5 +1,4 @@
 
-import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePlatforms } from '@/hooks/usePlatforms';
 import { useChatManagement } from '@/hooks/useChatManagement';
@@ -8,6 +7,10 @@ import { useMessageHandling } from '@/hooks/useMessageHandling';
 import { useFreeMode } from '@/hooks/useFreeMode';
 import { useUIState } from '@/hooks/useUIState';
 import { useEventHandlers } from '@/components/EventHandlers';
+import { useMessageInput } from '@/hooks/useMessageInput';
+import { useWelcomeScreen } from '@/hooks/useWelcomeScreen';
+import { useAutoCreateChat } from '@/hooks/useAutoCreateChat';
+import { useFreeModeIntegration } from '@/hooks/useFreeModeIntegration';
 
 export const useIndexPageLogic = () => {
   const { user, handleSignOut } = useAuth();
@@ -63,42 +66,6 @@ export const useIndexPageLogic = () => {
     setActiveTab
   } = useUIState();
 
-  const [showWelcome, setShowWelcome] = useState(false);
-  const [input, setInput] = useState('');
-
-  // Send single agent message function for free mode
-  const sendSingleAgentMessage = async (chatId: string, message: string, platformId: string) => {
-    if (!user || !activeChatId) return;
-    
-    try {
-      const platform = platforms.find(p => p.id === platformId);
-      if (!platform) {
-        console.error(`Platform not found: ${platformId}`);
-        return;
-      }
-      
-      const response = await callAIAPI(platform, messages || [], platforms, activeChatMode);
-      
-      // Add the AI response to the chat
-      // This would typically go through the message handling system
-      console.log(`${platform.name} response:`, response);
-    } catch (error) {
-      console.error(`Error with ${platformId}:`, error);
-    }
-  };
-
-  // Wrapper for startFreeMode with proper parameters
-  const startFreeMode = () => {
-    if (activeChatId) {
-      startFreeModeOriginal(
-        activeChatId, 
-        platforms, 
-        callAIAPI, 
-        sendSingleAgentMessage
-      );
-    }
-  };
-
   // Event handlers
   const {
     handleChatModeChange,
@@ -115,30 +82,36 @@ export const useIndexPageLogic = () => {
     resetConductorChat
   );
 
-  // Send function for ChatInput
-  const handleSend = () => {
-    if (!input.trim()) return;
-    handleSendMessage(input.trim());
-    setInput('');
+  // Free mode integration
+  const { sendSingleAgentMessage } = useFreeModeIntegration(
+    user,
+    activeChatId,
+    platforms,
+    messages,
+    activeChatMode,
+    callAIAPI
+  );
+
+  // Message input handling
+  const { input, setInput, handleSend } = useMessageInput(handleSendMessage);
+
+  // Welcome screen management
+  const { showWelcome, setShowWelcome } = useWelcomeScreen(user, isInitialLoadComplete, chats);
+
+  // Auto-create first chat
+  useAutoCreateChat(user, isInitialLoadComplete, chats, createChatMutation);
+
+  // Wrapper for startFreeMode with proper parameters
+  const startFreeMode = () => {
+    if (activeChatId) {
+      startFreeModeOriginal(
+        activeChatId, 
+        platforms, 
+        callAIAPI, 
+        sendSingleAgentMessage
+      );
+    }
   };
-
-  // Auto-create first chat if none exists - Add error handling to prevent infinite loops
-  useEffect(() => {
-    if (isInitialLoadComplete && user && (!chats || chats.length === 0)) {
-      // Only create chat if not already creating one
-      if (!createChatMutation.isPending) {
-        console.log('Auto-creating first chat for user');
-        createChatMutation.mutate({ title: 'New Conversation' });
-      }
-    }
-  }, [isInitialLoadComplete, user, chats, createChatMutation]);
-
-  // Show welcome screen for new users
-  useEffect(() => {
-    if (user && isInitialLoadComplete && (!chats || chats.length === 0)) {
-      setShowWelcome(true);
-    }
-  }, [user, isInitialLoadComplete, chats]);
 
   return {
     user,
