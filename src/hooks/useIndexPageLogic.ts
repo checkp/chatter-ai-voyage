@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/hooks/useAuth';
 import { usePlatforms } from '@/hooks/usePlatforms';
 import { useChatManagement } from '@/hooks/useChatManagement';
@@ -40,7 +39,7 @@ export const useIndexPageLogic = () => {
   const {
     activeAIStatuses,
     sendMessageMutation
-  } = useMessageHandling(user, activeChatId, platforms);
+  } = useMessageHandling(user, platforms, callAIAPI, activeChatMode);
 
   const conductorPlatformObj = platforms.find(p => p.id === conductorPlatform);
 
@@ -105,10 +104,10 @@ export const useIndexPageLogic = () => {
   const startFreeMode = () => {
     if (activeChatId) {
       startFreeModeOriginal(
-        activeChatId, 
-        conductorPlatform, 
-        platforms, 
-        callAIAPI, 
+        activeChatId,
+        conductorPlatform,
+        platforms,
+        callAIAPI,
         sendSingleAgentMessage
       );
     }

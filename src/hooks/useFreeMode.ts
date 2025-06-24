@@ -11,7 +11,8 @@ export const useFreeMode = () => {
   const freeModeRunningRef = useRef(false);
 
   const startFreeMode = useCallback(async (
-    activeChatId: string | null,
+    activeChatId: string,
+    conductorPlatform: string | null,
     platforms: AIPlatform[],
     callAIAPI: any,
     sendSingleAgentMessage: any
@@ -69,7 +70,7 @@ export const useFreeMode = () => {
         console.log(`Conversation mode: Processing message ${currentMessageCount + 1}/${freeModeMessageLimit} with ${currentPlatform.name}`);
         
         // Let the AI respond naturally to the existing conversation without any prompting
-        await sendSingleAgentMessage(chatId, '', currentPlatform.id);
+        await sendSingleAgentMessage('', currentPlatform.id);
 
         currentMessageCount++;
         setFreeModeMessageCount(currentMessageCount);
