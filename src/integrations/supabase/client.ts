@@ -47,11 +47,14 @@ supabase.auth.onAuthStateChange((event, session) => {
   });
 });
 
-// Test basic connectivity
-supabase.from('profiles').select('count').limit(1).then(
-  (result) => {
+// Test basic connectivity with proper error handling
+const testConnectivity = async () => {
+  try {
+    const result = await supabase.from('profiles').select('count').limit(1);
     console.log('Supabase connectivity test:', result.error ? 'Failed' : 'Success', result.error);
+  } catch (error) {
+    console.error('Supabase connectivity test failed:', error);
   }
-).catch((error) => {
-  console.error('Supabase connectivity test failed:', error);
-});
+};
+
+testConnectivity();
