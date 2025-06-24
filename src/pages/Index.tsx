@@ -300,9 +300,9 @@ const Index = () => {
           chats={chats}
           activeChatId={activeChatId}
           onSelectChat={setActiveChatId}
-          onCreateChat={(title: string) => createChatMutation.mutate({ title })}
+          onCreateChat={() => createChatMutation.mutate({ title: 'New Conversation' })}
           onDeleteChat={(chatId: string) => deleteChatMutation.mutate(chatId)}
-          isLoading={isLoadingChats}
+          isLoadingChats={isLoadingChats}
           isCreatingChat={createChatMutation.isPending}
         />
 
