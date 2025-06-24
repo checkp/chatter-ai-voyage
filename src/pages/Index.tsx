@@ -78,11 +78,7 @@ const Index = () => {
       isFreeModeRunning={isFreeModeRunning}
       freeModeMessageLimit={freeModeMessageLimit}
       freeModeMessageCount={freeModeMessageCount}
-      onStartFreeMode={() => {
-        if (activeChatId) {
-          startFreeMode(activeChatId, platforms, () => {}, () => {});
-        }
-      }}
+      onStartFreeMode={startFreeMode}
       onStopFreeMode={stopFreeMode}
       onUpdateFreeModeLimit={updateMessageLimit}
       onSendSingleAgentMessage={(message: string, platformId: string) => handleSendMessage(message, [platformId])}
