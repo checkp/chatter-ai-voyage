@@ -53,7 +53,7 @@ export const useIndexPageLogic = () => {
     isFreeModeRunning,
     freeModeMessageCount,
     freeModeMessageLimit,
-    startFreeMode,
+    startFreeMode: startFreeModeOriginal,
     stopFreeMode,
     updateMessageLimit
   } = useFreeMode();
@@ -81,6 +81,13 @@ export const useIndexPageLogic = () => {
       console.log(`${platform.name} response:`, response);
     } catch (error) {
       console.error(`Error with ${platformId}:`, error);
+    }
+  };
+
+  // Wrapper for startFreeMode with proper parameters
+  const startFreeMode = () => {
+    if (activeChatId) {
+      startFreeModeOriginal(activeChatId, platforms, callAIAPI, sendSingleAgentMessage);
     }
   };
 
@@ -148,11 +155,7 @@ export const useIndexPageLogic = () => {
     isFreeModeRunning,
     freeModeMessageCount,
     freeModeMessageLimit,
-    startFreeMode: () => {
-      if (activeChatId) {
-        startFreeMode(activeChatId, platforms, callAIAPI, sendSingleAgentMessage);
-      }
-    },
+    startFreeMode,
     stopFreeMode,
     updateMessageLimit,
     activeTab,
