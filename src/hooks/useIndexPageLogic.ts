@@ -1,3 +1,4 @@
+
 import { useAuth } from '@/hooks/useAuth';
 import { usePlatforms } from '@/hooks/usePlatforms';
 import { useChatManagement } from '@/hooks/useChatManagement';
@@ -105,6 +106,7 @@ export const useIndexPageLogic = () => {
     if (activeChatId) {
       startFreeModeOriginal(
         activeChatId, 
+        conductorPlatform, 
         platforms, 
         callAIAPI, 
         sendSingleAgentMessage
