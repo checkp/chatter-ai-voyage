@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +8,7 @@ export const useChatManagement = (user: any) => {
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [activeChatMode, setActiveChatMode] = useState<ChatMode>('discussion');
   const [isolatedMode, setIsolatedMode] = useState<boolean>(false);
+  const [conductorPlatform, setConductorPlatform] = useState<string | null>(null);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const queryClient = useQueryClient();
 
@@ -26,7 +26,8 @@ export const useChatManagement = (user: any) => {
           user_id,
           chat_mode,
           isolated_mode,
-          messages:messages(count)
+          conductor_platform,
+          messages: messages(count)
         `)
         .eq('user_id', user.id)
         .order('updated_at', { ascending: false });
@@ -45,6 +46,7 @@ export const useChatManagement = (user: any) => {
         user_id: chat.user_id,
         chat_mode: chat.chat_mode as ChatMode,
         isolated_mode: chat.isolated_mode || false,
+        conductor_platform: chat.conductor_platform,
         messageCount: Array.isArray(chat.messages) ? chat.messages.length : 0
       }));
 
@@ -113,7 +115,17 @@ export const useChatManagement = (user: any) => {
   });
 
   const createChatMutation = useMutation({
-    mutationFn: async ({ title, chatMode = 'discussion', isolatedMode = false }: { title: string; chatMode?: ChatMode; isolatedMode?: boolean }) => {
+    mutationFn: async ({ 
+      title, 
+      chatMode = 'discussion', 
+      isolatedMode = false, 
+      conductorPlatform = null 
+    }: { 
+      title: string; 
+      chatMode?: ChatMode; 
+      isolatedMode?: boolean;
+      conductorPlatform?: string | null;
+    }) => {
       if (!user) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
@@ -122,9 +134,10 @@ export const useChatManagement = (user: any) => {
           title,
           user_id: user.id,
           chat_mode: chatMode,
-          isolated_mode: isolatedMode
+          isolated_mode: isolatedMode,
+          conductor_platform: conductorPlatform
         }])
-        .select('id, title, created_at, updated_at, user_id, chat_mode, isolated_mode')
+        .select('id, title, created_at, updated_at, user_id, chat_mode, isolated_mode, conductor_platform')
         .single();
 
       if (error) throw error;
@@ -133,6 +146,7 @@ export const useChatManagement = (user: any) => {
         ...data,
         chat_mode: data.chat_mode as ChatMode,
         isolated_mode: data.isolated_mode || false,
+        conductor_platform: data.conductor_platform,
         messageCount: 0
       } as Chat;
     },
@@ -141,6 +155,7 @@ export const useChatManagement = (user: any) => {
       setActiveChatId(newChat.id);
       setActiveChatMode(newChat.chat_mode || 'discussion');
       setIsolatedMode(newChat.isolated_mode || false);
+      setConductorPlatform(newChat.conductor_platform || null);
     },
     onError: (error: any) => {
       console.error('Failed to create chat:', error);
@@ -179,6 +194,41 @@ export const useChatManagement = (user: any) => {
     onError: (error: any) => {
       console.error('Failed to update chat mode:', error);
       toast.error('Failed to update chat view');
+    }
+  });
+
+  const updateConductorPlatformMutation = useMutation({
+    mutationFn: async ({ chatId, conductorPlatform }: { chatId: string; conductorPlatform: string | null }) => {
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('conversations')
+        .update({ conductor_platform: conductorPlatform })
+        .eq('id', chatId)
+        .eq('user_id', user.id)
+        .select('id, conductor_platform')
+        .single();
+
+      if (error) throw error;
+      return { ...data, conductor_platform: data.conductor_platform };
+    },
+    onSuccess: (updatedChat) => {
+      setConductorPlatform(updatedChat.conductor_platform);
+      
+      queryClient.setQueryData(['chats', user?.id], (oldChats: Chat[] = []) =>
+        oldChats.map(chat =>
+          chat.id === updatedChat.id
+            ? { ...chat, conductor_platform: updatedChat.conductor_platform }
+            : chat
+        )
+      );
+      
+      const conductorName = updatedChat.conductor_platform ? 'selected' : 'cleared';
+      toast.success(`Conductor ${conductorName}`);
+    },
+    onError: (error: any) => {
+      console.error('Failed to update conductor platform:', error);
+      toast.error('Failed to update conductor');
     }
   });
 
@@ -256,13 +306,14 @@ export const useChatManagement = (user: any) => {
     }
   }, [chats, activeChatId]);
 
-  // Handle active chat change
+  // Handle active chat change - enhanced to include conductor platform
   useEffect(() => {
     if (activeChatId && chats) {
       const activeChat = chats.find(chat => chat.id === activeChatId);
       if (activeChat) {
         setActiveChatMode(activeChat.chat_mode || 'discussion');
         setIsolatedMode(activeChat.isolated_mode || false);
+        setConductorPlatform(activeChat.conductor_platform || null);
       }
     }
   }, [activeChatId, chats]);
@@ -275,12 +326,15 @@ export const useChatManagement = (user: any) => {
     activeChatId,
     activeChatMode,
     isolatedMode,
+    conductorPlatform,
     setActiveChatId,
     setActiveChatMode,
     setIsolatedMode,
+    setConductorPlatform,
     createChatMutation,
     updateChatModeMutation,
     updateIsolatedModeMutation,
+    updateConductorPlatformMutation,
     deleteChatMutation,
     isInitialLoadComplete
   };

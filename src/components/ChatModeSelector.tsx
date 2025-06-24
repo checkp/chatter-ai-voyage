@@ -38,13 +38,13 @@ const ChatModeSelector: React.FC<ChatModeSelectorProps> = ({
       value: 'discussion' as ChatMode,
       label: 'Discussion',
       icon: Users,
-      description: 'Standard chat view'
+      description: 'Standard multi-AI chat'
     },
     {
       value: 'conductor' as ChatMode,
       label: 'Conductor',
       icon: Crown,
-      description: 'AI-moderated discussion with summaries'
+      description: 'Single AI conductor managing other AIs'
     },
     {
       value: 'side-by-side' as ChatMode,
@@ -144,8 +144,8 @@ const ChatModeSelector: React.FC<ChatModeSelectorProps> = ({
                 </SelectContent>
               </Select>
             </div>
-            <div className="text-xs text-muted-foreground">
-              The conductor will moderate the discussion and provide summaries
+            <div className="text-xs text-muted-foreground max-w-xs">
+              The conductor will handle your conversations and coordinate with other AIs as needed
             </div>
           </div>
         )}

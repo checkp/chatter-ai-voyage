@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +38,8 @@ interface ChatHeaderProps {
   onChatModeChange: (mode: ChatMode) => void;
   onIsolatedModeToggle: (isolated: boolean) => void;
   onTogglePlatform: (platformId: string) => void;
+  conductorPlatform?: string | null;
+  onConductorPlatformChange?: (platformId: string | null) => void;
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -61,7 +64,9 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   isolatedMode,
   onChatModeChange,
   onIsolatedModeToggle,
-  onTogglePlatform
+  onTogglePlatform,
+  conductorPlatform,
+  onConductorPlatformChange
 }) => {
   const [showChangelog, setShowChangelog] = useState(false);
   
@@ -109,6 +114,9 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
     }
   };
 
+  const availableConductors = platforms.filter(p => p.enabled && p.hasApiKey);
+  const selectedConductor = availableConductors.find(p => p.id === conductorPlatform);
+
   return (
     <TooltipProvider>
       <header className="flex items-center justify-between p-4 bg-background border-b border-border">
@@ -120,6 +128,12 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             <Badge variant="outline" className="text-xs whitespace-nowrap">
               <ModeIcon className="h-3 w-3 mr-1" />
               {currentChatMode} {isolatedMode && '• isolated'}
+            </Badge>
+          )}
+          {currentChatMode === 'conductor' && selectedConductor && (
+            <Badge variant="secondary" className="text-xs whitespace-nowrap">
+              <span className="mr-1">{selectedConductor.icon}</span>
+              {selectedConductor.name}
             </Badge>
           )}
         </div>
@@ -211,9 +225,9 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             />
           )}
 
-          {/* Tab Navigation - Icon Only */}
+          {/* Tab Navigation - Enhanced for Conductor Mode */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-fit grid-cols-2 h-8">
+            <TabsList className={`grid w-fit h-8 ${currentChatMode === 'conductor' ? 'grid-cols-3' : 'grid-cols-2'}`}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <TabsTrigger value="chat" className="h-6 w-8 p-0">
@@ -224,6 +238,20 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
                   <p>Chat</p>
                 </TooltipContent>
               </Tooltip>
+              
+              {currentChatMode === 'conductor' && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TabsTrigger value="conductor" className="h-6 w-8 p-0">
+                      <Crown className="h-4 w-4" />
+                    </TabsTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Conductor</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              
               <Tooltip>
                 <TooltipTrigger asChild>
                   <TabsTrigger value="settings" className="h-6 w-8 p-0">
