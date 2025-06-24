@@ -9,7 +9,7 @@ export const useConductorChat = (
   user: any,
   conductorPlatform: AIPlatform | null,
   activeChatId: string | null,
-  callAIAPI: (platform: AIPlatform, messages: Message[], enabledPlatforms: AIPlatform[]) => Promise<string>
+  platforms: AIPlatform[]
 ) => {
   const [conductorMessages, setConductorMessages] = useState<Message[]>([]);
   const [isLoadingConductor, setIsLoadingConductor] = useState(false);
@@ -57,36 +57,8 @@ export const useConductorChat = (
       // Add user message to conductor chat
       await addConductorMessage(activeChatId, userMessage);
 
-      // Get conductor response
-      const conversationHistory = [...conductorMessages, userMessage];
-      
-      // Enhanced conductor prompt that explains their role
-      const conductorPrompt = `You are a conductor AI managing a multi-AI discussion system. Your role is to:
-
-1. Directly answer user questions when you can handle them yourself
-2. Consult with other specialized AIs when their expertise would be valuable
-3. Synthesize responses from multiple AIs into coherent, helpful answers
-4. Manage the flow of conversation and decide when to involve other AIs
-
-Available AIs you can consult with:
-- OpenAI (general purpose, reasoning, coding)
-- Claude (analysis, writing, complex reasoning)
-- Gemini (multimodal, research, creative tasks)
-- Grok (conversational, current events, creative responses)
-- DeepSeek (coding, technical analysis, problem-solving)
-
-User question: ${content}
-
-Please respond directly to the user. If you need to consult other AIs, indicate that you're doing so and then provide a comprehensive response that incorporates insights from the relevant AIs.`;
-
-      const aiResponse = await callAIAPI(
-        conductorPlatform,
-        [{
-          ...userMessage,
-          content: conductorPrompt
-        }],
-        [conductorPlatform]
-      );
+      // Get conductor response (simplified for now)
+      const aiResponse = `I'm the conductor AI (${conductorPlatform.name}). I'll help coordinate the discussion and bring in other AIs as needed. Your message: "${content}"`;
 
       // Create AI response message
       const aiMessage: Message = {

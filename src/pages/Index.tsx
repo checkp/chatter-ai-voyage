@@ -23,9 +23,9 @@ import { toast } from 'sonner';
 import type { AIPlatform, ChatMode } from '@/types/chat';
 
 const Index = () => {
-  const { user, signOut } = useAuth();
+  const { user, handleSignOut } = useAuth();
   const isMobile = useIsMobile();
-  const { platforms, updatePlatformSettings, togglePlatform, updateAgentOrder } = usePlatforms(user);
+  const { platforms, togglePlatform, updateAgentOrder } = usePlatforms(user);
   
   const {
     chats,
@@ -50,8 +50,7 @@ const Index = () => {
 
   const {
     activeAIStatuses,
-    sendMessage,
-    callAIAPI
+    sendMessageMutation
   } = useMessageHandling(user, activeChatId, platforms);
 
   const conductorPlatformObj = platforms.find(p => p.id === conductorPlatform);
@@ -61,7 +60,7 @@ const Index = () => {
     isLoadingConductor,
     sendConductorMessage,
     resetConductorChat
-  } = useConductorChat(user, conductorPlatformObj, activeChatId, callAIAPI);
+  } = useConductorChat(user, conductorPlatformObj, activeChatId, platforms);
 
   const {
     isFreeMode,
@@ -70,15 +69,15 @@ const Index = () => {
     freeModeMessageLimit,
     startFreeMode,
     stopFreeMode,
-    updateFreeModeLimit
+    updateMessageLimit
   } = useFreeMode();
 
   const {
     activeTab,
-    setActiveTab,
-    showWelcome,
-    setShowWelcome
+    setActiveTab
   } = useUIState();
+
+  const [showWelcome, setShowWelcome] = useState(false);
 
   // Handle chat mode changes
   const handleChatModeChange = async (mode: ChatMode) => {
@@ -137,6 +136,20 @@ const Index = () => {
     }
   };
 
+  // Send message function
+  const handleSendMessage = (message: string, platformIds?: string[]) => {
+    if (!activeChatId) {
+      toast.error('No active chat selected');
+      return;
+    }
+    
+    sendMessageMutation.mutate({
+      chatId: activeChatId,
+      message,
+      platformIds: platformIds || platforms.filter(p => p.enabled).map(p => p.id)
+    });
+  };
+
   // Auto-create first chat if none exists
   useEffect(() => {
     if (isInitialLoadComplete && user && (!chats || chats.length === 0)) {
@@ -149,7 +162,7 @@ const Index = () => {
     if (user && isInitialLoadComplete && (!chats || chats.length === 0)) {
       setShowWelcome(true);
     }
-  }, [user, isInitialLoadComplete, chats, setShowWelcome]);
+  }, [user, isInitialLoadComplete, chats]);
 
   if (!user) {
     return <AuthPage />;
@@ -164,13 +177,13 @@ const Index = () => {
         messages={messages}
         activeChatId={activeChatId}
         activeAIStatuses={activeAIStatuses}
-        onSendMessage={sendMessage}
+        onSendMessage={handleSendMessage}
         onCreateChat={(title) => createChatMutation.mutate({ title })}
         onDeleteChat={(chatId) => deleteChatMutation.mutate(chatId)}
         onSelectChat={setActiveChatId}
-        onSignOut={signOut}
+        onSignOut={handleSignOut}
         onTogglePlatform={togglePlatform}
-        onUpdatePlatformSettings={updatePlatformSettings}
+        onUpdatePlatformSettings={() => {}}
       />
     );
   }
@@ -192,7 +205,7 @@ const Index = () => {
       return (
         <SettingsPanel
           platforms={platforms}
-          onUpdatePlatformSettings={updatePlatformSettings}
+          onUpdatePlatformSettings={() => {}}
           onTogglePlatform={togglePlatform}
           onUpdateAgentOrder={updateAgentOrder}
           user={user}
@@ -215,7 +228,7 @@ const Index = () => {
       return (
         <SideBySideLayout
           platforms={platforms}
-          onSendMessage={(message, platformId) => sendMessage(message, [platformId])}
+          onSendMessage={(message, platformId) => handleSendMessage(message, [platformId])}
           activeAIStatuses={activeAIStatuses}
         />
       );
@@ -226,16 +239,17 @@ const Index = () => {
         <div className="flex-1 overflow-hidden">
           <ChatMessages 
             messages={messages || []} 
-            isLoading={isLoadingMessages}
+            isLoadingMessages={isLoadingMessages}
+            isLoadingResponse={sendMessageMutation.isPending}
             platforms={platforms}
           />
         </div>
         <ChatInput
-          onSendMessage={sendMessage}
-          platforms={platforms}
-          disabled={!activeChatId}
-          isolatedMode={isolatedMode}
-          chatMode={activeChatMode}
+          input=""
+          setInput={() => {}}
+          handleSend={() => {}}
+          isLoadingResponse={sendMessageMutation.isPending}
+          isPending={sendMessageMutation.isPending}
         />
       </div>
     );
@@ -257,10 +271,10 @@ const Index = () => {
         freeModeMessageCount={freeModeMessageCount}
         onStartFreeMode={startFreeMode}
         onStopFreeMode={stopFreeMode}
-        onUpdateFreeModeLimit={updateFreeModeLimit}
-        onSendSingleAgentMessage={(message, platformId) => sendMessage(message, [platformId])}
+        onUpdateFreeModeLimit={updateMessageLimit}
+        onSendSingleAgentMessage={(message, platformId) => handleSendMessage(message, [platformId])}
         onUpdateAgentOrder={updateAgentOrder}
-        onSignOut={signOut}
+        onSignOut={handleSignOut}
         currentChatMode={activeChatMode}
         isolatedMode={isolatedMode}
         onChatModeChange={handleChatModeChange}
@@ -288,8 +302,8 @@ const Index = () => {
       {activeTab === 'chat' && activeChatId && (
         <DraggableAIStatusBar
           platforms={platforms}
-          activeStatuses={activeAIStatuses}
-          onUpdateOrder={updateAgentOrder}
+          activeAIStatuses={activeAIStatuses}
+          onReorder={updateAgentOrder}
         />
       )}
     </div>

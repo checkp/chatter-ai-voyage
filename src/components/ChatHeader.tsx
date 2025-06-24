@@ -308,7 +308,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" class="h-8 w-8">
+                <Button variant="ghost" size="icon" className="h-8 w-8">
                   <Avatar className="h-6 w-6">
                     <AvatarImage src={user.user_metadata?.avatar_url} />
                     <AvatarFallback>
