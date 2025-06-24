@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Settings, MessageSquare, User, LogOut, Sparkles, Crown, Grid3X3, Users, SwitchCamera } from 'lucide-react';
@@ -135,6 +136,31 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
               <span className="mr-1">{selectedConductor.icon}</span>
               {selectedConductor.name}
             </Badge>
+          )}
+          
+          {/* Conductor Selection Dropdown - Show when in conductor mode */}
+          {currentChatMode === 'conductor' && activeChatId && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Conductor:</span>
+              <Select 
+                value={conductorPlatform || ''} 
+                onValueChange={(value) => onConductorPlatformChange?.(value || null)}
+              >
+                <SelectTrigger className="w-48 h-8">
+                  <SelectValue placeholder="Select conductor AI" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableConductors.map((platform) => (
+                    <SelectItem key={platform.id} value={platform.id}>
+                      <div className="flex items-center gap-2">
+                        <span>{platform.icon}</span>
+                        <span>{platform.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
         </div>
 
@@ -282,7 +308,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button variant="ghost" size="icon" class="h-8 w-8">
                   <Avatar className="h-6 w-6">
                     <AvatarImage src={user.user_metadata?.avatar_url} />
                     <AvatarFallback>
