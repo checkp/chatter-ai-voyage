@@ -11,7 +11,7 @@ import { useEventHandlers } from '@/components/EventHandlers';
 
 export const useIndexPageLogic = () => {
   const { user, handleSignOut } = useAuth();
-  const { platforms, togglePlatform, updateAgentOrder } = usePlatforms(user);
+  const { platforms, togglePlatform, updateAgentOrder, callAIAPI } = usePlatforms(user);
   
   const {
     chats,
@@ -65,6 +65,24 @@ export const useIndexPageLogic = () => {
 
   const [showWelcome, setShowWelcome] = useState(false);
   const [input, setInput] = useState('');
+
+  // Send single agent message function for free mode
+  const sendSingleAgentMessage = async (chatId: string, message: string, platformId: string) => {
+    if (!user || !activeChatId) return;
+    
+    try {
+      const platform = platforms.find(p => p.id === platformId);
+      if (!platform) return;
+      
+      const response = await callAIAPI(platform, messages || [], platforms, activeChatMode);
+      
+      // Add the AI response to the chat
+      // This would typically go through the message handling system
+      console.log(`${platform.name} response:`, response);
+    } catch (error) {
+      console.error(`Error with ${platformId}:`, error);
+    }
+  };
 
   // Event handlers
   const {
@@ -130,7 +148,11 @@ export const useIndexPageLogic = () => {
     isFreeModeRunning,
     freeModeMessageCount,
     freeModeMessageLimit,
-    startFreeMode,
+    startFreeMode: () => {
+      if (activeChatId) {
+        startFreeMode(activeChatId, platforms, callAIAPI, sendSingleAgentMessage);
+      }
+    },
     stopFreeMode,
     updateMessageLimit,
     activeTab,
