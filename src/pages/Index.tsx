@@ -7,20 +7,16 @@ import { useConductorChat } from '@/hooks/useConductorChat';
 import { useMessageHandling } from '@/hooks/useMessageHandling';
 import { useFreeMode } from '@/hooks/useFreeMode';
 import { useUIState } from '@/hooks/useUIState';
+import { useEventHandlers } from '@/components/EventHandlers';
 import AuthPage from '@/components/AuthPage';
-import WelcomeScreen from '@/components/WelcomeScreen';
 import ChatHeader from '@/components/ChatHeader';
 import ChatSidebar from '@/components/ChatSidebar';
-import ChatMessages from '@/components/ChatMessages';
-import ChatInput from '@/components/ChatInput';
-import ConductorChat from '@/components/ConductorChat';
-import SettingsPanel from '@/components/SettingsPanel';
-import SideBySideLayout from '@/components/SideBySideLayout';
-import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
+import MainContentRenderer from '@/components/MainContentRenderer';
+import StatusBarManager from '@/components/StatusBarManager';
 import MobileInterface from '@/components/mobile/MobileInterface';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
-import type { AIPlatform, ChatMode } from '@/types/chat';
+import type { AIPlatform } from '@/types/chat';
 
 const Index = () => {
   const { user, handleSignOut } = useAuth();
@@ -80,75 +76,21 @@ const Index = () => {
   const [showWelcome, setShowWelcome] = useState(false);
   const [input, setInput] = useState('');
 
-  // Handle chat mode changes
-  const handleChatModeChange = async (mode: ChatMode) => {
-    if (!activeChatId) {
-      toast.error('No active chat selected');
-      return;
-    }
-
-    try {
-      await updateChatModeMutation.mutateAsync({ chatId: activeChatId, chatMode: mode });
-      
-      // Reset conductor chat when switching modes
-      if (mode !== 'conductor') {
-        resetConductorChat();
-      }
-      
-      // Switch to appropriate tab
-      if (mode === 'conductor') {
-        setActiveTab('conductor');
-      } else {
-        setActiveTab('chat');
-      }
-    } catch (error) {
-      console.error('Failed to change chat mode:', error);
-    }
-  };
-
-  // Handle conductor platform selection
-  const handleConductorPlatformChange = async (platformId: string | null) => {
-    if (!activeChatId) {
-      toast.error('No active chat selected');
-      return;
-    }
-
-    try {
-      await updateConductorPlatformMutation.mutateAsync({ 
-        chatId: activeChatId, 
-        conductorPlatform: platformId 
-      });
-    } catch (error) {
-      console.error('Failed to update conductor platform:', error);
-    }
-  };
-
-  // Handle isolated mode toggle
-  const handleIsolatedModeToggle = async (isolated: boolean) => {
-    if (!activeChatId) {
-      toast.error('No active chat selected');
-      return;
-    }
-
-    try {
-      await updateIsolatedModeMutation.mutateAsync({ chatId: activeChatId, isolatedMode: isolated });
-    } catch (error) {
-      console.error('Failed to toggle isolated mode:', error);
-    }
-  };
-
-  // Send message function
-  const handleSendMessage = (message: string, platformIds?: string[]) => {
-    if (!activeChatId) {
-      toast.error('No active chat selected');
-      return;
-    }
-    
-    sendMessageMutation.mutate({
-      chatId: activeChatId,
-      userMessage: message
-    });
-  };
+  // Event handlers
+  const {
+    handleChatModeChange,
+    handleConductorPlatformChange,
+    handleIsolatedModeToggle,
+    handleSendMessage
+  } = useEventHandlers(
+    activeChatId,
+    updateChatModeMutation,
+    updateConductorPlatformMutation,
+    updateIsolatedModeMutation,
+    sendMessageMutation,
+    setActiveTab,
+    resetConductorChat
+  );
 
   // Send function for ChatInput
   const handleSend = () => {
@@ -184,72 +126,6 @@ const Index = () => {
     return <MobileInterface />;
   }
 
-  const renderMainContent = () => {
-    if (showWelcome) {
-      return (
-        <WelcomeScreen
-          onCreateChat={(title: string) => {
-            createChatMutation.mutate({ title });
-            setShowWelcome(false);
-          }}
-        />
-      );
-    }
-
-    if (activeTab === 'settings') {
-      return (
-        <SettingsPanel
-          platforms={platforms}
-          onUpdatePlatformSettings={() => {}}
-          onTogglePlatform={togglePlatform}
-          onUpdateAgentOrder={(reorderedPlatforms: AIPlatform[]) => updateAgentOrder(reorderedPlatforms)}
-          user={user}
-        />
-      );
-    }
-
-    if (activeTab === 'conductor' && activeChatMode === 'conductor') {
-      return (
-        <ConductorChat
-          conductorPlatform={conductorPlatformObj}
-          messages={conductorMessages}
-          isLoading={isLoadingConductor}
-          onSendMessage={sendConductorMessage}
-        />
-      );
-    }
-
-    if (activeChatMode === 'side-by-side') {
-      return (
-        <SideBySideLayout
-          platforms={platforms}
-          onSendMessage={(message: string, platformId: string) => handleSendMessage(message, [platformId])}
-          activeAIStatuses={transformActiveAIStatuses(activeAIStatuses)}
-        />
-      );
-    }
-
-    return (
-      <div className="flex flex-col h-full">
-        <div className="flex-1 overflow-hidden">
-          <ChatMessages 
-            messages={messages || []} 
-            isLoadingMessages={isLoadingMessages}
-            isLoadingResponse={sendMessageMutation.isPending}
-            platforms={platforms}
-          />
-        </div>
-        <ChatInput
-          input={input}
-          setInput={setInput}
-          handleSend={handleSend}
-          isLoadingResponse={sendMessageMutation.isPending}
-          isPending={sendMessageMutation.isPending}
-        />
-      </div>
-    );
-  };
-
   return (
     <div className="h-screen flex flex-col bg-background">
       <ChatHeader
@@ -272,7 +148,7 @@ const Index = () => {
         onStopFreeMode={stopFreeMode}
         onUpdateFreeModeLimit={updateMessageLimit}
         onSendSingleAgentMessage={(message: string, platformId: string) => handleSendMessage(message, [platformId])}
-        onUpdateAgentOrder={(reorderedPlatforms: AIPlatform[]) => updateAgentOrder(reorderedPlatforms)}
+        onUpdateAgentOrder={updateAgentOrder}
         onSignOut={handleSignOut}
         currentChatMode={activeChatMode}
         isolatedMode={isolatedMode}
@@ -295,17 +171,39 @@ const Index = () => {
         />
 
         <main className="flex-1 flex flex-col overflow-hidden">
-          {renderMainContent()}
+          <MainContentRenderer
+            showWelcome={showWelcome}
+            activeTab={activeTab}
+            activeChatMode={activeChatMode}
+            conductorPlatformObj={conductorPlatformObj}
+            conductorMessages={conductorMessages}
+            isLoadingConductor={isLoadingConductor}
+            sendConductorMessage={sendConductorMessage}
+            platforms={platforms}
+            messages={messages}
+            isLoadingMessages={isLoadingMessages}
+            sendMessageMutation={sendMessageMutation}
+            input={input}
+            setInput={setInput}
+            handleSend={handleSend}
+            createChatMutation={createChatMutation}
+            setShowWelcome={setShowWelcome}
+            togglePlatform={togglePlatform}
+            updateAgentOrder={updateAgentOrder}
+            user={user}
+            handleSendMessage={handleSendMessage}
+            activeAIStatuses={transformActiveAIStatuses(activeAIStatuses)}
+          />
         </main>
       </div>
 
-      {activeTab === 'chat' && activeChatId && (
-        <DraggableAIStatusBar
-          platforms={platforms}
-          activeAIStatuses={transformActiveAIStatuses(activeAIStatuses)}
-          onReorder={(reorderedPlatforms: AIPlatform[]) => updateAgentOrder(reorderedPlatforms)}
-        />
-      )}
+      <StatusBarManager
+        activeTab={activeTab}
+        activeChatId={activeChatId}
+        platforms={platforms}
+        activeAIStatuses={transformActiveAIStatuses(activeAIStatuses)}
+        updateAgentOrder={updateAgentOrder}
+      />
     </div>
   );
 };
