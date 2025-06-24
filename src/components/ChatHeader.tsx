@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -159,7 +160,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
                     disabled={currentChatMode === 'conductor'}
                     className="h-8 w-8"
                   >
-                    <SwitchIcon className="h-4 w-4" />
+                    <SwitchCamera className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
