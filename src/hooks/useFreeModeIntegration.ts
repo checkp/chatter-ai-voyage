@@ -11,7 +11,7 @@ export const useFreeModeIntegration = (
   callAIAPI: (platform: AIPlatform, messages: Message[], enabledPlatforms: AIPlatform[], chatMode?: ChatMode) => Promise<string>
 ) => {
   // Send single agent message function for free mode
-  const sendSingleAgentMessage = async (chatId: string, message: string, platformId: string) => {
+  const sendSingleAgentMessage = async (message: string, platformId: string) => {
     if (!user || !activeChatId) return;
     
     try {
