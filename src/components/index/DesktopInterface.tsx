@@ -9,7 +9,7 @@ import ChatMessages from '@/components/ChatMessages';
 import ChatInput from '@/components/ChatInput';
 import SettingsPanel from '@/components/SettingsPanel';
 import SideBySideLayout from '@/components/SideBySideLayout';
-import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
+import DraggableA statusBar from '@/components/DraggableAIStatusBar';
 import ContactUsButton from '@/components/ContactUsButton';
 import type { DesktopInterfaceProps } from './types';
 
@@ -58,12 +58,6 @@ const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
 }) => {
   const effectiveChatMode = activeChatMode;
 
-  // Convert transformedStatuses back to boolean format for DraggableAIStatusBar
-  const booleanStatuses = Object.entries(transformedStatuses).reduce((acc, [key, value]) => {
-    acc[key] = value === 'responding' || value === 'thinking';
-    return acc;
-  }, {} as Record<string, boolean>);
-
   return (
     <div className="min-h-screen bg-background flex h-screen overflow-hidden">
       <ChatSidebar 
@@ -107,7 +101,7 @@ const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
         <div className="bg-secondary/50 border-b border-border px-4 py-2">
           <DraggableAIStatusBar
             platforms={platforms}
-            activeAIStatuses={booleanStatuses}
+            activeAIStatuses={transformedStatuses}
             onReorder={updateAgentOrder}
             onAgentClick={(platform) => {
               console.log('Agent clicked:', platform.name);
