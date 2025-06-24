@@ -59,11 +59,17 @@ const Index = () => {
     return <MobileInterface />;
   }
 
+  // Convert boolean activeAIStatuses to the expected string format
+  const convertedActiveAIStatuses: Record<string, 'thinking' | 'responding' | 'completed' | 'error'> = {};
+  Object.entries(activeAIStatuses).forEach(([key, value]) => {
+    convertedActiveAIStatuses[key] = value ? 'responding' : 'completed';
+  });
+
   return (
     <MainLayout
       chats={chats}
       activeChatId={activeChatId}
-      activeAIStatuses={activeAIStatuses}
+      activeAIStatuses={convertedActiveAIStatuses}
       platforms={platforms}
       activeTab={activeTab}
       setActiveTab={setActiveTab}
