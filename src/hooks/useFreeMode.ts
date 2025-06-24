@@ -15,7 +15,7 @@ export const useFreeMode = () => {
     conductorPlatform: string | null,
     platforms: AIPlatform[],
     callAIAPI: any,
-    sendSingleAgentMessage: any
+    sendSingleAgentMessage: (message: string, platformId: string) => Promise<void>
   ) => {
     if (!activeChatId) {
       toast.error('Please select a chat to start conversation mode');
@@ -38,7 +38,7 @@ export const useFreeMode = () => {
     // Start the autonomous conversation in a separate execution context
     setTimeout(async () => {
       try {
-        await runFreeModeConversation(activeChatId, enabledPlatforms, callAIAPI, sendSingleAgentMessage);
+        await runFreeModeConversation(enabledPlatforms, sendSingleAgentMessage);
       } catch (error) {
         console.error('Error in conversation mode:', error);
         toast.error('Conversation mode encountered an error');
@@ -55,10 +55,8 @@ export const useFreeMode = () => {
   }, [freeModeMessageCount]);
 
   const runFreeModeConversation = async (
-    chatId: string,
     enabledPlatforms: AIPlatform[],
-    callAIAPI: any,
-    sendSingleAgentMessage: any
+    sendSingleAgentMessage: (message: string, platformId: string) => Promise<void>
   ) => {
     let currentMessageCount = 0;
     let currentPlatformIndex = 0;
