@@ -7,7 +7,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Settings, MessageSquare, User, LogOut, Sparkles, Crown, Grid3X3, Users, SwitchCamera } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
 import { ModeToggle } from './ModeToggle';
 import TokenBalance from './TokenBalance';
 import FreeModeControls from './FreeModeControls';
@@ -81,6 +80,15 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
 
   const ModeIcon = getChatModeIcon(currentChatMode);
 
+  const handleChatModeChange = (mode: ChatMode) => {
+    console.log('ChatHeader: Changing to mode:', mode);
+    try {
+      onChatModeChange(mode);
+    } catch (error) {
+      console.error('ChatHeader: Error changing chat mode:', error);
+    }
+  };
+
   return (
     <TooltipProvider>
       <header className="flex items-center justify-between p-4 bg-background border-b border-border">
@@ -106,7 +114,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
                   <Button
                     variant={currentChatMode === 'discussion' ? "default" : "outline"}
                     size="icon"
-                    onClick={() => onChatModeChange('discussion')}
+                    onClick={() => handleChatModeChange('discussion')}
                     className="h-8 w-8"
                   >
                     <Users className="h-4 w-4" />
@@ -122,7 +130,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
                   <Button
                     variant={currentChatMode === 'conductor' ? "default" : "outline"}
                     size="icon"
-                    onClick={() => onChatModeChange('conductor')}
+                    onClick={() => handleChatModeChange('conductor')}
                     className="h-8 w-8"
                   >
                     <Crown className="h-4 w-4" />
@@ -138,9 +146,9 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
                   <Button
                     variant={currentChatMode === 'side-by-side' ? "default" : "outline"}
                     size="icon"
-                    onClick={() => onChatModeChange('side-by-side')}
+                    onClick={() => handleChatModeChange('side-by-side')}
                     className="h-8 w-8"
-                    disabled={false} // Remove mobile check for now
+                    disabled={false}
                   >
                     <Grid3X3 className="h-4 w-4" />
                   </Button>
