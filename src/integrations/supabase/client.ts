@@ -34,6 +34,12 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     headers: {
       'X-Client-Info': 'roboheard-web-client'
     }
+  },
+  // Add retry logic for network issues
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
   }
 });
 
@@ -47,14 +53,34 @@ supabase.auth.onAuthStateChange((event, session) => {
   });
 });
 
-// Test basic connectivity with proper error handling
-const testConnectivity = async () => {
-  try {
-    const result = await supabase.from('profiles').select('count').limit(1);
-    console.log('Supabase connectivity test:', result.error ? 'Failed' : 'Success', result.error);
-  } catch (error) {
-    console.error('Supabase connectivity test failed:', error);
+// Test basic connectivity with proper error handling and retry logic
+const testConnectivity = async (retries = 3) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      console.log(`Supabase connectivity test attempt ${i + 1}/${retries}`);
+      const result = await supabase.from('profiles').select('count').limit(1);
+      console.log('Supabase connectivity test:', result.error ? 'Failed' : 'Success', result.error);
+      
+      if (!result.error) {
+        break; // Success, exit retry loop
+      }
+      
+      if (i < retries - 1) {
+        console.log(`Retrying in ${(i + 1) * 1000}ms...`);
+        await new Promise(resolve => setTimeout(resolve, (i + 1) * 1000));
+      }
+    } catch (error) {
+      console.error(`Supabase connectivity test failed (attempt ${i + 1}):`, error);
+      
+      if (i < retries - 1) {
+        console.log(`Retrying in ${(i + 1) * 1000}ms...`);
+        await new Promise(resolve => setTimeout(resolve, (i + 1) * 1000));
+      }
+    }
   }
 };
 
-testConnectivity();
+// Only test connectivity in browser environment
+if (typeof window !== 'undefined') {
+  testConnectivity();
+}

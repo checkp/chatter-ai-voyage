@@ -36,16 +36,22 @@ const MobileInterface = () => {
   } = useChatManagement(user);
 
   const {
-    input,
-    setInput,
-    isLoadingResponse,
     activeAIStatuses,
-    sendMessageMutation,
-    handleSend,
-    handleStop,
-    canStop,
-    getPendingCount
+    sendMessageMutation
   } = useMessageHandling(user, platforms, callAIAPI, activeChatMode);
+
+  const [input, setInput] = useState('');
+
+  const handleSend = () => {
+    if (!input.trim() || !activeChatId) return;
+    
+    sendMessageMutation.mutate({
+      chatId: activeChatId,
+      content: input.trim(),
+      enabledPlatforms: platforms.filter(p => p.enabled && p.hasApiKey)
+    });
+    setInput('');
+  };
 
   const handleCreateChat = () => {
     createChatMutation.mutate({ title: 'New Chat', chatMode: 'discussion' });
@@ -71,7 +77,7 @@ const MobileInterface = () => {
 
   // Transform activeAIStatuses to match expected type
   const transformedStatuses = Object.entries(activeAIStatuses).reduce((acc, [key, value]) => {
-    acc[key] = value ? 'responding' : 'completed';
+    acc[key] = value === 'thinking' || value === 'responding' ? 'responding' : 'completed';
     return acc;
   }, {} as Record<string, 'thinking' | 'responding' | 'completed' | 'error'>);
 
@@ -95,7 +101,7 @@ const MobileInterface = () => {
               <ChatMessages 
                 messages={messages}
                 isLoadingMessages={isLoadingMessages}
-                isLoadingResponse={isLoadingResponse}
+                isLoadingResponse={sendMessageMutation.isPending}
                 platforms={platforms}
               />
               <div ref={messagesEndRef} className="h-4" />
@@ -106,15 +112,9 @@ const MobileInterface = () => {
               <ChatInput 
                 input={input}
                 setInput={setInput}
-                handleSend={() => handleSend(activeChatId)}
-                handleStop={handleStop}
-                isLoadingResponse={isLoadingResponse}
+                handleSend={handleSend}
+                isLoadingResponse={sendMessageMutation.isPending}
                 isPending={sendMessageMutation.isPending}
-                canStop={canStop}
-                pendingCount={getPendingCount()}
-                isFreeMode={false}
-                isFreeModeRunning={false}
-                onSendAndStartConversation={() => {}}
               />
             </div>
           </>
