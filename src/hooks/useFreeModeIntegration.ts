@@ -20,11 +20,10 @@ export const useFreeModeIntegration = (
       const { data, error } = await supabase
         .from('messages')
         .insert({
-          chat_id: activeChatId,
+          conversation_id: activeChatId,
           content,
-          role,
-          platform_id: platformId,
-          user_id: user.id
+          sender: role === 'user' ? 'user' : 'ai',
+          platform: platformId
         })
         .select()
         .single();
