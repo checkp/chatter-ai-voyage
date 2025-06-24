@@ -90,7 +90,12 @@ export const useIndexPageLogic = () => {
   // Wrapper for startFreeMode with proper parameters
   const startFreeMode = () => {
     if (activeChatId) {
-      startFreeModeOriginal(activeChatId, platforms, callAIAPI, sendSingleAgentMessage);
+      startFreeModeOriginal(
+        activeChatId, 
+        platforms, 
+        callAIAPI, 
+        sendSingleAgentMessage
+      );
     }
   };
 
