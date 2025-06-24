@@ -146,8 +146,7 @@ const Index = () => {
     
     sendMessageMutation.mutate({
       chatId: activeChatId,
-      userMessage: message,
-      platformIds: platformIds || platforms.filter(p => p.enabled).map(p => p.id)
+      userMessage: message
     });
   };
 
@@ -156,6 +155,11 @@ const Index = () => {
     if (!input.trim()) return;
     handleSendMessage(input.trim());
     setInput('');
+  };
+
+  // Convert boolean statuses to proper type
+  const transformActiveAIStatuses = (statuses: Record<string, 'thinking' | 'responding' | 'completed' | 'error'>): Record<string, 'thinking' | 'responding' | 'completed' | 'error'> => {
+    return statuses;
   };
 
   // Auto-create first chat if none exists
@@ -177,23 +181,7 @@ const Index = () => {
   }
 
   if (isMobile) {
-    return (
-      <MobileInterface
-        user={user}
-        platforms={platforms}
-        chats={chats || []}
-        messages={messages || []}
-        activeChatId={activeChatId || ''}
-        activeAIStatuses={activeAIStatuses}
-        onSendMessage={handleSendMessage}
-        onCreateChat={(title: string) => createChatMutation.mutate({ title })}
-        onDeleteChat={(chatId: string) => deleteChatMutation.mutate(chatId)}
-        onSelectChat={setActiveChatId}
-        onSignOut={handleSignOut}
-        onTogglePlatform={togglePlatform}
-        onUpdatePlatformSettings={() => {}}
-      />
-    );
+    return <MobileInterface />;
   }
 
   const renderMainContent = () => {
@@ -236,7 +224,7 @@ const Index = () => {
         <SideBySideLayout
           platforms={platforms}
           onSendMessage={(message: string, platformId: string) => handleSendMessage(message, [platformId])}
-          activeAIStatuses={activeAIStatuses}
+          activeAIStatuses={transformActiveAIStatuses(activeAIStatuses)}
         />
       );
     }
@@ -267,7 +255,7 @@ const Index = () => {
       <ChatHeader
         chats={chats}
         activeChatId={activeChatId}
-        activeAIStatuses={activeAIStatuses}
+        activeAIStatuses={transformActiveAIStatuses(activeAIStatuses)}
         platforms={platforms}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -299,7 +287,7 @@ const Index = () => {
         <ChatSidebar
           chats={chats}
           activeChatId={activeChatId}
-          onSelectChat={setActiveChatId}
+          setActiveChatId={setActiveChatId}
           onCreateChat={() => createChatMutation.mutate({ title: 'New Conversation' })}
           onDeleteChat={(chatId: string) => deleteChatMutation.mutate(chatId)}
           isLoadingChats={isLoadingChats}
@@ -314,7 +302,7 @@ const Index = () => {
       {activeTab === 'chat' && activeChatId && (
         <DraggableAIStatusBar
           platforms={platforms}
-          activeAIStatuses={activeAIStatuses}
+          activeAIStatuses={transformActiveAIStatuses(activeAIStatuses)}
           onReorder={updateAgentOrder}
         />
       )}
