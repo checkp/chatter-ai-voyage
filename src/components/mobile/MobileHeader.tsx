@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Menu, Settings, MessageSquare } from 'lucide-react';
 import type { AIPlatform } from '@/types/chat';
 
@@ -26,38 +27,55 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
   );
 
   return (
-    <header className="flex items-center justify-between p-4 bg-background border-b">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={onMenuClick}>
-          <Menu className="h-5 w-5" />
-        </Button>
-        <h1 className="text-lg font-semibold">
-          {activeView === 'chat' ? 'RoboHeard' : 'Settings'}
-        </h1>
-      </div>
+    <TooltipProvider>
+      <header className="flex items-center justify-between p-4 bg-background border-b">
+        <div className="flex items-center gap-3">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={onMenuClick}>
+                <Menu className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Open menu</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          <h1 className="text-lg font-semibold">
+            {activeView === 'chat' ? 'RoboHeard' : 'Settings'}
+          </h1>
+        </div>
 
-      <div className="flex items-center gap-2">
-        {/* AI Status Indicator */}
-        {busyAgents.length > 0 && (
-          <Badge variant="secondary" className="text-xs">
-            {busyAgents.length} AI{busyAgents.length > 1 ? 's' : ''} active
-          </Badge>
-        )}
-
-        {/* View Toggle */}
-        <Button
-          variant={activeView === 'settings' ? 'default' : 'ghost'}
-          size="icon"
-          onClick={onSettingsClick}
-        >
-          {activeView === 'settings' ? (
-            <MessageSquare className="h-5 w-5" />
-          ) : (
-            <Settings className="h-5 w-5" />
+        <div className="flex items-center gap-2">
+          {/* AI Status Indicator */}
+          {busyAgents.length > 0 && (
+            <Badge variant="secondary" className="text-xs">
+              {busyAgents.length} AI{busyAgents.length > 1 ? 's' : ''} active
+            </Badge>
           )}
-        </Button>
-      </div>
-    </header>
+
+          {/* View Toggle */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={activeView === 'settings' ? 'default' : 'ghost'}
+                size="icon"
+                onClick={onSettingsClick}
+              >
+                {activeView === 'settings' ? (
+                  <MessageSquare className="h-5 w-5" />
+                ) : (
+                  <Settings className="h-5 w-5" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Switch to {activeView === 'settings' ? 'chat' : 'settings'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </header>
+    </TooltipProvider>
   );
 };
 
