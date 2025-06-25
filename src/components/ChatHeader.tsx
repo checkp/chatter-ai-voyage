@@ -1,16 +1,12 @@
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { Settings, MessageSquare, User, LogOut, Sparkles, Grid3X3, Users, Shield, ShieldOff } from 'lucide-react';
-import { ModeToggle } from './ModeToggle';
-import TokenBalance from './TokenBalance';
-import FreeModeControls from './FreeModeControls';
-import ConductorControls from './ConductorControls';
-import ChangelogDialog from './ChangelogDialog';
+import React from 'react';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import FreeModeControls from '@/components/FreeModeControls';
+import ConductorControls from '@/components/ConductorControls';
+import ChatTitleSection from '@/components/header/ChatTitleSection';
+import ChatModeControls from '@/components/header/ChatModeControls';
+import TabNavigation from '@/components/header/TabNavigation';
+import UserControls from '@/components/header/UserControls';
 import type { Chat, ChatMode, AIPlatform } from '@/types/chat';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -77,80 +73,26 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   onStopConductor,
   onRequestConductorDirection
 }) => {
-  const [showChangelog, setShowChangelog] = useState(false);
-  
   const activeChat = chats?.find(chat => chat.id === activeChatId);
-  const truncatedTitle = activeChat?.title ? 
-    (activeChat.title.length > 30 ? `${activeChat.title.substring(0, 30)}...` : activeChat.title) 
-    : 'RoboHeard';
-
-  const getChatModeIcon = (mode: ChatMode) => {
-    return mode === 'side-by-side' ? Grid3X3 : Users;
-  };
-
-  const ChatModeIcon = getChatModeIcon(currentChatMode);
 
   return (
     <TooltipProvider>
       <header className="flex items-center justify-between p-3 bg-background border-b border-border min-h-[60px]">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div className="flex items-center gap-2 min-w-0">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <h1 className="text-lg font-semibold text-foreground truncate cursor-help">
-                  {truncatedTitle}
-                </h1>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{activeChat?.title || 'RoboHeard'}</p>
-              </TooltipContent>
-            </Tooltip>
-            
-            {activeChat && (
-              <Badge variant="outline" className="text-xs whitespace-nowrap">
-                {currentChatMode} {isolatedMode && '• isolated'}
-              </Badge>
-            )}
-          </div>
+          <ChatTitleSection 
+            activeChat={activeChat}
+            currentChatMode={currentChatMode}
+            isolatedMode={isolatedMode}
+          />
 
           {/* Chat Mode Controls - only show when on chat tab */}
           {activeTab === 'chat' && activeChatId && (
-            <div className="flex items-center gap-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      const nextMode = currentChatMode === 'discussion' ? 'side-by-side' : 'discussion';
-                      onChatModeChange(nextMode);
-                    }}
-                    className="h-8 w-8 p-0"
-                  >
-                    <ChatModeIcon className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Switch to {currentChatMode === 'discussion' ? 'side-by-side' : 'discussion'} mode</p>
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onIsolatedModeToggle(!isolatedMode)}
-                    className="h-8 w-8 p-0"
-                  >
-                    {isolatedMode ? <Shield className="h-4 w-4" /> : <ShieldOff className="h-4 w-4" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{isolatedMode ? 'Disable' : 'Enable'} isolated mode</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
+            <ChatModeControls
+              currentChatMode={currentChatMode}
+              isolatedMode={isolatedMode}
+              onChatModeChange={onChatModeChange}
+              onIsolatedModeToggle={onIsolatedModeToggle}
+            />
           )}
         </div>
 
@@ -181,94 +123,18 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             />
           )}
 
-          {/* Tab Navigation with Icons */}
-          <div className="flex items-center gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={activeTab === 'chat' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setActiveTab('chat')}
-                  className="h-8 w-8 p-0"
-                >
-                  <MessageSquare className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Chat</p>
-              </TooltipContent>
-            </Tooltip>
+          <TabNavigation 
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          />
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={activeTab === 'settings' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setActiveTab('settings')}
-                  className="h-8 w-8 p-0"
-                >
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Settings</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-
-          {/* User Controls */}
-          <div className="flex items-center gap-1">
-            <TokenBalance user={user} onPurchaseClick={() => setActiveTab('settings')} />
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <ModeToggle />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Toggle theme</p>
-              </TooltipContent>
-            </Tooltip>
-            
-            <DropdownMenu>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={user.user_metadata?.avatar_url} />
-                        <AvatarFallback>
-                          <User className="h-3 w-3" />
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>User menu</p>
-                </TooltipContent>
-              </Tooltip>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setShowChangelog(true)}>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  What's New?
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <UserControls
+            user={user}
+            onSignOut={onSignOut}
+            setActiveTab={setActiveTab}
+          />
         </div>
       </header>
-
-      <ChangelogDialog 
-        open={showChangelog} 
-        onOpenChange={setShowChangelog} 
-      />
     </TooltipProvider>
   );
 };
