@@ -11,6 +11,8 @@ import SettingsPanel from '@/components/SettingsPanel';
 import SideBySideLayout from '@/components/SideBySideLayout';
 import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
 import ContactUsButton from '@/components/ContactUsButton';
+import ConductorSummary from '@/components/ConductorSummary';
+import { useConductor } from '@/hooks/useConductor';
 import type { DesktopInterfaceProps } from './types';
 
 const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
@@ -58,6 +60,30 @@ const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
 }) => {
   const effectiveChatMode = activeChatMode;
 
+  // Initialize conductor hook
+  const {
+    conductorState,
+    conductorAnalysis,
+    startConductor,
+    stopConductor,
+    requestConductorDirection
+  } = useConductor(user);
+
+  // Show conductor summary state
+  const [showConductorSummary, setShowConductorSummary] = React.useState(false);
+
+  // Handle conductor direction request
+  const handleRequestConductorDirection = async () => {
+    if (!messages || !platforms) return;
+    
+    const enabledPlatforms = platforms.filter(p => p.enabled);
+    const direction = await requestConductorDirection(messages, enabledPlatforms);
+    
+    if (direction) {
+      setShowConductorSummary(true);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex h-screen overflow-hidden">
       <ChatSidebar 
@@ -95,6 +121,10 @@ const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
           onChatModeChange={handleChatModeChange}
           onIsolatedModeToggle={handleIsolatedModeToggle}
           onTogglePlatform={togglePlatform}
+          conductorState={conductorState}
+          onStartConductor={startConductor}
+          onStopConductor={stopConductor}
+          onRequestConductorDirection={handleRequestConductorDirection}
         />
 
         {/* Add the Draggable AI Status Bar */}
@@ -167,6 +197,13 @@ const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
           />
         )}
       </main>
+
+      {/* Conductor Summary */}
+      <ConductorSummary
+        summary={conductorState.lastSummary || ''}
+        isVisible={showConductorSummary}
+        onClose={() => setShowConductorSummary(false)}
+      />
 
       {/* Contact Us Button */}
       <ContactUsButton />
