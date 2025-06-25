@@ -1,8 +1,6 @@
 
 import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatHeader from '@/components/ChatHeader';
 import ChatMessages from '@/components/ChatMessages';
@@ -13,6 +11,7 @@ import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
 import ContactUsButton from '@/components/ContactUsButton';
 import ConductorSummary from '@/components/ConductorSummary';
 import { useConductor } from '@/hooks/useConductor';
+import MainContent from './MainContent';
 import type { DesktopInterfaceProps } from './types';
 
 const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
@@ -58,8 +57,6 @@ const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
   getPendingCount,
   handleSendAndStartConversation
 }) => {
-  const effectiveChatMode = activeChatMode;
-
   // Initialize conductor hook
   const {
     conductorState,
@@ -141,61 +138,30 @@ const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
           />
         </div>
 
-        {/* Chat Messages Area */}
-        <div className="flex-1 overflow-hidden">
-          {activeTab === 'chat' && (
-            <>
-              {effectiveChatMode === 'side-by-side' ? (
-                <SideBySideLayout
-                  enabledPlatforms={platforms}
-                  messages={messages}
-                  isLoadingResponse={isLoadingResponse}
-                  activeAIStatuses={transformedStatuses}
-                  onTogglePlatform={togglePlatform}
-                  chatMode={effectiveChatMode}
-                  isolatedMode={isolatedMode}
-                />
-              ) : (
-                <ScrollArea className="h-full" ref={scrollAreaRef}>
-                  <div className="p-4">
-                    <ChatMessages 
-                      messages={messages}
-                      isLoadingMessages={isLoadingMessages}
-                      isLoadingResponse={isLoadingResponse}
-                      platforms={platforms}
-                    />
-                    <div ref={messagesEndRef} className="h-4" />
-                  </div>
-                </ScrollArea>
-              )}
-            </>
-          )}
-
-          {activeTab === 'settings' && (
-            <ScrollArea className="h-full">
-              <div className="p-4">
-                <SettingsPanel />
-              </div>
-            </ScrollArea>
-          )}
-        </div>
-
-        {/* Chat Input */}
-        {activeTab === 'chat' && (
-          <ChatInput 
-            input={input}
-            setInput={setInput}
-            handleSend={() => handleSend(activeChatId)}
-            handleStop={handleStop}
-            isLoadingResponse={isLoadingResponse}
-            isPending={sendMessageMutation.isPending}
-            canStop={canStop}
-            pendingCount={getPendingCount()}
-            isFreeMode={isFreeMode}
-            isFreeModeRunning={isFreeModeRunning}
-            onSendAndStartConversation={handleSendAndStartConversation}
-          />
-        )}
+        <MainContent
+          activeTab={activeTab}
+          activeChatMode={activeChatMode}
+          isolatedMode={isolatedMode}
+          platforms={platforms}
+          messages={messages}
+          isLoadingMessages={isLoadingMessages}
+          isLoadingResponse={isLoadingResponse}
+          transformedStatuses={transformedStatuses}
+          togglePlatform={togglePlatform}
+          scrollAreaRef={scrollAreaRef}
+          messagesEndRef={messagesEndRef}
+          activeChatId={activeChatId}
+          input={input}
+          setInput={setInput}
+          handleSend={handleSend}
+          handleStop={handleStop}
+          sendMessageMutation={sendMessageMutation}
+          canStop={canStop}
+          getPendingCount={getPendingCount}
+          isFreeMode={isFreeMode}
+          isFreeModeRunning={isFreeModeRunning}
+          handleSendAndStartConversation={handleSendAndStartConversation}
+        />
       </main>
 
       {/* Conductor Summary */}
