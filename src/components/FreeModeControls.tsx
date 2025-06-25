@@ -1,8 +1,9 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Play, Square } from 'lucide-react';
 
 interface FreeModeControlsProps {
@@ -22,69 +23,73 @@ const FreeModeControls: React.FC<FreeModeControlsProps> = ({
   freeModeMessageCount,
   onStart,
   onStop,
-  onUpdateLimit
+  onUpdateLimit,
 }) => {
   const handleLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
-    if (!isNaN(value) && value > 0) {
+    if (!isNaN(value) && value > 0 && value <= 1000) {
       onUpdateLimit(value);
     }
   };
 
   return (
-    <div className="flex items-center gap-3">
-      {/* Play/Stop Button */}
-      {!isFreeMode ? (
-        <Button
-          onClick={onStart}
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-2"
-        >
-          <Play className="h-4 w-4" />
-          Conversation Mode
-        </Button>
+    <div className="flex items-center gap-2">
+      {!isFreeModeRunning ? (
+        <>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onStart}
+                className="h-8 w-8 p-0"
+              >
+                <Play className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Start conversation mode</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Input
+                type="number"
+                value={freeModeMessageLimit}
+                onChange={handleLimitChange}
+                min={1}
+                max={1000}
+                className="w-16 h-8 text-xs"
+              />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Message limit for conversation mode</p>
+            </TooltipContent>
+          </Tooltip>
+        </>
       ) : (
-        <Button
-          onClick={onStop}
-          variant="destructive"
-          size="sm"
-          className="flex items-center gap-2"
-        >
-          <Square className="h-4 w-4" />
-          Stop
-        </Button>
-      )}
-
-      {/* Message Limit Input */}
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Limit:</span>
-        <Input
-          type="number"
-          value={freeModeMessageLimit}
-          onChange={handleLimitChange}
-          disabled={isFreeModeRunning}
-          className="w-20 h-8"
-          min="1"
-          max="1000"
-        />
-      </div>
-
-      {/* Progress Badge */}
-      {isFreeMode && (
-        <Badge variant="outline" className="text-xs">
-          {freeModeMessageCount}/{freeModeMessageLimit}
-        </Badge>
-      )}
-
-      {/* Status Indicator */}
-      {isFreeMode && (
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${isFreeModeRunning ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-          <span className="text-xs text-muted-foreground">
-            {isFreeModeRunning ? 'Running' : 'Stopped'}
-          </span>
-        </div>
+        <>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onStop}
+                className="h-8 w-8 p-0"
+              >
+                <Square className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Stop conversation mode</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          <Badge variant="secondary" className="text-xs">
+            {freeModeMessageCount}/{freeModeMessageLimit}
+          </Badge>
+        </>
       )}
     </div>
   );
