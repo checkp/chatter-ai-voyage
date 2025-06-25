@@ -9,6 +9,7 @@ import { Settings, MessageSquare, User, LogOut, Sparkles, Grid3X3, Users, Shield
 import { ModeToggle } from './ModeToggle';
 import TokenBalance from './TokenBalance';
 import FreeModeControls from './FreeModeControls';
+import ConductorControls from './ConductorControls';
 import ChangelogDialog from './ChangelogDialog';
 import type { Chat, ChatMode, AIPlatform } from '@/types/chat';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
@@ -36,6 +37,16 @@ interface ChatHeaderProps {
   onChatModeChange: (mode: ChatMode) => void;
   onIsolatedModeToggle: (isolated: boolean) => void;
   onTogglePlatform: (platformId: string) => void;
+  // Conductor props
+  conductorState?: {
+    isActive: boolean;
+    isAnalyzing: boolean;
+    conversationCount: number;
+    lastSummary: string | null;
+  };
+  onStartConductor?: () => void;
+  onStopConductor?: () => void;
+  onRequestConductorDirection?: () => void;
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -60,7 +71,11 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   isolatedMode,
   onChatModeChange,
   onIsolatedModeToggle,
-  onTogglePlatform
+  onTogglePlatform,
+  conductorState,
+  onStartConductor,
+  onStopConductor,
+  onRequestConductorDirection
 }) => {
   const [showChangelog, setShowChangelog] = useState(false);
   
@@ -140,6 +155,19 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Conductor Controls - only show when on chat tab */}
+          {activeTab === 'chat' && activeChatId && conductorState && onStartConductor && onStopConductor && onRequestConductorDirection && (
+            <ConductorControls
+              isActive={conductorState.isActive}
+              isAnalyzing={conductorState.isAnalyzing}
+              conversationCount={conductorState.conversationCount}
+              lastSummary={conductorState.lastSummary}
+              onStart={onStartConductor}
+              onStop={onStopConductor}
+              onRequestDirection={onRequestConductorDirection}
+            />
+          )}
+
           {/* Free Mode Controls - only show when on chat tab */}
           {activeTab === 'chat' && activeChatId && (
             <FreeModeControls
