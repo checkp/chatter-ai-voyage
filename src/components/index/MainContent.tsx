@@ -56,6 +56,12 @@ const MainContent: React.FC<MainContentProps> = ({
   isFreeModeRunning,
   handleSendAndStartConversation
 }) => {
+  // Transform the status strings to booleans for SideBySideLayout
+  const activeAIStatusesBool = Object.keys(transformedStatuses).reduce((acc, key) => {
+    acc[key] = transformedStatuses[key] === 'responding' || transformedStatuses[key] === 'thinking';
+    return acc;
+  }, {} as Record<string, boolean>);
+
   return (
     <>
       {/* Chat Messages Area */}
@@ -67,7 +73,7 @@ const MainContent: React.FC<MainContentProps> = ({
                 enabledPlatforms={platforms}
                 messages={messages}
                 isLoadingResponse={isLoadingResponse}
-                activeAIStatuses={transformedStatuses}
+                activeAIStatuses={activeAIStatusesBool}
                 onTogglePlatform={togglePlatform}
                 chatMode={activeChatMode}
                 isolatedMode={isolatedMode}
