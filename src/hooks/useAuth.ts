@@ -29,34 +29,28 @@ export const useAuth = () => {
     try {
       console.log('ensureUserTokens: Starting for user:', userId);
       
-      // First check if user_tokens already exists
-      const { data: existingTokens, error: checkError } = await supabase
+      // Use upsert to handle duplicates gracefully
+      const { error } = await supabase
         .from('user_tokens')
-        .select('user_id')
-        .eq('user_id', userId)
-        .single();
+        .upsert({
+          user_id: userId,
+          balance: 300,
+          total_purchased: 0,
+          total_consumed: 0
+        }, {
+          onConflict: 'user_id',
+          ignoreDuplicates: true
+        });
 
-      if (checkError && checkError.code === 'PGRST116') {
-        // No tokens found, create them
-        console.log('ensureUserTokens: Creating tokens for user:', userId);
-        const { error: insertError } = await supabase
-          .from('user_tokens')
-          .insert({
-            user_id: userId,
-            balance: 300,
-            total_purchased: 0,
-            total_consumed: 0
-          });
-
-        if (insertError) {
-          console.error('ensureUserTokens: Insert error:', insertError);
+      if (error) {
+        // If it's a duplicate key error, that's actually fine - tokens already exist
+        if (error.code === '23505') {
+          console.log('ensureUserTokens: Tokens already exist for user:', userId);
         } else {
-          console.log('ensureUserTokens: Tokens created successfully for user:', userId);
+          console.error('ensureUserTokens: Error:', error);
         }
-      } else if (checkError) {
-        console.error('ensureUserTokens: Check error:', checkError);
       } else {
-        console.log('ensureUserTokens: Tokens already exist for user:', userId);
+        console.log('ensureUserTokens: Success for user:', userId);
       }
     } catch (error) {
       console.error('ensureUserTokens: Unexpected error:', error);
@@ -67,35 +61,24 @@ export const useAuth = () => {
     try {
       console.log('ensureUserProfile: Starting for user:', user.email);
       
-      // Check if user profile exists
-      const { data: existingProfile, error: fetchError } = await supabase
+      // Use upsert to handle duplicates gracefully
+      const { error } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+        .upsert({
+          id: user.id,
+          email: user.email,
+          full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+          avatar_url: user.user_metadata?.avatar_url || null,
+          has_completed_onboarding: false
+        }, {
+          onConflict: 'id',
+          ignoreDuplicates: true
+        });
 
-      if (fetchError && fetchError.code === 'PGRST116') {
-        // No profile found, create one
-        console.log('ensureUserProfile: Creating profile for:', user.email);
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: user.id,
-            email: user.email,
-            full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-            avatar_url: user.user_metadata?.avatar_url || null,
-            has_completed_onboarding: false
-          });
-
-        if (insertError) {
-          console.error('ensureUserProfile: Insert error:', insertError);
-        } else {
-          console.log('ensureUserProfile: Profile created successfully');
-        }
-      } else if (fetchError) {
-        console.error('ensureUserProfile: Fetch error:', fetchError);
+      if (error) {
+        console.error('ensureUserProfile: Error:', error);
       } else {
-        console.log('ensureUserProfile: Profile already exists');
+        console.log('ensureUserProfile: Success');
       }
     } catch (error) {
       console.error('ensureUserProfile: Unexpected error:', error);
@@ -187,7 +170,7 @@ export const useAuth = () => {
 
   useEffect(() => {
     let mounted = true;
-    let setupComplete = new Set<string>(); // Track which users have completed setup
+    let setupInProgress = new Set<string>(); // Track users currently being set up
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -204,31 +187,33 @@ export const useAuth = () => {
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('User signed in successfully:', session.user.email);
           
-          // Prevent duplicate setup for the same user
-          if (!setupComplete.has(session.user.id)) {
-            setupComplete.add(session.user.id);
+          // Prevent concurrent setup for the same user
+          if (!setupInProgress.has(session.user.id)) {
+            setupInProgress.add(session.user.id);
             
-            // Defer additional setup to prevent deadlocks and race conditions
+            // Defer additional setup to prevent deadlocks
             setTimeout(async () => {
-              if (mounted && !setupComplete.has(`${session.user.id}_completed`)) {
-                setupComplete.add(`${session.user.id}_completed`);
-                
-                await ensureUserProfile(session.user);
-                await ensureUserTokens(session.user.id);
-                await ensureDefaultAgentSettings(session.user.id);
-                
-                if (window.location.pathname === '/auth') {
-                  console.log('Redirecting from auth page to main app');
-                  window.location.href = '/';
+              if (mounted) {
+                try {
+                  await ensureUserProfile(session.user);
+                  await ensureUserTokens(session.user.id);
+                  await ensureDefaultAgentSettings(session.user.id);
+                  
+                  if (window.location.pathname === '/auth') {
+                    console.log('Redirecting from auth page to main app');
+                    window.location.href = '/';
+                  }
+                } finally {
+                  setupInProgress.delete(session.user.id);
                 }
               }
-            }, 500); // Increased delay to prevent race conditions
+            }, 1000); // Increased delay to prevent race conditions
           }
         }
         
         if (event === 'SIGNED_OUT') {
           console.log('User signed out');
-          setupComplete.clear(); // Clear tracking on sign out
+          setupInProgress.clear(); // Clear tracking on sign out
           cleanupAuthState();
           
           // Only redirect if we're not already on auth page
@@ -261,18 +246,20 @@ export const useAuth = () => {
           setLoading(false);
 
           // Ensure user setup for existing sessions
-          if (session?.user && !setupComplete.has(session.user.id)) {
-            setupComplete.add(session.user.id);
+          if (session?.user && !setupInProgress.has(session.user.id)) {
+            setupInProgress.add(session.user.id);
             
             setTimeout(async () => {
-              if (mounted && !setupComplete.has(`${session.user.id}_completed`)) {
-                setupComplete.add(`${session.user.id}_completed`);
-                
-                await ensureUserProfile(session.user);
-                await ensureUserTokens(session.user.id);
-                await ensureDefaultAgentSettings(session.user.id);
+              if (mounted) {
+                try {
+                  await ensureUserProfile(session.user);
+                  await ensureUserTokens(session.user.id);
+                  await ensureDefaultAgentSettings(session.user.id);
+                } finally {
+                  setupInProgress.delete(session.user.id);
+                }
               }
-            }, 500);
+            }, 1000);
           }
         }
       } catch (error) {
