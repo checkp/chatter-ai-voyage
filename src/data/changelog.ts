@@ -1,4 +1,3 @@
-
 export interface ChangelogEntry {
   version: string;
   date: string;
@@ -12,6 +11,21 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "2.1.6",
+    date: "2025-06-29",
+    title: "Conductor Mode & Admin Panel Updates",
+    description: "Enhanced conductor mode interface and improved admin panel functionality with better user management.",
+    type: "improvement",
+    changes: [
+      { type: "feature", description: "🤖 Added Gemini Support: Gemini is now available as a conductor agent option" },
+      { type: "improvement", description: "🎨 Enhanced Conductor UI: Redesigned conductor agent selector with better visual hierarchy and icons" },
+      { type: "improvement", description: "💬 Updated Conversation Mode: Default message limit increased from 5 to 25 for longer discussions" },
+      { type: "improvement", description: "🔧 Better Conductor Interface: Improved dropdown design with agent descriptions and color coding" },
+      { type: "improvement", description: "👥 Admin Panel Enhancement: Admins can now view all users' data including profiles, tokens, and settings" },
+      { type: "improvement", description: "🛡️ Secure Admin Access: Added proper RLS policies for admin user management capabilities" }
+    ]
+  },
   {
     version: "2.1.5",
     date: "2025-06-29",
