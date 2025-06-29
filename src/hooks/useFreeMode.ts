@@ -1,11 +1,10 @@
-
 import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import type { AIPlatform } from '@/types/chat';
 
 export const useFreeMode = () => {
   const [isFreeMode, setIsFreeMode] = useState(false);
-  const [freeModeMessageLimit, setFreeModeMessageLimit] = useState(5);
+  const [freeModeMessageLimit, setFreeModeMessageLimit] = useState(25);
   const [freeModeMessageCount, setFreeModeMessageCount] = useState(0);
   const [isFreeModeRunning, setIsFreeModeRunning] = useState(false);
   const freeModeRunningRef = useRef(false);
