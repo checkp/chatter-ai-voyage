@@ -29,23 +29,34 @@ export const useAuth = () => {
     try {
       console.log('ensureUserTokens: Starting for user:', userId);
       
-      // Use upsert with ON CONFLICT to prevent duplicates
-      const { error } = await supabase
+      // First check if user_tokens already exists
+      const { data: existingTokens, error: checkError } = await supabase
         .from('user_tokens')
-        .upsert({
-          user_id: userId,
-          balance: 300,
-          total_purchased: 0,
-          total_consumed: 0
-        }, {
-          onConflict: 'user_id',
-          ignoreDuplicates: true
-        });
+        .select('user_id')
+        .eq('user_id', userId)
+        .single();
 
-      if (error) {
-        console.error('ensureUserTokens: Error:', error);
+      if (checkError && checkError.code === 'PGRST116') {
+        // No tokens found, create them
+        console.log('ensureUserTokens: Creating tokens for user:', userId);
+        const { error: insertError } = await supabase
+          .from('user_tokens')
+          .insert({
+            user_id: userId,
+            balance: 300,
+            total_purchased: 0,
+            total_consumed: 0
+          });
+
+        if (insertError) {
+          console.error('ensureUserTokens: Insert error:', insertError);
+        } else {
+          console.log('ensureUserTokens: Tokens created successfully for user:', userId);
+        }
+      } else if (checkError) {
+        console.error('ensureUserTokens: Check error:', checkError);
       } else {
-        console.log('ensureUserTokens: Success for user:', userId);
+        console.log('ensureUserTokens: Tokens already exist for user:', userId);
       }
     } catch (error) {
       console.error('ensureUserTokens: Unexpected error:', error);
@@ -176,6 +187,7 @@ export const useAuth = () => {
 
   useEffect(() => {
     let mounted = true;
+    let setupComplete = new Set<string>(); // Track which users have completed setup
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -192,24 +204,31 @@ export const useAuth = () => {
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('User signed in successfully:', session.user.email);
           
-          // Defer additional setup to prevent deadlocks
-          setTimeout(async () => {
-            if (mounted) {
-              await ensureUserProfile(session.user);
-              await ensureUserTokens(session.user.id);
-              await ensureDefaultAgentSettings(session.user.id);
-              
-              if (window.location.pathname === '/auth') {
-                console.log('Redirecting from auth page to main app');
-                window.location.href = '/';
+          // Prevent duplicate setup for the same user
+          if (!setupComplete.has(session.user.id)) {
+            setupComplete.add(session.user.id);
+            
+            // Defer additional setup to prevent deadlocks and race conditions
+            setTimeout(async () => {
+              if (mounted && !setupComplete.has(`${session.user.id}_completed`)) {
+                setupComplete.add(`${session.user.id}_completed`);
+                
+                await ensureUserProfile(session.user);
+                await ensureUserTokens(session.user.id);
+                await ensureDefaultAgentSettings(session.user.id);
+                
+                if (window.location.pathname === '/auth') {
+                  console.log('Redirecting from auth page to main app');
+                  window.location.href = '/';
+                }
               }
-            }
-          }, 100);
+            }, 500); // Increased delay to prevent race conditions
+          }
         }
         
         if (event === 'SIGNED_OUT') {
           console.log('User signed out');
-          // Clean up any remaining auth state
+          setupComplete.clear(); // Clear tracking on sign out
           cleanupAuthState();
           
           // Only redirect if we're not already on auth page
@@ -242,10 +261,18 @@ export const useAuth = () => {
           setLoading(false);
 
           // Ensure user setup for existing sessions
-          if (session?.user) {
-            await ensureUserProfile(session.user);
-            await ensureUserTokens(session.user.id);
-            await ensureDefaultAgentSettings(session.user.id);
+          if (session?.user && !setupComplete.has(session.user.id)) {
+            setupComplete.add(session.user.id);
+            
+            setTimeout(async () => {
+              if (mounted && !setupComplete.has(`${session.user.id}_completed`)) {
+                setupComplete.add(`${session.user.id}_completed`);
+                
+                await ensureUserProfile(session.user);
+                await ensureUserTokens(session.user.id);
+                await ensureDefaultAgentSettings(session.user.id);
+              }
+            }, 500);
           }
         }
       } catch (error) {
