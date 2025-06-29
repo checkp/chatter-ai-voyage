@@ -1,0 +1,109 @@
+
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useConductor } from '@/hooks/useConductor';
+import { useConductorMode } from '@/hooks/useConductorMode';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { AIPlatform, Message, ChatMode } from '@/types/chat';
+
+interface ConductorHooksProps {
+  user: SupabaseUser;
+  platforms: AIPlatform[];
+  callAIAPI: (platform: AIPlatform, messages: Message[], enabledPlatforms: AIPlatform[]) => Promise<string>;
+  activeChatId: string | null;
+  activeChatMode: ChatMode;
+  messages: Message[] | undefined;
+}
+
+export const useConductorHooks = ({
+  user,
+  platforms,
+  callAIAPI,
+  activeChatId,
+  activeChatMode,
+  messages
+}: ConductorHooksProps) => {
+  // Initialize conductor hook
+  const {
+    conductorState,
+    conductorAnalysis,
+    startConductor,
+    stopConductor,
+    requestConductorDirection
+  } = useConductor(user);
+
+  // Initialize conductor mode hook with callAIAPI function
+  const {
+    conductorAgent,
+    setConductorAgent,
+    isProcessing,
+    processConductorMessage
+  } = useConductorMode(user, platforms, callAIAPI);
+
+  // Get conductor messages for conductor mode
+  const { data: conductorMessages } = useQuery({
+    queryKey: ['messages', `${activeChatId}_conductor`],
+    queryFn: async () => {
+      if (!activeChatId || activeChatMode !== 'conductor') return [];
+      // Fetch conductor messages from database
+      return [];
+    },
+    enabled: !!activeChatId && activeChatMode === 'conductor'
+  });
+
+  // Show conductor summary state - now tracks both automatic analysis and requested guidance
+  const [showConductorSummary, setShowConductorSummary] = React.useState(false);
+  const [currentSummary, setCurrentSummary] = React.useState('');
+
+  // Handle conductor direction request
+  const handleRequestConductorDirection = async () => {
+    if (!messages || !platforms) return;
+    
+    const enabledPlatforms = platforms.filter(p => p.enabled);
+    const direction = await requestConductorDirection(messages, enabledPlatforms);
+    
+    if (direction) {
+      setCurrentSummary(direction);
+      setShowConductorSummary(true);
+    }
+  };
+
+  // Handle conductor message send
+  const handleConductorSend = async (message: string) => {
+    if (!activeChatId || !message.trim()) return;
+    
+    try {
+      await processConductorMessage(
+        activeChatId,
+        message,
+        conductorMessages || [],
+        messages || []
+      );
+    } catch (error) {
+      console.error('Conductor send error:', error);
+    }
+  };
+
+  // Update summary when conductor provides automatic analysis
+  React.useEffect(() => {
+    if (conductorState.lastSummary) {
+      setCurrentSummary(conductorState.lastSummary);
+      setShowConductorSummary(true);
+    }
+  }, [conductorState.lastSummary]);
+
+  return {
+    conductorState,
+    startConductor,
+    stopConductor,
+    handleRequestConductorDirection,
+    conductorMessages,
+    conductorAgent,
+    setConductorAgent,
+    isProcessing,
+    handleConductorSend,
+    showConductorSummary,
+    setShowConductorSummary,
+    currentSummary
+  };
+};
