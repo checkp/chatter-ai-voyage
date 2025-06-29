@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Users, DollarSign, Settings, Key } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Shield, Users, DollarSign, Settings, Key, Calendar, Mail, User as UserIcon } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
@@ -32,11 +32,13 @@ interface UserWithTokens {
   balance: number;
   total_purchased: number;
   total_consumed: number;
+  has_completed_onboarding: boolean;
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
   const [selectedApiKey, setSelectedApiKey] = useState('');
   const [apiKeyValue, setApiKeyValue] = useState('');
+  const queryClient = useQueryClient();
 
   // Check if user is admin
   const { data: userProfile } = useQuery({
@@ -54,7 +56,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
   });
 
   // Fetch all users for admin
-  const { data: allUsers, isLoading: isLoadingUsers } = useQuery({
+  const { data: allUsers, isLoading: isLoadingUsers, refetch: refetchUsers } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -64,7 +66,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
           email,
           full_name,
           is_admin,
-          created_at
+          created_at,
+          has_completed_onboarding
         `)
         .order('created_at', { ascending: false });
 
@@ -173,12 +176,22 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
       if (error) throw error;
 
       toast.success(`User ${!currentIsAdmin ? 'promoted to' : 'removed from'} admin`);
-      // Refresh users list
-      // queryClient.invalidateQueries(['admin-users']);
+      refetchUsers();
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     } catch (error: any) {
       console.error('Error updating user admin status:', error);
       toast.error('Failed to update user admin status');
     }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   if (!userProfile?.is_admin) {
@@ -205,13 +218,108 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
         <Badge variant="destructive">Admin Only</Badge>
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs defaultValue="users" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="api-keys">API Keys</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="users" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                All Users ({allUsers?.length || 0})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingUsers ? (
+                <div className="space-y-4">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="h-16 bg-muted animate-pulse rounded" />
+                  ))}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Tokens</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Joined</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {allUsers?.map((userData) => (
+                        <TableRow key={userData.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <UserIcon className="w-4 h-4 text-muted-foreground" />
+                              <div>
+                                <div className="font-medium">
+                                  {userData.full_name || 'No name'}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  ID: {userData.id.slice(0, 8)}...
+                                </div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Mail className="w-3 h-3 text-muted-foreground" />
+                              {userData.email}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <div>Balance: <span className="font-medium">{userData.balance}</span></div>
+                              <div className="text-xs text-muted-foreground">
+                                Purchased: {userData.total_purchased} | Used: {userData.total_consumed}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={userData.is_admin ? "default" : "secondary"}>
+                              {userData.is_admin ? 'Admin' : 'User'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1 text-sm">
+                              <Calendar className="w-3 h-3 text-muted-foreground" />
+                              {formatDate(userData.created_at)}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={userData.has_completed_onboarding ? "outline" : "secondary"}>
+                              {userData.has_completed_onboarding ? 'Active' : 'New'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => toggleUserAdmin(userData.id, userData.is_admin)}
+                              disabled={userData.id === user.id}
+                            >
+                              {userData.is_admin ? 'Remove Admin' : 'Make Admin'}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -280,51 +388,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
               </CardContent>
             </Card>
           )}
-        </TabsContent>
-
-        <TabsContent value="users" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoadingUsers ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-16 bg-muted animate-pulse rounded" />
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {allUsers?.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <div className="font-medium">{user.email}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {user.full_name || 'No name provided'}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Balance: {user.balance || 0} tokens
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={user.is_admin ? "default" : "secondary"}>
-                          {user.is_admin ? 'Admin' : 'User'}
-                        </Badge>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => toggleUserAdmin(user.id, user.is_admin)}
-                        >
-                          {user.is_admin ? 'Remove Admin' : 'Make Admin'}
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </TabsContent>
 
         <TabsContent value="api-keys" className="space-y-4">
