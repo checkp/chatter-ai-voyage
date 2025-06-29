@@ -7,24 +7,47 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MessageSquare, Send } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const ContactUsButton = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) {
       toast.error('Please enter a message');
       return;
     }
+
+    setIsSubmitting(true);
     
-    // Here you would typically send the message to your backend
-    toast.success('Thank you for your feedback! We\'ll get back to you soon.');
-    setMessage('');
-    setEmail('');
-    setIsOpen(false);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-telegram-message', {
+        body: {
+          email: email || 'Not provided',
+          message: message,
+        },
+      });
+
+      if (error) {
+        console.error('Error sending message:', error);
+        throw error;
+      }
+
+      console.log('Message sent successfully:', data);
+      toast.success('Thank you for your feedback! We\'ll get back to you soon.');
+      setMessage('');
+      setEmail('');
+      setIsOpen(false);
+    } catch (error: any) {
+      console.error('Failed to send message:', error);
+      toast.error('Failed to send message. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -53,6 +76,7 @@ const ContactUsButton = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your.email@example.com"
+                disabled={isSubmitting}
               />
             </div>
             <div>
@@ -64,11 +88,12 @@ const ContactUsButton = () => {
                 placeholder="Tell us your suggestions, feedback, or report any issues..."
                 className="min-h-[100px]"
                 required
+                disabled={isSubmitting}
               />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
               <Send className="h-4 w-4 mr-2" />
-              Send Message
+              {isSubmitting ? 'Sending...' : 'Send Message'}
             </Button>
           </form>
         </DialogContent>
