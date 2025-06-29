@@ -11,6 +11,8 @@ import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
 import ContactUsButton from '@/components/ContactUsButton';
 import ConductorSummary from '@/components/ConductorSummary';
 import { useConductor } from '@/hooks/useConductor';
+import { useConductorMode } from '@/hooks/useConductorMode';
+import { useQuery } from '@tanstack/react-query';
 import MainContent from './MainContent';
 import type { DesktopInterfaceProps } from './types';
 
@@ -66,6 +68,29 @@ const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
     requestConductorDirection
   } = useConductor(user);
 
+  // Initialize conductor mode hook
+  const {
+    conductorAgent,
+    setConductorAgent,
+    isProcessing,
+    processConductorMessage
+  } = useConductorMode(user, platforms, async (platform, messages, enabledPlatforms) => {
+    // This would call your existing callAIAPI function
+    // You'll need to pass this from the Index component
+    return "Mock response for now";
+  });
+
+  // Get conductor messages for conductor mode
+  const { data: conductorMessages } = useQuery({
+    queryKey: ['messages', `${activeChatId}_conductor`],
+    queryFn: async () => {
+      if (!activeChatId || activeChatMode !== 'conductor') return [];
+      // Fetch conductor messages from database
+      return [];
+    },
+    enabled: !!activeChatId && activeChatMode === 'conductor'
+  });
+
   // Show conductor summary state - now tracks both automatic analysis and requested guidance
   const [showConductorSummary, setShowConductorSummary] = React.useState(false);
   const [currentSummary, setCurrentSummary] = React.useState('');
@@ -80,6 +105,23 @@ const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
     if (direction) {
       setCurrentSummary(direction);
       setShowConductorSummary(true);
+    }
+  };
+
+  // Handle conductor message send
+  const handleConductorSend = async (message: string) => {
+    if (!activeChatId || !message.trim()) return;
+    
+    try {
+      await processConductorMessage(
+        activeChatId,
+        message,
+        conductorMessages || [],
+        messages || []
+      );
+      setInput('');
+    } catch (error) {
+      console.error('Conductor send error:', error);
     }
   };
 
@@ -134,19 +176,21 @@ const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
           onRequestConductorDirection={handleRequestConductorDirection}
         />
 
-        {/* Add the Draggable AI Status Bar */}
-        <div className="bg-secondary/50 border-b border-border px-4 py-2">
-          <DraggableAIStatusBar
-            platforms={platforms}
-            activeAIStatuses={transformedStatuses}
-            onReorder={updateAgentOrder}
-            onAgentClick={(platform) => {
-              console.log('Agent clicked:', platform.name);
-            }}
-            currentChat={currentChatWithMessages}
-            onSendMessage={handleSingleAgentMessage}
-          />
-        </div>
+        {/* Add the Draggable AI Status Bar - hide in conductor mode */}
+        {activeChatMode !== 'conductor' && (
+          <div className="bg-secondary/50 border-b border-border px-4 py-2">
+            <DraggableAIStatusBar
+              platforms={platforms}
+              activeAIStatuses={transformedStatuses}
+              onReorder={updateAgentOrder}
+              onAgentClick={(platform) => {
+                console.log('Agent clicked:', platform.name);
+              }}
+              currentChat={currentChatWithMessages}
+              onSendMessage={handleSingleAgentMessage}
+            />
+          </div>
+        )}
 
         <MainContent
           activeTab={activeTab}
@@ -155,7 +199,7 @@ const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
           platforms={platforms}
           messages={messages}
           isLoadingMessages={isLoadingMessages}
-          isLoadingResponse={isLoadingResponse}
+          isLoadingResponse={isLoadingResponse || isProcessing}
           transformedStatuses={transformedStatuses}
           togglePlatform={togglePlatform}
           scrollAreaRef={scrollAreaRef}
@@ -171,15 +215,21 @@ const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
           isFreeMode={isFreeMode}
           isFreeModeRunning={isFreeModeRunning}
           handleSendAndStartConversation={handleSendAndStartConversation}
+          conductorMessages={conductorMessages}
+          conductorAgent={conductorAgent}
+          onConductorAgentChange={setConductorAgent}
+          handleConductorSend={handleConductorSend}
         />
       </main>
 
-      {/* Conductor Summary */}
-      <ConductorSummary
-        summary={currentSummary}
-        isVisible={showConductorSummary}
-        onClose={() => setShowConductorSummary(false)}
-      />
+      {/* Conductor Summary - only show in non-conductor modes */}
+      {activeChatMode !== 'conductor' && (
+        <ConductorSummary
+          summary={currentSummary}
+          isVisible={showConductorSummary}
+          onClose={() => setShowConductorSummary(false)}
+        />
+      )}
 
       {/* Contact Us Button */}
       <ContactUsButton />

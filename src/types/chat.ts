@@ -1,4 +1,4 @@
-export type ChatMode = 'discussion' | 'isolated' | 'side-by-side';
+export type ChatMode = 'discussion' | 'isolated' | 'side-by-side' | 'conductor';
 
 export interface Message {
   id: string;

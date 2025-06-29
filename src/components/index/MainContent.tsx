@@ -5,6 +5,7 @@ import ChatMessages from '@/components/ChatMessages';
 import ChatInput from '@/components/ChatInput';
 import SettingsPanel from '@/components/SettingsPanel';
 import SideBySideLayout from '@/components/SideBySideLayout';
+import ConductorLayout from '@/components/ConductorLayout';
 import type { AIPlatform, ChatMode } from '@/types/chat';
 
 interface MainContentProps {
@@ -30,6 +31,11 @@ interface MainContentProps {
   isFreeMode: boolean;
   isFreeModeRunning: boolean;
   handleSendAndStartConversation: () => void;
+  // Conductor mode props
+  conductorMessages?: any;
+  conductorAgent?: string;
+  onConductorAgentChange?: (agent: string) => void;
+  handleConductorSend?: (message: string) => void;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -54,7 +60,11 @@ const MainContent: React.FC<MainContentProps> = ({
   getPendingCount,
   isFreeMode,
   isFreeModeRunning,
-  handleSendAndStartConversation
+  handleSendAndStartConversation,
+  conductorMessages,
+  conductorAgent = 'openai',
+  onConductorAgentChange,
+  handleConductorSend
 }) => {
   // Transform the status strings to booleans for SideBySideLayout
   const activeAIStatusesBool = Object.keys(transformedStatuses).reduce((acc, key) => {
@@ -68,7 +78,16 @@ const MainContent: React.FC<MainContentProps> = ({
       <div className="flex-1 overflow-hidden">
         {activeTab === 'chat' && (
           <>
-            {activeChatMode === 'side-by-side' ? (
+            {activeChatMode === 'conductor' ? (
+              <ConductorLayout
+                conductorMessages={conductorMessages || []}
+                mainMessages={messages || []}
+                platforms={platforms}
+                isLoadingResponse={isLoadingResponse}
+                conductorAgent={conductorAgent}
+                onConductorAgentChange={onConductorAgentChange || (() => {})}
+              />
+            ) : activeChatMode === 'side-by-side' ? (
               <SideBySideLayout
                 enabledPlatforms={platforms}
                 messages={messages}
@@ -108,7 +127,10 @@ const MainContent: React.FC<MainContentProps> = ({
         <ChatInput 
           input={input}
           setInput={setInput}
-          handleSend={() => handleSend(activeChatId)}
+          handleSend={activeChatMode === 'conductor' && handleConductorSend ? 
+            () => handleConductorSend(input) : 
+            () => handleSend(activeChatId)
+          }
           handleStop={handleStop}
           isLoadingResponse={isLoadingResponse}
           isPending={sendMessageMutation.isPending}

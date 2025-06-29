@@ -3,7 +3,7 @@ import React from 'react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { MessageCircle, Users, Grid3X3 } from 'lucide-react';
+import { MessageCircle, Users, Grid3X3, Brain } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { ChatMode } from '@/types/chat';
@@ -38,6 +38,13 @@ const ChatModeSelector: React.FC<ChatModeSelectorProps> = ({
       icon: Grid3X3,
       description: 'Separate windows (desktop only)',
       disabled: isMobile
+    },
+    {
+      value: 'conductor' as ChatMode,
+      label: 'Conductor',
+      icon: Brain,
+      description: 'AI orchestrated conversations',
+      disabled: isMobile
     }
   ];
 
@@ -69,16 +76,18 @@ const ChatModeSelector: React.FC<ChatModeSelectorProps> = ({
         </ToggleGroup>
       </div>
 
-      <div className="flex items-center gap-2">
-        <Switch 
-          id="isolated-mode" 
-          checked={isolatedMode}
-          onCheckedChange={onIsolatedToggle}
-        />
-        <Label htmlFor="isolated-mode" className="text-sm font-medium text-muted-foreground cursor-pointer">
-          Isolated
-        </Label>
-      </div>
+      {currentMode !== 'conductor' && (
+        <div className="flex items-center gap-2">
+          <Switch 
+            id="isolated-mode" 
+            checked={isolatedMode}
+            onCheckedChange={onIsolatedToggle}
+          />
+          <Label htmlFor="isolated-mode" className="text-sm font-medium text-muted-foreground cursor-pointer">
+            Isolated
+          </Label>
+        </div>
+      )}
     </div>
   );
 };
