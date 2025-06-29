@@ -66,8 +66,9 @@ const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
     requestConductorDirection
   } = useConductor(user);
 
-  // Show conductor summary state
+  // Show conductor summary state - now tracks both automatic analysis and requested guidance
   const [showConductorSummary, setShowConductorSummary] = React.useState(false);
+  const [currentSummary, setCurrentSummary] = React.useState('');
 
   // Handle conductor direction request
   const handleRequestConductorDirection = async () => {
@@ -77,9 +78,18 @@ const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
     const direction = await requestConductorDirection(messages, enabledPlatforms);
     
     if (direction) {
+      setCurrentSummary(direction);
       setShowConductorSummary(true);
     }
   };
+
+  // Update summary when conductor provides automatic analysis
+  React.useEffect(() => {
+    if (conductorState.lastSummary) {
+      setCurrentSummary(conductorState.lastSummary);
+      setShowConductorSummary(true);
+    }
+  }, [conductorState.lastSummary]);
 
   return (
     <div className="min-h-screen bg-background flex h-screen overflow-hidden">
@@ -166,7 +176,7 @@ const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
 
       {/* Conductor Summary */}
       <ConductorSummary
-        summary={conductorState.lastSummary || ''}
+        summary={currentSummary}
         isVisible={showConductorSummary}
         onClose={() => setShowConductorSummary(false)}
       />
