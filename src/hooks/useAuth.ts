@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { cleanupAuthState } from './auth/authStateCleanup';
-import { ensureUserProfile, ensureUserTokens, ensureDefaultAgentSettings } from './auth/userSetupOperations';
+import { ensureDefaultAgentSettings } from './auth/userSetupOperations';
 import { handleSignOut } from './auth/signOutHandler';
 
 export const useAuth = () => {
@@ -29,15 +29,12 @@ export const useAuth = () => {
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('User signed in successfully:', session.user.email);
           
-          // Give database triggers time to complete, then verify setup
+          // Give database trigger time to complete, then set up agent settings only
           setTimeout(async () => {
             if (!mounted) return;
             
             try {
-              // Just verify the setup, don't try to create anything
-              // The database triggers should handle profile and token creation
-              await ensureUserProfile(session.user);
-              await ensureUserTokens(session.user.id);
+              // Only handle agent settings - profile and tokens are handled by database trigger
               await ensureDefaultAgentSettings(session.user.id);
               
               if (mounted && window.location.pathname === '/auth') {
@@ -45,9 +42,9 @@ export const useAuth = () => {
                 window.location.href = '/';
               }
             } catch (error) {
-              console.error('Setup verification error for user:', session.user.id, error);
+              console.error('Agent settings setup error for user:', session.user.id, error);
             }
-          }, 2000); // Increased delay to give database triggers time to complete
+          }, 3000); // Increased delay to ensure database trigger completes
         }
         
         if (event === 'SIGNED_OUT') {
@@ -83,17 +80,15 @@ export const useAuth = () => {
           setUser(session?.user ?? null);
           setLoading(false);
 
-          // For existing sessions, just verify setup without trying to create anything
+          // For existing sessions, just set up agent settings if needed
           if (session?.user) {
             setTimeout(async () => {
               if (!mounted) return;
               
               try {
-                await ensureUserProfile(session.user);
-                await ensureUserTokens(session.user.id);
                 await ensureDefaultAgentSettings(session.user.id);
               } catch (error) {
-                console.error('Initial setup verification error for user:', session.user.id, error);
+                console.error('Initial agent settings setup error for user:', session.user.id, error);
               }
             }, 1000);
           }
