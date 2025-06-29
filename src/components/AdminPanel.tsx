@@ -1,16 +1,17 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Users, DollarSign, Settings, Key, Calendar, Mail, User as UserIcon } from 'lucide-react';
+import { Shield, Settings } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+import AdminStatsCards from './admin/AdminStatsCards';
+import AdminUsersTable from './admin/AdminUsersTable';
+import AdminApiKeys from './admin/AdminApiKeys';
+import AdminPlatformUsage from './admin/AdminPlatformUsage';
 
 interface AdminPanelProps {
   user: SupabaseUser;
@@ -36,8 +37,6 @@ interface UserWithTokens {
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
-  const [selectedApiKey, setSelectedApiKey] = useState('');
-  const [apiKeyValue, setApiKeyValue] = useState('');
   const queryClient = useQueryClient();
 
   // Check if user is admin
@@ -137,35 +136,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
     enabled: userProfile?.is_admin === true,
   });
 
-  const handleUpdateApiKey = async () => {
-    if (!selectedApiKey || !apiKeyValue) {
-      toast.error('Please select an API key type and enter a value');
-      return;
-    }
-
-    try {
-      const response = await supabase.functions.invoke('update-api-key', {
-        body: { 
-          key_name: selectedApiKey,
-          key_value: apiKeyValue 
-        },
-        headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-        },
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
-
-      toast.success('API key updated successfully');
-      setApiKeyValue('');
-    } catch (error: any) {
-      console.error('Error updating API key:', error);
-      toast.error('Failed to update API key: ' + error.message);
-    }
-  };
-
   const toggleUserAdmin = async (userId: string, currentIsAdmin: boolean) => {
     try {
       const { error } = await supabase
@@ -182,16 +152,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
       console.error('Error updating user admin status:', error);
       toast.error('Failed to update user admin status');
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   if (!userProfile?.is_admin) {
@@ -227,216 +187,27 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
         </TabsList>
 
         <TabsContent value="users" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                All Users ({allUsers?.length || 0})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoadingUsers ? (
-                <div className="space-y-4">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="h-16 bg-muted animate-pulse rounded" />
-                  ))}
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Tokens</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Joined</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {allUsers?.map((userData) => (
-                        <TableRow key={userData.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <UserIcon className="w-4 h-4 text-muted-foreground" />
-                              <div>
-                                <div className="font-medium">
-                                  {userData.full_name || 'No name'}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  ID: {userData.id.slice(0, 8)}...
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <Mail className="w-3 h-3 text-muted-foreground" />
-                              {userData.email}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <div>Balance: <span className="font-medium">{userData.balance}</span></div>
-                              <div className="text-xs text-muted-foreground">
-                                Purchased: {userData.total_purchased} | Used: {userData.total_consumed}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={userData.is_admin ? "default" : "secondary"}>
-                              {userData.is_admin ? 'Admin' : 'User'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1 text-sm">
-                              <Calendar className="w-3 h-3 text-muted-foreground" />
-                              {formatDate(userData.created_at)}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={userData.has_completed_onboarding ? "outline" : "secondary"}>
-                              {userData.has_completed_onboarding ? 'Active' : 'New'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => toggleUserAdmin(userData.id, userData.is_admin)}
-                              disabled={userData.id === user.id}
-                            >
-                              {userData.is_admin ? 'Remove Admin' : 'Make Admin'}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <AdminUsersTable
+            users={allUsers || []}
+            currentUser={user}
+            isLoading={isLoadingUsers}
+            onToggleAdmin={toggleUserAdmin}
+          />
         </TabsContent>
 
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{allUsers?.length || 0}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  ${((tokenStats?.totalRevenue || 0) / 100).toFixed(2)}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Tokens Sold</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {(tokenStats?.totalPurchased || 0).toLocaleString()}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Tokens Used</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {(tokenStats?.totalConsumed || 0).toLocaleString()}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Platform Usage Chart */}
-          {tokenStats?.platformUsage && Object.keys(tokenStats.platformUsage).length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Platform Usage</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {Object.entries(tokenStats.platformUsage).map(([platform, usage]) => (
-                    <div key={platform} className="flex items-center justify-between">
-                      <span className="capitalize">{platform}</span>
-                      <Badge variant="outline">{usage.toLocaleString()} tokens</Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+          <AdminStatsCards
+            userCount={allUsers?.length || 0}
+            tokenStats={tokenStats}
+          />
+          
+          {tokenStats?.platformUsage && (
+            <AdminPlatformUsage platformUsage={tokenStats.platformUsage} />
           )}
         </TabsContent>
 
         <TabsContent value="api-keys" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Key className="w-5 h-5" />
-                Centralized API Key Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="api-key-type">API Key Type</Label>
-                <select
-                  id="api-key-type"
-                  value={selectedApiKey}
-                  onChange={(e) => setSelectedApiKey(e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="">Select API Key Type</option>
-                  <option value="OPENAI_API_KEY">OpenAI API Key</option>
-                  <option value="ANTHROPIC_API_KEY">Anthropic API Key</option>
-                  <option value="DEEPSEEK_API_KEY">DeepSeek API Key</option>
-                  <option value="GROK_API_KEY">Grok (X.AI) API Key</option>
-                  <option value="STRIPE_SECRET_KEY">Stripe Secret Key</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="api-key-value">API Key Value</Label>
-                <Input
-                  id="api-key-value"
-                  type="password"
-                  value={apiKeyValue}
-                  onChange={(e) => setApiKeyValue(e.target.value)}
-                  placeholder="Enter the API key value"
-                />
-              </div>
-
-              <Button onClick={handleUpdateApiKey} disabled={!selectedApiKey || !apiKeyValue}>
-                Update API Key
-              </Button>
-
-              <div className="text-sm text-muted-foreground">
-                <strong>Note:</strong> These centralized API keys are used for all users. 
-                Users no longer manage their own API keys.
-              </div>
-            </CardContent>
-          </Card>
+          <AdminApiKeys />
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-4">
