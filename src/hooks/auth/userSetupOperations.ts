@@ -4,9 +4,10 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 export const ensureUserTokens = async (userId: string) => {
   try {
-    console.log('ensureUserTokens: Starting for user:', userId);
+    console.log('ensureUserTokens: Checking for user:', userId);
     
-    // First check if tokens already exist
+    // Just check if tokens exist, don't try to create them
+    // The database trigger should handle token creation automatically
     const { data: existingTokens, error: checkError } = await supabase
       .from('user_tokens')
       .select('*')
@@ -20,28 +21,8 @@ export const ensureUserTokens = async (userId: string) => {
 
     if (existingTokens) {
       console.log('ensureUserTokens: Tokens already exist for user:', userId);
-      return;
-    }
-
-    // Only insert if no tokens exist
-    const { error } = await supabase
-      .from('user_tokens')
-      .insert({
-        user_id: userId,
-        balance: 300,
-        total_purchased: 0,
-        total_consumed: 0
-      });
-
-    if (error) {
-      // If it's a duplicate key error, that's fine - tokens already exist
-      if (error.code === '23505') {
-        console.log('ensureUserTokens: Race condition - tokens already created for user:', userId);
-      } else {
-        console.error('ensureUserTokens: Error creating tokens:', error);
-      }
     } else {
-      console.log('ensureUserTokens: Success for user:', userId);
+      console.log('ensureUserTokens: No tokens found, they should be created by database trigger');
     }
   } catch (error) {
     console.error('ensureUserTokens: Unexpected error:', error);
@@ -50,9 +31,10 @@ export const ensureUserTokens = async (userId: string) => {
 
 export const ensureUserProfile = async (user: SupabaseUser) => {
   try {
-    console.log('ensureUserProfile: Starting for user:', user.email);
+    console.log('ensureUserProfile: Checking for user:', user.email);
     
-    // First check if profile already exists
+    // Just check if profile exists, don't try to create it
+    // The database trigger should handle profile creation automatically
     const { data: existingProfile, error: checkError } = await supabase
       .from('profiles')
       .select('*')
@@ -66,29 +48,8 @@ export const ensureUserProfile = async (user: SupabaseUser) => {
 
     if (existingProfile) {
       console.log('ensureUserProfile: Profile already exists for user:', user.email);
-      return;
-    }
-
-    // Only insert if no profile exists
-    const { error } = await supabase
-      .from('profiles')
-      .insert({
-        id: user.id,
-        email: user.email,
-        full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-        avatar_url: user.user_metadata?.avatar_url || null,
-        has_completed_onboarding: false
-      });
-
-    if (error) {
-      // If it's a duplicate key error, that's fine - profile already exists
-      if (error.code === '23505') {
-        console.log('ensureUserProfile: Race condition - profile already created for user:', user.email);
-      } else {
-        console.error('ensureUserProfile: Error creating profile:', error);
-      }
     } else {
-      console.log('ensureUserProfile: Success');
+      console.log('ensureUserProfile: No profile found, it should be created by database trigger');
     }
   } catch (error) {
     console.error('ensureUserProfile: Unexpected error:', error);

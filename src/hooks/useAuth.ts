@@ -13,7 +13,6 @@ export const useAuth = () => {
 
   useEffect(() => {
     let mounted = true;
-    let setupPromises = new Map<string, Promise<void>>(); // Track setup promises per user
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -30,38 +29,29 @@ export const useAuth = () => {
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('User signed in successfully:', session.user.email);
           
-          // Prevent concurrent setup for the same user
-          if (!setupPromises.has(session.user.id)) {
-            const setupPromise = (async () => {
-              try {
-                // Sequential setup to avoid race conditions
-                await ensureUserProfile(session.user);
-                await ensureUserTokens(session.user.id);
-                await ensureDefaultAgentSettings(session.user.id);
-                
-                if (mounted && window.location.pathname === '/auth') {
-                  console.log('Redirecting from auth page to main app');
-                  window.location.href = '/';
-                }
-              } catch (error) {
-                console.error('Setup error for user:', session.user.id, error);
-              } finally {
-                setupPromises.delete(session.user.id);
+          // Give database triggers time to complete, then verify setup
+          setTimeout(async () => {
+            if (!mounted) return;
+            
+            try {
+              // Just verify the setup, don't try to create anything
+              // The database triggers should handle profile and token creation
+              await ensureUserProfile(session.user);
+              await ensureUserTokens(session.user.id);
+              await ensureDefaultAgentSettings(session.user.id);
+              
+              if (mounted && window.location.pathname === '/auth') {
+                console.log('Redirecting from auth page to main app');
+                window.location.href = '/';
               }
-            })();
-            
-            setupPromises.set(session.user.id, setupPromise);
-            
-            // Don't await here to avoid blocking the auth state change
-            setupPromise.catch(() => {
-              // Error already logged above
-            });
-          }
+            } catch (error) {
+              console.error('Setup verification error for user:', session.user.id, error);
+            }
+          }, 2000); // Increased delay to give database triggers time to complete
         }
         
         if (event === 'SIGNED_OUT') {
           console.log('User signed out');
-          setupPromises.clear(); // Clear all pending setups
           cleanupAuthState();
           
           // Only redirect if we're not already on auth page
@@ -93,26 +83,19 @@ export const useAuth = () => {
           setUser(session?.user ?? null);
           setLoading(false);
 
-          // Ensure user setup for existing sessions
-          if (session?.user && !setupPromises.has(session.user.id)) {
-            const setupPromise = (async () => {
+          // For existing sessions, just verify setup without trying to create anything
+          if (session?.user) {
+            setTimeout(async () => {
+              if (!mounted) return;
+              
               try {
                 await ensureUserProfile(session.user);
                 await ensureUserTokens(session.user.id);
                 await ensureDefaultAgentSettings(session.user.id);
               } catch (error) {
-                console.error('Initial setup error for user:', session.user.id, error);
-              } finally {
-                setupPromises.delete(session.user.id);
+                console.error('Initial setup verification error for user:', session.user.id, error);
               }
-            })();
-            
-            setupPromises.set(session.user.id, setupPromise);
-            
-            // Don't await to avoid blocking
-            setupPromise.catch(() => {
-              // Error already logged above
-            });
+            }, 1000);
           }
         }
       } catch (error) {
