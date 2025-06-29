@@ -1,3 +1,4 @@
+
 export interface ChangelogEntry {
   version: string;
   date: string;
@@ -11,6 +12,21 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "2.1.5",
+    date: "2025-06-29",
+    title: "Authentication & Database Stability Improvements",
+    description: "Major backend improvements to fix authentication issues and enhance user onboarding reliability.",
+    type: "improvement",
+    changes: [
+      { type: "bugfix", description: "🔧 Fixed Duplicate User Setup: Resolved race condition causing duplicate key constraint violations during user registration" },
+      { type: "improvement", description: "🛠️ Consolidated Database Triggers: Streamlined user initialization into a single, reliable database trigger" },
+      { type: "bugfix", description: "⚡ Enhanced Authentication Flow: Fixed token initialization and profile creation conflicts" },
+      { type: "improvement", description: "🔒 Improved User Onboarding: More reliable automatic setup of user profiles and default tokens" },
+      { type: "improvement", description: "📊 Better Error Handling: Enhanced database constraint handling to prevent signup failures" },
+      { type: "improvement", description: "🎯 Optimized Agent Settings: Streamlined default agent configuration setup for new users" }
+    ]
+  },
   {
     version: "2.1.4",
     date: "2025-01-14",
