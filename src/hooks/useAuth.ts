@@ -29,25 +29,39 @@ export const useAuth = () => {
     try {
       console.log('ensureUserTokens: Starting for user:', userId);
       
-      // Use upsert to handle duplicates gracefully
+      // First check if tokens already exist
+      const { data: existingTokens, error: checkError } = await supabase
+        .from('user_tokens')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('ensureUserTokens: Error checking existing tokens:', checkError);
+        return;
+      }
+
+      if (existingTokens) {
+        console.log('ensureUserTokens: Tokens already exist for user:', userId);
+        return;
+      }
+
+      // Only insert if no tokens exist
       const { error } = await supabase
         .from('user_tokens')
-        .upsert({
+        .insert({
           user_id: userId,
           balance: 300,
           total_purchased: 0,
           total_consumed: 0
-        }, {
-          onConflict: 'user_id',
-          ignoreDuplicates: true
         });
 
       if (error) {
-        // If it's a duplicate key error, that's actually fine - tokens already exist
+        // If it's a duplicate key error, that's fine - tokens already exist
         if (error.code === '23505') {
-          console.log('ensureUserTokens: Tokens already exist for user:', userId);
+          console.log('ensureUserTokens: Race condition - tokens already created for user:', userId);
         } else {
-          console.error('ensureUserTokens: Error:', error);
+          console.error('ensureUserTokens: Error creating tokens:', error);
         }
       } else {
         console.log('ensureUserTokens: Success for user:', userId);
@@ -61,22 +75,41 @@ export const useAuth = () => {
     try {
       console.log('ensureUserProfile: Starting for user:', user.email);
       
-      // Use upsert to handle duplicates gracefully
+      // First check if profile already exists
+      const { data: existingProfile, error: checkError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('ensureUserProfile: Error checking existing profile:', checkError);
+        return;
+      }
+
+      if (existingProfile) {
+        console.log('ensureUserProfile: Profile already exists for user:', user.email);
+        return;
+      }
+
+      // Only insert if no profile exists
       const { error } = await supabase
         .from('profiles')
-        .upsert({
+        .insert({
           id: user.id,
           email: user.email,
           full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
           avatar_url: user.user_metadata?.avatar_url || null,
           has_completed_onboarding: false
-        }, {
-          onConflict: 'id',
-          ignoreDuplicates: true
         });
 
       if (error) {
-        console.error('ensureUserProfile: Error:', error);
+        // If it's a duplicate key error, that's fine - profile already exists
+        if (error.code === '23505') {
+          console.log('ensureUserProfile: Race condition - profile already created for user:', user.email);
+        } else {
+          console.error('ensureUserProfile: Error creating profile:', error);
+        }
       } else {
         console.log('ensureUserProfile: Success');
       }
@@ -170,7 +203,7 @@ export const useAuth = () => {
 
   useEffect(() => {
     let mounted = true;
-    let setupInProgress = new Set<string>(); // Track users currently being set up
+    let setupPromises = new Map<string, Promise<void>>(); // Track setup promises per user
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -188,32 +221,37 @@ export const useAuth = () => {
           console.log('User signed in successfully:', session.user.email);
           
           // Prevent concurrent setup for the same user
-          if (!setupInProgress.has(session.user.id)) {
-            setupInProgress.add(session.user.id);
-            
-            // Defer additional setup to prevent deadlocks
-            setTimeout(async () => {
-              if (mounted) {
-                try {
-                  await ensureUserProfile(session.user);
-                  await ensureUserTokens(session.user.id);
-                  await ensureDefaultAgentSettings(session.user.id);
-                  
-                  if (window.location.pathname === '/auth') {
-                    console.log('Redirecting from auth page to main app');
-                    window.location.href = '/';
-                  }
-                } finally {
-                  setupInProgress.delete(session.user.id);
+          if (!setupPromises.has(session.user.id)) {
+            const setupPromise = (async () => {
+              try {
+                // Sequential setup to avoid race conditions
+                await ensureUserProfile(session.user);
+                await ensureUserTokens(session.user.id);
+                await ensureDefaultAgentSettings(session.user.id);
+                
+                if (mounted && window.location.pathname === '/auth') {
+                  console.log('Redirecting from auth page to main app');
+                  window.location.href = '/';
                 }
+              } catch (error) {
+                console.error('Setup error for user:', session.user.id, error);
+              } finally {
+                setupPromises.delete(session.user.id);
               }
-            }, 1000); // Increased delay to prevent race conditions
+            })();
+            
+            setupPromises.set(session.user.id, setupPromise);
+            
+            // Don't await here to avoid blocking the auth state change
+            setupPromise.catch(() => {
+              // Error already logged above
+            });
           }
         }
         
         if (event === 'SIGNED_OUT') {
           console.log('User signed out');
-          setupInProgress.clear(); // Clear tracking on sign out
+          setupPromises.clear(); // Clear all pending setups
           cleanupAuthState();
           
           // Only redirect if we're not already on auth page
@@ -246,20 +284,25 @@ export const useAuth = () => {
           setLoading(false);
 
           // Ensure user setup for existing sessions
-          if (session?.user && !setupInProgress.has(session.user.id)) {
-            setupInProgress.add(session.user.id);
-            
-            setTimeout(async () => {
-              if (mounted) {
-                try {
-                  await ensureUserProfile(session.user);
-                  await ensureUserTokens(session.user.id);
-                  await ensureDefaultAgentSettings(session.user.id);
-                } finally {
-                  setupInProgress.delete(session.user.id);
-                }
+          if (session?.user && !setupPromises.has(session.user.id)) {
+            const setupPromise = (async () => {
+              try {
+                await ensureUserProfile(session.user);
+                await ensureUserTokens(session.user.id);
+                await ensureDefaultAgentSettings(session.user.id);
+              } catch (error) {
+                console.error('Initial setup error for user:', session.user.id, error);
+              } finally {
+                setupPromises.delete(session.user.id);
               }
-            }, 1000);
+            })();
+            
+            setupPromises.set(session.user.id, setupPromise);
+            
+            // Don't await to avoid blocking
+            setupPromise.catch(() => {
+              // Error already logged above
+            });
           }
         }
       } catch (error) {
