@@ -1,22 +1,22 @@
 
-import type { Chat, ChatMode, AIPlatform } from '@/types/chat';
-import type { User } from '@supabase/supabase-js';
+import type { Chat, ChatMode, AIPlatform, Message } from '@/types/chat';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 export interface DesktopInterfaceProps {
   chats: Chat[] | undefined;
   isLoadingChats: boolean;
   activeChatId: string | null;
-  setActiveChatId: (chatId: string) => void;
-  handleCreateChat: (chatMode?: ChatMode) => void;
+  setActiveChatId: (id: string | null) => void;
+  handleCreateChat: () => void;
   handleDeleteChat: (chatId: string) => void;
   createChatMutation: any;
-  messages: any;
+  messages: Message[] | undefined;
   isLoadingMessages: boolean;
   isLoadingResponse: boolean;
   platforms: AIPlatform[];
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  user: User | null;
+  user: SupabaseUser;
   isFreeMode: boolean;
   isFreeModeRunning: boolean;
   freeModeMessageLimit: number;
@@ -25,7 +25,7 @@ export interface DesktopInterfaceProps {
   stopFreeMode: () => void;
   updateMessageLimit: (limit: number) => void;
   handleSingleAgentMessage: (message: string, platformId: string) => Promise<void>;
-  updateAgentOrder: (platforms: AIPlatform[]) => void;
+  updateAgentOrder: (reorderedPlatforms: AIPlatform[]) => void;
   handleSignOut: () => void;
   activeChatMode: ChatMode;
   isolatedMode: boolean;
@@ -44,4 +44,5 @@ export interface DesktopInterfaceProps {
   canStop: boolean;
   getPendingCount: () => number;
   handleSendAndStartConversation: () => void;
+  callAIAPI: (platform: AIPlatform, messages: Message[], enabledPlatforms: AIPlatform[]) => Promise<string>;
 }

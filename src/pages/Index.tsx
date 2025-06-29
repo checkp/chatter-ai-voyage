@@ -299,6 +299,7 @@ const Index = () => {
       canStop={canStop}
       getPendingCount={getPendingCount}
       handleSendAndStartConversation={handleSendAndStartConversation}
+      callAIAPI={callAIAPI}
     />
   );
 

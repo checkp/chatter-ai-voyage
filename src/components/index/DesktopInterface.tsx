@@ -57,7 +57,8 @@ const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
   sendMessageMutation,
   canStop,
   getPendingCount,
-  handleSendAndStartConversation
+  handleSendAndStartConversation,
+  callAIAPI
 }) => {
   // Initialize conductor hook
   const {
@@ -68,17 +69,13 @@ const DesktopInterface: React.FC<DesktopInterfaceProps> = ({
     requestConductorDirection
   } = useConductor(user);
 
-  // Initialize conductor mode hook
+  // Initialize conductor mode hook with callAIAPI function
   const {
     conductorAgent,
     setConductorAgent,
     isProcessing,
     processConductorMessage
-  } = useConductorMode(user, platforms, async (platform, messages, enabledPlatforms) => {
-    // This would call your existing callAIAPI function
-    // You'll need to pass this from the Index component
-    return "Mock response for now";
-  });
+  } = useConductorMode(user, platforms, callAIAPI);
 
   // Get conductor messages for conductor mode
   const { data: conductorMessages } = useQuery({

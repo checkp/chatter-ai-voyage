@@ -18,6 +18,7 @@ interface ChatInputProps {
   isFreeMode?: boolean;
   isFreeModeRunning?: boolean;
   onSendAndStartConversation?: () => void;
+  placeholder?: string;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -31,7 +32,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
   pendingCount = 0,
   isFreeMode = false,
   isFreeModeRunning = false,
-  onSendAndStartConversation
+  onSendAndStartConversation,
+  placeholder = "Type your message here..."
 }) => {
   const navigate = useNavigate();
   const isDisabled = isLoadingResponse || isPending;
@@ -50,7 +52,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               }
             }
           }}
-          placeholder="Type your message here..."
+          placeholder={placeholder}
           className="flex-1 resize-none"
           disabled={isDisabled}
         />
