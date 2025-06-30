@@ -86,6 +86,7 @@ const MainContent: React.FC<MainContentProps> = ({
                 isLoadingResponse={isLoadingResponse}
                 conductorAgent={conductorAgent}
                 onConductorAgentChange={onConductorAgentChange || (() => {})}
+                onConductorSend={handleConductorSend}
               />
             ) : activeChatMode === 'side-by-side' ? (
               <SideBySideLayout
@@ -122,15 +123,12 @@ const MainContent: React.FC<MainContentProps> = ({
         )}
       </div>
 
-      {/* Chat Input */}
-      {activeTab === 'chat' && (
+      {/* Chat Input - only show for non-conductor modes */}
+      {activeTab === 'chat' && activeChatMode !== 'conductor' && (
         <ChatInput 
           input={input}
           setInput={setInput}
-          handleSend={activeChatMode === 'conductor' && handleConductorSend ? 
-            () => handleConductorSend(input) : 
-            () => handleSend(activeChatId)
-          }
+          handleSend={() => handleSend(activeChatId)}
           handleStop={handleStop}
           isLoadingResponse={isLoadingResponse}
           isPending={sendMessageMutation.isPending}

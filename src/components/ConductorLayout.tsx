@@ -1,9 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Brain, Users, Sparkles, Bot, Search, Zap, Gem } from 'lucide-react';
+import { Brain, Users, Sparkles, Bot, Search, Zap, Gem, Send } from 'lucide-react';
 import ChatMessages from '@/components/ChatMessages';
 import type { Message, AIPlatform } from '@/types/chat';
 
@@ -14,6 +16,7 @@ interface ConductorLayoutProps {
   isLoadingResponse: boolean;
   conductorAgent: string;
   onConductorAgentChange: (agent: string) => void;
+  onConductorSend?: (message: string) => void;
 }
 
 const ConductorLayout: React.FC<ConductorLayoutProps> = ({
@@ -22,8 +25,11 @@ const ConductorLayout: React.FC<ConductorLayoutProps> = ({
   platforms,
   isLoadingResponse,
   conductorAgent,
-  onConductorAgentChange
+  onConductorAgentChange,
+  onConductorSend
 }) => {
+  const [conductorInput, setConductorInput] = useState('');
+
   const conductorOptions = [
     { 
       id: 'openai', 
@@ -69,6 +75,20 @@ const ConductorLayout: React.FC<ConductorLayoutProps> = ({
 
   const selectedOption = conductorOptions.find(option => option.id === conductorAgent);
   const SelectedIcon = selectedOption?.icon || Brain;
+
+  const handleConductorSend = () => {
+    if (conductorInput.trim() && onConductorSend) {
+      onConductorSend(conductorInput);
+      setConductorInput('');
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleConductorSend();
+    }
+  };
 
   return (
     <div className="flex h-full">
@@ -156,6 +176,28 @@ const ConductorLayout: React.FC<ConductorLayoutProps> = ({
             )}
           </div>
         </ScrollArea>
+
+        {/* Conductor Input */}
+        <div className="p-4 border-t border-border bg-background/50">
+          <div className="flex gap-2">
+            <Textarea
+              value={conductorInput}
+              onChange={(e) => setConductorInput(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="Ask the conductor to orchestrate the discussion..."
+              className="flex-1 min-h-[44px] max-h-32 resize-none"
+              disabled={isLoadingResponse}
+            />
+            <Button
+              onClick={handleConductorSend}
+              disabled={!conductorInput.trim() || isLoadingResponse}
+              size="sm"
+              className="self-end h-11"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Main Conversation Pane */}
