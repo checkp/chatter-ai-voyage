@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Brain, Users, Sparkles, Bot, Search, Zap, Gem, Send, Help, Copy } from 'lucide-react';
+import { Brain, Users, Sparkles, Bot, Search, Zap, Gem, Send, HelpCircle, Copy } from 'lucide-react';
 import ChatMessages from '@/components/ChatMessages';
 import { useToast } from '@/hooks/use-toast';
 import type { Message, AIPlatform } from '@/types/chat';
@@ -135,7 +135,7 @@ Provide a structured analysis comparing their different perspectives.`;
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <Help className="h-4 w-4 text-muted-foreground" />
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-96 p-4" align="end">
