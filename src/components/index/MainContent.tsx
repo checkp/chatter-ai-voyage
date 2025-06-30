@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatMessages from '@/components/ChatMessages';
@@ -36,6 +35,7 @@ interface MainContentProps {
   conductorAgent?: string;
   onConductorAgentChange?: (agent: string) => void;
   handleConductorSend?: (message: string) => void;
+  user?: any; // Add user prop
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -64,7 +64,8 @@ const MainContent: React.FC<MainContentProps> = ({
   conductorMessages,
   conductorAgent = 'openai',
   onConductorAgentChange,
-  handleConductorSend
+  handleConductorSend,
+  user
 }) => {
   // Transform the status strings to booleans for SideBySideLayout
   const activeAIStatusesBool = Object.keys(transformedStatuses).reduce((acc, key) => {
@@ -87,6 +88,7 @@ const MainContent: React.FC<MainContentProps> = ({
                 conductorAgent={conductorAgent}
                 onConductorAgentChange={onConductorAgentChange || (() => {})}
                 onConductorSend={handleConductorSend}
+                user={user}
               />
             ) : activeChatMode === 'side-by-side' ? (
               <SideBySideLayout

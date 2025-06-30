@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Users, Zap, ArrowRight, Bot, MessageCircle, ArrowLeft, Copy, Sparkles, Wrench, Bug } from 'lucide-react';
+import { MessageSquare, Users, Zap, ArrowRight, Bot, MessageCircle, ArrowLeft, Copy, Sparkles, Wrench, Bug, Brain } from 'lucide-react';
 import { toast } from 'sonner';
 import { changelog } from '@/data/changelog';
 
@@ -124,20 +123,19 @@ const WelcomeScreen = ({ onGetStarted, onSkip }: WelcomeScreenProps) => {
               <CardHeader className="pb-3">
                 <div className="flex items-center space-x-2">
                   <div className="p-2 bg-primary/10 rounded-lg">
-                    <Zap className="h-6 w-6 text-primary" />
+                    <Brain className="h-6 w-6 text-primary" />
                   </div>
-                  <CardTitle className="text-lg">Conversation Mode</CardTitle>
+                  <CardTitle className="text-lg">AI Conductor</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 <CardDescription className="text-sm leading-relaxed">
-                  Watch AI agents discuss topics autonomously. Set a message limit and let the AIs explore ideas while you observe their conversation.
+                  Let one AI agent orchestrate discussions between multiple agents. Perfect for complex analysis requiring different perspectives and expertise.
                 </CardDescription>
                 <div className="bg-muted/50 p-3 rounded-lg text-xs space-y-1">
-                  <div className="font-medium text-foreground">Perfect for:</div>
-                  <div className="text-muted-foreground">• Research and brainstorming</div>
-                  <div className="text-muted-foreground">• Exploring different viewpoints</div>
-                  <div className="text-muted-foreground">• Learning from AI discussions</div>
+                  <div className="font-medium text-foreground">Example:</div>
+                  <div className="text-muted-foreground italic">Conductor assigns roles to agents</div>
+                  <div className="text-muted-foreground">→ Technical, Security, UX & Performance agents collaborate</div>
                 </div>
               </CardContent>
             </Card>

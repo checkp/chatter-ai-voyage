@@ -164,6 +164,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           conductorAgent={conductorAgent}
           onConductorAgentChange={onConductorAgentChange}
           handleConductorSend={handleConductorSend}
+          user={user}
         />
       </main>
 
