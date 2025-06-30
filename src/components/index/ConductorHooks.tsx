@@ -60,6 +60,8 @@ export const useConductorHooks = ({
 
       return data?.map(msg => ({
         ...msg,
+        sender: msg.sender as 'user' | 'ai',
+        platform: msg.platform || undefined,
         timestamp: new Date(msg.created_at)
       })) || [];
     },
