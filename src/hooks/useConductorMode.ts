@@ -19,7 +19,8 @@ export const useConductorMode = (
     chatId: string,
     userMessage: string,
     conductorMessages: Message[],
-    mainMessages: Message[]
+    mainMessages: Message[],
+    conductorConversationId: string
   ) => {
     if (!user) throw new Error('User not authenticated');
 
@@ -33,6 +34,7 @@ export const useConductorMode = (
         mainMessages,
         platforms,
         conductorAgent,
+        conductorConversationId,
         callAIAPI
       });
 

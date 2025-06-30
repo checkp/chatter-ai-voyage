@@ -15,6 +15,7 @@ interface ProcessConductorParams {
   mainMessages: Message[];
   platforms: AIPlatform[];
   conductorAgent: string;
+  conductorConversationId: string;
   callAIAPI: (platform: AIPlatform, messages: Message[], enabledPlatforms: AIPlatform[]) => Promise<string>;
 }
 
@@ -122,12 +123,10 @@ export const processConductorMessageFlow = async (params: ProcessConductorParams
     mainMessages,
     platforms,
     conductorAgent,
+    conductorConversationId,
     callAIAPI
   } = params;
 
-  // Create conductor conversation ID
-  const conductorConversationId = generateChatId();
-  
   console.log('Processing conductor message:', {
     originalChatId: chatId,
     conductorConversationId,

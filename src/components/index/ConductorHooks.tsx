@@ -117,7 +117,8 @@ export const useConductorHooks = ({
         activeChatId,
         message,
         conductorMessages || [],
-        messages || []
+        messages || [],
+        conductorConversationId
       );
     } catch (error) {
       console.error('Conductor send error:', error);
