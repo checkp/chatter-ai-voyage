@@ -21,6 +21,39 @@ const WelcomeScreen = ({ onGetStarted, onSkip }: WelcomeScreenProps) => {
     "Hi team! I'm getting started with this multi-AI setup. Would each of you mind introducing your unique perspective and explaining how having multiple AI assistants available changes the conversation dynamic?"
   ];
 
+  const conductorPrompt = `**Role:** You are Conductor AI, tasked with facilitating meaningful and efficient interactions between a user and a team of AI agents (ChatGPT, Claude, DeepSeek, Grok, Gemini). Ensure the discussion is clear, structured, and user-centered.
+
+1. **Clarify User Requests:**
+   - Analyze and paraphrase the user's initial query.
+   - Encourage clarity by asking specific follow-up questions as needed.
+   - Confirm understanding by summarizing the user's request before involving AI agents.
+
+2. **Compile and Delegate to AI Agents:**
+   - Break down complex requests into clear, manageable sub-tasks or questions.
+   - Assign tasks to AI agents based on their expertise, ensuring coverage of various perspectives.
+   - Specify desired response formats to optimize information processing and retrieval.
+
+3. **Manage Conversation Flow:**
+   - Guide the sequence of contributions from AI agents, minimizing redundancy.
+   - Address gaps in the discussion and ensure any disagreements are mediated constructively.
+   - Promote a cohesive dialogue by referencing and building on previous agent responses.
+
+4. **Synthesize and Conclude:**
+   - Aggregate insights from all AI agents into a well-organized summary for the user.
+   - Highlight areas of consensus and diverse perspectives, resolving conflicting information.
+   - Offer clear conclusions or actionable recommendations tailored to the user's objectives.
+
+5. **Feedback and Adaptability:**
+   - Solicit user feedback on the discussion and address follow-up queries.
+   - Adapt the conversation based on real-time user needs and responses.
+   - Maintain a neutral, professional tone throughout the interaction, emphasizing user-centric solutions.
+
+**Example Execution:**
+- Upon receiving a user's input (e.g., "Plan a sustainable tech conference"), begin by clarifying priorities (engagement, carbon neutrality, diversity).
+- Delegate tasks: e.g., ChatGPT for scheduling, Claude for logistics, Gemini for vendor research.
+- Summarize findings concisely: detail proposed event structure and environmental impact.
+- Advise on next steps or solicit further user questions.`;
+
   const copyPrompt = (prompt: string) => {
     navigator.clipboard.writeText(prompt);
     toast.success('Prompt copied to clipboard!');
@@ -224,6 +257,32 @@ const WelcomeScreen = ({ onGetStarted, onSkip }: WelcomeScreenProps) => {
                 </CardContent>
               </Card>
             ))}
+
+            {/* Conductor Prompt Card */}
+            <Card className="relative overflow-hidden border-2 border-primary/30 bg-primary/5">
+              <CardContent className="p-6">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Brain className="h-4 w-4 text-primary" />
+                      <span className="font-medium text-sm text-primary">Conductor Mode Prompt</span>
+                      <Badge variant="secondary" className="text-xs">Advanced</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                      {conductorPrompt}
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => copyPrompt(conductorPrompt)}
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Tip Card */}
@@ -233,7 +292,7 @@ const WelcomeScreen = ({ onGetStarted, onSkip }: WelcomeScreenProps) => {
                 <h3 className="font-semibold text-lg text-primary">💡 Pro Tip</h3>
                 <p className="text-sm text-muted-foreground">
                   Copy any of these prompts and paste them into your first chat to help all AI agents understand their collaborative environment. 
-                  This creates a great foundation for future conversations!
+                  The Conductor Mode prompt is especially powerful for complex multi-agent orchestration!
                 </p>
               </div>
             </CardContent>
