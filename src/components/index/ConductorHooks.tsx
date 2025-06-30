@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useConductor } from '@/hooks/useConductor';
 import { useConductorMode } from '@/hooks/useConductorMode';
+import { generateChatId } from '@/utils/chatUtils';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform, Message, ChatMode } from '@/types/chat';
 
@@ -41,14 +42,15 @@ export const useConductorHooks = ({
     processConductorMessage
   } = useConductorMode(user, platforms, callAIAPI);
 
-  // Store conductor conversation ID in state
+  // Store conductor conversation ID using a proper UUID format
   const [conductorConversationId, setConductorConversationId] = React.useState<string | null>(null);
 
   // Create conductor conversation ID when activeChatId changes
   React.useEffect(() => {
     if (activeChatId && activeChatMode === 'conductor') {
-      // Create a unique conductor conversation ID
-      const newConductorId = `conductor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // Generate a proper UUID for the conductor conversation
+      const newConductorId = generateChatId();
+      console.log('Creating new conductor conversation ID:', newConductorId);
       setConductorConversationId(newConductorId);
     }
   }, [activeChatId, activeChatMode]);
@@ -103,9 +105,14 @@ export const useConductorHooks = ({
 
   // Handle conductor message send
   const handleConductorSend = async (message: string) => {
-    if (!activeChatId || !message.trim()) return;
+    if (!activeChatId || !message.trim() || !conductorConversationId) {
+      console.error('Missing required data for conductor send:', { activeChatId, message: !!message.trim(), conductorConversationId });
+      return;
+    }
     
     try {
+      console.log('Sending conductor message:', { activeChatId, conductorConversationId, message: message.substring(0, 50) });
+      
       await processConductorMessage(
         activeChatId,
         message,

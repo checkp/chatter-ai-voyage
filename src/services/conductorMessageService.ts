@@ -14,6 +14,13 @@ export const saveConductorUserMessage = async (
   userMessage: string,
   conductorConversationId: string
 ): Promise<Message> => {
+  console.log('Saving conductor user message:', { userMessage: userMessage.substring(0, 50), conductorConversationId });
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
   const userMsgObj: Message = {
     id: generateChatId(),
     content: userMessage,
@@ -38,6 +45,7 @@ export const saveConductorUserMessage = async (
     throw error;
   }
 
+  console.log('Successfully saved conductor user message');
   return userMsgObj;
 };
 
@@ -46,6 +54,13 @@ export const saveConductorAIMessage = async (
   platform: string,
   conductorConversationId: string
 ): Promise<Message> => {
+  console.log('Saving conductor AI message:', { platform, conductorConversationId });
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
   const conductorMsgObj: Message = {
     id: generateChatId(),
     content,
@@ -72,6 +87,7 @@ export const saveConductorAIMessage = async (
     throw error;
   }
 
+  console.log('Successfully saved conductor AI message');
   return conductorMsgObj;
 };
 
@@ -79,6 +95,13 @@ export const saveMainChatUserMessage = async (
   userMessage: string,
   chatId: string
 ): Promise<Message> => {
+  console.log('Saving main chat user message:', { userMessage: userMessage.substring(0, 50), chatId });
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
   const mainUserMsgObj: Message = {
     id: generateChatId(),
     content: userMessage,
@@ -103,11 +126,14 @@ export const saveMainChatUserMessage = async (
     throw error;
   }
 
+  console.log('Successfully saved main chat user message');
   return mainUserMsgObj;
 };
 
 export const saveAgentResponses = async (agentResponses: Message[]): Promise<void> => {
   if (agentResponses.length === 0) return;
+
+  console.log('Saving agent responses:', agentResponses.length);
 
   const { error } = await supabase
     .from('messages')
@@ -124,4 +150,6 @@ export const saveAgentResponses = async (agentResponses: Message[]): Promise<voi
     console.error('Error saving agent messages:', error);
     throw error;
   }
+
+  console.log('Successfully saved agent responses');
 };
