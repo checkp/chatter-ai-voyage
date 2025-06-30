@@ -41,16 +41,19 @@ export const useConductorHooks = ({
     processConductorMessage
   } = useConductorMode(user, platforms, callAIAPI);
 
-  // Get conductor messages for conductor mode
+  // Get conductor messages for conductor mode - use ILIKE to handle the _conductor suffix
   const { data: conductorMessages } = useQuery({
     queryKey: ['messages', `${activeChatId}_conductor`],
     queryFn: async () => {
       if (!activeChatId || activeChatMode !== 'conductor') return [];
       
+      const conductorConversationId = `${activeChatId}_conductor`;
+      
+      // Use ILIKE instead of exact match to handle the UUID vs string issue
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .eq('conversation_id', `${activeChatId}_conductor`)
+        .ilike('conversation_id', conductorConversationId)
         .order('created_at', { ascending: true });
 
       if (error) {
