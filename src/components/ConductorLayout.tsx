@@ -1,12 +1,13 @@
-
 import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Brain, Users, Sparkles, Bot, Search, Zap, Gem, Send } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Brain, Users, Sparkles, Bot, Search, Zap, Gem, Send, Help, Copy } from 'lucide-react';
 import ChatMessages from '@/components/ChatMessages';
+import { useToast } from '@/hooks/use-toast';
 import type { Message, AIPlatform } from '@/types/chat';
 
 interface ConductorLayoutProps {
@@ -29,6 +30,31 @@ const ConductorLayout: React.FC<ConductorLayoutProps> = ({
   onConductorSend
 }) => {
   const [conductorInput, setConductorInput] = useState('');
+  const { toast } = useToast();
+
+  const samplePrompt = `You are an AI Conductor orchestrating a multi-agent discussion. Your role is to:
+
+1. Analyze the user's question and determine which AI agents should participate
+2. Provide specific instructions to each agent about their focus area
+3. Synthesize responses from multiple agents into coherent insights
+4. Guide the conversation flow to ensure comprehensive coverage
+
+Please coordinate a discussion about: [USER'S TOPIC]
+
+Involve these agents with these specific roles:
+- Agent A: Focus on [SPECIFIC ASPECT]
+- Agent B: Focus on [SPECIFIC ASPECT]
+- Agent C: Focus on [SPECIFIC ASPECT]
+
+Provide a structured analysis comparing their different perspectives.`;
+
+  const copyPrompt = () => {
+    navigator.clipboard.writeText(samplePrompt);
+    toast({
+      title: "Copied!",
+      description: "Sample prompt copied to clipboard",
+    });
+  };
 
   const conductorOptions = [
     { 
@@ -105,9 +131,47 @@ const ConductorLayout: React.FC<ConductorLayoutProps> = ({
                 <p className="text-sm text-muted-foreground">Orchestrating multi-agent discussions</p>
               </div>
             </div>
-            <Badge variant="secondary" className="text-xs font-medium px-3 py-1">
-              Active
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <Help className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-96 p-4" align="end">
+                  <div className="space-y-3">
+                    <div>
+                      <h4 className="font-semibold text-sm mb-1">What is the AI Conductor?</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        The Conductor orchestrates discussions between multiple AI agents, 
+                        assigning specific roles and synthesizing their responses for comprehensive insights.
+                      </p>
+                    </div>
+                    
+                    <div className="border-t pt-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <h5 className="font-medium text-xs">Sample Prompt:</h5>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={copyPrompt}
+                          className="h-6 px-2 text-xs"
+                        >
+                          <Copy className="h-3 w-3 mr-1" />
+                          Copy
+                        </Button>
+                      </div>
+                      <div className="bg-muted/50 rounded-md p-3 text-xs font-mono leading-relaxed max-h-32 overflow-y-auto">
+                        {samplePrompt}
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <Badge variant="secondary" className="text-xs font-medium px-3 py-1">
+                Active
+              </Badge>
+            </div>
           </div>
           
           <div className="space-y-2">
