@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useConductor } from '@/hooks/useConductor';
 import { useConductorMode } from '@/hooks/useConductorMode';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
@@ -45,8 +46,22 @@ export const useConductorHooks = ({
     queryKey: ['messages', `${activeChatId}_conductor`],
     queryFn: async () => {
       if (!activeChatId || activeChatMode !== 'conductor') return [];
-      // Fetch conductor messages from database
-      return [];
+      
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', `${activeChatId}_conductor`)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching conductor messages:', error);
+        return [];
+      }
+
+      return data?.map(msg => ({
+        ...msg,
+        timestamp: new Date(msg.created_at)
+      })) || [];
     },
     enabled: !!activeChatId && activeChatMode === 'conductor'
   });

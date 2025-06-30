@@ -37,6 +37,21 @@ export const useConductorMode = (
         timestamp: new Date()
       };
 
+      // Save user message to database
+      const { error: userMsgError } = await supabase
+        .from('messages')
+        .insert([{
+          id: userMsgObj.id,
+          content: userMsgObj.content,
+          sender: userMsgObj.sender,
+          conversation_id: userMsgObj.conversation_id,
+          created_at: userMsgObj.created_at
+        }]);
+
+      if (userMsgError) {
+        console.error('Error saving user message:', userMsgError);
+      }
+
       const updatedConductorMessages = [...conductorMessages, userMsgObj];
 
       // Step 2: Get conductor's processing response
@@ -78,6 +93,22 @@ First, acknowledge the user's request and explain how you'll process it with the
         conversation_id: `${chatId}_conductor`,
         timestamp: new Date()
       };
+
+      // Save conductor message to database
+      const { error: conductorMsgError } = await supabase
+        .from('messages')
+        .insert([{
+          id: conductorMsgObj.id,
+          content: conductorMsgObj.content,
+          sender: conductorMsgObj.sender,
+          platform: conductorMsgObj.platform,
+          conversation_id: conductorMsgObj.conversation_id,
+          created_at: conductorMsgObj.created_at
+        }]);
+
+      if (conductorMsgError) {
+        console.error('Error saving conductor message:', conductorMsgError);
+      }
 
       // Step 3: Send optimized message to enabled AI agents
       const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
@@ -144,27 +175,43 @@ Provide a coherent, synthesized response that captures the best insights from al
           timestamp: new Date()
         };
 
+        // Save summary message to database
+        const { error: summaryMsgError } = await supabase
+          .from('messages')
+          .insert([{
+            id: summaryMsgObj.id,
+            content: summaryMsgObj.content,
+            sender: summaryMsgObj.sender,
+            platform: summaryMsgObj.platform,
+            conversation_id: summaryMsgObj.conversation_id,
+            created_at: summaryMsgObj.created_at
+          }]);
+
+        if (summaryMsgError) {
+          console.error('Error saving summary message:', summaryMsgError);
+        }
+
+        // Save agent responses to database
+        if (agentResponses.length > 0) {
+          const { error: agentMsgError } = await supabase
+            .from('messages')
+            .insert(agentResponses.map(msg => ({
+              id: msg.id,
+              content: msg.content,
+              sender: msg.sender,
+              platform: msg.platform,
+              conversation_id: msg.conversation_id,
+              created_at: msg.created_at
+            })));
+
+          if (agentMsgError) {
+            console.error('Error saving agent messages:', agentMsgError);
+          }
+        }
+
         // Update query cache
-        queryClient.setQueryData(['messages', `${chatId}_conductor`], [
-          ...updatedConductorMessages,
-          conductorMsgObj,
-          summaryMsgObj
-        ]);
-
-        queryClient.setQueryData(['messages', chatId], [
-          ...mainMessages,
-          ...agentResponses
-        ]);
-
-        // Save to database
-        await Promise.all([
-          supabase.from('messages').insert([
-            { ...userMsgObj, conversation_id: `${chatId}_conductor` },
-            { ...conductorMsgObj },
-            { ...summaryMsgObj }
-          ]),
-          supabase.from('messages').insert(agentResponses.map(msg => ({ ...msg })))
-        ]);
+        queryClient.invalidateQueries({ queryKey: ['messages', `${chatId}_conductor`] });
+        queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
       }
 
       return { conductorMessages: updatedConductorMessages, agentResponses };
