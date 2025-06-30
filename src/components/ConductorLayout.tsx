@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -5,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Brain, Users, Sparkles, Bot, Search, Zap, Gem, Send, HelpCircle, Copy } from 'lucide-react';
+import { Brain, Users, Sparkles, Bot, Search, Zap, Gem, Send, HelpCircle, Copy, MessageSquare } from 'lucide-react';
 import ChatMessages from '@/components/ChatMessages';
 import { useToast } from '@/hooks/use-toast';
 import type { Message, AIPlatform } from '@/types/chat';
@@ -20,7 +21,8 @@ interface ConductorLayoutProps {
   conductorAgent: string;
   onConductorAgentChange: (agent: string) => void;
   onConductorSend?: (message: string) => void;
-  user?: any; // Add user prop for onboarding
+  onAgentSend?: (message: string) => void; // New prop for sending to agent chat
+  user?: any;
 }
 
 const ConductorLayout: React.FC<ConductorLayoutProps> = ({
@@ -31,9 +33,11 @@ const ConductorLayout: React.FC<ConductorLayoutProps> = ({
   conductorAgent,
   onConductorAgentChange,
   onConductorSend,
+  onAgentSend,
   user
 }) => {
   const [conductorInput, setConductorInput] = useState('');
+  const [agentInput, setAgentInput] = useState('');
   const { toast } = useToast();
   
   // Conductor onboarding
@@ -129,10 +133,24 @@ Provide a structured analysis comparing their different perspectives.`;
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleAgentSend = () => {
+    if (agentInput.trim() && onAgentSend) {
+      onAgentSend(agentInput);
+      setAgentInput('');
+    }
+  };
+
+  const handleConductorKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleConductorSend();
+    }
+  };
+
+  const handleAgentKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleAgentSend();
     }
   };
 
@@ -268,7 +286,7 @@ Provide a structured analysis comparing their different perspectives.`;
               <Textarea
                 value={conductorInput}
                 onChange={(e) => setConductorInput(e.target.value)}
-                onKeyDown={handleKeyPress}
+                onKeyDown={handleConductorKeyPress}
                 placeholder="Ask the conductor to orchestrate the discussion..."
                 className="flex-1 min-h-[44px] max-h-32 resize-none"
                 disabled={isLoadingResponse}
@@ -328,6 +346,29 @@ Provide a structured analysis comparing their different perspectives.`;
               )}
             </div>
           </ScrollArea>
+
+          {/* Agent Chat Input */}
+          <div className="p-4 border-t border-border bg-background/50">
+            <div className="flex gap-2">
+              <Textarea
+                value={agentInput}
+                onChange={(e) => setAgentInput(e.target.value)}
+                onKeyDown={handleAgentKeyPress}
+                placeholder="Send a direct message to the AI agents..."
+                className="flex-1 min-h-[44px] max-h-32 resize-none"
+                disabled={isLoadingResponse}
+              />
+              <Button
+                onClick={handleAgentSend}
+                disabled={!agentInput.trim() || isLoadingResponse}
+                size="sm"
+                className="self-end h-11"
+                variant="outline"
+              >
+                <MessageSquare className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 

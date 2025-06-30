@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatMessages from '@/components/ChatMessages';
@@ -35,7 +36,7 @@ interface MainContentProps {
   conductorAgent?: string;
   onConductorAgentChange?: (agent: string) => void;
   handleConductorSend?: (message: string) => void;
-  user?: any; // Add user prop
+  user?: any;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -73,6 +74,15 @@ const MainContent: React.FC<MainContentProps> = ({
     return acc;
   }, {} as Record<string, boolean>);
 
+  // Handle direct agent send in conductor mode
+  const handleAgentSend = (message: string) => {
+    if (activeChatId && message.trim()) {
+      // Use the existing handleSend but set input first
+      setInput(message);
+      handleSend(activeChatId);
+    }
+  };
+
   return (
     <>
       {/* Chat Messages Area */}
@@ -88,6 +98,7 @@ const MainContent: React.FC<MainContentProps> = ({
                 conductorAgent={conductorAgent}
                 onConductorAgentChange={onConductorAgentChange || (() => {})}
                 onConductorSend={handleConductorSend}
+                onAgentSend={handleAgentSend}
                 user={user}
               />
             ) : activeChatMode === 'side-by-side' ? (

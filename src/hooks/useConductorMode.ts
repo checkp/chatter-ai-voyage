@@ -27,29 +27,38 @@ export const useConductorMode = (
     setIsProcessing(true);
 
     try {
+      // Create a separate conductor conversation ID as a proper UUID
+      const conductorConversationId = generateChatId();
+      
+      console.log('Processing conductor message:', {
+        originalChatId: chatId,
+        conductorConversationId,
+        userMessage: userMessage.substring(0, 50) + '...'
+      });
+
       // Step 1: Add user message to conductor conversation
       const userMsgObj: Message = {
         id: generateChatId(),
         content: userMessage,
         sender: 'user',
         created_at: new Date().toISOString(),
-        conversation_id: `${chatId}_conductor`,
+        conversation_id: conductorConversationId,
         timestamp: new Date()
       };
 
-      // Save user message to database
+      // Save user message to database with conductor conversation ID
       const { error: userMsgError } = await supabase
         .from('messages')
         .insert([{
           id: userMsgObj.id,
           content: userMsgObj.content,
           sender: userMsgObj.sender,
-          conversation_id: userMsgObj.conversation_id,
+          conversation_id: conductorConversationId,
           created_at: userMsgObj.created_at
         }]);
 
       if (userMsgError) {
-        console.error('Error saving user message:', userMsgError);
+        console.error('Error saving user message to conductor:', userMsgError);
       }
 
       const updatedConductorMessages = [...conductorMessages, userMsgObj];
@@ -77,7 +86,7 @@ First, acknowledge the user's request and explain how you'll process it with the
           sender: 'ai',
           platform: 'system',
           created_at: new Date().toISOString(),
-          conversation_id: `${chatId}_conductor`,
+          conversation_id: conductorConversationId,
           timestamp: new Date()
         }],
         [conductorPlatform]
@@ -90,7 +99,7 @@ First, acknowledge the user's request and explain how you'll process it with the
         sender: 'ai',
         platform: conductorAgent,
         created_at: new Date().toISOString(),
-        conversation_id: `${chatId}_conductor`,
+        conversation_id: conductorConversationId,
         timestamp: new Date()
       };
 
@@ -102,7 +111,7 @@ First, acknowledge the user's request and explain how you'll process it with the
           content: conductorMsgObj.content,
           sender: conductorMsgObj.sender,
           platform: conductorMsgObj.platform,
-          conversation_id: conductorMsgObj.conversation_id,
+          conversation_id: conductorConversationId,
           created_at: conductorMsgObj.created_at
         }]);
 
@@ -110,11 +119,39 @@ First, acknowledge the user's request and explain how you'll process it with the
         console.error('Error saving conductor message:', conductorMsgError);
       }
 
-      // Step 3: Send optimized message to enabled AI agents
+      // Step 3: Send optimized message to enabled AI agents in main chat
       const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
+      
+      // Add user message to main chat first
+      const mainUserMsgObj: Message = {
+        id: generateChatId(),
+        content: userMessage,
+        sender: 'user',
+        created_at: new Date().toISOString(),
+        conversation_id: chatId,
+        timestamp: new Date()
+      };
+
+      // Save user message to main chat
+      const { error: mainUserMsgError } = await supabase
+        .from('messages')
+        .insert([{
+          id: mainUserMsgObj.id,
+          content: mainUserMsgObj.content,
+          sender: mainUserMsgObj.sender,
+          conversation_id: chatId,
+          created_at: mainUserMsgObj.created_at
+        }]);
+
+      if (mainUserMsgError) {
+        console.error('Error saving user message to main chat:', mainUserMsgError);
+      }
+
       const agentPromises = enabledPlatforms.map(async (platform) => {
         try {
           const optimizedPrompt = `${userMessage}\n\n[Note: This message has been processed by our Conductor AI for optimal response coordination]`;
+          
+          const updatedMainMessages = [...mainMessages, mainUserMsgObj];
           
           const response = await callAIAPI(platform, [{
             id: generateChatId(),
@@ -159,7 +196,7 @@ Provide a coherent, synthesized response that captures the best insights from al
             content: summaryPrompt,
             sender: 'user',
             created_at: new Date().toISOString(),
-            conversation_id: `${chatId}_conductor`,
+            conversation_id: conductorConversationId,
             timestamp: new Date()
           }],
           [conductorPlatform]
@@ -171,11 +208,11 @@ Provide a coherent, synthesized response that captures the best insights from al
           sender: 'ai',
           platform: conductorAgent,
           created_at: new Date().toISOString(),
-          conversation_id: `${chatId}_conductor`,
+          conversation_id: conductorConversationId,
           timestamp: new Date()
         };
 
-        // Save summary message to database
+        // Save summary message to conductor conversation
         const { error: summaryMsgError } = await supabase
           .from('messages')
           .insert([{
@@ -183,7 +220,7 @@ Provide a coherent, synthesized response that captures the best insights from al
             content: summaryMsgObj.content,
             sender: summaryMsgObj.sender,
             platform: summaryMsgObj.platform,
-            conversation_id: summaryMsgObj.conversation_id,
+            conversation_id: conductorConversationId,
             created_at: summaryMsgObj.created_at
           }]);
 
@@ -191,7 +228,7 @@ Provide a coherent, synthesized response that captures the best insights from al
           console.error('Error saving summary message:', summaryMsgError);
         }
 
-        // Save agent responses to database
+        // Save agent responses to main chat
         if (agentResponses.length > 0) {
           const { error: agentMsgError } = await supabase
             .from('messages')
@@ -209,8 +246,8 @@ Provide a coherent, synthesized response that captures the best insights from al
           }
         }
 
-        // Update query cache
-        queryClient.invalidateQueries({ queryKey: ['messages', `${chatId}_conductor`] });
+        // Update query cache for both conversations
+        queryClient.invalidateQueries({ queryKey: ['messages', conductorConversationId] });
         queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
       }
 

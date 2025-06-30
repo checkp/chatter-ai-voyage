@@ -41,25 +41,38 @@ export const useConductorHooks = ({
     processConductorMessage
   } = useConductorMode(user, platforms, callAIAPI);
 
-  // Get conductor messages for conductor mode - use ILIKE to handle the _conductor suffix
+  // Store conductor conversation ID in state
+  const [conductorConversationId, setConductorConversationId] = React.useState<string | null>(null);
+
+  // Create conductor conversation ID when activeChatId changes
+  React.useEffect(() => {
+    if (activeChatId && activeChatMode === 'conductor') {
+      // Create a unique conductor conversation ID
+      const newConductorId = `conductor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      setConductorConversationId(newConductorId);
+    }
+  }, [activeChatId, activeChatMode]);
+
+  // Get conductor messages using the conductor conversation ID
   const { data: conductorMessages } = useQuery({
-    queryKey: ['messages', `${activeChatId}_conductor`],
+    queryKey: ['conductor_messages', conductorConversationId],
     queryFn: async () => {
-      if (!activeChatId || activeChatMode !== 'conductor') return [];
+      if (!conductorConversationId || activeChatMode !== 'conductor') return [];
       
-      const conductorConversationId = `${activeChatId}_conductor`;
+      console.log('Fetching conductor messages for:', conductorConversationId);
       
-      // Use ILIKE instead of exact match to handle the UUID vs string issue
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .ilike('conversation_id', conductorConversationId)
+        .eq('conversation_id', conductorConversationId)
         .order('created_at', { ascending: true });
 
       if (error) {
         console.error('Error fetching conductor messages:', error);
         return [];
       }
+
+      console.log('Found conductor messages:', data?.length || 0);
 
       return data?.map(msg => ({
         ...msg,
@@ -68,7 +81,7 @@ export const useConductorHooks = ({
         timestamp: new Date(msg.created_at)
       })) || [];
     },
-    enabled: !!activeChatId && activeChatMode === 'conductor'
+    enabled: !!conductorConversationId && activeChatMode === 'conductor'
   });
 
   // Show conductor summary state - now tracks both automatic analysis and requested guidance
