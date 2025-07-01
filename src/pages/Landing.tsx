@@ -14,7 +14,9 @@ import {
   Eye,
   Layers,
   ArrowRight,
-  Check
+  Check,
+  Brain,
+  Settings
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -23,17 +25,22 @@ const Landing = () => {
 
   const features = [
     {
+      icon: <Brain className="h-8 w-8 text-purple-600" />,
+      title: "AI Conductor Mode",
+      description: "Revolutionary conductor AI that orchestrates discussions between multiple agents, assigning roles and synthesizing comprehensive responses."
+    },
+    {
       icon: <Bot className="h-8 w-8 text-blue-600" />,
       title: "Multi-Agent AI Platform",
       description: "Chat with GPT-4, Claude, DeepSeek, Grok, and Gemini simultaneously in one unified interface."
     },
     {
       icon: <MessageSquare className="h-8 w-8 text-green-600" />,
-      title: "Three Chat Modes",
-      description: "Discussion mode for collaborative AI, Isolated mode for independent responses, and Side-by-Side for focused comparison."
+      title: "Four Conversation Modes",
+      description: "Conductor mode for orchestrated AI, Discussion mode for collaboration, Isolated mode for independent responses, and Side-by-Side for focused comparison."
     },
     {
-      icon: <Users className="h-8 w-8 text-purple-600" />,
+      icon: <Users className="h-8 w-8 text-orange-600" />,
       title: "AI Collaboration",
       description: "Watch AI agents discuss, debate, and build upon each other's ideas in real-time conversations."
     },
@@ -41,11 +48,6 @@ const Landing = () => {
       icon: <Zap className="h-8 w-8 text-yellow-600" />,
       title: "Free Mode Conversations",
       description: "Automated multi-round discussions between AI agents without manual intervention."
-    },
-    {
-      icon: <Grid3X3 className="h-8 w-8 text-indigo-600" />,
-      title: "Side-by-Side Analysis",
-      description: "Compare AI responses in dedicated windows with individual agent controls and response tracking."
     },
     {
       icon: <Shield className="h-8 w-8 text-red-600" />,
@@ -63,6 +65,12 @@ const Landing = () => {
   ];
 
   const chatModes = [
+    {
+      name: "Conductor Mode",
+      icon: <Brain className="h-6 w-6" />,
+      description: "AI conductor orchestrates multi-agent discussions with role assignment and synthesis",
+      features: ["Intelligent role delegation", "Comprehensive synthesis", "Structured conversations"]
+    },
     {
       name: "Discussion Mode",
       icon: <Users className="h-6 w-6" />,
@@ -106,20 +114,20 @@ const Landing = () => {
       <section className="container mx-auto px-4 py-20 text-center">
         <div className="max-w-4xl mx-auto">
           <Badge variant="outline" className="mb-4">
-            <Sparkles className="mr-2 h-4 w-4" />
-            Multi-Agent AI Platform
+            <Brain className="mr-2 h-4 w-4" />
+            AI Conductor Platform
           </Badge>
           <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-primary via-purple-600 to-blue-600 bg-clip-text text-transparent">
             Train Your AI Army
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed">
-            Revolutionary conversation platform where multiple AI agents collaborate, debate, and generate insights together. 
-            Watch GPT-4, Claude, DeepSeek, Grok, and Gemini work as a team.
+            Revolutionary conversation platform with AI Conductor mode. Watch our conductor AI orchestrate 
+            discussions between GPT-4, Claude, DeepSeek, Grok, and Gemini for comprehensive insights and solutions.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" onClick={() => navigate('/auth')} className="text-lg px-8 py-6">
-              Start Free Conversations
-              <Bot className="ml-2 h-5 w-5" />
+              Experience AI Conductor
+              <Brain className="ml-2 h-5 w-5" />
             </Button>
             <Button size="lg" variant="outline" onClick={() => navigate('/auth')} className="text-lg px-8 py-6">
               View Demo
@@ -133,7 +141,7 @@ const Landing = () => {
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Supported AI Models</h2>
-          <p className="text-muted-foreground text-lg">Access the best AI models from leading providers in one platform</p>
+          <p className="text-muted-foreground text-lg">Access the best AI models from leading providers, orchestrated by our AI Conductor</p>
         </div>
         <div className="flex flex-wrap justify-center gap-4">
           {aiModels.map((model) => (
@@ -147,18 +155,18 @@ const Landing = () => {
       {/* Chat Modes Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Three Conversation Modes</h2>
-          <p className="text-muted-foreground text-lg">Choose how your AI agents interact and collaborate</p>
+          <h2 className="text-3xl font-bold mb-4">Four Conversation Modes</h2>
+          <p className="text-muted-foreground text-lg">Choose how your AI agents interact, from conductor-orchestrated to independent responses</p>
         </div>
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {chatModes.map((mode) => (
             <Card key={mode.name} className="border-2 hover:border-primary/50 transition-colors">
               <CardHeader>
                 <div className="flex items-center gap-3 mb-2">
                   {mode.icon}
-                  <CardTitle className="text-xl">{mode.name}</CardTitle>
+                  <CardTitle className="text-lg">{mode.name}</CardTitle>
                 </div>
-                <CardDescription className="text-base leading-relaxed">
+                <CardDescription className="text-sm leading-relaxed">
                   {mode.description}
                 </CardDescription>
               </CardHeader>
@@ -166,8 +174,8 @@ const Landing = () => {
                 <ul className="space-y-2">
                   {mode.features.map((feature) => (
                     <li key={feature} className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-600" />
-                      <span className="text-sm">{feature}</span>
+                      <Check className="h-3 w-3 text-green-600" />
+                      <span className="text-xs">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -181,7 +189,7 @@ const Landing = () => {
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Powerful Features</h2>
-          <p className="text-muted-foreground text-lg">Everything you need for advanced AI conversations</p>
+          <p className="text-muted-foreground text-lg">Everything you need for advanced AI conversations and conductor-orchestrated discussions</p>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature) => (
@@ -201,14 +209,15 @@ const Landing = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-20 text-center">
+      <section className="container mx-auto px-4 py-20 text-center">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-4xl font-bold mb-6">Ready to Build Your AI Team?</h2>
+          <h2 className="text-4xl font-bold mb-6">Ready to Experience AI Conductor?</h2>
           <p className="text-xl text-muted-foreground mb-8">
-            Join thousands of users who are already experiencing the power of collaborative AI conversations.
+            Join thousands of users who are experiencing the power of conductor-orchestrated AI conversations 
+            and multi-agent collaboration.
           </p>
           <Button size="lg" onClick={() => navigate('/auth')} className="text-lg px-12 py-6">
-            Start Your Free Trial
+            Start Your AI Journey
             <Sparkles className="ml-2 h-5 w-5" />
           </Button>
         </div>
@@ -227,7 +236,7 @@ const Landing = () => {
               <span className="font-semibold">RoboHeard</span>
             </div>
             <p className="text-muted-foreground text-center">
-              © 2025 RoboHeard. Train your AI army with collaborative conversations.
+              © 2025 RoboHeard. Experience AI Conductor and train your AI army with collaborative conversations.
             </p>
           </div>
         </div>

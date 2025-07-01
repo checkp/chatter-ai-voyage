@@ -8,7 +8,7 @@
   <!-- Homepage -->
   <url>
     <loc>https://roboheard.ai/</loc>
-    <lastmod>2025-06-17</lastmod>
+    <lastmod>2025-07-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -16,7 +16,7 @@
   <!-- Landing page -->
   <url>
     <loc>https://roboheard.ai/landing</loc>
-    <lastmod>2025-06-17</lastmod>
+    <lastmod>2025-07-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -24,7 +24,7 @@
   <!-- Authentication page -->
   <url>
     <loc>https://roboheard.ai/auth</loc>
-    <lastmod>2025-06-17</lastmod>
+    <lastmod>2025-07-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -32,7 +32,7 @@
   <!-- Purchase page -->
   <url>
     <loc>https://roboheard.ai/purchase</loc>
-    <lastmod>2025-06-17</lastmod>
+    <lastmod>2025-07-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -40,7 +40,7 @@
   <!-- Image Generation page -->
   <url>
     <loc>https://roboheard.ai/images</loc>
-    <lastmod>2025-06-17</lastmod>
+    <lastmod>2025-07-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -48,7 +48,7 @@
   <!-- Success page -->
   <url>
     <loc>https://roboheard.ai/success</loc>
-    <lastmod>2025-06-17</lastmod>
+    <lastmod>2025-07-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
