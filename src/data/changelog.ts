@@ -12,6 +12,21 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.1.7",
+    date: "2025-07-01",
+    title: "Database Security & Conductor Prompt Updates",
+    description: "Fixed critical RLS policy issues and enhanced conductor AI instructions for better user experience.",
+    type: "improvement",
+    changes: [
+      { type: "bugfix", description: "🔧 Fixed RLS Policy Violations: Resolved 'row violates row-level security policy' errors in conductor message saving" },
+      { type: "improvement", description: "🛡️ Enhanced Conversation Security: Added automatic conversation creation with proper user_id validation" },
+      { type: "improvement", description: "🤖 Updated Conductor Prompts: Enhanced AI conductor instructions with more detailed role descriptions and example execution" },
+      { type: "improvement", description: "📋 Better Error Handling: Improved database constraint handling for message operations" },
+      { type: "improvement", description: "🔒 Strengthened Authentication: Added comprehensive user authentication checks in conductor service" },
+      { type: "improvement", description: "⚡ Optimized Message Flow: Streamlined conductor message saving with proper conversation validation" }
+    ]
+  },
+  {
     version: "2.1.6",
     date: "2025-06-29",
     title: "Conductor Mode & Admin Panel Updates",
