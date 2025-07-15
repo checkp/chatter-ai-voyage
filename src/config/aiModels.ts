@@ -90,9 +90,27 @@ export const AI_MODELS: Record<string, ModelConfig[]> = {
   ],
   grok: [
     {
+      id: 'grok-4',
+      name: 'Grok 4',
+      description: 'Next-generation model with advanced reasoning and real-time capabilities',
+      maxTokens: 200000,
+      costTier: 'high',
+      capabilities: ['text', 'reasoning', 'real-time', 'analysis'],
+      speed: 'medium'
+    },
+    {
+      id: 'grok-4-heavy',
+      name: 'Grok 4 Heavy',
+      description: 'Most powerful Grok model for complex tasks and deep reasoning',
+      maxTokens: 200000,
+      costTier: 'high',
+      capabilities: ['text', 'reasoning', 'real-time', 'analysis', 'complex-tasks'],
+      speed: 'slow'
+    },
+    {
       id: 'grok-3',
       name: 'Grok 3',
-      description: 'Latest generation model with enhanced capabilities',
+      description: 'Previous generation model with enhanced capabilities',
       maxTokens: 128000,
       costTier: 'high',
       capabilities: ['text', 'reasoning', 'real-time'],
@@ -187,7 +205,7 @@ export const getDefaultModel = (platformId: string): string => {
     openai: 'gpt-4o-mini',
     anthropic: 'claude-3-5-haiku-20241022',
     deepseek: 'deepseek-chat',
-    grok: 'grok-3',
+    grok: 'grok-4',
     google: 'gemini-1.5-flash'
   };
   
