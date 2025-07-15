@@ -12,6 +12,20 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.1.8",
+    date: "2025-07-15",
+    title: "Grok 4 Models & Agent Expansion",
+    description: "Added latest Grok 4 models and enhanced AI agent selection with new powerful options.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "🚀 New Grok 4 Model: Added Grok 4 with advanced reasoning and real-time capabilities" },
+      { type: "feature", description: "💪 Grok 4 Heavy Model: Introduced most powerful Grok model for complex tasks and deep reasoning" },
+      { type: "improvement", description: "🎯 Updated Default Model: Grok 4 is now the default selection for new users" },
+      { type: "improvement", description: "🤖 Enhanced Model Selection: Better model descriptions and capability indicators" },
+      { type: "improvement", description: "⚡ Performance Tiers: Clear cost and speed indicators for all Grok models" }
+    ]
+  },
+  {
     version: "2.1.7",
     date: "2025-07-01",
     title: "Database Security & Conductor Prompt Updates",
