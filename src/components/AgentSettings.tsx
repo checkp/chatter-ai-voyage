@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Settings, Save } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import ModelSelector from './ModelSelector';
 import { getDefaultModel } from '@/config/aiModels';
 
@@ -19,7 +19,7 @@ interface AgentSetting {
 const AgentSettings = () => {
   const [selectedModels, setSelectedModels] = useState<Record<string, string>>({});
   const [enabledPlatforms, setEnabledPlatforms] = useState<Record<string, boolean>>({});
-  const [loading, setLoading] = useState(false);
+  
   const [hasLoaded, setHasLoaded] = useState(false);
 
   const platforms = [
@@ -81,66 +81,59 @@ const AgentSettings = () => {
     loadSettings();
   }, [loadSettings]);
 
-  const saveSettings = async () => {
-    setLoading(true);
+  const saveSetting = async (platform: string, model?: string, enabled?: boolean) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('User not authenticated');
       }
 
-      // Save all platform settings
-      const promises = platforms.map(platform => {
-        return supabase
-          .from('user_agent_settings')
-          .upsert({
-            user_id: user.id,
-            platform: platform.id,
-            model: selectedModels[platform.id] || getDefaultModel(platform.id),
-            enabled: enabledPlatforms[platform.id] || false,
-            updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'user_id,platform'
-          });
-      });
+      const updateData: any = {
+        user_id: user.id,
+        platform: platform,
+        updated_at: new Date().toISOString()
+      };
 
-      const results = await Promise.all(promises);
-      
-      // Check for errors
-      const errors = results.filter(result => result.error);
-      if (errors.length > 0) {
-        console.error('Errors saving agent settings:', errors);
-        throw new Error('Failed to save some settings');
+      if (model !== undefined) {
+        updateData.model = model;
+      }
+      if (enabled !== undefined) {
+        updateData.enabled = enabled;
       }
 
-      toast.success('Agent settings saved successfully');
+      const { error } = await supabase
+        .from('user_agent_settings')
+        .upsert(updateData, {
+          onConflict: 'user_id,platform'
+        });
+
+      if (error) {
+        console.error('Error saving agent setting:', error);
+        throw error;
+      }
+
+      toast.success('Setting saved');
     } catch (error: any) {
-      console.error('Failed to save agent settings:', error);
-      toast.error('Failed to save agent settings: ' + error.message);
-    } finally {
-      setLoading(false);
+      console.error('Failed to save agent setting:', error);
+      toast.error('Failed to save setting: ' + error.message);
     }
   };
 
   const handleModelChange = useCallback((platform: string, model: string) => {
     setSelectedModels(prev => ({ ...prev, [platform]: model }));
+    saveSetting(platform, model);
   }, []);
 
   const handleToggleEnabled = useCallback((platform: string, enabled: boolean) => {
     setEnabledPlatforms(prev => ({ ...prev, [platform]: enabled }));
+    saveSetting(platform, undefined, enabled);
   }, []);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Settings className="w-5 h-5" />
-          <h2 className="text-2xl font-bold">Agent Model Settings</h2>
-        </div>
-        <Button onClick={saveSettings} disabled={loading}>
-          <Save className="w-4 h-4 mr-2" />
-          Save All Settings
-        </Button>
+      <div className="flex items-center gap-2">
+        <Settings className="w-5 h-5" />
+        <h2 className="text-2xl font-bold">Agent Model Settings</h2>
       </div>
       
       <div className="grid gap-4">
