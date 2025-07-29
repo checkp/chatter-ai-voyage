@@ -12,6 +12,20 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.1.9",
+    date: "2025-01-29",
+    title: "Mobile UI & Navigation Improvements",
+    description: "Enhanced mobile experience with responsive logos, clickable navigation, and improved spacing across all pages.",
+    type: "improvement",
+    changes: [
+      { type: "improvement", description: "📱 Responsive Logo Design: Logos now scale properly on small screens across all pages" },
+      { type: "feature", description: "🔗 Clickable Logos: All logos are now clickable and navigate to home page with hover effects" },
+      { type: "improvement", description: "✨ Mobile Typography: Better responsive text sizing on auth page and onboarding screens" },
+      { type: "improvement", description: "📐 Enhanced Spacing: Improved padding and margins for better mobile layout" },
+      { type: "improvement", description: "🎨 Visual Polish: Added hover transitions and opacity effects for better user feedback" }
+    ]
+  },
+  {
     version: "2.1.8",
     date: "2025-07-15",
     title: "Grok 4 Models & Agent Expansion",
