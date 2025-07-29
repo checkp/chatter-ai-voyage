@@ -249,12 +249,13 @@ const AuthPage = () => {
               <img 
                 src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png" 
                 alt="RoboHeard Logo" 
-                className="w-full max-w-md h-auto object-contain mx-auto lg:mx-0"
+                className="w-full max-w-xs sm:max-w-sm md:max-w-md h-auto object-contain mx-auto lg:mx-0 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => window.location.href = '/'}
               />
-              <h1 className="text-4xl font-bold text-primary mt-6 mb-4">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mt-4 md:mt-6 mb-3 md:mb-4">
                 Train Your AI Army
               </h1>
-              <p className="text-xl text-muted-foreground">
+              <p className="text-lg sm:text-xl text-muted-foreground">
                 The ultimate multi-agent AI platform where GPT-4, Claude, DeepSeek, Grok, and Gemini collaborate in revolutionary conversations.
               </p>
             </div>

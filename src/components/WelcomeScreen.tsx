@@ -95,14 +95,15 @@ const WelcomeScreen = ({ onGetStarted, onSkip }: WelcomeScreenProps) => {
               <img 
                 src="/lovable-uploads/90258cc1-9b63-4dac-b077-ccc51f69f93e.png" 
                 alt="AI Chat Logo" 
-                className="h-12 w-12 object-contain"
+                className="h-8 sm:h-10 md:h-12 w-8 sm:w-10 md:w-12 object-contain cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => window.location.href = '/'}
               />
-              <Bot className="h-8 w-8 text-primary" />
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              <Bot className="h-6 sm:h-7 md:h-8 w-6 sm:w-7 md:w-8 text-primary" />
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                 Welcome to AI Chat
               </h1>
             </div>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4 sm:px-0">
               Experience the power of multiple AI agents working together. Let's show you how to get the most out of your conversations.
             </p>
           </div>
@@ -218,14 +219,15 @@ const WelcomeScreen = ({ onGetStarted, onSkip }: WelcomeScreenProps) => {
               <img 
                 src="/lovable-uploads/90258cc1-9b63-4dac-b077-ccc51f69f93e.png" 
                 alt="AI Chat Logo" 
-                className="h-12 w-12 object-contain"
+                className="h-8 sm:h-10 md:h-12 w-8 sm:w-10 md:w-12 object-contain cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => window.location.href = '/'}
               />
-              <Bot className="h-8 w-8 text-primary" />
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              <Bot className="h-6 sm:h-7 md:h-8 w-6 sm:w-7 md:w-8 text-primary" />
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                 Get Started with AI Collaboration
               </h1>
             </div>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4 sm:px-0">
               Here are some sample prompts to help onboard all AI agents and introduce them to this collaborative environment.
             </p>
           </div>
@@ -327,14 +329,15 @@ const WelcomeScreen = ({ onGetStarted, onSkip }: WelcomeScreenProps) => {
             <img 
               src="/lovable-uploads/90258cc1-9b63-4dac-b077-ccc51f69f93e.png" 
               alt="AI Chat Logo" 
-              className="h-12 w-12 object-contain"
+              className="h-8 sm:h-10 md:h-12 w-8 sm:w-10 md:w-12 object-contain cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => window.location.href = '/'}
             />
-            <Sparkles className="h-8 w-8 text-primary" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            <Sparkles className="h-6 sm:h-7 md:h-8 w-6 sm:w-7 md:w-8 text-primary" />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               What's New?
             </h1>
           </div>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4 sm:px-0">
             Here's what's been added and improved in AI Chat recently.
           </p>
         </div>
