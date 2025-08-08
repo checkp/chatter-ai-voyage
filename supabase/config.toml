@@ -9,3 +9,6 @@ verify_jwt = true
 
 [functions.send-telegram-message]
 verify_jwt = false
+
+[functions.sync-model-pricing]
+verify_jwt = true

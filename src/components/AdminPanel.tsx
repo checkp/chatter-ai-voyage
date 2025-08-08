@@ -12,6 +12,7 @@ import AdminStatsCards from './admin/AdminStatsCards';
 import AdminUsersTable from './admin/AdminUsersTable';
 import AdminApiKeys from './admin/AdminApiKeys';
 import AdminPlatformUsage from './admin/AdminPlatformUsage';
+import AdminModelPricing from './admin/AdminModelPricing';
 
 interface AdminPanelProps {
   user: SupabaseUser;
@@ -179,9 +180,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
       </div>
 
       <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="model-pricing">Model Pricing</TabsTrigger>
           <TabsTrigger value="api-keys">API Keys</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
@@ -204,6 +206,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
           {tokenStats?.platformUsage && (
             <AdminPlatformUsage platformUsage={tokenStats.platformUsage} />
           )}
+        </TabsContent>
+
+        <TabsContent value="model-pricing" className="space-y-4">
+          <AdminModelPricing />
         </TabsContent>
 
         <TabsContent value="api-keys" className="space-y-4">

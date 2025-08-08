@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.1.11",
+    date: "2025-08-08",
+    title: "Model pricing sync (admin) + pricing refresh",
+    description: "Added admin sync for model_pricing and refreshed provider-backed costs.",
+    type: "improvement",
+    changes: [
+      { type: "feature", description: "One-click admin sync of model_pricing via edge function" },
+      { type: "improvement", description: "Updated pricing for OpenAI, Anthropic, Google, DeepSeek, xAI (provisional where noted)" }
+    ]
+  },
+  {
     version: "2.1.10",
     date: "2025-08-08",
     title: "ChatGPT 5 Model Support",
