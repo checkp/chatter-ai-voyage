@@ -37,6 +37,15 @@ export const AI_MODELS: Record<string, ModelConfig[]> = {
       costTier: 'high',
       capabilities: ['text', 'reasoning', 'coding'],
       speed: 'medium'
+    },
+    {
+      id: 'gpt-5',
+      name: 'ChatGPT 5',
+      description: 'Next-generation model with advanced multimodal reasoning',
+      maxTokens: 200000,
+      costTier: 'high',
+      capabilities: ['text', 'vision', 'reasoning', 'coding', 'analysis'],
+      speed: 'medium'
     }
   ],
   anthropic: [

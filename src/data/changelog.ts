@@ -12,6 +12,18 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.1.10",
+    date: "2025-08-08",
+    title: "ChatGPT 5 Model Support",
+    description: "Added ChatGPT 5 to OpenAI agent options with enhanced reasoning and vision.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "🚀 New Model: ChatGPT 5 now available in OpenAI models list" },
+      { type: "improvement", description: "🧠 Advanced Capabilities: Improved reasoning, coding, and multimodal support" },
+      { type: "improvement", description: "🎛️ Model Selector: Updated descriptions and capabilities indicators" }
+    ]
+  },
+  {
     version: "2.1.9",
     date: "2025-01-29",
     title: "Mobile UI & Navigation Improvements",
