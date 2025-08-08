@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ArrowRight, HelpCircle } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 
 const LandingHeader = () => {
   const navigate = useNavigate();
@@ -18,9 +18,16 @@ const LandingHeader = () => {
           />
           <h1 className="text-2xl font-bold">RoboHeard</h1>
         </div>
-        <Button onClick={() => navigate('/auth')}>
-          Get Started <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="ghost">
+            <Link to="/help">
+              <HelpCircle className="mr-2 h-4 w-4" /> Help
+            </Link>
+          </Button>
+          <Button onClick={() => navigate('/auth')}>
+            Get Started <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </header>
   );

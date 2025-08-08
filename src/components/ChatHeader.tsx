@@ -1,12 +1,15 @@
 
 import React from 'react';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import FreeModeControls from '@/components/FreeModeControls';
 import ConductorControls from '@/components/ConductorControls';
 import ChatTitleSection from '@/components/header/ChatTitleSection';
 import ChatModeControls from '@/components/header/ChatModeControls';
 import TabNavigation from '@/components/header/TabNavigation';
 import UserControls from '@/components/header/UserControls';
+import { Button } from '@/components/ui/button';
+import { HelpCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import type { Chat, ChatMode, AIPlatform } from '@/types/chat';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -127,6 +130,20 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             activeTab={activeTab}
             setActiveTab={setActiveTab}
           />
+
+          {/* Help */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button asChild variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="Help">
+                <Link to="/help">
+                  <HelpCircle className="h-4 w-4" />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Help</p>
+            </TooltipContent>
+          </Tooltip>
 
           <UserControls
             user={user}

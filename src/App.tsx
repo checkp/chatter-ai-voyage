@@ -12,6 +12,7 @@ import Success from "./pages/Success";
 import Purchase from "./pages/Purchase";
 import ImageGenerationPage from "./pages/ImageGeneration";
 import AuthPage from "./components/AuthPage";
+import Help from "./pages/Help";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/purchase" element={<Purchase />} />
             <Route path="/images" element={<ImageGenerationPage />} />
             <Route path="/success" element={<Success />} />
+            <Route path="/help" element={<Help />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
