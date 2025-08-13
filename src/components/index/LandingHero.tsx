@@ -34,7 +34,7 @@ const LandingHero: React.FC = () => {
       
       <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 md:mb-8 leading-relaxed px-4 md:px-0">
         Experience the future of AI interaction with our revolutionary <strong>Conductor AI</strong>. 
-        Watch ChatGPT, Claude, Grok, Gemini, and DeepSeek work together under intelligent 
+        Watch GPT-5, ChatGPT, Claude, Grok-4, Grok, Gemini, and DeepSeek work together under intelligent 
         orchestration, building on each other's ideas in real-time conversations.
       </p>
       

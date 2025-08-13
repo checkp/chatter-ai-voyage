@@ -20,7 +20,7 @@ const LandingHeroSection = () => {
         </h1>
         <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed">
           Revolutionary conversation platform with AI Conductor mode. Watch our conductor AI orchestrate 
-          discussions between GPT-4, Claude, DeepSeek, Grok, and Gemini for comprehensive insights and solutions.
+          discussions between GPT-5, GPT-4, Claude, DeepSeek, Grok-4, Grok, and Gemini for comprehensive insights and solutions.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button size="lg" onClick={() => navigate('/auth')} className="text-lg px-8 py-6">

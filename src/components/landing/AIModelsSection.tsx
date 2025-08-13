@@ -4,9 +4,11 @@ import { Badge } from '@/components/ui/badge';
 
 const AIModelsSection = () => {
   const aiModels = [
+    { name: "GPT-5", provider: "OpenAI", color: "bg-green-100 text-green-800" },
     { name: "GPT-4", provider: "OpenAI", color: "bg-green-100 text-green-800" },
     { name: "Claude", provider: "Anthropic", color: "bg-orange-100 text-orange-800" },
     { name: "DeepSeek", provider: "DeepSeek AI", color: "bg-blue-100 text-blue-800" },
+    { name: "Grok-4", provider: "xAI", color: "bg-purple-100 text-purple-800" },
     { name: "Grok", provider: "xAI", color: "bg-purple-100 text-purple-800" },
     { name: "Gemini", provider: "Google", color: "bg-red-100 text-red-800" }
   ];

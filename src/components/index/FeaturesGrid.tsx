@@ -21,8 +21,8 @@ const features = [
   },
   {
     icon: Bot,
-    title: "5 Leading AI Models",
-    description: "Access ChatGPT, Claude, Grok, Gemini, and DeepSeek all in one platform."
+    title: "7 Leading AI Models",
+    description: "Access GPT-5, ChatGPT, Claude, Grok-4, Grok, Gemini, and DeepSeek all in one platform."
   }
 ];
 
