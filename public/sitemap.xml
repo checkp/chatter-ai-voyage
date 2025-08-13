@@ -37,6 +37,14 @@
     <priority>0.7</priority>
   </url>
   
+  <!-- Help page -->
+  <url>
+    <loc>https://roboheard.ai/help</loc>
+    <lastmod>2025-08-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
   <!-- Image Generation page -->
   <url>
     <loc>https://roboheard.ai/images</loc>
