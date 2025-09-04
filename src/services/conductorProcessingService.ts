@@ -19,20 +19,38 @@ interface ProcessConductorParams {
   callAIAPI: (platform: AIPlatform, messages: Message[], enabledPlatforms: AIPlatform[]) => Promise<string>;
 }
 
-export const createConductorPrompt = (
+export const createDecisionPrompt = (
   userMessage: string,
   platforms: AIPlatform[]
 ): string => {
-  return `You are the Conductor AI, an orchestrator of multi-AI conversations. Your role is to:
+  return `You are the AI Conductor. Analyze this user message and decide if it needs multi-agent coordination.
 
-1. Analyze the user's message: "${userMessage}"
-2. Translate it into optimal prompts for different AI agents
-3. Coordinate their responses
-4. Provide a synthesized summary
+User message: "${userMessage}"
 
 Available AI agents: ${platforms.filter(p => p.enabled).map(p => p.name).join(', ')}
 
-First, acknowledge the user's request and explain how you'll process it with the AI agents.`;
+Respond with:
+1. Your direct response to the user
+2. At the end, add a decision marker: [COORDINATION_NEEDED: YES/NO]
+3. If YES, briefly explain why multiple agents would be beneficial
+
+Only suggest coordination if the question would truly benefit from multiple AI perspectives (e.g., complex analysis, comparing approaches, multi-faceted problems).`;
+};
+
+export const createAgentCoordinationPrompt = (
+  userMessage: string,
+  conductorAnalysis: string,
+  platforms: AIPlatform[]
+): string => {
+  return `As the AI Conductor, I'm coordinating a multi-agent discussion based on this user request:
+
+Original message: "${userMessage}"
+
+My analysis: ${conductorAnalysis}
+
+Available agents: ${platforms.filter(p => p.enabled).map(p => p.name).join(', ')}
+
+Please provide your specialized perspective on this request. Focus on your unique strengths and approach.`;
 };
 
 export const createSummaryPrompt = (
@@ -70,35 +88,28 @@ export const getConductorResponse = async (
   return saveConductorAIMessage(response, conductorPlatform.id, conductorConversationId);
 };
 
-export const processAgentResponses = async (
-  userMessage: string,
+export const processAgentResponsesWithConductorPrompt = async (
+  conductorPrompt: string,
   chatId: string,
   mainMessages: Message[],
   enabledPlatforms: AIPlatform[],
   callAIAPI: (platform: AIPlatform, messages: Message[], enabledPlatforms: AIPlatform[]) => Promise<string>
 ): Promise<Message[]> => {
-  const mainUserMsgObj = await saveMainChatUserMessage(userMessage, chatId);
-  
-  // Build the conversation history including the new user message
-  const updatedMainMessages = [...mainMessages, mainUserMsgObj];
-  
+  // Don't save the conductor prompt to main chat - agents respond to conductor's coordination
   const agentPromises = enabledPlatforms.map(async (platform) => {
     try {
-      // Add conductor context to the user message
-      const optimizedPrompt = `${userMessage}\n\n[Note: This message has been processed by our Conductor AI for optimal response coordination]`;
-      
-      // Create the latest message with optimized prompt but preserve conversation history
-      const latestMessage: Message = {
+      // Create a message with conductor's coordination prompt
+      const coordinationMessage: Message = {
         id: generateChatId(),
-        content: optimizedPrompt,
+        content: conductorPrompt,
         sender: 'user',
         created_at: new Date().toISOString(),
         conversation_id: chatId,
         timestamp: new Date()
       };
       
-      // Use the full conversation history with the optimized latest message
-      const messagesForAgent = [...updatedMainMessages.slice(0, -1), latestMessage];
+      // Use conversation history with conductor's coordination prompt
+      const messagesForAgent = [...mainMessages, coordinationMessage];
       
       const response = await callAIAPI(platform, messagesForAgent, enabledPlatforms);
 
@@ -147,41 +158,37 @@ export const processConductorMessageFlow = async (params: ProcessConductorParams
   const userMsgObj = await saveConductorUserMessage(userMessage, conductorConversationId);
   const updatedConductorMessages = [...conductorMessages, userMsgObj];
 
-  // Step 2: Get conductor platform and initial response
+  // Step 2: Get conductor platform and decision response
   const conductorPlatform = platforms.find(p => p.id === conductorAgent);
   if (!conductorPlatform) throw new Error('Conductor platform not found');
 
-  // Create a more conversational prompt for direct conductor interaction
-  const directConductorPrompt = `You are the AI Conductor. The user has sent you a message directly: "${userMessage}"
-
-You can either:
-1. Respond directly to the user if this is a simple question or conversation
-2. If this requires multi-agent coordination, let the user know you'll orchestrate a discussion with the agents
-
-Please respond appropriately to the user's message. Only suggest involving other agents if the question would truly benefit from multiple perspectives.`;
-
+  // Phase 1: Get conductor's decision about coordination
+  const decisionPrompt = createDecisionPrompt(userMessage, platforms);
   const conductorMsgObj = await getConductorResponse(
     conductorPlatform,
     updatedConductorMessages,
-    directConductorPrompt,
+    decisionPrompt,
     conductorConversationId,
     callAIAPI
   );
 
-  // Step 3: Only process agent responses if conductor explicitly requests it
-  // or if the message contains specific orchestration keywords
-  const shouldTriggerAgents = userMessage.toLowerCase().includes('orchestrate') || 
-    userMessage.toLowerCase().includes('coordinate') ||
-    userMessage.toLowerCase().includes('all agents') ||
-    userMessage.toLowerCase().includes('multiple agents') ||
-    userMessage.toLowerCase().includes('discuss with agents');
-
+  // Step 3: Check if conductor decided coordination is needed
+  const coordinationNeeded = conductorMsgObj.content.includes('[COORDINATION_NEEDED: YES]');
   let agentResponses: Message[] = [];
   
-  if (shouldTriggerAgents) {
-    const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
-    agentResponses = await processAgentResponses(
+  if (coordinationNeeded) {
+    console.log('Conductor decided coordination is needed, triggering agents...');
+    
+    // Phase 2: Create agent coordination prompt
+    const coordinationPrompt = createAgentCoordinationPrompt(
       userMessage,
+      conductorMsgObj.content,
+      platforms
+    );
+    
+    const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
+    agentResponses = await processAgentResponsesWithConductorPrompt(
+      coordinationPrompt,
       chatId,
       mainMessages,
       enabledPlatforms,
@@ -199,6 +206,8 @@ Please respond appropriately to the user's message. Only suggest involving other
         callAIAPI
       );
     }
+  } else {
+    console.log('Conductor handled the request directly, no agent coordination needed');
   }
 
   return { conductorMessages: updatedConductorMessages, agentResponses };
