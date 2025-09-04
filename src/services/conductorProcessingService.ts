@@ -151,35 +151,54 @@ export const processConductorMessageFlow = async (params: ProcessConductorParams
   const conductorPlatform = platforms.find(p => p.id === conductorAgent);
   if (!conductorPlatform) throw new Error('Conductor platform not found');
 
-  const conductorPrompt = createConductorPrompt(userMessage, platforms);
+  // Create a more conversational prompt for direct conductor interaction
+  const directConductorPrompt = `You are the AI Conductor. The user has sent you a message directly: "${userMessage}"
+
+You can either:
+1. Respond directly to the user if this is a simple question or conversation
+2. If this requires multi-agent coordination, let the user know you'll orchestrate a discussion with the agents
+
+Please respond appropriately to the user's message. Only suggest involving other agents if the question would truly benefit from multiple perspectives.`;
+
   const conductorMsgObj = await getConductorResponse(
     conductorPlatform,
     updatedConductorMessages,
-    conductorPrompt,
+    directConductorPrompt,
     conductorConversationId,
     callAIAPI
   );
 
-  // Step 3: Process agent responses
-  const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
-  const agentResponses = await processAgentResponses(
-    userMessage,
-    chatId,
-    mainMessages,
-    enabledPlatforms,
-    callAIAPI
-  );
+  // Step 3: Only process agent responses if conductor explicitly requests it
+  // or if the message contains specific orchestration keywords
+  const shouldTriggerAgents = userMessage.toLowerCase().includes('orchestrate') || 
+    userMessage.toLowerCase().includes('coordinate') ||
+    userMessage.toLowerCase().includes('all agents') ||
+    userMessage.toLowerCase().includes('multiple agents') ||
+    userMessage.toLowerCase().includes('discuss with agents');
 
-  // Step 4: Generate conductor summary if we have agent responses
-  if (agentResponses.length > 0) {
-    const summaryPrompt = createSummaryPrompt(agentResponses, platforms);
-    await getConductorResponse(
-      conductorPlatform,
-      [...updatedConductorMessages, conductorMsgObj],
-      summaryPrompt,
-      conductorConversationId,
+  let agentResponses: Message[] = [];
+  
+  if (shouldTriggerAgents) {
+    const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
+    agentResponses = await processAgentResponses(
+      userMessage,
+      chatId,
+      mainMessages,
+      enabledPlatforms,
       callAIAPI
     );
+
+    // Step 4: Generate conductor summary if we have agent responses
+    if (agentResponses.length > 0) {
+      const summaryPrompt = createSummaryPrompt(agentResponses, platforms);
+      await getConductorResponse(
+        conductorPlatform,
+        [...updatedConductorMessages, conductorMsgObj],
+        summaryPrompt,
+        conductorConversationId,
+        callAIAPI
+      );
+    }
   }
 
   return { conductorMessages: updatedConductorMessages, agentResponses };
