@@ -181,6 +181,50 @@ export const saveMainChatUserMessage = async (
   return mainUserMsgObj;
 };
 
+export const saveMainChatConductorMessage = async (
+  conductorPrompt: string,
+  chatId: string
+): Promise<Message> => {
+  console.log('Saving conductor coordination message:', { chatId });
+  
+  // Ensure conversation exists first
+  await ensureConversationExists(chatId);
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const conductorMsgObj: Message = {
+    id: generateChatId(),
+    content: `🎭 **Conductor coordinating agents:**\n\n${conductorPrompt}`,
+    sender: 'ai',
+    platform: 'conductor',
+    created_at: new Date().toISOString(),
+    conversation_id: chatId,
+    timestamp: new Date()
+  };
+
+  const { error } = await supabase
+    .from('messages')
+    .insert([{
+      id: conductorMsgObj.id,
+      content: conductorMsgObj.content,
+      sender: conductorMsgObj.sender,
+      platform: conductorMsgObj.platform,
+      conversation_id: chatId,
+      created_at: conductorMsgObj.created_at
+    }]);
+
+  if (error) {
+    console.error('Error saving conductor coordination message:', error);
+    throw error;
+  }
+
+  console.log('Successfully saved conductor coordination message');
+  return conductorMsgObj;
+};
+
 export const saveAgentResponses = async (agentResponses: Message[]): Promise<void> => {
   if (agentResponses.length === 0) return;
 

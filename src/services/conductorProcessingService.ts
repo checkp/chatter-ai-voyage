@@ -5,6 +5,7 @@ import {
   saveConductorUserMessage,
   saveConductorAIMessage,
   saveMainChatUserMessage,
+  saveMainChatConductorMessage,
   saveAgentResponses
 } from './conductorMessageService';
 
@@ -95,21 +96,16 @@ export const processAgentResponsesWithConductorPrompt = async (
   enabledPlatforms: AIPlatform[],
   callAIAPI: (platform: AIPlatform, messages: Message[], enabledPlatforms: AIPlatform[]) => Promise<string>
 ): Promise<Message[]> => {
-  // Don't save the conductor prompt to main chat - agents respond to conductor's coordination
+  // Save the conductor's coordination prompt as a visible message in main chat
+  const coordinationMessage = await saveMainChatConductorMessage(conductorPrompt, chatId);
+  
+  // Build updated message history including the conductor's coordination message
+  const updatedMainMessages = [...mainMessages, coordinationMessage];
+  
   const agentPromises = enabledPlatforms.map(async (platform) => {
     try {
-      // Create a message with conductor's coordination prompt
-      const coordinationMessage: Message = {
-        id: generateChatId(),
-        content: conductorPrompt,
-        sender: 'user',
-        created_at: new Date().toISOString(),
-        conversation_id: chatId,
-        timestamp: new Date()
-      };
-      
       // Use conversation history with conductor's coordination prompt
-      const messagesForAgent = [...mainMessages, coordinationMessage];
+      const messagesForAgent = updatedMainMessages;
       
       const response = await callAIAPI(platform, messagesForAgent, enabledPlatforms);
 
