@@ -12,6 +12,21 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.1.12",
+    date: "2025-09-04",
+    title: "Enhanced Conductor Mode with AI-Based Decision Making",
+    description: "Upgraded conductor mode with intelligent coordination decisions and improved agent orchestration.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "🧠 AI-Powered Coordination: Conductor now intelligently decides when multi-agent coordination is needed" },
+      { type: "improvement", description: "🔒 Enhanced Privacy: User messages to conductor remain private and aren't forwarded to agents" },
+      { type: "improvement", description: "🎯 Optimized Agent Prompts: Conductor creates specialized prompts for agents instead of forwarding original messages" },
+      { type: "improvement", description: "💬 Two-Phase Response Flow: Conductor first analyzes, then coordinates only when beneficial" },
+      { type: "improvement", description: "⚡ Smarter Orchestration: Replaced keyword detection with AI-based decision making for better user experience" },
+      { type: "improvement", description: "🛡️ Improved Message Flow: Clear separation between conductor conversation and agent coordination" }
+    ]
+  },
+  {
     version: "2.1.11",
     date: "2025-08-08",
     title: "Model pricing sync (admin) + pricing refresh",
