@@ -165,7 +165,7 @@ Provide a structured analysis comparing their different perspectives.`;
             value={conductorInput}
             onChange={(e) => setConductorInput(e.target.value)}
             onKeyDown={handleConductorKeyPress}
-            placeholder="Chat with the conductor privately... Use keywords like 'orchestrate', 'coordinate', or 'all agents' to trigger multi-agent discussions."
+            placeholder="Chat with the conductor privately. The conductor will decide if your question needs multi-agent coordination."
             className="flex-1 min-h-[44px] max-h-32 resize-none"
             disabled={isLoadingResponse}
           />
