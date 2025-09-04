@@ -79,18 +79,28 @@ export const processAgentResponses = async (
 ): Promise<Message[]> => {
   const mainUserMsgObj = await saveMainChatUserMessage(userMessage, chatId);
   
+  // Build the conversation history including the new user message
+  const updatedMainMessages = [...mainMessages, mainUserMsgObj];
+  
   const agentPromises = enabledPlatforms.map(async (platform) => {
     try {
+      // Add conductor context to the user message
       const optimizedPrompt = `${userMessage}\n\n[Note: This message has been processed by our Conductor AI for optimal response coordination]`;
       
-      const response = await callAIAPI(platform, [{
+      // Create the latest message with optimized prompt but preserve conversation history
+      const latestMessage: Message = {
         id: generateChatId(),
         content: optimizedPrompt,
         sender: 'user',
         created_at: new Date().toISOString(),
         conversation_id: chatId,
         timestamp: new Date()
-      }], enabledPlatforms);
+      };
+      
+      // Use the full conversation history with the optimized latest message
+      const messagesForAgent = [...updatedMainMessages.slice(0, -1), latestMessage];
+      
+      const response = await callAIAPI(platform, messagesForAgent, enabledPlatforms);
 
       return {
         id: generateChatId(),
