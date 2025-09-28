@@ -59,11 +59,15 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
             <TooltipTrigger asChild>
               <Button
                 variant={activeView === 'settings' ? 'default' : 'ghost'}
-                size="icon"
+                size={activeView === 'settings' ? 'sm' : 'icon'}
                 onClick={onSettingsClick}
+                className={activeView === 'settings' ? 'gap-2' : ''}
               >
                 {activeView === 'settings' ? (
-                  <MessageSquare className="h-5 w-5" />
+                  <>
+                    <MessageSquare className="h-4 w-4" />
+                    <span className="text-sm">Back to Chat</span>
+                  </>
                 ) : (
                   <Settings className="h-5 w-5" />
                 )}
