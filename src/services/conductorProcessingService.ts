@@ -151,7 +151,7 @@ export const processConductorMessageFlow = async (params: ProcessConductorParams
   });
 
   // Step 1: Save user message to conductor conversation
-  const userMsgObj = await saveConductorUserMessage(userMessage, conductorConversationId);
+  const userMsgObj = await saveConductorUserMessage(userMessage, conductorConversationId, chatId);
   const updatedConductorMessages = [...conductorMessages, userMsgObj];
 
   // Step 2: Get conductor platform and decision response
