@@ -50,26 +50,26 @@ export const AI_MODELS: Record<string, ModelConfig[]> = {
   ],
   anthropic: [
     {
-      id: 'claude-3-5-haiku-20241022',
-      name: 'Claude 3.5 Haiku',
-      description: 'Fastest model for quick responses',
-      maxTokens: 200000,
-      costTier: 'low',
-      capabilities: ['text', 'reasoning'],
-      speed: 'fast'
-    },
-    {
-      id: 'claude-3-5-sonnet-20241022',
-      name: 'Claude 3.5 Sonnet',
-      description: 'Balanced performance and capability',
+      id: 'claude-sonnet-4-20250514',
+      name: 'Claude Sonnet 4',
+      description: 'Latest balanced model with strong reasoning',
       maxTokens: 200000,
       costTier: 'medium',
       capabilities: ['text', 'reasoning', 'coding', 'analysis'],
       speed: 'medium'
     },
     {
-      id: 'claude-3-opus-20240229',
-      name: 'Claude 3 Opus',
+      id: 'claude-haiku-4-20250514',
+      name: 'Claude Haiku 4',
+      description: 'Fast and cost-effective model',
+      maxTokens: 200000,
+      costTier: 'low',
+      capabilities: ['text', 'reasoning'],
+      speed: 'fast'
+    },
+    {
+      id: 'claude-opus-4-20250514',
+      name: 'Claude Opus 4',
       description: 'Most powerful model for complex tasks',
       maxTokens: 200000,
       costTier: 'high',
@@ -173,8 +173,8 @@ export const AI_MODELS: Record<string, ModelConfig[]> = {
   ],
   google: [
     {
-      id: 'gemini-1.5-flash',
-      name: 'Gemini 1.5 Flash',
+      id: 'gemini-2.0-flash',
+      name: 'Gemini 2.0 Flash',
       description: 'Fast and efficient model for everyday tasks',
       maxTokens: 1000000,
       costTier: 'low',
@@ -182,22 +182,13 @@ export const AI_MODELS: Record<string, ModelConfig[]> = {
       speed: 'fast'
     },
     {
-      id: 'gemini-1.5-pro',
-      name: 'Gemini 1.5 Pro',
+      id: 'gemini-2.5-pro-preview-06-05',
+      name: 'Gemini 2.5 Pro',
       description: 'Most capable model with advanced reasoning',
-      maxTokens: 2000000,
+      maxTokens: 1000000,
       costTier: 'medium',
       capabilities: ['text', 'reasoning', 'vision', 'coding', 'analysis'],
       speed: 'medium'
-    },
-    {
-      id: 'gemini-2.0-flash-exp',
-      name: 'Gemini 2.0 Flash (Experimental)',
-      description: 'Latest experimental model with enhanced capabilities',
-      maxTokens: 1000000,
-      costTier: 'medium',
-      capabilities: ['text', 'reasoning', 'vision', 'multimodal'],
-      speed: 'fast'
     }
   ]
 };
@@ -212,10 +203,10 @@ export const getDefaultModel = (platformId: string): string => {
   
   const defaults: Record<string, string> = {
     openai: 'gpt-4o-mini',
-    anthropic: 'claude-3-5-haiku-20241022',
+    anthropic: 'claude-sonnet-4-20250514',
     deepseek: 'deepseek-chat',
     grok: 'grok-4',
-    google: 'gemini-1.5-flash'
+    google: 'gemini-2.0-flash'
   };
   
   return defaults[platformId] || models[0].id;

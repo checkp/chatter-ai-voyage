@@ -83,7 +83,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: model,
         messages: messages,
-        max_tokens: 1000
+        max_completion_tokens: 1000
       })
     });
 
