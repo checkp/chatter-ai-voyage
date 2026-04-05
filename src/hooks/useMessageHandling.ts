@@ -7,6 +7,7 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform, Message, ChatMode } from '@/types/chat';
 import { generateChatId } from '@/utils/chatUtils';
 import { useTokens } from '@/hooks/useTokens';
+import { useActivityLog } from '@/contexts/ActivityLogContext';
 
 export const useMessageHandling = (
   user: SupabaseUser | null, 
@@ -23,6 +24,7 @@ export const useMessageHandling = (
   const queryClient = useQueryClient();
   const abortControllerRef = useRef<AbortController | null>(null);
   const { tokenBalance, checkTokenBalance, calculateTokenCost } = useTokens(user);
+  const { addEntry } = useActivityLog();
 
   const updateActiveStatus = useCallback((platformId: string, isActive: boolean) => {
     setActiveAIStatuses(prev => ({
@@ -61,6 +63,7 @@ export const useMessageHandling = (
       // Add user message to local state immediately
       const updatedMessages = [...currentMessages, userMessageObj];
       queryClient.setQueryData(['messages', chatId], updatedMessages);
+      addEntry('user', `Message sent: "${userMessage.substring(0, 60)}${userMessage.length > 60 ? '...' : ''}"`);
 
       // Save user message to database
       const { error: userMsgError } = await supabase
@@ -111,10 +114,12 @@ export const useMessageHandling = (
       // Call all enabled AI platforms
       const aiPromises = enabledPlatforms.map(async (platform) => {
         updateActiveStatus(platform.id, true);
+        addEntry('ai', `Requesting response...`, platform.name);
         
         try {
           console.log(`Calling ${platform.name} API...`);
           const response = await callAIAPI(platform, updatedMessages, enabledPlatforms, chatMode);
+          addEntry('ai', `Response received (${response.length} chars)`, platform.name);
           console.log(`${platform.name} responded:`, response.substring(0, 100) + '...');
 
           if (abortControllerRef.current?.signal.aborted) {
@@ -160,6 +165,7 @@ export const useMessageHandling = (
         } catch (error) {
           console.error(`Error calling ${platform.name}:`, error);
           const errMsg = error instanceof Error ? error.message : 'Unknown error';
+          addEntry('error', errMsg, platform.name);
           if (errMsg.includes('Network error') || errMsg.includes('Load failed')) {
             toast.error(`Network issue with ${platform.name} — retrying may help`);
           } else {
@@ -190,6 +196,7 @@ export const useMessageHandling = (
       setCanStop(false);
       setActiveAIStatuses({});
       const msg = error.message || 'Unknown error';
+      addEntry('error', `Send failed: ${msg}`);
       if (msg.includes('Load failed') || msg.includes('TypeError') || msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
         toast.error('Network error — please check your connection and try again');
       } else if (msg.includes('Session expired') || msg.includes('Not authenticated')) {
@@ -209,6 +216,7 @@ export const useMessageHandling = (
 
   const handleStop = useCallback(() => {
     console.log('Stopping AI responses...');
+    addEntry('system', 'AI responses stopped by user');
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -216,7 +224,7 @@ export const useMessageHandling = (
     setCanStop(false);
     setActiveAIStatuses({});
     toast.info('AI responses stopped');
-  }, []);
+  }, [addEntry]);
 
   const sendSingleAgentMessage = useCallback(async (chatId: string, message: string, platformId: string) => {
     if (!user) throw new Error('User not authenticated');
