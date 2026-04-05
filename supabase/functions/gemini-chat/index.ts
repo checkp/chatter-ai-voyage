@@ -25,7 +25,7 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = 'gemini-1.5-flash', user_id } = await req.json();
+    const { messages, model = 'gemini-2.0-flash', user_id } = await req.json();
     
     // Check token balance - create if doesn't exist
     let { data: tokenData, error: tokenError } = await supabaseClient
@@ -79,7 +79,7 @@ serve(async (req) => {
       parts: [{ text: msg.content }]
     }));
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
