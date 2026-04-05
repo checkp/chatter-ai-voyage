@@ -19,7 +19,7 @@ export const ensureDefaultAgentSettings = async (userId: string) => {
     // Enable all 4 platforms by default with centralized API keys
     const defaultPlatforms = [
       { platform: 'openai', model: 'gpt-4o-mini', enabled: true },
-      { platform: 'anthropic', model: 'claude-3-5-haiku-20241022', enabled: true },
+      { platform: 'anthropic', model: 'claude-sonnet-4-20250514', enabled: true },
       { platform: 'deepseek', model: 'deepseek-chat', enabled: true },
       { platform: 'grok', model: 'grok-3', enabled: true }
     ];
