@@ -10,7 +10,7 @@ export interface ConductorMessageData {
   mainMessages: Message[];
 }
 
-const ensureConversationExists = async (conversationId: string): Promise<void> => {
+const ensureConversationExists = async (conversationId: string, parentChatId?: string): Promise<void> => {
   console.log('Checking if conversation exists:', conversationId);
   
   const { data: { user } } = await supabase.auth.getUser();
@@ -32,13 +32,14 @@ const ensureConversationExists = async (conversationId: string): Promise<void> =
 
   if (!existingConversation) {
     console.log('Creating new conversation:', conversationId);
+    const title = parentChatId ? `Conductor: ${parentChatId}` : 'Conductor Conversation';
     // Create conversation if it doesn't exist
     const { error: insertError } = await supabase
       .from('conversations')
       .insert([{
         id: conversationId,
         user_id: user.id,
-        title: 'Conductor Conversation',
+        title,
         chat_mode: 'conductor'
       }]);
 
