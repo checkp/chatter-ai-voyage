@@ -24,6 +24,7 @@ export const useMessageHandling = (
   const queryClient = useQueryClient();
   const abortControllerRef = useRef<AbortController | null>(null);
   const { tokenBalance, checkTokenBalance, calculateTokenCost } = useTokens(user);
+  const { addEntry } = useActivityLog();
 
   const updateActiveStatus = useCallback((platformId: string, isActive: boolean) => {
     setActiveAIStatuses(prev => ({
