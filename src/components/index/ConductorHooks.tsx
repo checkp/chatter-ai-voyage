@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useConductor } from '@/hooks/useConductor';
 import { useConductorMode } from '@/hooks/useConductorMode';
 import { generateChatId } from '@/utils/chatUtils';
+import { useActivityLog } from '@/contexts/ActivityLogContext';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform, Message, ChatMode } from '@/types/chat';
 
@@ -25,6 +26,7 @@ export const useConductorHooks = ({
   activeChatMode,
   messages
 }: ConductorHooksProps) => {
+  const { addEntry } = useActivityLog();
   // Initialize conductor hook
   const {
     conductorState,
@@ -93,11 +95,12 @@ export const useConductorHooks = ({
   // Handle conductor direction request
   const handleRequestConductorDirection = async () => {
     if (!messages || !platforms) return;
-    
+    addEntry('conductor', 'Requesting direction analysis...');
     const enabledPlatforms = platforms.filter(p => p.enabled);
     const direction = await requestConductorDirection(messages, enabledPlatforms);
     
     if (direction) {
+      addEntry('conductor', 'Direction received');
       setCurrentSummary(direction);
       setShowConductorSummary(true);
     }
@@ -111,6 +114,7 @@ export const useConductorHooks = ({
     }
     
     try {
+      addEntry('conductor', `Processing: "${message.substring(0, 50)}${message.length > 50 ? '...' : ''}"`);
       console.log('Sending conductor message:', { activeChatId, conductorConversationId, message: message.substring(0, 50) });
       
       await processConductorMessage(
@@ -120,8 +124,10 @@ export const useConductorHooks = ({
         messages || [],
         conductorConversationId
       );
+      addEntry('conductor', 'Processing complete');
     } catch (error) {
       console.error('Conductor send error:', error);
+      addEntry('error', `Conductor error: ${error instanceof Error ? error.message : 'Unknown'}`, 'Conductor');
     }
   };
 
