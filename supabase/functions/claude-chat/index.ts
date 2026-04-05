@@ -49,7 +49,7 @@ serve(async (req) => {
 
     console.log('User authenticated successfully:', user.id)
 
-    const { messages, model = 'claude-3-5-haiku-20241022' } = await req.json()
+    const { messages, model = 'claude-sonnet-4-20250514' } = await req.json()
     const user_id = user.id;
     console.log('Received messages:', messages?.length || 0, 'messages')
 

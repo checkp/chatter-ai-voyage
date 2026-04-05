@@ -83,13 +83,13 @@ serve(async (req) => {
       body: JSON.stringify({
         model: model,
         messages: messages,
-        max_tokens: 1000
+        max_completion_tokens: 1000
       })
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Grok API error: ${response.status}`);
+      throw new Error(`Grok API error: ${response.status} - ${errorText}`);
     }
 
     const data_response = await response.json();
