@@ -8,13 +8,21 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Settings } from 'lucide-react';
 import ModelSelector from './ModelSelector';
-import { getDefaultModel } from '@/config/aiModels';
+import { getDefaultModel, getModelConfig } from '@/config/aiModels';
 
 interface AgentSetting {
   platform: string;
   model: string;
   enabled: boolean;
 }
+
+const resolvePlatformModel = (platformId: string, model?: string | null) => {
+  if (!model) {
+    return getDefaultModel(platformId);
+  }
+
+  return getModelConfig(platformId, model) ? model : getDefaultModel(platformId);
+};
 
 const AgentSettings = () => {
   const [selectedModels, setSelectedModels] = useState<Record<string, string>>({});
@@ -54,11 +62,10 @@ const AgentSettings = () => {
       const enabledMap: Record<string, boolean> = {};
       
       data?.forEach((setting: AgentSetting) => {
-        modelsMap[setting.platform] = setting.model || getDefaultModel(setting.platform);
+        modelsMap[setting.platform] = resolvePlatformModel(setting.platform, setting.model);
         enabledMap[setting.platform] = setting.enabled;
       });
 
-      // Set defaults for platforms without settings
       platforms.forEach(platform => {
         if (!modelsMap[platform.id]) {
           modelsMap[platform.id] = getDefaultModel(platform.id);
@@ -95,7 +102,7 @@ const AgentSettings = () => {
       };
 
       if (model !== undefined) {
-        updateData.model = model;
+        updateData.model = resolvePlatformModel(platform, model);
       }
       if (enabled !== undefined) {
         updateData.enabled = enabled;
@@ -120,7 +127,7 @@ const AgentSettings = () => {
   };
 
   const handleModelChange = useCallback((platform: string, model: string) => {
-    setSelectedModels(prev => ({ ...prev, [platform]: model }));
+    setSelectedModels(prev => ({ ...prev, [platform]: resolvePlatformModel(platform, model) }));
     saveSetting(platform, model);
   }, []);
 

@@ -173,20 +173,20 @@ export const AI_MODELS: Record<string, ModelConfig[]> = {
   ],
   google: [
     {
-      id: 'gemini-2.0-flash',
-      name: 'Gemini 2.0 Flash',
-      description: 'Fast and efficient model for everyday tasks',
+      id: 'gemini-2.5-flash',
+      name: 'Gemini 2.5 Flash',
+      description: 'Fast and cost-effective model for everyday tasks',
       maxTokens: 1000000,
       costTier: 'low',
       capabilities: ['text', 'reasoning', 'vision'],
       speed: 'fast'
     },
     {
-      id: 'gemini-2.5-pro-preview-06-05',
+      id: 'gemini-2.5-pro',
       name: 'Gemini 2.5 Pro',
-      description: 'Most capable model with advanced reasoning',
+      description: 'Advanced reasoning model for complex tasks',
       maxTokens: 1000000,
-      costTier: 'medium',
+      costTier: 'high',
       capabilities: ['text', 'reasoning', 'vision', 'coding', 'analysis'],
       speed: 'medium'
     }
@@ -206,7 +206,7 @@ export const getDefaultModel = (platformId: string): string => {
     anthropic: 'claude-sonnet-4-20250514',
     deepseek: 'deepseek-chat',
     grok: 'grok-4',
-    google: 'gemini-2.0-flash'
+    google: 'gemini-2.5-flash'
   };
   
   return defaults[platformId] || models[0].id;
