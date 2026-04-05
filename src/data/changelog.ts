@@ -13,7 +13,7 @@ export interface ChangelogEntry {
 export const changelog: ChangelogEntry[] = [
   {
     version: "2.1.13",
-    date: "2025-09-05",
+    date: "2026-04-05",
     title: "AI Model Updates & Deprecation Fixes",
     description: "Fixed all broken AI agents by updating deprecated model IDs and API parameters across all platforms.",
     type: "fix",
@@ -21,7 +21,7 @@ export const changelog: ChangelogEntry[] = [
       { type: "bugfix", description: "🔧 OpenAI: Replaced deprecated `max_tokens` with `max_completion_tokens` parameter" },
       { type: "bugfix", description: "🔧 Claude: Updated from retired `claude-3-5-sonnet/haiku` to `claude-sonnet-4-20250514`" },
       { type: "bugfix", description: "🔧 Grok: Fixed `max_tokens` → `max_completion_tokens` and added better error logging" },
-      { type: "bugfix", description: "🔧 Gemini: Updated API from `v1beta` to `v1` and model to `gemini-2.0-flash`" },
+      { type: "bugfix", description: "🔧 Gemini: Updated to `gemini-2.5-flash` with legacy model fallback mapping" },
       { type: "improvement", description: "📋 Updated all model configurations with current model IDs for all platforms" },
       { type: "bugfix", description: "🗃️ Migrated all existing user agent settings to use valid model IDs" }
     ]

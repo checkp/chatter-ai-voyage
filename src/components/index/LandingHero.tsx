@@ -19,7 +19,7 @@ const LandingHero: React.FC = () => {
         src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png" 
         alt="RoboHeard Logo" 
         className="w-full max-w-xs sm:max-w-md md:max-w-xl lg:max-w-2xl h-auto object-contain mx-auto mb-4 md:mb-6 cursor-pointer hover:opacity-80 transition-opacity"
-        onClick={() => window.location.href = '/'}
+        onClick={() => window.location.href = '/auth'}
       />
       
       <Badge variant="outline" className="mb-4 md:mb-6 text-primary border-primary/20">
