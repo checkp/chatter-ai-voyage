@@ -4,7 +4,15 @@ import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform, Message, ChatMode } from '@/types/chat';
 import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI, callGeminiAPI } from '@/services/aiApiService';
-import { getDefaultModel } from '@/config/aiModels';
+import { getDefaultModel, getModelConfig } from '@/config/aiModels';
+
+const resolvePlatformModel = (platformId: string, model?: string | null) => {
+  if (!model) {
+    return getDefaultModel(platformId);
+  }
+
+  return getModelConfig(platformId, model) ? model : getDefaultModel(platformId);
+};
 
 export const usePlatforms = (user: SupabaseUser | null) => {
   const [platforms, setPlatforms] = useState<AIPlatform[]>([
@@ -69,13 +77,11 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       return;
     }
 
-    // Prevent multiple simultaneous loads
     if (loadingRef.current) {
       console.log('Already loading agent settings, skipping');
       return;
     }
 
-    // Skip if user hasn't changed
     if (lastUserIdRef.current === user.id) {
       console.log('User unchanged, skipping agent settings reload');
       return;
@@ -101,21 +107,25 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       }
 
       const settingsMap = new Map((settings || []).map(setting => [
-        setting.platform, 
-        { 
-          enabled: setting.enabled, 
+        setting.platform,
+        {
+          enabled: setting.enabled,
           model: setting.model,
-          displayOrder: setting.display_order
-        }
+          displayOrder: setting.display_order,
+        },
       ]));
       
-      setPlatforms(prev => prev.map(platform => ({
-        ...platform,
-        enabled: settingsMap.has(platform.id) ? settingsMap.get(platform.id)?.enabled || false : true,
-        selectedModel: settingsMap.get(platform.id)?.model || getDefaultModel(platform.id),
-        displayOrder: settingsMap.get(platform.id)?.displayOrder || platform.displayOrder,
-        hasApiKey: true
-      })));
+      setPlatforms(prev => prev.map(platform => {
+        const savedSetting = settingsMap.get(platform.id);
+
+        return {
+          ...platform,
+          enabled: settingsMap.has(platform.id) ? Boolean(savedSetting?.enabled) : true,
+          selectedModel: resolvePlatformModel(platform.id, savedSetting?.model),
+          displayOrder: savedSetting?.displayOrder ?? platform.displayOrder,
+          hasApiKey: true,
+        };
+      }));
     } catch (error: any) {
       console.error('Failed to load agent settings:', error);
     } finally {
@@ -124,7 +134,6 @@ export const usePlatforms = (user: SupabaseUser | null) => {
   }, [user]);
 
   const reloadSettings = useCallback(async () => {
-    // Force reload by resetting the user ID ref
     lastUserIdRef.current = null;
     await loadAgentSettings();
   }, [loadAgentSettings]);
@@ -144,7 +153,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       };
 
       if (model) {
-        updateData.model = model;
+        updateData.model = resolvePlatformModel(platformId, model);
       }
 
       if (displayOrder !== undefined) {
@@ -170,7 +179,6 @@ export const usePlatforms = (user: SupabaseUser | null) => {
   const updateAgentOrder = useCallback(async (reorderedPlatforms: AIPlatform[]) => {
     console.log('Updating agent order:', reorderedPlatforms.map(p => p.name));
     
-    // Update local state immediately for better UX
     setPlatforms(prev => {
       const newPlatforms = [...prev];
       reorderedPlatforms.forEach((platform, index) => {
@@ -182,7 +190,6 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       return newPlatforms.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
     });
 
-    // Save to database
     try {
       const promises = reorderedPlatforms.map((platform, index) => 
         saveAgentSetting(platform.id, platform.enabled, platform.selectedModel, index + 1)
@@ -193,7 +200,6 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     } catch (error) {
       console.error('Failed to save agent order:', error);
       toast.error('Failed to save agent order');
-      // Reload settings to restore correct order
       await loadAgentSettings();
     }
   }, [saveAgentSetting, loadAgentSettings]);
@@ -227,7 +233,6 @@ export const usePlatforms = (user: SupabaseUser | null) => {
   ): Array<{role: 'user' | 'assistant', content: string}> => {
     const conversationHistory: Array<{role: 'user' | 'assistant', content: string}> = [];
     
-    // Take the last 15 messages to maintain context but avoid token limits
     const recentMessages = messages.slice(-15);
     
     recentMessages.forEach(message => {
@@ -237,26 +242,20 @@ export const usePlatforms = (user: SupabaseUser | null) => {
           content: message.content 
         });
       } else if (message.sender === 'ai') {
-        // Handle different chat modes
         if (chatMode === 'isolated' || chatMode === 'side-by-side') {
-          // In isolated modes, skip ALL other AI responses
           if (message.platform !== platformId) {
             return;
           }
-          // Include this platform's own responses
           conversationHistory.push({ 
             role: 'assistant', 
             content: message.content 
           });
         } else {
-          // Discussion mode - original behavior
-          // Skip the current platform's own messages completely
           if (message.platform === platformId) {
             console.log(`Skipping ${platformId}'s own message:`, message.content.substring(0, 50));
             return;
           }
           
-          // Include other AI agents' responses as system context
           if (message.platform && message.platform !== platformId) {
             const otherPlatform = enabledPlatforms.find(p => p.id === message.platform);
             const platformName = otherPlatform?.name || message.platform;
@@ -283,13 +282,11 @@ export const usePlatforms = (user: SupabaseUser | null) => {
 
     const conversationHistory = buildConversationForPlatform(messages, platform.id, enabledPlatforms, chatMode);
     
-    // Enhanced context instructions based on chat mode
     let contextMessage = '';
     
     if (chatMode === 'isolated' || chatMode === 'side-by-side') {
       contextMessage = `You are ${platform.name} in isolated mode. You can only see user messages and your own previous responses. Respond naturally and helpfully to the user's messages without referencing other AI agents.`;
     } else {
-      // Discussion mode - multi-agent context
       const otherAIs = enabledPlatforms.filter(p => p.id !== platform.id && p.enabled && p.hasApiKey);
       if (otherAIs.length > 0) {
         contextMessage = `You are ${platform.name} in a multi-AI conversation with: ${otherAIs.map(p => p.name).join(', ')}.
@@ -312,9 +309,9 @@ Your goal: Contribute meaningfully to this multi-agent conversation as ${platfor
     
     conversationHistory.unshift({ role: 'user', content: contextMessage });
 
-    console.log(`Calling ${platform.name} API in ${chatMode} mode with ${conversationHistory.length} messages and model: ${platform.selectedModel}`);
-    
-    const selectedModel = platform.selectedModel || getDefaultModel(platform.id);
+    const selectedModel = resolvePlatformModel(platform.id, platform.selectedModel);
+
+    console.log(`Calling ${platform.name} API in ${chatMode} mode with ${conversationHistory.length} messages and model: ${selectedModel}`);
     
     switch (platform.id) {
       case 'anthropic':
@@ -332,7 +329,6 @@ Your goal: Contribute meaningfully to this multi-agent conversation as ${platfor
     }
   };
 
-  // Load settings only when user changes and not already loading
   useEffect(() => {
     loadAgentSettings();
   }, [loadAgentSettings]);

@@ -170,7 +170,7 @@ export const callClaudeAPI = async (
 export const callGeminiAPI = async (
   conversationHistory: Array<{role: 'user' | 'assistant', content: string}>,
   user: SupabaseUser,
-  model: string = 'gemini-1.5-flash'
+  model: string = 'gemini-2.5-flash'
 ): Promise<string> => {
   console.log('Calling Gemini API with centralized key...');
   
