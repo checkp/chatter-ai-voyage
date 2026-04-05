@@ -128,10 +128,18 @@ serve(async (req) => {
       );
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
+    // Get signed URL (bucket is now private)
+    const { data: urlData, error: signedUrlError } = await supabase.storage
       .from('generated-images')
-      .getPublicUrl(fileName);
+      .createSignedUrl(fileName, 3600 * 24 * 7); // 7 day signed URL
+
+    if (signedUrlError || !urlData?.signedUrl) {
+      console.error('Signed URL error:', signedUrlError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to create image URL' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Save image metadata to database
     const { data: imageRecord, error: dbError } = await supabase
@@ -139,7 +147,7 @@ serve(async (req) => {
       .insert({
         user_id: user.id,
         prompt,
-        image_url: urlData.publicUrl,
+        image_url: urlData.signedUrl,
         file_name: fileName,
         tokens_used: tokensRequired,
         model_used: model,

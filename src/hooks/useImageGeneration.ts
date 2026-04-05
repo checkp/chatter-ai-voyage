@@ -42,7 +42,20 @@ export const useImageGeneration = (user: SupabaseUser | null) => {
         return [];
       }
 
-      return data as GeneratedImage[];
+      // Refresh signed URLs for each image (stored URLs may have expired)
+      const imagesWithFreshUrls = await Promise.all(
+        (data as GeneratedImage[]).map(async (img) => {
+          const { data: urlData } = await supabase.storage
+            .from('generated-images')
+            .createSignedUrl(img.file_name, 3600); // 1 hour
+          return {
+            ...img,
+            image_url: urlData?.signedUrl || img.image_url,
+          };
+        })
+      );
+
+      return imagesWithFreshUrls;
     },
     enabled: !!user,
   });
