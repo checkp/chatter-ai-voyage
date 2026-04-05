@@ -217,13 +217,14 @@ export const useMessageHandling = (
   const handleStop = useCallback(() => {
     console.log('Stopping AI responses...');
     addEntry('system', 'AI responses stopped by user');
+    if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
     setIsLoadingResponse(false);
     setCanStop(false);
     setActiveAIStatuses({});
     toast.info('AI responses stopped');
-  }, []);
+  }, [addEntry]);
 
   const sendSingleAgentMessage = useCallback(async (chatId: string, message: string, platformId: string) => {
     if (!user) throw new Error('User not authenticated');
