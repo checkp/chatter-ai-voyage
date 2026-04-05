@@ -159,7 +159,12 @@ export const useMessageHandling = (
           return aiMessage;
         } catch (error) {
           console.error(`Error calling ${platform.name}:`, error);
-          toast.error(`Failed to get response from ${platform.name}`);
+          const errMsg = error instanceof Error ? error.message : 'Unknown error';
+          if (errMsg.includes('Network error') || errMsg.includes('Load failed')) {
+            toast.error(`Network issue with ${platform.name} — retrying may help`);
+          } else {
+            toast.error(`${platform.name}: ${errMsg}`);
+          }
           return null;
         } finally {
           updateActiveStatus(platform.id, false);
@@ -184,7 +189,14 @@ export const useMessageHandling = (
       setIsLoadingResponse(false);
       setCanStop(false);
       setActiveAIStatuses({});
-      toast.error('Failed to send message: ' + (error.message || 'Unknown error'));
+      const msg = error.message || 'Unknown error';
+      if (msg.includes('Load failed') || msg.includes('TypeError') || msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+        toast.error('Network error — please check your connection and try again');
+      } else if (msg.includes('Session expired') || msg.includes('Not authenticated')) {
+        toast.error('Session expired — please refresh the page');
+      } else {
+        toast.error(msg);
+      }
     },
   });
 
