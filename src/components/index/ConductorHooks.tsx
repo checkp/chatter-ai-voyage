@@ -47,15 +47,40 @@ export const useConductorHooks = ({
   // Store conductor conversation ID using a proper UUID format
   const [conductorConversationId, setConductorConversationId] = React.useState<string | null>(null);
 
-  // Create conductor conversation ID when activeChatId changes
+  // Look up existing conductor conversation or create a new one when activeChatId changes
   React.useEffect(() => {
-    if (activeChatId && activeChatMode === 'conductor') {
-      // Generate a proper UUID for the conductor conversation
-      const newConductorId = generateChatId();
-      console.log('Creating new conductor conversation ID:', newConductorId);
-      setConductorConversationId(newConductorId);
+    if (!activeChatId || activeChatMode !== 'conductor') {
+      setConductorConversationId(null);
+      return;
     }
-  }, [activeChatId, activeChatMode]);
+
+    const findOrCreateConductorConversation = async () => {
+      // Look for an existing conductor conversation linked to this chat
+      const conductorTitle = `Conductor: ${activeChatId}`;
+      const { data: existing, error } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('chat_mode', 'conductor')
+        .eq('title', conductorTitle)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error looking up conductor conversation:', error);
+      }
+
+      if (existing) {
+        console.log('Found existing conductor conversation:', existing.id);
+        setConductorConversationId(existing.id);
+      } else {
+        const newConductorId = generateChatId();
+        console.log('Creating new conductor conversation ID:', newConductorId);
+        setConductorConversationId(newConductorId);
+      }
+    };
+
+    findOrCreateConductorConversation();
+  }, [activeChatId, activeChatMode, user.id]);
 
   // Get conductor messages using the conductor conversation ID
   const { data: conductorMessages } = useQuery({
