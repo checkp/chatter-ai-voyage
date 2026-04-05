@@ -55,12 +55,13 @@ const ensureConversationExists = async (conversationId: string, parentChatId?: s
 
 export const saveConductorUserMessage = async (
   userMessage: string,
-  conductorConversationId: string
+  conductorConversationId: string,
+  parentChatId?: string
 ): Promise<Message> => {
   console.log('Saving conductor user message:', { userMessage: userMessage.substring(0, 50), conductorConversationId });
   
   // Ensure conversation exists first
-  await ensureConversationExists(conductorConversationId);
+  await ensureConversationExists(conductorConversationId, parentChatId);
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
