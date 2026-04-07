@@ -61,8 +61,8 @@ const MobileChatSidebar: React.FC<MobileChatSidebarProps> = ({
             <div className="p-4 text-center text-muted-foreground">
               Loading chats...
             </div>
-          ) : chats && chats.length > 0 ? (
-            chats.map((chat, index) => (
+          ) : chats && chats.filter(c => !c.title.startsWith('Conductor: ')).length > 0 ? (
+            chats.filter(c => !c.title.startsWith('Conductor: ')).map((chat, index) => (
               <React.Fragment key={chat.id}>
                 <div
                   className={`group relative p-3 rounded-lg cursor-pointer transition-colors ${
