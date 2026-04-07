@@ -55,7 +55,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             </div>
           ) : (
             <div className="space-y-1">
-              {chats?.map((chat) => (
+              {chats?.filter(chat => !chat.title.startsWith('Conductor: ')).map((chat) => (
                 <div
                   key={chat.id}
                   className={`group flex items-center justify-between p-2 rounded cursor-pointer transition-colors ${
