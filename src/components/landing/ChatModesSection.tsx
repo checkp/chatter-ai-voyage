@@ -8,26 +8,26 @@ const ChatModesSection = () => {
     {
       name: "Conductor Mode",
       icon: <Brain className="h-6 w-6" />,
-      description: "AI conductor orchestrates multi-agent discussions with role assignment and synthesis",
-      features: ["Intelligent role delegation", "Comprehensive synthesis", "Structured conversations"]
+      description: "An AI orchestrator assigns roles, mediates debates, and synthesizes multi-agent output into a single coherent answer — the agentic workflow pattern leading AI in 2026.",
+      features: ["Agentic role delegation", "Real-time synthesis", "Conflict resolution"]
     },
     {
       name: "Discussion Mode",
       icon: <Users className="h-6 w-6" />,
-      description: "All AI agents can see each other's responses and build collaborative conversations",
-      features: ["Cross-agent collaboration", "Rich context sharing", "Emergent insights"]
+      description: "Every agent sees all prior responses, enabling chain-of-thought collaboration where models build on each other's reasoning.",
+      features: ["Chain-of-thought collaboration", "Cross-model context", "Emergent insights"]
     },
     {
-      name: "Isolated Mode", 
+      name: "Isolated Mode",
       icon: <Eye className="h-6 w-6" />,
-      description: "Each agent only sees user messages and their own responses",
-      features: ["Independent perspectives", "Unbiased responses", "Parallel processing"]
+      description: "Each model responds independently — ideal for unbiased benchmarking and comparing reasoning approaches side-by-side.",
+      features: ["Zero cross-contamination", "Fair benchmarking", "Parallel inference"]
     },
     {
       name: "Side-by-Side Mode",
       icon: <Grid3X3 className="h-6 w-6" />,
-      description: "Isolated mode with dedicated windows for each agent (desktop only)",
-      features: ["Visual comparison", "Individual controls", "Response tracking"]
+      description: "Dedicated panels per agent let you visually compare outputs, refine prompts, and cherry-pick the best answers.",
+      features: ["Visual comparison", "Per-agent controls", "Cherry-pick responses"]
     }
   ];
 
@@ -35,7 +35,7 @@ const ChatModesSection = () => {
     <section className="container mx-auto px-4 py-16">
       <div className="text-center mb-12">
         <h2 className="text-3xl font-bold mb-4">Four Conversation Modes</h2>
-        <p className="text-muted-foreground text-lg">Choose how your AI agents interact, from conductor-orchestrated to independent responses</p>
+        <p className="text-muted-foreground text-lg">From agentic orchestration to independent benchmarking — choose the collaboration style that fits your task</p>
       </div>
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
         {chatModes.map((mode) => (

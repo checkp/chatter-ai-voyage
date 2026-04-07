@@ -15,7 +15,7 @@ const LandingFooter = () => {
             <span className="font-semibold">RoboHeard</span>
           </div>
           <p className="text-muted-foreground text-center">
-            © 2025 RoboHeard. Experience AI Conductor and train your AI army with collaborative conversations.
+            © 2026 RoboHeard. Agentic AI orchestration — Conductor Mode for multi-model collaboration.
           </p>
         </div>
       </div>

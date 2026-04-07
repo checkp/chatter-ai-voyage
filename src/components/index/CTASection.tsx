@@ -11,11 +11,11 @@ const CTASection: React.FC = () => {
   return (
     <div className="text-center bg-primary/5 rounded-2xl p-12">
       <h2 className="text-3xl font-bold text-foreground mb-4">
-        Ready to Experience AI Collaboration?
+        Stop Prompting Alone — Start Orchestrating
       </h2>
       <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-        Join the conversation where multiple AI minds work together. See how different perspectives 
-        create something greater than the sum of their parts.
+        In 2026, the smartest teams let seven frontier models debate, challenge, and refine each other's ideas. 
+        Conductor Mode makes multi-agent collaboration as easy as sending a single message.
       </p>
       <Button 
         size="lg"

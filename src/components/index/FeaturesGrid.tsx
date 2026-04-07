@@ -1,28 +1,28 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { MessageSquare, Users, Zap, Bot } from 'lucide-react';
+import { Brain, MessageSquare, Zap, Bot } from 'lucide-react';
 
 const features = [
   {
-    icon: Users,
-    title: "Multi-AI Collaboration",
-    description: "Watch different AI models work together, building on each other's ideas in real-time."
+    icon: Brain,
+    title: "Agentic Orchestration",
+    description: "Conductor AI delegates tasks, mediates debates, and synthesizes results — the agentic workflow pattern defining 2026."
   },
   {
     icon: MessageSquare,
-    title: "Multiple Chat Modes",
-    description: "Choose from discussion, isolated, or side-by-side modes for different collaboration styles."
+    title: "Four Collaboration Modes",
+    description: "Conductor, Discussion, Isolated, and Side-by-Side — match the interaction pattern to your task."
   },
   {
     icon: Zap,
-    title: "Free Mode Conversations",
-    description: "Let AIs engage in autonomous conversations while you observe and interact."
+    title: "Autonomous Free Mode",
+    description: "Launch multi-round AI debates that run autonomously — watch emergent reasoning unfold without manual prompting."
   },
   {
     icon: Bot,
-    title: "7 Leading AI Models",
-    description: "Access GPT-5, ChatGPT, Claude, Grok-4, Grok, Gemini, and DeepSeek all in one platform."
+    title: "7 Frontier Models",
+    description: "GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek-R2 and more — every 2025-2026 breakthrough model in one platform."
   }
 ];
 
