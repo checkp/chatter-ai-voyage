@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -33,6 +33,13 @@ const ConductorPane: React.FC<ConductorPaneProps> = ({
   setConductorInput
 }) => {
   const { toast } = useToast();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+    }, 100);
+  }, [conductorMessages]);
 
   const samplePrompt = `You are an AI Conductor orchestrating a multi-agent discussion. Your role is to:
 
@@ -156,6 +163,7 @@ Provide a structured analysis comparing their different perspectives.`;
               platforms={platforms}
             />
           )}
+          <div ref={messagesEndRef} className="h-1" />
         </div>
       </ScrollArea>
 
