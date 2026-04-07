@@ -44,7 +44,7 @@ const FloatingActivityConsole: React.FC = () => {
   const latestEntry = entries[0];
 
   return (
-    <div <div className="fixed bottom-16 left-4 z-40 w-64 rounded-lg border border-border/50 bg-background/85 backdrop-blur-md shadow-lg overflow-hidden transition-all duration-200">
+    <div className="fixed bottom-16 left-4 z-40 w-64 rounded-lg border border-border/50 bg-background/85 backdrop-blur-md shadow-lg overflow-hidden transition-all duration-200">
       {/* Header bar */}
       <div
         className="flex items-center justify-between px-3 py-1.5 cursor-pointer hover:bg-accent/30 transition-colors select-none"
