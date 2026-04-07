@@ -3,68 +3,66 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Brain, Users, Zap, Target, ArrowRight, Sparkles } from 'lucide-react';
+import { Brain, Users, Zap, Target, Sparkles } from 'lucide-react';
 
 const ConductorShowcase: React.FC = () => {
   const conductorFeatures = [
     {
       icon: Brain,
-      title: "AI Orchestration",
-      description: "Watch our Conductor AI intelligently coordinate conversations between GPT-4, Claude, DeepSeek, Grok, and Gemini for comprehensive insights."
+      title: "Agentic Orchestration",
+      description: "The Conductor analyses your query, assigns specialist roles to each model, and mediates the multi-turn conversation — the agentic pattern that defines 2026 AI."
     },
     {
       icon: Users,
-      title: "Multi-Agent Collaboration",
-      description: "Experience unprecedented AI teamwork where each model builds upon others' responses, creating richer and more nuanced solutions."
+      title: "Cross-Model Reasoning",
+      description: "GPT-5's reasoning meets Claude 4's analysis and DeepSeek-R2's open-source depth — perspectives combine into answers no single model can produce."
     },
     {
       icon: Target,
-      title: "Focused Discussions",
-      description: "The Conductor keeps conversations productive and on-track, ensuring you get actionable results from every AI interaction."
+      title: "Conflict Resolution",
+      description: "When models disagree, the Conductor highlights consensus, surfaces evidence, and produces a balanced synthesis — not just majority vote."
     },
     {
       icon: Zap,
-      title: "Real-time Analysis",
-      description: "Get instant summaries and direction from the Conductor as it analyzes conversation flow and suggests next steps."
+      title: "Real-Time Summaries",
+      description: "Live synthesis as agents respond. Get structured conclusions, actionable next steps, and dissenting viewpoints — all before you ask."
     }
   ];
 
   const aiExperiences = [
     {
-      scenario: "Problem Solving",
-      description: "Present a complex challenge and watch GPT-4 analyze, Claude provide ethical considerations, DeepSeek offer technical depth, while the Conductor synthesizes everything into actionable solutions.",
-      badge: "Multi-Perspective"
+      scenario: "Multi-Model Code Review",
+      description: "Submit a PR and let GPT-5 catch logic bugs, Claude 4 flag security issues, DeepSeek-R2 suggest performance optimizations, while the Conductor prioritises the fixes.",
+      badge: "Engineering"
     },
     {
-      scenario: "Creative Projects",
-      description: "Brainstorm ideas with Gemini's creativity, refine them with Grok's wit, validate with Claude's reasoning, all while the Conductor ensures every angle is explored.",
-      badge: "Creative Flow"
+      scenario: "Research Synthesis",
+      description: "Paste a paper or topic — Gemini 2.5 extracts key claims with million-token context, Grok-4 cross-references real-time data, and the Conductor produces an annotated brief.",
+      badge: "Research"
     },
     {
-      scenario: "Research & Analysis",
-      description: "Deep-dive into topics with each AI contributing their unique strengths - from DeepSeek's technical analysis to GPT-4's comprehensive overviews.",
-      badge: "Research Mode"
+      scenario: "Strategic Planning",
+      description: "Describe a business challenge. Each model brings a different lens — market data, risk analysis, creative strategy — orchestrated into a unified action plan.",
+      badge: "Business"
     }
   ];
 
   return (
     <section className="mb-20">
-      {/* Main Conductor Introduction */}
       <div className="text-center mb-16">
         <Badge variant="outline" className="mb-4 text-primary border-primary/20">
           <Brain className="mr-2 h-4 w-4" />
-          Introducing Conductor AI
+          Conductor AI — Agentic Orchestration
         </Badge>
         <h2 className="text-4xl md:text-5xl font-bold mb-6">
-          The Future of AI Collaboration
+          The Agentic AI Workflow, Simplified
         </h2>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-          Experience the revolutionary Conductor mode where an AI orchestrator coordinates 
-          discussions between multiple AI models, creating unprecedented collaborative intelligence.
+          2025 proved that multi-agent systems outperform single models on complex tasks. 
+          Conductor Mode brings that research breakthrough to everyone — no infra, no code, just results.
         </p>
       </div>
 
-      {/* Conductor Features Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
         {conductorFeatures.map((feature, index) => {
           const IconComponent = feature.icon;
@@ -86,12 +84,11 @@ const ConductorShowcase: React.FC = () => {
         })}
       </div>
 
-      {/* AI Experiences Section */}
       <div className="mb-16">
         <div className="text-center mb-12">
-          <h3 className="text-3xl font-bold mb-4">New AI Experiences</h3>
+          <h3 className="text-3xl font-bold mb-4">Real-World Use Cases</h3>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Discover how Conductor AI transforms your interactions with multiple AI models
+            See how teams use Conductor Mode to solve problems that stump single models
           </p>
         </div>
 
@@ -116,11 +113,10 @@ const ConductorShowcase: React.FC = () => {
         </div>
       </div>
 
-      {/* Call to Action */}
       <div className="text-center bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl p-8">
-        <h3 className="text-2xl font-bold mb-4">Ready to Experience Conductor AI?</h3>
+        <h3 className="text-2xl font-bold mb-4">Ready to Orchestrate?</h3>
         <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-          Join the revolution in AI collaboration and discover what's possible when multiple AI minds work together under intelligent orchestration.
+          Join thousands who moved from single-model prompting to agentic orchestration. Free to start — pay only for the tokens you use.
         </p>
         <Button size="lg" className="text-lg px-8 py-6" onClick={() => window.location.href = '/auth'}>
           Try Conductor Mode
