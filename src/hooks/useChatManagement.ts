@@ -252,7 +252,11 @@ export const useChatManagement = (user: any) => {
 
   useEffect(() => {
     if (chats && chats.length > 0 && !activeChatId) {
-      setActiveChatId(chats[0].id);
+      // Skip conductor conversations when auto-selecting
+      const nonConductorChat = chats.find(c => !c.title.startsWith('Conductor: '));
+      if (nonConductorChat) {
+        setActiveChatId(nonConductorChat.id);
+      }
     }
   }, [chats, activeChatId]);
 
