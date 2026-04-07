@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,14 @@ const AgentPane: React.FC<AgentPaneProps> = ({
   agentInput,
   setAgentInput
 }) => {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+    }, 100);
+  }, [mainMessages]);
+
   const handleAgentSend = () => {
     if (agentInput.trim() && onAgentSend) {
       onAgentSend(agentInput);
@@ -80,6 +88,7 @@ const AgentPane: React.FC<AgentPaneProps> = ({
               platforms={platforms}
             />
           )}
+          <div ref={messagesEndRef} className="h-1" />
         </div>
       </ScrollArea>
 
