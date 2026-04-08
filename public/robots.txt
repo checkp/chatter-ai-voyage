@@ -4,6 +4,7 @@ Allow: /
 Allow: /landing
 Allow: /auth
 Allow: /purchase
+Allow: /help
 Allow: /images
 
 # Sitemap
