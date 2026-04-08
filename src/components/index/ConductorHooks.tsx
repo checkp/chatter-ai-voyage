@@ -42,7 +42,7 @@ export const useConductorHooks = ({
     setConductorAgent,
     isProcessing,
     processConductorMessage
-  } = useConductorMode(user, platforms, callAIAPI);
+  } = useConductorMode(user, platforms, callAIAPI, activeChatId);
 
   // Store conductor conversation ID using a proper UUID format
   const [conductorConversationId, setConductorConversationId] = React.useState<string | null>(null);
