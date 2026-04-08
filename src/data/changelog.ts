@@ -12,6 +12,21 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.2.0",
+    date: "2026-04-08",
+    title: "Agentic AI Refresh & Security Hardening",
+    description: "Major content refresh for the agentic AI era, security improvements, and conductor UX polish.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "🌐 Landing Page Refresh: Updated all content to reflect 2026 frontier models (GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek-R2)" },
+      { type: "feature", description: "🎼 Conductor Showcase: Redesigned hero and features to spotlight agentic multi-model orchestration" },
+      { type: "improvement", description: "🔒 Security Hardening: Migrated admin role checks to a dedicated user_roles table with security-definer functions" },
+      { type: "improvement", description: "⬇️ Auto-Scroll in Conductor: Both conductor and agent panes now auto-scroll to the latest message" },
+      { type: "improvement", description: "📏 Activity Console Resize: Floating activity log is now more compact to avoid overlapping the chat" },
+      { type: "bugfix", description: "🔧 Conductor Chat Context: Fixed issue where conductor mode created duplicate conversations instead of reusing the active one" }
+    ]
+  },
+  {
     version: "2.1.13",
     date: "2026-04-05",
     title: "AI Model Updates & Deprecation Fixes",
