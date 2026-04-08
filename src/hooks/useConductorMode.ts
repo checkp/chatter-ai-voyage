@@ -1,7 +1,8 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform, Message } from '@/types/chat';
 import { processConductorMessageFlow } from '@/services/conductorProcessingService';
@@ -9,11 +10,42 @@ import { processConductorMessageFlow } from '@/services/conductorProcessingServi
 export const useConductorMode = (
   user: SupabaseUser | null,
   platforms: AIPlatform[],
-  callAIAPI: (platform: AIPlatform, messages: Message[], enabledPlatforms: AIPlatform[]) => Promise<string>
+  callAIAPI: (platform: AIPlatform, messages: Message[], enabledPlatforms: AIPlatform[]) => Promise<string>,
+  activeChatId?: string | null
 ) => {
-  const [conductorAgent, setConductorAgent] = useState('openai');
+  const [conductorAgent, setConductorAgentState] = useState('openai');
   const [isProcessing, setIsProcessing] = useState(false);
   const queryClient = useQueryClient();
+
+  // Load conductor_platform from the conversation when activeChatId changes
+  useEffect(() => {
+    if (!activeChatId || !user) return;
+    const load = async () => {
+      const { data } = await supabase
+        .from('conversations')
+        .select('conductor_platform')
+        .eq('id', activeChatId)
+        .maybeSingle();
+      if (data?.conductor_platform) {
+        setConductorAgentState(data.conductor_platform);
+      }
+    };
+    load();
+  }, [activeChatId, user]);
+
+  // Wrap setConductorAgent to also persist to DB
+  const setConductorAgent = useCallback((agent: string) => {
+    setConductorAgentState(agent);
+    if (activeChatId) {
+      supabase
+        .from('conversations')
+        .update({ conductor_platform: agent })
+        .eq('id', activeChatId)
+        .then(({ error }) => {
+          if (error) console.error('Failed to persist conductor agent:', error);
+        });
+    }
+  }, [activeChatId]);
 
   const processConductorMessage = useCallback(async (
     chatId: string,
@@ -38,7 +70,6 @@ export const useConductorMode = (
         callAIAPI
       });
 
-      // Update query cache for both conversations
       queryClient.invalidateQueries({ queryKey: ['conductor_messages'] });
       queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
 
