@@ -1,26 +1,49 @@
 
 
-## Update SEO Tags with 2026 AI Keywords
+## Rework Image Generation Panel
 
-The current SEO metadata references outdated model names (GPT-4, Grok, Gemini without version) and misses trending 2026 keywords like "agentic AI", "AI orchestration", and current model names. The landing page content was already updated but `index.html` SEO tags lag behind.
+### Current State
+- Only supports OpenAI DALL-E 2/3 and GPT Image 1
+- Plain card-based layout, basic form with model/size selects
+- Edge function only calls OpenAI's image API
 
 ### Changes
 
-**1. `index.html` — Meta tags overhaul**
-- **Title**: Update to include "Agentic AI Orchestration" and "Multi-Model AI Platform"
-- **Keywords meta**: Replace with 2026-relevant terms:
-  - `agentic AI, AI orchestration, AI conductor, multi-agent AI, GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek-R2, frontier AI models, AI debate platform, collaborative AI, conductor mode, AI delegation, AI synthesis, multi-model AI chat, AI super-intelligence, autonomous AI agents, AI workflow automation, RoboHeard, AI platform 2026`
-- **Description meta**: Refresh to mention GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek-R2, agentic orchestration
-- **OG tags**: Update `og:title`, `og:description`, `og:updated_time` to 2026-04-08
-- **Twitter tags**: Update title/description with same 2026 keywords
-- **Structured data (JSON-LD)**: Update `softwareVersion` to 2.2.0, `dateModified` to 2026-04-08, model names in `featureList`, and review text
+**1. `src/components/ImageGeneration.tsx` — UI Redesign + New Engines**
+- Add engine selector with visual cards instead of plain dropdown: **OpenAI** (DALL-E 3, GPT Image 1), **Google Gemini** (Gemini Image, Gemini Pro Image), **Grok** (Aurora)
+- Replace plain input with a larger textarea for prompts
+- Add style preset chips (Photorealistic, Digital Art, Anime, Oil Painting, 3D Render, Watercolor)
+- Show selected engine's badge with cost, speed indicator, and capabilities
+- Improve gallery: add lightbox-style image preview on click, better grid with masonry-like layout, date grouping
+- Add aspect ratio visual selector (square, landscape, portrait icons) instead of text dropdown
+- Update `getTokenCost` to cover all new engines
 
-**2. `public/sitemap.xml` — Update `lastmod` dates**
-- Set all `lastmod` values to `2026-04-08`
+**2. `supabase/functions/generate-image/index.ts` — Multi-Engine Support**
+- Add routing logic based on `model` parameter:
+  - `dall-e-3`, `gpt-image-1` → OpenAI API (existing)
+  - `gemini-image`, `gemini-pro-image` → Lovable AI Gateway (`google/gemini-2.5-flash-image`, `google/gemini-3-pro-image-preview`)
+  - `grok-aurora` → Grok/xAI image API using `XAI_API_KEY`
+- Extract base64 from each provider's response format
+- Keep existing storage upload + token deduction logic unchanged
 
-**3. `public/robots.txt` — Add `/help` route**
-- Add `Allow: /help` to the allow list
+**3. `src/hooks/useImageGeneration.ts` — No structural changes**
+- Only minor: pass `style` parameter through to edge function if style presets are selected
 
-**4. `src/pages/Help.tsx` — Update `setSEO` meta description**
-- Refresh the meta description to reference 2026 models and agentic AI
+**4. `src/pages/ImageGeneration.tsx` — Minor polish**
+- Add gradient background accent to header area
+
+### Technical Details
+
+Engine routing in edge function:
+```text
+model param        → API endpoint
+─────────────────────────────────────
+dall-e-3           → OpenAI /v1/images/generations
+gpt-image-1        → OpenAI /v1/images/generations  
+gemini-image       → Lovable AI Gateway (gemini-2.5-flash-image)
+gemini-pro-image   → Lovable AI Gateway (gemini-3-pro-image-preview)
+grok-aurora        → xAI grok-2-image-gen endpoint
+```
+
+Size options vary by engine — the UI will dynamically show valid sizes per selected model.
 
