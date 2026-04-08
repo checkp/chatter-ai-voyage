@@ -1,31 +1,26 @@
 
 
-## Plan: Add Retry Logic, Improve Error Messages, and Restyle Toasts
+## Update SEO Tags with 2026 AI Keywords
 
-### 1. Add shared retry wrapper with session validation (`src/services/aiApiService.ts`)
+The current SEO metadata references outdated model names (GPT-4, Grok, Gemini without version) and misses trending 2026 keywords like "agentic AI", "AI orchestration", and current model names. The landing page content was already updated but `index.html` SEO tags lag behind.
 
-- Create a `withRetry` helper function (3 attempts, exponential backoff) that also refreshes the auth session before each attempt
-- Apply it to `callOpenAI`, `callDeepSeek`, `callGrokAPI`, and `callGeminiAPI` (Claude already has retries)
-- Detect `TypeError` / "Load failed" and throw a friendly "Network error" message
+### Changes
 
-### 2. Improve error messages in `src/hooks/useMessageHandling.ts`
+**1. `index.html` — Meta tags overhaul**
+- **Title**: Update to include "Agentic AI Orchestration" and "Multi-Model AI Platform"
+- **Keywords meta**: Replace with 2026-relevant terms:
+  - `agentic AI, AI orchestration, AI conductor, multi-agent AI, GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek-R2, frontier AI models, AI debate platform, collaborative AI, conductor mode, AI delegation, AI synthesis, multi-model AI chat, AI super-intelligence, autonomous AI agents, AI workflow automation, RoboHeard, AI platform 2026`
+- **Description meta**: Refresh to mention GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek-R2, agentic orchestration
+- **OG tags**: Update `og:title`, `og:description`, `og:updated_time` to 2026-04-08
+- **Twitter tags**: Update title/description with same 2026 keywords
+- **Structured data (JSON-LD)**: Update `softwareVersion` to 2.2.0, `dateModified` to 2026-04-08, model names in `featureList`, and review text
 
-- In the `onError` handler and per-platform catch blocks, detect `TypeError` / "Load failed" patterns and replace with user-friendly messages like "Network error — please try again"
-- Detect "Not authenticated" / session errors and show "Session expired — please refresh"
+**2. `public/sitemap.xml` — Update `lastmod` dates**
+- Set all `lastmod` values to `2026-04-08`
 
-### 3. Move toasts to bottom-left and make them less intrusive (`src/components/ui/sonner.tsx`)
+**3. `public/robots.txt` — Add `/help` route**
+- Add `Allow: /help` to the allow list
 
-- Set Sonner `position="bottom-left"` 
-- Reduce toast styling: smaller text, softer shadow, subtle border, semi-transparent background, shorter duration (3s)
-- Add `richColors={false}` for a more muted look
-
-### 4. Clean up duplicate Toaster (`src/App.tsx`)
-
-- Remove the legacy `<Toaster />` import from `@/components/ui/toaster` since the app uses sonner's `toast()` — having both is unnecessary
-
-### Files to modify
-- `src/services/aiApiService.ts` — retry wrapper + session refresh
-- `src/hooks/useMessageHandling.ts` — friendly error messages  
-- `src/components/ui/sonner.tsx` — position bottom-left, subtler styling
-- `src/App.tsx` — remove duplicate legacy Toaster
+**4. `src/pages/Help.tsx` — Update `setSEO` meta description**
+- Refresh the meta description to reference 2026 models and agentic AI
 
