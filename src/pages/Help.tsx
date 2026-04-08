@@ -34,7 +34,7 @@ function setSEO() {
     tag.setAttribute('content', content);
   };
 
-  ensureMeta('description', 'Help guide: features, chat vs conductor modes, and starter prompts to begin quickly.');
+  ensureMeta('description', 'Get started with RoboHeard — learn Conductor Mode, agentic orchestration across GPT-5, Claude 4, Gemini 2.5, Grok-4 & DeepSeek-R2, and grab ready-to-use prompts.');
 
   let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
   if (!canonical) {
