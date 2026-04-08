@@ -34,7 +34,7 @@ const ImageGenerationPage = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-secondary border-border p-4">
+      <header className="border-b border-border bg-gradient-to-r from-primary/10 via-accent/10 to-secondary/10 p-4">
         <div className="flex items-center gap-4 max-w-6xl mx-auto">
           <Button 
             variant="ghost" 

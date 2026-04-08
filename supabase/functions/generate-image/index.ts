@@ -8,14 +8,94 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function generateWithOpenAI(prompt: string, model: string, size: string): Promise<Uint8Array> {
+  const response = await fetch('https://api.openai.com/v1/images/generations', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ model, prompt, n: 1, size, response_format: 'b64_json' }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    console.error('OpenAI API error:', error);
+    throw new Error('Failed to generate image with OpenAI');
+  }
+
+  const data = await response.json();
+  const b64 = data.data[0].b64_json;
+  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+}
+
+async function generateWithGemini(prompt: string, model: string): Promise<Uint8Array> {
+  const gatewayModel = model === 'gemini-pro-image'
+    ? 'google/gemini-3-pro-image-preview'
+    : 'google/gemini-2.5-flash-image';
+
+  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: gatewayModel,
+      messages: [{ role: 'user', content: prompt }],
+      modalities: ['image', 'text'],
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    console.error('Gemini API error:', error);
+    throw new Error('Failed to generate image with Gemini');
+  }
+
+  const data = await response.json();
+  const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+  if (!imageUrl) throw new Error('No image returned from Gemini');
+
+  // Extract base64 from data URL
+  const b64 = imageUrl.replace(/^data:image\/\w+;base64,/, '');
+  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+}
+
+async function generateWithGrok(prompt: string): Promise<Uint8Array> {
+  const response = await fetch('https://api.x.ai/v1/images/generations', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${Deno.env.get('GROK_API_KEY')}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'grok-2-image',
+      prompt,
+      n: 1,
+      response_format: 'b64_json',
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    console.error('Grok API error:', error);
+    throw new Error('Failed to generate image with Grok');
+  }
+
+  const data = await response.json();
+  const b64 = data.data[0].b64_json;
+  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { prompt, model = 'dall-e-2', size = '1024x1024' } = await req.json();
-    
+    const { prompt, model = 'dall-e-3', size = '1024x1024' } = await req.json();
+
     if (!prompt) {
       return new Response(
         JSON.stringify({ error: 'Prompt is required' }),
@@ -23,7 +103,6 @@ serve(async (req) => {
       );
     }
 
-    // Get auth header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
@@ -32,14 +111,12 @@ serve(async (req) => {
       );
     }
 
-    // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey, {
       auth: { persistSession: false }
     });
 
-    // Get user from token
     const { data: { user }, error: authError } = await supabase.auth.getUser(
       authHeader.replace('Bearer ', '')
     );
@@ -51,17 +128,17 @@ serve(async (req) => {
       );
     }
 
-    // Get token cost for the model
-    const { data: pricing } = await supabase
-      .from('model_pricing')
-      .select('tokens_per_message')
-      .eq('platform', 'openai')
-      .eq('model_id', model)
-      .single();
+    // Determine token cost based on model
+    const tokenCosts: Record<string, number> = {
+      'dall-e-3': 40,
+      'gpt-image-1': 30,
+      'gemini-image': 15,
+      'gemini-pro-image': 35,
+      'grok-aurora': 25,
+    };
+    const tokensRequired = tokenCosts[model] || 30;
 
-    const tokensRequired = pricing?.tokens_per_message || 20;
-
-    // Check user's token balance
+    // Check balance
     const { data: userTokens, error: tokenError } = await supabase
       .from('user_tokens')
       .select('balance')
@@ -70,8 +147,8 @@ serve(async (req) => {
 
     if (tokenError || !userTokens || userTokens.balance < tokensRequired) {
       return new Response(
-        JSON.stringify({ 
-          error: 'Insufficient tokens', 
+        JSON.stringify({
+          error: 'Insufficient tokens',
           required: tokensRequired,
           available: userTokens?.balance || 0
         }),
@@ -79,46 +156,26 @@ serve(async (req) => {
       );
     }
 
-    // Generate image with OpenAI
-    const openAIResponse = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        prompt,
-        n: 1,
-        size,
-        response_format: 'b64_json'
-      }),
-    });
+    // Route to the correct provider
+    let imageBuffer: Uint8Array;
 
-    if (!openAIResponse.ok) {
-      const error = await openAIResponse.text();
-      console.error('OpenAI API error:', error);
-      return new Response(
-        JSON.stringify({ error: 'Failed to generate image' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (model === 'dall-e-3' || model === 'gpt-image-1') {
+      imageBuffer = await generateWithOpenAI(prompt, model, size);
+    } else if (model === 'gemini-image' || model === 'gemini-pro-image') {
+      imageBuffer = await generateWithGemini(prompt, model);
+    } else if (model === 'grok-aurora') {
+      imageBuffer = await generateWithGrok(prompt);
+    } else {
+      // Fallback to OpenAI
+      imageBuffer = await generateWithOpenAI(prompt, 'dall-e-3', size);
     }
 
-    const imageData = await openAIResponse.json();
-    const base64Image = imageData.data[0].b64_json;
-
-    // Convert base64 to blob
-    const imageBuffer = Uint8Array.from(atob(base64Image), c => c.charCodeAt(0));
-    
-    // Generate unique filename
+    // Upload to storage
     const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2)}.png`;
-    
-    // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+
+    const { error: uploadError } = await supabase.storage
       .from('generated-images')
-      .upload(fileName, imageBuffer, {
-        contentType: 'image/png',
-      });
+      .upload(fileName, imageBuffer, { contentType: 'image/png' });
 
     if (uploadError) {
       console.error('Storage upload error:', uploadError);
@@ -128,10 +185,9 @@ serve(async (req) => {
       );
     }
 
-    // Get signed URL (bucket is now private)
     const { data: urlData, error: signedUrlError } = await supabase.storage
       .from('generated-images')
-      .createSignedUrl(fileName, 3600 * 24 * 7); // 7 day signed URL
+      .createSignedUrl(fileName, 3600 * 24 * 7);
 
     if (signedUrlError || !urlData?.signedUrl) {
       console.error('Signed URL error:', signedUrlError);
@@ -141,7 +197,6 @@ serve(async (req) => {
       );
     }
 
-    // Save image metadata to database
     const { data: imageRecord, error: dbError } = await supabase
       .from('generated_images')
       .insert({
@@ -158,7 +213,6 @@ serve(async (req) => {
 
     if (dbError) {
       console.error('Database insert error:', dbError);
-      // Clean up uploaded file
       await supabase.storage.from('generated-images').remove([fileName]);
       return new Response(
         JSON.stringify({ error: 'Failed to save image metadata' }),
@@ -171,7 +225,7 @@ serve(async (req) => {
       p_user_id: user.id,
       p_amount: tokensRequired,
       p_description: `Image generation: ${model}`,
-      p_metadata: { 
+      p_metadata: {
         prompt: prompt.substring(0, 100),
         model,
         size,
@@ -191,7 +245,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in generate-image function:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: error.message || 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
