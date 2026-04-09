@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Brain, Send, HelpCircle, Copy } from 'lucide-react';
 import ChatMessages from '@/components/ChatMessages';
 import { useToast } from '@/hooks/use-toast';
+import { useAutoScroll } from '@/hooks/useAutoScroll';
 import type { Message, AIPlatform } from '@/types/chat';
 import ConductorAgentSelector from './ConductorAgentSelector';
 
@@ -33,13 +34,7 @@ const ConductorPane: React.FC<ConductorPaneProps> = ({
   setConductorInput
 }) => {
   const { toast } = useToast();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
-    }, 100);
-  }, [conductorMessages]);
+  const messagesEndRef = useAutoScroll([conductorMessages.length]);
 
   const samplePrompt = `You are an AI Conductor orchestrating a multi-agent discussion. Your role is to:
 
