@@ -241,8 +241,8 @@ const AuthPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
+      <div className="container mx-auto px-4 py-6 md:py-8">
+        <div className="flex flex-col-reverse lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-center max-w-6xl mx-auto">
           {/* Left Column - Features & Branding */}
           <div className="space-y-8">
             <div className="text-center lg:text-left">
