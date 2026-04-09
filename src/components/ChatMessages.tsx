@@ -2,6 +2,7 @@
 import React from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshCw } from 'lucide-react';
+import { useAutoScroll } from '@/hooks/useAutoScroll';
 import type { Message, AIPlatform } from '@/types/chat';
 
 interface ChatMessagesProps {
@@ -17,6 +18,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   isLoadingResponse,
   platforms
 }) => {
+  const endRef = useAutoScroll([messages?.length, isLoadingResponse]);
+
   const getPlatformName = (platformId: string) => {
     return platforms.find(p => p.id === platformId)?.name || platformId;
   };
@@ -85,6 +88,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
           </div>
         </div>
       )}
+      <div ref={endRef} className="h-1" />
     </>
   );
 };

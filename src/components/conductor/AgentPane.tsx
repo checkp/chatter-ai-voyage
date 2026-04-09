@@ -1,11 +1,12 @@
 
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Users, MessageSquare } from 'lucide-react';
 import ChatMessages from '@/components/ChatMessages';
+import { useAutoScroll } from '@/hooks/useAutoScroll';
 import type { Message, AIPlatform } from '@/types/chat';
 
 interface AgentPaneProps {
@@ -25,13 +26,7 @@ const AgentPane: React.FC<AgentPaneProps> = ({
   agentInput,
   setAgentInput
 }) => {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
-    }, 100);
-  }, [mainMessages]);
+  const messagesEndRef = useAutoScroll([mainMessages.length]);
 
   const handleAgentSend = () => {
     if (agentInput.trim() && onAgentSend) {
