@@ -25,7 +25,8 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = 'gpt-4o-mini', user_id } = await req.json();
+    const { messages, model = 'gpt-4o-mini' } = await req.json();
+    const user_id = user.id;
     
     // Check token balance - create if doesn't exist
     let { data: tokenData, error: tokenError } = await supabaseClient
