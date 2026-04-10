@@ -149,7 +149,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('DeepSeek function error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: 'Request failed' }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
