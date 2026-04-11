@@ -12,6 +12,21 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.3.0",
+    date: "2026-04-11",
+    title: "Interactive Guided Tour, Demo Chat & Mode-Aware Agents",
+    description: "New guided tour for the chat interface, live demo chat on the landing page, and smarter mode-aware agent prompts.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "🧭 Guided Tour: Step-by-step tooltip tour walks you through every chat mode, conductor AI, free mode, and more" },
+      { type: "feature", description: "💬 Live Demo Chat: Try a real AI conversation on the landing page — no signup required" },
+      { type: "feature", description: "🎨 Side-by-Side Hero: Redesigned landing hero with demo chat and product info in a two-column layout" },
+      { type: "improvement", description: "🧠 Mode-Aware Prompts: Agents now understand their conversation context — discussion, conductor, or free mode" },
+      { type: "improvement", description: "📢 Auto What's New: Changelog dialog now pops up automatically when there are new updates since your last visit" },
+      { type: "improvement", description: "🚀 Auto-Launch Tour: The guided tour starts automatically for users who haven't seen it yet" }
+    ]
+  },
+  {
     version: "2.2.0",
     date: "2026-04-08",
     title: "Agentic AI Refresh & Security Hardening",
