@@ -43,6 +43,7 @@ const ChatModeControls: React.FC<ChatModeControlsProps> = ({
             size="sm"
             onClick={() => onChatModeChange(getNextMode(currentChatMode))}
             className="h-8 w-8 p-0"
+            data-tour="chat-mode"
           >
             <ChatModeIcon className="h-4 w-4" />
           </Button>
@@ -60,6 +61,7 @@ const ChatModeControls: React.FC<ChatModeControlsProps> = ({
               size="sm"
               onClick={() => onIsolatedModeToggle(!isolatedMode)}
               className="h-8 w-8 p-0"
+              data-tour="isolated-mode"
             >
               {isolatedMode ? <Shield className="h-4 w-4" /> : <ShieldOff className="h-4 w-4" />}
             </Button>
