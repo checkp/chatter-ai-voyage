@@ -8,6 +8,7 @@ import FeaturesGrid from './FeaturesGrid';
 import AITestimonials from './AITestimonials';
 import CTASection from './CTASection';
 import ConductorShowcase from './ConductorShowcase';
+import DemoChat from './DemoChat';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ const LandingPage: React.FC = () => {
       </header>
       <div className="container mx-auto px-4 py-8 md:py-16">
         <LandingHero />
+        <DemoChat />
         <ConductorShowcase />
         <FeaturesGrid />
         <AITestimonials />
