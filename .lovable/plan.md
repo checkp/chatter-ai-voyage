@@ -1,55 +1,59 @@
 
 
-## Plan: Side-by-Side Hero Layout with Demo Chat + Cooler Opening Lines
+## Plan: Tour for Existing Users, Auto Changelog, Mode-Aware Agent Prompts
 
-### Layout Change
+### 1. Auto-launch guided tour for existing users
 
-Restructure the hero section into a two-column layout on desktop:
-- **Left column**: The DemoChat widget (remove it from its current standalone position below hero)
-- **Right column**: The RoboHeard logo image + badge + headline + CTA buttons
-- **Mobile**: Stack vertically — hero text first, then demo chat below (same as current)
+Currently the tour only runs when manually triggered via the compass button. The tour completion is stored in `localStorage` (`roboheard_tour_completed`).
 
-### File Changes
+**Change**: In `DesktopLayout.tsx`, auto-start the tour on mount if `tour.hasCompletedTour` is false. This means:
+- New users see it after onboarding completes
+- Existing users who never took the tour see it on next login
+- Once completed, it never auto-launches again
 
-**`src/components/index/LandingPage.tsx`**
-- Remove standalone `<DemoChat />` from below `<LandingHero />`
-- Create a new flex container wrapping `<DemoChat />` (left) and `<LandingHero />` (right) side by side on `md:` breakpoint
-- On mobile, hide demo chat here (desktop only) — mobile users go straight to hero + features
+**File**: `src/components/index/DesktopLayout.tsx` -- add a `useEffect` that calls `tour.startTour()` if `!tour.hasCompletedTour`.
 
-**`src/components/index/LandingHero.tsx`**
-- Remove `text-center` and `mx-auto` centering — align text left on desktop
-- Keep the image, badge, headline, description, and CTAs but left-aligned when in the two-column context
-- Make it work both standalone (mobile) and as a right-column element (desktop)
+### 2. Update changelog with latest features
 
-**`src/components/index/DemoChat.tsx`**
-- Update the 3 initial greeting messages to be more personalized and compelling:
-  - GPT: Something warm and direct referencing the time of day, like "Welcome in. I'm GPT — ask me something wild and watch what happens."
-  - Claude: Something thoughtful, like "I'm Claude. I tend to see angles others miss. Test me."
-  - DeepSeek: Something edgy/technical, like "DeepSeek here. I dig deep where others skim. Let's go."
-- Remove the outer heading/subheading ("Try it now — real AI, no signup") — the widget speaks for itself in the hero
-- Adjust max-width to fill its column (`w-full` instead of `max-w-2xl mx-auto`)
-- Remove the `my-12` margin since it'll be inside the hero flex container
+Add a new entry (v2.3.0, dated 2026-04-11) covering recent additions:
+- Live demo chat on landing page (real AI, no signup)
+- Side-by-side hero layout with demo chat
+- Guided tour for chat interface
+- Mode-aware agent prompts
 
-### Visual Result (Desktop)
+**File**: `src/data/changelog.ts` -- prepend new entry.
 
-```text
-+---------------------------+----------------------------+
-|                           |                            |
-|   [Demo Chat Widget]      |   [RoboHeard Logo]         |
-|   GPT: Welcome in...      |   2026 — Agentic AI        |
-|   Claude: I see angles..  |   Seven Frontier Models,   |
-|   DeepSeek: Let's go.     |   One Conductor            |
-|                           |                            |
-|   [input field] [send]    |   [CTA Buttons]            |
-|                           |                            |
-+---------------------------+----------------------------+
-```
+### 3. Auto-show "What's New" when changelog updates
 
-### Files to Edit
+Track the last-seen changelog version in `localStorage`. When the app loads and the latest version is newer than what the user last saw, auto-open the ChangelogDialog.
+
+**Files**:
+- `src/components/index/DesktopLayout.tsx` -- add state + effect to compare `localStorage` key `roboheard_last_seen_changelog` against `changelog[0].version`. If different, auto-open `ChangelogDialog`. On close, save the current version.
+- Import `ChangelogDialog` and `changelog` into DesktopLayout.
+
+### 4. Make agent prompts mode-aware (discussion vs conductor context)
+
+Currently in `usePlatforms.ts`, the `contextMessage` injected as the first message only mentions isolated/side-by-side vs discussion mode. It has no awareness of conductor mode or conversation modes like free mode.
+
+**Change in `src/hooks/usePlatforms.ts`** (`callAIAPI` function, lines ~285-300):
+- Add a `conductor` chatMode branch: "You are {name} being orchestrated by a Conductor AI. Follow the conductor's instructions precisely. The conductor assigns you specific roles and tasks — stay in your lane and deliver focused answers."
+- Enhance the discussion mode prompt to mention: "This is a live collaborative discussion. You and the other agents are having a real-time conversation. Build on ideas, respectfully disagree, and keep the dialogue flowing."
+- For free mode (detected via messages or a flag), add context: "The agents are in free conversation mode — talking autonomously among themselves. Be natural, opinionated, and engaging."
+
+Since free mode status isn't passed to `callAIAPI`, we'll add an optional `isFreeMode` parameter.
+
+**Files**:
+- `src/hooks/usePlatforms.ts` -- update `callAIAPI` signature and context messages
+- `src/hooks/useSimpleDiscussion.ts`, `src/hooks/useDiscussion.ts`, `src/hooks/useFreeMode.ts` -- pass `isFreeMode` flag where applicable
+
+### Technical Details
 
 | File | Change |
 |------|--------|
-| `src/components/index/LandingPage.tsx` | Two-column hero layout, remove standalone DemoChat |
-| `src/components/index/LandingHero.tsx` | Left-align on desktop, responsive adjustments |
-| `src/components/index/DemoChat.tsx` | Cooler opening lines, remove outer heading/margins, full-width |
+| `src/data/changelog.ts` | Add v2.3.0 entry |
+| `src/components/index/DesktopLayout.tsx` | Auto-start tour for new users; auto-show changelog on version change |
+| `src/hooks/usePlatforms.ts` | Add conductor/free-mode aware prompts to `callAIAPI` |
+| `src/hooks/useSimpleDiscussion.ts` | Pass free mode context |
+| `src/hooks/useDiscussion.ts` | Pass free mode context |
+| `src/hooks/useFreeMode.ts` | Pass isFreeMode flag through callAIAPI |
 
