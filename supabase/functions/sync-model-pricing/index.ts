@@ -50,6 +50,17 @@ const PRICING_MAP: Array<{
   { platform: 'grok', model_id: 'grok-3-mini-fast',cost_tier: 'low',    api_cost_per_1k_tokens: 0.003, tokens_per_message: 6 },
   { platform: 'grok', model_id: 'grok-2-vision-1212', cost_tier: 'medium', api_cost_per_1k_tokens: 0.007, tokens_per_message: 12 },
   { platform: 'grok', model_id: 'grok-2-1212',         cost_tier: 'medium', api_cost_per_1k_tokens: 0.006, tokens_per_message: 10 },
+
+  // Mistral AI
+  { platform: 'mistral', model_id: 'mistral-large-latest',  cost_tier: 'high',   api_cost_per_1k_tokens: 0.008, tokens_per_message: 16 },
+  { platform: 'mistral', model_id: 'mistral-medium-latest', cost_tier: 'medium', api_cost_per_1k_tokens: 0.005, tokens_per_message: 10 },
+  { platform: 'mistral', model_id: 'mistral-small-latest',  cost_tier: 'low',    api_cost_per_1k_tokens: 0.002, tokens_per_message: 6 },
+  { platform: 'mistral', model_id: 'codestral-latest',      cost_tier: 'medium', api_cost_per_1k_tokens: 0.003, tokens_per_message: 8 },
+
+  // Perplexity AI
+  { platform: 'perplexity', model_id: 'sonar-pro',            cost_tier: 'high',   api_cost_per_1k_tokens: 0.006, tokens_per_message: 14 },
+  { platform: 'perplexity', model_id: 'sonar',                cost_tier: 'low',    api_cost_per_1k_tokens: 0.001, tokens_per_message: 6 },
+  { platform: 'perplexity', model_id: 'sonar-reasoning-pro',  cost_tier: 'high',   api_cost_per_1k_tokens: 0.008, tokens_per_message: 18 },
 ];
 
 serve(async (req) => {
