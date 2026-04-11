@@ -44,8 +44,11 @@ const DemoChat: React.FC = () => {
     for (let i = 0; i <= text.length; i++) {
       await new Promise(r => setTimeout(r, 15));
       setMessages(prev => {
-        const copy = [...prev];
-        const idx = copy.findLastIndex(m => m.platform === platform && m.typing);
+      const copy = [...prev];
+        let idx = -1;
+        for (let j = copy.length - 1; j >= 0; j--) {
+          if (copy[j].platform === platform && copy[j].typing) { idx = j; break; }
+        }
         if (idx !== -1) {
           copy[idx] = { ...copy[idx], content: text.slice(0, i) };
         }
@@ -55,7 +58,10 @@ const DemoChat: React.FC = () => {
 
     setMessages(prev => {
       const copy = [...prev];
-      const idx = copy.findLastIndex(m => m.platform === platform && m.typing);
+      let idx = -1;
+      for (let j = copy.length - 1; j >= 0; j--) {
+        if (copy[j].platform === platform && copy[j].typing) { idx = j; break; }
+      }
       if (idx !== -1) copy[idx] = { ...copy[idx], typing: false };
       return copy;
     });
