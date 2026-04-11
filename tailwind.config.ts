@@ -52,6 +52,8 @@ export default {
 					anthropic: '#98D982',    // Light Green
 					deepseek: '#87CEEB',     // Sky Blue with green tint
 					grok: '#DDA0DD',         // Plum with green undertone
+					mistral: '#F4A460',      // Sandy Brown (orange)
+					perplexity: '#20B2AA',   // Light Sea Green (teal)
 				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',

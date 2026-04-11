@@ -20,7 +20,7 @@ const LandingHeroSection = () => {
         </h1>
         <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed">
           The first platform where a <strong>Conductor AI</strong> orchestrates real-time debates between 
-          GPT-5, Claude 4, Gemini 2.5, Grok-4, and DeepSeek-R2 — turning seven frontier models into one collaborative super-intelligence.
+          GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek-R2, Mistral, and Perplexity — turning seven frontier models into one collaborative super-intelligence.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button size="lg" onClick={() => navigate('/auth')} className="text-lg px-8 py-6">
