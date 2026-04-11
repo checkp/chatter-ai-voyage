@@ -218,8 +218,6 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
       {/* Floating Activity Console */}
       <FloatingActivityConsole />
 
-      {/* Contact Us Button */}
-      <ContactUsButton />
 
       {/* Guided Tour Overlay */}
       <GuidedTour
