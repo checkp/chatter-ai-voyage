@@ -39,7 +39,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const isDisabled = isLoadingResponse || isPending;
 
   return (
-    <footer className="border-t bg-secondary border-border p-4 flex-shrink-0">
+    <footer className="border-t bg-secondary border-border p-4 flex-shrink-0" data-tour="chat-input">
       <div className="flex items-center gap-2">
         <Textarea
           value={input}

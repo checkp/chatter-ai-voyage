@@ -25,7 +25,7 @@ const ConductorControls: React.FC<ConductorControlsProps> = ({
   onRequestDirection
 }) => {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" data-tour="conductor-controls">
       {/* Conductor Toggle */}
       <Tooltip>
         <TooltipTrigger asChild>
