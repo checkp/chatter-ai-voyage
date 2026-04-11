@@ -276,7 +276,8 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     platform: AIPlatform, 
     messages: Message[], 
     enabledPlatforms: AIPlatform[],
-    chatMode: ChatMode = 'discussion'
+    chatMode: ChatMode = 'discussion',
+    isFreeMode: boolean = false
   ): Promise<string> => {
     if (!user) throw new Error('User not authenticated');
 
@@ -286,14 +287,19 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     
     const conciseness = `Be concise and direct. Keep responses under 150 words unless the topic genuinely requires more depth. No filler, no preamble. Short paragraphs.`;
     
-    if (chatMode === 'isolated' || chatMode === 'side-by-side') {
+    if (isFreeMode) {
+      const otherAIs = enabledPlatforms.filter(p => p.id !== platform.id && p.enabled && p.hasApiKey);
+      contextMessage = `You are ${platform.name} in an autonomous free conversation mode with ${otherAIs.map(p => p.name).join(', ')}. The agents are talking among themselves without user prompts. Be natural, opinionated, and engaging. Build on what others said, challenge ideas, ask follow-up questions to other agents. Keep the dialogue flowing organically. ${conciseness}`;
+    } else if (chatMode === 'conductor') {
+      contextMessage = `You are ${platform.name} being orchestrated by a Conductor AI in a multi-agent system. Follow the conductor's instructions precisely. The conductor assigns you specific roles and tasks — stay in your lane and deliver focused, expert answers. Do not deviate from the assigned task or role. ${conciseness}`;
+    } else if (chatMode === 'isolated' || chatMode === 'side-by-side') {
       contextMessage = `You are ${platform.name} in a multi-AI chat app. The user may be comparing your response with other AI agents. ${conciseness}`;
     } else {
       const otherAIs = enabledPlatforms.filter(p => p.id !== platform.id && p.enabled && p.hasApiKey);
       if (otherAIs.length > 0) {
-        contextMessage = `You are ${platform.name} in a multi-AI chat alongside ${otherAIs.map(p => p.name).join(', ')}. ${conciseness}
+        contextMessage = `You are ${platform.name} in a live collaborative discussion alongside ${otherAIs.map(p => p.name).join(', ')}. This is a real-time multi-agent conversation. ${conciseness}
 
-Messages from other agents appear as [Agent Name responded]. Add your unique perspective — don't repeat what others said. If you disagree, explain briefly. Do not reference your own previous responses.`;
+Messages from other agents appear as [Agent Name responded]. Build on ideas, respectfully disagree when you have a different view, and keep the dialogue flowing. Add your unique perspective — don't repeat what others said. Do not reference your own previous responses.`;
       } else {
         contextMessage = `You are ${platform.name}. ${conciseness}`;
       }
