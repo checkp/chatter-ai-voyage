@@ -6,6 +6,8 @@ import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
 import ContactUsButton from '@/components/ContactUsButton';
 import FloatingActivityConsole from '@/components/FloatingActivityConsole';
 import ConductorSummary from '@/components/ConductorSummary';
+import GuidedTour from '@/components/GuidedTour';
+import { useTour } from '@/hooks/useTour';
 import MainContent from './MainContent';
 import type { DesktopInterfaceProps } from './types';
 
@@ -79,6 +81,8 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   currentSummary,
   conductorIsProcessing
 }) => {
+  const tour = useTour();
+
   return (
     <div className="min-h-screen bg-background flex h-screen overflow-hidden">
       <ChatSidebar 
@@ -120,6 +124,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           onStartConductor={onStartConductor}
           onStopConductor={onStopConductor}
           onRequestConductorDirection={onRequestConductorDirection}
+          onStartTour={tour.startTour}
         />
 
         {/* Add the Draggable AI Status Bar - hide in conductor mode */}
@@ -183,6 +188,16 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
       {/* Contact Us Button */}
       <ContactUsButton />
+
+      {/* Guided Tour Overlay */}
+      <GuidedTour
+        isActive={tour.isActive}
+        currentStep={tour.currentStep}
+        steps={tour.visibleSteps}
+        onNext={tour.nextStep}
+        onPrev={tour.prevStep}
+        onEnd={tour.endTour}
+      />
     </div>
   );
 };

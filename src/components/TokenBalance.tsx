@@ -68,7 +68,7 @@ const TokenBalance: React.FC<TokenBalanceProps> = memo(({ user, onPurchaseClick 
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" data-tour="token-balance">
       <div className="flex items-center gap-1">
         <Coins className={`w-4 h-4 ${isLowBalance ? 'text-orange-500' : 'text-muted-foreground'}`} />
         {isNearDailyLimit && (

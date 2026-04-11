@@ -22,6 +22,7 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
             size="sm"
             onClick={() => setActiveTab('chat')}
             className="h-8 w-8 p-0"
+            data-tour="tab-chat"
           >
             <MessageSquare className="h-4 w-4" />
           </Button>
@@ -38,6 +39,7 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
             size="sm"
             onClick={() => setActiveTab('settings')}
             className="h-8 w-8 p-0"
+            data-tour="tab-settings"
           >
             <Settings className="h-4 w-4" />
           </Button>
