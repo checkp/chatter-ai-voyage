@@ -230,6 +230,9 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         onPrev={tour.prevStep}
         onEnd={tour.endTour}
       />
+
+      {/* What's New Dialog */}
+      <ChangelogDialog open={showChangelog} onOpenChange={handleChangelogClose} />
     </div>
   );
 };
