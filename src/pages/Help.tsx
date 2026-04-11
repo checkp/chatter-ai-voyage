@@ -179,6 +179,8 @@ const Help: React.FC = () => {
             </CardContent>
           </Card>
         </div>
+
+        <ContactUsButton />
       </main>
     </div>
   );
