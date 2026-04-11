@@ -8,7 +8,7 @@ import ChatModeControls from '@/components/header/ChatModeControls';
 import TabNavigation from '@/components/header/TabNavigation';
 import UserControls from '@/components/header/UserControls';
 import { Button } from '@/components/ui/button';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Navigation } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Chat, ChatMode, AIPlatform } from '@/types/chat';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
