@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatHeader from '@/components/ChatHeader';
 import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
-import ContactUsButton from '@/components/ContactUsButton';
+
 import FloatingActivityConsole from '@/components/FloatingActivityConsole';
 import ConductorSummary from '@/components/ConductorSummary';
 import GuidedTour from '@/components/GuidedTour';
