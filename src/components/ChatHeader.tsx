@@ -8,7 +8,7 @@ import ChatModeControls from '@/components/header/ChatModeControls';
 import TabNavigation from '@/components/header/TabNavigation';
 import UserControls from '@/components/header/UserControls';
 import { Button } from '@/components/ui/button';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Navigation } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Chat, ChatMode, AIPlatform } from '@/types/chat';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
@@ -46,6 +46,7 @@ interface ChatHeaderProps {
   onStartConductor?: () => void;
   onStopConductor?: () => void;
   onRequestConductorDirection?: () => void;
+  onStartTour?: () => void;
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -74,7 +75,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   conductorState,
   onStartConductor,
   onStopConductor,
-  onRequestConductorDirection
+  onRequestConductorDirection,
+  onStartTour
 }) => {
   const activeChat = chats?.find(chat => chat.id === activeChatId);
 
@@ -130,6 +132,20 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             activeTab={activeTab}
             setActiveTab={setActiveTab}
           />
+
+          {/* Guided Tour */}
+          {onStartTour && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="Guided Tour" onClick={onStartTour}>
+                  <Navigation className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Take a Tour</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           {/* Help */}
           <Tooltip>
