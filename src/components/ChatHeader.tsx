@@ -75,7 +75,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   conductorState,
   onStartConductor,
   onStopConductor,
-  onRequestConductorDirection
+  onRequestConductorDirection,
+  onStartTour
 }) => {
   const activeChat = chats?.find(chat => chat.id === activeChatId);
 
