@@ -33,10 +33,11 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
       </div>
 
       {/* New Chat Button */}
-      <div className="p-4">
+      <div className="px-4 py-3">
         <Button 
+          variant="outline"
           onClick={onCreateChat} 
-          className="w-full"
+          className="w-full rounded-md bg-primary/10 border-primary/20 text-foreground hover:bg-primary/20 hover:border-primary/30 transition-all"
           disabled={isCreatingChat}
         >
           <Plus className="mr-2 h-4 w-4" />
