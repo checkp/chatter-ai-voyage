@@ -55,7 +55,7 @@ const ContactUsButton = () => {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
           <Button
-            className="fixed bottom-4 left-4 z-50 shadow-lg"
+            className="shadow-lg"
             size="sm"
             variant="outline"
           >
