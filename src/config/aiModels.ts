@@ -190,9 +190,75 @@ export const AI_MODELS: Record<string, ModelConfig[]> = {
       capabilities: ['text', 'reasoning', 'vision', 'coding', 'analysis'],
       speed: 'medium'
     }
+  ],
+  mistral: [
+    {
+      id: 'mistral-large-latest',
+      name: 'Mistral Large',
+      description: 'Most capable Mistral model for complex reasoning and multilingual tasks',
+      maxTokens: 128000,
+      costTier: 'high',
+      capabilities: ['text', 'reasoning', 'coding', 'multilingual'],
+      speed: 'medium'
+    },
+    {
+      id: 'mistral-medium-latest',
+      name: 'Mistral Medium',
+      description: 'Balanced model for general tasks',
+      maxTokens: 128000,
+      costTier: 'medium',
+      capabilities: ['text', 'reasoning', 'coding'],
+      speed: 'medium'
+    },
+    {
+      id: 'mistral-small-latest',
+      name: 'Mistral Small',
+      description: 'Fast and cost-effective for everyday tasks',
+      maxTokens: 128000,
+      costTier: 'low',
+      capabilities: ['text', 'reasoning'],
+      speed: 'fast'
+    },
+    {
+      id: 'codestral-latest',
+      name: 'Codestral',
+      description: 'Specialized coding model optimized for code generation',
+      maxTokens: 32000,
+      costTier: 'medium',
+      capabilities: ['coding', 'debugging', 'analysis'],
+      speed: 'fast'
+    }
+  ],
+  perplexity: [
+    {
+      id: 'sonar-pro',
+      name: 'Sonar Pro',
+      description: 'Multi-step reasoning with real-time web search and citations',
+      maxTokens: 128000,
+      costTier: 'high',
+      capabilities: ['text', 'reasoning', 'search', 'citations'],
+      speed: 'medium'
+    },
+    {
+      id: 'sonar',
+      name: 'Sonar',
+      description: 'Fast lightweight search for everyday questions',
+      maxTokens: 128000,
+      costTier: 'low',
+      capabilities: ['text', 'search', 'citations'],
+      speed: 'fast'
+    },
+    {
+      id: 'sonar-reasoning-pro',
+      name: 'Sonar Reasoning Pro',
+      description: 'Advanced chain-of-thought reasoning with real-time search',
+      maxTokens: 128000,
+      costTier: 'high',
+      capabilities: ['text', 'reasoning', 'search', 'citations', 'analysis'],
+      speed: 'slow'
+    }
   ]
 };
-
 export const getModelConfig = (platformId: string, modelId: string): ModelConfig | undefined => {
   return AI_MODELS[platformId]?.find(model => model.id === modelId);
 };
@@ -206,7 +272,9 @@ export const getDefaultModel = (platformId: string): string => {
     anthropic: 'claude-sonnet-4-20250514',
     deepseek: 'deepseek-chat',
     grok: 'grok-4',
-    google: 'gemini-2.5-flash'
+    google: 'gemini-2.5-flash',
+    mistral: 'mistral-large-latest',
+    perplexity: 'sonar-pro'
   };
   
   return defaults[platformId] || models[0].id;

@@ -21,7 +21,9 @@ export const ensureDefaultAgentSettings = async (userId: string) => {
       { platform: 'openai', model: 'gpt-4o-mini', enabled: true },
       { platform: 'anthropic', model: 'claude-sonnet-4-20250514', enabled: true },
       { platform: 'deepseek', model: 'deepseek-chat', enabled: true },
-      { platform: 'grok', model: 'grok-3', enabled: true }
+      { platform: 'grok', model: 'grok-3', enabled: true },
+      { platform: 'mistral', model: 'mistral-large-latest', enabled: true },
+      { platform: 'perplexity', model: 'sonar-pro', enabled: true }
     ];
     
     const settingsToInsert = [];

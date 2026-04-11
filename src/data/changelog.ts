@@ -12,6 +12,19 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.4.0",
+    date: "2026-04-11",
+    title: "Mistral AI & Perplexity AI Integration",
+    description: "Added two new frontier AI providers — Mistral AI for multilingual reasoning and Perplexity AI for real-time web search with citations.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "🌀 Mistral AI: Added Mistral Large, Medium, Small, and Codestral models with multilingual and coding capabilities" },
+      { type: "feature", description: "🔮 Perplexity AI: Added Sonar Pro, Sonar, and Sonar Reasoning Pro with live web search and automatic source citations" },
+      { type: "improvement", description: "🎯 7 Frontier Providers: Platform now orchestrates models from OpenAI, Anthropic, Google, xAI, DeepSeek, Mistral, and Perplexity" },
+      { type: "improvement", description: "🎨 New Agent Colors: Distinctive orange (Mistral) and teal (Perplexity) theme colors" }
+    ]
+  },
+  {
     version: "2.3.0",
     date: "2026-04-11",
     title: "Interactive Guided Tour, Demo Chat & Mode-Aware Agents",
