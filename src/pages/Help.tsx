@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Copy, HelpCircle, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import ContactUsButton from '@/components/ContactUsButton';
 
 const prompts = {
   conversation: [
@@ -178,6 +179,8 @@ const Help: React.FC = () => {
             </CardContent>
           </Card>
         </div>
+
+        <ContactUsButton />
       </main>
     </div>
   );
