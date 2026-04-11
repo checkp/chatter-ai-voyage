@@ -284,26 +284,18 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     
     let contextMessage = '';
     
+    const conciseness = `Be concise and direct. Keep responses under 150 words unless the topic genuinely requires more depth. No filler, no preamble. Short paragraphs.`;
+    
     if (chatMode === 'isolated' || chatMode === 'side-by-side') {
-      contextMessage = `You are ${platform.name} in isolated mode. You can only see user messages and your own previous responses. Respond naturally and helpfully to the user's messages without referencing other AI agents.`;
+      contextMessage = `You are ${platform.name} in a multi-AI chat app. The user may be comparing your response with other AI agents. ${conciseness}`;
     } else {
       const otherAIs = enabledPlatforms.filter(p => p.id !== platform.id && p.enabled && p.hasApiKey);
       if (otherAIs.length > 0) {
-        contextMessage = `You are ${platform.name} in a multi-AI conversation with: ${otherAIs.map(p => p.name).join(', ')}.
+        contextMessage = `You are ${platform.name} in a multi-AI chat alongside ${otherAIs.map(p => p.name).join(', ')}. ${conciseness}
 
-IMPORTANT INSTRUCTIONS:
-- You can see responses from other AI agents marked with [Agent Name responded]
-- Build upon the conversation naturally, considering what others have said
-- Add your unique perspective without simply repeating what others said
-- If you disagree with another agent, explain your reasoning
-- You can reference other agents' points when relevant
-- Keep responses focused and add genuine value to the discussion
-- Avoid redundant information already covered by other agents
-- DO NOT reference or build upon your own previous responses
-
-Your goal: Contribute meaningfully to this multi-agent conversation as ${platform.name}.`;
+Messages from other agents appear as [Agent Name responded]. Add your unique perspective — don't repeat what others said. If you disagree, explain briefly. Do not reference your own previous responses.`;
       } else {
-        contextMessage = `You are ${platform.name}. Respond to the conversation naturally without referencing your previous responses.`;
+        contextMessage = `You are ${platform.name}. ${conciseness}`;
       }
     }
     
