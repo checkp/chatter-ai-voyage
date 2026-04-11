@@ -90,7 +90,14 @@ const DemoChat: React.FC = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('demo-chat', {
-        body: { message: userMessage },
+        body: {
+          message: userMessage,
+          userContext: {
+            language: navigator.language || 'en',
+            hour: new Date().getHours(),
+            platform: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+          },
+        },
       });
 
       if (error) throw error;
