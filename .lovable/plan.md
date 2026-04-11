@@ -1,48 +1,80 @@
 
 
-## Plan: Streamline Onboarding, Fix Side-by-Side Layout, and Add Concise Default Mode
+## Plan: Add Interactive Demo Chat on Landing Page
 
-### 1. Shorten the Onboarding (WelcomeScreen.tsx)
+### Concept
+A small embedded chat widget on the landing page where visitors can type a message and see simulated multi-AI responses (from GPT, Claude, DeepSeek). After the user sends their 2nd message (3rd total send = user's 2nd), they get redirected to auth with their demo conversation preserved via localStorage so it loads into their first real chat.
 
-**Problem**: Page 2 is massive -- 4 sample prompts + a huge Conductor prompt + a pro tip card.
+### New Files
 
-**Solution**: Collapse pages 1 and 2 into a single screen:
-- Keep the 3 feature cards (Multi-AI, Private Agent, Conductor) from page 1
-- Remove page 2 entirely (sample prompts and conductor prompt) -- users don't need to copy prompts manually
-- Keep "What's New" as optional page 2
-- Single "Start Chatting" button that calls `onGetStarted` directly
+**`src/components/index/DemoChat.tsx`**
+- A compact chat window component (~400px tall) styled like a mini version of the main chat
+- Shows agent avatars/names with colored badges (GPT, Claude, DeepSeek)
+- Pre-seeded with a welcome message from each agent greeting the user
+- Text input at the bottom with send button
+- On first user message: fire real API calls to 3 agents (using the existing edge functions but without auth -- OR use pre-canned simulated responses that type out with a streaming animation)
+- On second user message: show a "Sign up to continue this conversation" overlay, redirect to `/auth`
+- Save the conversation to `localStorage` under a key like `demo_conversation`
 
-### 2. Fix Side-by-Side Layout (SideBySideLayout.tsx)
+**Decision: Real API vs Simulated responses**
+- Real API calls require auth tokens -- won't work for anonymous users
+- Better approach: **pre-scripted typewriter responses** for the demo. Each agent has 2-3 canned responses per common topic. If the user's message doesn't match, use generic "great question" responses. This is zero-cost and instant.
 
-**Problem**: The outer `ScrollArea` wraps the flex container but there's no horizontal scroll, and individual agent windows lack proper vertical scrolling.
+### Changes to Existing Files
 
-**Changes**:
-- Replace the outer `ScrollArea` with a div that has `overflow-x-auto` for horizontal scrolling
-- Give the inner flex container a fixed height (`h-full`) so agent windows fill the available space
-- Each agent window already has `ScrollArea` on `flex-1` -- ensure the parent container has a defined height so the scroll area activates properly
-- Set agent windows to a reasonable `w-80` with `flex-shrink-0` instead of just `min-w-80`
+**`src/components/index/LandingPage.tsx`**
+- Import and render `<DemoChat />` between `LandingHero` and `ConductorShowcase`
+- Add a heading like "Try it now -- no signup needed"
 
-### 3. Default to Concise "Simple" Mode (usePlatforms.ts)
+**`src/components/AuthPage.tsx`**
+- After successful auth redirect, check for `demo_conversation` in localStorage
+- If present, pass it via URL state or keep in localStorage for Index to pick up
 
-**Problem**: Agents are too verbose and don't have awareness of the chat environment by default, leading to a poor first impression.
+**`src/pages/Index.tsx`**
+- After auth, check `localStorage` for `demo_conversation`
+- If found, create a new chat and seed it with those messages, then clear localStorage
 
-**Changes in `usePlatforms.ts` `callAIAPI` function**:
-- Inject a system-level context message that:
-  - Tells agents they're in a multi-AI collaborative chat app
-  - Instructs them to be **concise** -- short paragraphs, direct answers, no filler
-  - Sets a "keep it under 150 words unless complexity demands more" guideline
-- Update both the `discussion` and `isolated` context messages to include conciseness instructions
-- Change the context injection from `role: 'user'` to `role: 'system'` (OpenAI/DeepSeek/Grok support this; for Claude it gets handled as the first user message which is fine)
+### DemoChat Component Details
 
-**Updated prompt examples**:
-- Discussion mode: "You are {name} in a multi-AI chat app alongside {others}. Be concise and direct. Keep responses under 150 words unless the topic requires depth. Add unique value, don't repeat what others said."
-- Isolated mode: "You are {name}. Be concise and direct. Keep responses under 150 words unless the topic requires depth."
+```text
++------------------------------------------+
+|  Try RoboHeard -- Live Demo              |
++------------------------------------------+
+| 🤖 GPT: Hey! Ask us anything.           |
+| 🎭 Claude: We're ready to collaborate.  |
+| 🔍 DeepSeek: Fire away!                 |
+|                                          |
+| [User]: What's the best programming     |
+|         language for AI?                 |
+|                                          |
+| 🤖 GPT: Python dominates for ML...      |
+| 🎭 Claude: I'd add that Rust is...      |
+| 🔍 DeepSeek: From a research angle...   |
++------------------------------------------+
+| [Type a message...]          [Send]      |
++------------------------------------------+
+```
 
-### Files to Edit
+- Typewriter effect for agent responses (30ms per char)
+- Track `sendCount` state -- on 2nd user send, show signup CTA overlay
+- Store messages in state as `{sender, content, platform}[]`
+- Save to `localStorage('demo_conversation')` on redirect
 
-| File | Change |
+### Conversation Preservation Flow
+
+1. User sends 2 messages in demo
+2. Demo saves messages to `localStorage`
+3. Redirect to `/auth`
+4. After auth success, Index.tsx checks localStorage
+5. Creates a new chat, inserts demo messages via Supabase
+6. Clears localStorage key
+7. User lands in main chat with their demo conversation intact
+
+### Files to Create/Edit
+
+| File | Action |
 |------|--------|
-| `src/components/WelcomeScreen.tsx` | Merge pages 1+2 into single page, remove sample prompts |
-| `src/components/SideBySideLayout.tsx` | Fix horizontal scroll, ensure per-agent vertical scroll |
-| `src/hooks/usePlatforms.ts` | Update context prompts to be concise-by-default |
+| `src/components/index/DemoChat.tsx` | Create -- demo chat widget |
+| `src/components/index/LandingPage.tsx` | Edit -- add DemoChat section |
+| `src/pages/Index.tsx` | Edit -- hydrate demo conversation after auth |
 
