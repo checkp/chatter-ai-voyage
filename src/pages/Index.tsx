@@ -1,11 +1,12 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useIndexHooks } from '@/hooks/useIndexHooks';
 import { useScrollEffects } from '@/hooks/useScrollEffects';
 import { createIndexHandlers } from '@/utils/indexHandlers';
 import LandingPage from '@/components/index/LandingPage';
 import WelcomeHandlers from '@/components/index/WelcomeHandlers';
 import IndexLayout from '@/components/index/IndexLayout';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
   // Initialize all hooks
@@ -87,6 +88,51 @@ const Index = () => {
       </div>
     );
   }
+
+  // Hydrate demo conversation after auth
+  useEffect(() => {
+    const hydrateDemoConversation = async () => {
+      if (!hooks.user) return;
+      const stored = localStorage.getItem('demo_conversation');
+      if (!stored) return;
+      
+      try {
+        const demoMessages = JSON.parse(stored);
+        localStorage.removeItem('demo_conversation');
+        
+        // Create a new conversation
+        const { data: conv, error: convError } = await supabase
+          .from('conversations')
+          .insert({ title: 'Demo Conversation', user_id: hooks.user.id })
+          .select()
+          .single();
+        
+        if (convError || !conv) return;
+
+        // Insert demo messages
+        const messagesToInsert = demoMessages
+          .filter((m: any) => m.content && !m.typing)
+          .map((m: any) => ({
+            conversation_id: conv.id,
+            content: m.content,
+            sender: m.sender === 'user' ? 'user' : 'ai',
+            platform: m.platform || null,
+          }));
+
+        if (messagesToInsert.length > 0) {
+          await supabase.from('messages').insert(messagesToInsert);
+        }
+
+        // Switch to the new conversation
+        hooks.setActiveChatId(conv.id);
+      } catch (e) {
+        console.error('Failed to hydrate demo conversation:', e);
+        localStorage.removeItem('demo_conversation');
+      }
+    };
+
+    hydrateDemoConversation();
+  }, [hooks.user]);
 
   // Show enhanced landing page if not authenticated
   if (!hooks.user) {
