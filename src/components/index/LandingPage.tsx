@@ -30,8 +30,19 @@ const LandingPage: React.FC = () => {
         </Button>
       </header>
       <div className="container mx-auto px-4 py-8 md:py-16">
-        <LandingHero />
-        <DemoChat />
+        {/* Desktop: side-by-side | Mobile: hero only */}
+        <div className="hidden md:flex items-stretch gap-8 mb-16">
+          <div className="flex-1 min-w-0">
+            <DemoChat />
+          </div>
+          <div className="flex-1 min-w-0 flex items-center">
+            <LandingHero />
+          </div>
+        </div>
+        {/* Mobile: stacked */}
+        <div className="md:hidden">
+          <LandingHero />
+        </div>
         <ConductorShowcase />
         <FeaturesGrid />
         <AITestimonials />
