@@ -1,59 +1,48 @@
 
 
-## Plan: Tour for Existing Users, Auto Changelog, Mode-Aware Agent Prompts
+## Plan: Add Mistral AI and Perplexity AI as New Agents
 
-### 1. Auto-launch guided tour for existing users
+### Overview
+Add two new AI providers — **Mistral AI** and **Perplexity AI** — following the exact same patterns as the existing 5 agents. This brings the total to 7 frontier models.
 
-Currently the tour only runs when manually triggered via the compass button. The tour completion is stored in `localStorage` (`roboheard_tour_completed`).
+### 1. Create Edge Functions
 
-**Change**: In `DesktopLayout.tsx`, auto-start the tour on mount if `tour.hasCompletedTour` is false. This means:
-- New users see it after onboarding completes
-- Existing users who never took the tour see it on next login
-- Once completed, it never auto-launches again
+**`supabase/functions/mistral-chat/index.ts`** — Same structure as `openai-chat/index.ts` but calling `https://api.mistral.ai/v1/chat/completions` with `MISTRAL_API_KEY`. Default model: `mistral-large-latest`.
 
-**File**: `src/components/index/DesktopLayout.tsx` -- add a `useEffect` that calls `tour.startTour()` if `!tour.hasCompletedTour`.
+**`supabase/functions/perplexity-chat/index.ts`** — Same structure but calling `https://api.perplexity.ai/chat/completions` with `PERPLEXITY_API_KEY`. Default model: `sonar-pro`. Perplexity returns `citations` in responses — we'll append them to the content.
 
-### 2. Update changelog with latest features
+### 2. Add API Keys as Secrets
+- `MISTRAL_API_KEY` — from https://console.mistral.ai
+- `PERPLEXITY_API_KEY` — via the Perplexity connector (already available)
 
-Add a new entry (v2.3.0, dated 2026-04-11) covering recent additions:
-- Live demo chat on landing page (real AI, no signup)
-- Side-by-side hero layout with demo chat
-- Guided tour for chat interface
-- Mode-aware agent prompts
+### 3. Update Config
+**`supabase/config.toml`** — Add `[functions.mistral-chat]` and `[functions.perplexity-chat]` with `verify_jwt = true`.
 
-**File**: `src/data/changelog.ts` -- prepend new entry.
+### 4. Update AI Models Config
+**`src/config/aiModels.ts`** — Add `mistral` and `perplexity` entries:
+- Mistral: `mistral-large-latest` (high), `mistral-medium-latest` (medium), `mistral-small-latest` (low), `codestral-latest` (coding)
+- Perplexity: `sonar-pro` (search+reasoning), `sonar` (fast search), `sonar-reasoning-pro` (deep reasoning)
 
-### 3. Auto-show "What's New" when changelog updates
+### 5. Update Service Layer
+**`src/services/aiApiService.ts`** — Add `callMistralAPI` and `callPerplexityAPI` functions following existing patterns.
 
-Track the last-seen changelog version in `localStorage`. When the app loads and the latest version is newer than what the user last saw, auto-open the ChangelogDialog.
+### 6. Update Platform Hook
+**`src/hooks/usePlatforms.ts`**:
+- Add `mistral` and `perplexity` to the default platforms array with icons 🌀 and 🔮
+- Add cases in `callAIAPI` switch
 
-**Files**:
-- `src/components/index/DesktopLayout.tsx` -- add state + effect to compare `localStorage` key `roboheard_last_seen_changelog` against `changelog[0].version`. If different, auto-open `ChangelogDialog`. On close, save the current version.
-- Import `ChangelogDialog` and `changelog` into DesktopLayout.
+### 7. Update Supporting Files
+- **`src/hooks/auth/userSetupOperations.ts`** — Add mistral and perplexity to default agent settings
+- **`src/components/ai-status/StatusBarUtils.ts`** — Add icons for new platforms
+- **`src/components/landing/AIModelsSection.tsx`** — Add Mistral and Perplexity to the showcase (now truly 7 models)
+- **`src/components/landing/LandingHeroSection.tsx`** — Update copy to include Mistral and Perplexity
+- **`src/data/changelog.ts`** — Add changelog entry for new agents
 
-### 4. Make agent prompts mode-aware (discussion vs conductor context)
+### 8. Add Theme Colors
+**`tailwind.config.ts`** — Add `agent-mistral` (orange) and `agent-perplexity` (teal) colors.
 
-Currently in `usePlatforms.ts`, the `contextMessage` injected as the first message only mentions isolated/side-by-side vs discussion mode. It has no awareness of conductor mode or conversation modes like free mode.
-
-**Change in `src/hooks/usePlatforms.ts`** (`callAIAPI` function, lines ~285-300):
-- Add a `conductor` chatMode branch: "You are {name} being orchestrated by a Conductor AI. Follow the conductor's instructions precisely. The conductor assigns you specific roles and tasks — stay in your lane and deliver focused answers."
-- Enhance the discussion mode prompt to mention: "This is a live collaborative discussion. You and the other agents are having a real-time conversation. Build on ideas, respectfully disagree, and keep the dialogue flowing."
-- For free mode (detected via messages or a flag), add context: "The agents are in free conversation mode — talking autonomously among themselves. Be natural, opinionated, and engaging."
-
-Since free mode status isn't passed to `callAIAPI`, we'll add an optional `isFreeMode` parameter.
-
-**Files**:
-- `src/hooks/usePlatforms.ts` -- update `callAIAPI` signature and context messages
-- `src/hooks/useSimpleDiscussion.ts`, `src/hooks/useDiscussion.ts`, `src/hooks/useFreeMode.ts` -- pass `isFreeMode` flag where applicable
-
-### Technical Details
-
-| File | Change |
-|------|--------|
-| `src/data/changelog.ts` | Add v2.3.0 entry |
-| `src/components/index/DesktopLayout.tsx` | Auto-start tour for new users; auto-show changelog on version change |
-| `src/hooks/usePlatforms.ts` | Add conductor/free-mode aware prompts to `callAIAPI` |
-| `src/hooks/useSimpleDiscussion.ts` | Pass free mode context |
-| `src/hooks/useDiscussion.ts` | Pass free mode context |
-| `src/hooks/useFreeMode.ts` | Pass isFreeMode flag through callAIAPI |
+### Technical Notes
+- Mistral API is OpenAI-compatible format, so the edge function is nearly identical to OpenAI's
+- Perplexity connector is available but we need the `PERPLEXITY_API_KEY` secret for the edge function
+- Both platforms use `platform` field in `model_pricing` table for token cost tracking
 
