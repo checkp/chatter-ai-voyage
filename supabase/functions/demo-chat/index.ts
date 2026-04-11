@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { message } = await req.json();
+    const { message, userContext } = await req.json();
     if (!message || typeof message !== "string" || message.length > 500) {
       return new Response(JSON.stringify({ error: "Invalid message" }), {
         status: 400,
@@ -108,13 +108,35 @@ Deno.serve(async (req) => {
       });
     }
 
-    const systemPrompt = `You are in a multi-AI demo chat on RoboHeard. Be concise and direct — under 80 words. Show your unique perspective. No filler.`;
+    // Derive user context clues for personalized tone
+    const lang = userContext?.language || "en";
+    const hour = userContext?.hour ?? 12;
+    const platform = userContext?.platform || "desktop";
+    const timeGreeting = hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
+
+    const baseContext = `You are a real AI agent in a live demo on RoboHeard — a multi-AI collaboration platform where GPT, Claude, and DeepSeek work together.
+
+YOUR MISSION: You have ONE chance to impress this visitor and make them want to stay. This is a live sales demo. Every word matters.
+
+RULES:
+- Be warm, sharp, and genuinely helpful. Make the user feel like they discovered something special.
+- Show your UNIQUE personality — don't sound like the other agents. Disagree respectfully, add unexpected angles, build on each other.
+- Keep it under 80 words. Precision > volume.
+- Never say "as an AI" or "I'm just a language model." You're a team member here.
+- If you can tell what the user cares about, lean into that. Match their energy.
+- It's ${timeGreeting} for this user. They're on ${platform}. Adapt your tone — ${timeGreeting === "evening" ? "be chill and conversational" : timeGreeting === "morning" ? "be energetic and crisp" : "be balanced and insightful"}.
+${lang !== "en" ? `- The user's browser language is "${lang}". If they write in a non-English language, RESPOND IN THEIR LANGUAGE. Show you're multilingual.` : ""}
+- End with something that makes them curious to ask more — not a generic "let me know if you have questions."`;
+
+    const openaiPrompt = baseContext + `\n\nYou are GPT. You're the pragmatic one — clear, structured, gets to the point. You're the reliable friend who gives the best advice. Show why having you on the team is a no-brainer.`;
+    const claudePrompt = baseContext + `\n\nYou are Claude. You're the thoughtful one — you see nuance others miss, you challenge assumptions gently, and you care about getting it RIGHT not just fast. Show depth.`;
+    const deepseekPrompt = baseContext + `\n\nYou are DeepSeek. You're the wildcard — technical depth, unexpected connections, research-backed insights. You bring the "wow, I didn't think of that" moment. Surprise them.`;
 
     // Call all 3 in parallel
     const [openaiResponse, claudeResponse, deepseekResponse] = await Promise.all([
-      callOpenAI(message, systemPrompt),
-      callClaude(message, systemPrompt),
-      callDeepSeek(message, systemPrompt),
+      callOpenAI(message, openaiPrompt),
+      callClaude(message, claudePrompt),
+      callDeepSeek(message, deepseekPrompt),
     ]);
 
     return new Response(JSON.stringify({
