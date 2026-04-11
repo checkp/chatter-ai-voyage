@@ -25,7 +25,33 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = 'sonar-pro' } = await req.json();
+    const { messages: rawMessages, model = 'sonar-pro' } = await req.json();
+    
+    // Perplexity requires strict alternation: user/assistant messages must alternate
+    // Filter and fix message ordering
+    const messages = [];
+    let lastRole = '';
+    for (const msg of rawMessages) {
+      const role = msg.role === 'assistant' ? 'assistant' : 'user';
+      if (role === lastRole && role === 'user') {
+        // Merge consecutive user messages
+        messages[messages.length - 1].content += '\n' + msg.content;
+      } else if (role === lastRole && role === 'assistant') {
+        // Merge consecutive assistant messages
+        messages[messages.length - 1].content += '\n' + msg.content;
+      } else {
+        messages.push({ role, content: msg.content });
+        lastRole = role;
+      }
+    }
+    // Ensure first message is user
+    if (messages.length > 0 && messages[0].role !== 'user') {
+      messages.shift();
+    }
+    // Ensure last message is user
+    if (messages.length > 0 && messages[messages.length - 1].role !== 'user') {
+      messages.pop();
+    }
     const user_id = user.id;
     
     let { data: tokenData, error: tokenError } = await supabaseClient
