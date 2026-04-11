@@ -129,12 +129,7 @@ const DemoChat: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto my-12">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold mb-2">Try it now — real AI, no signup</h2>
-        <p className="text-muted-foreground">Send a message and watch GPT, Claude & DeepSeek respond live</p>
-      </div>
-
+    <div className="w-full">
       <div className="relative rounded-xl border bg-card shadow-lg overflow-hidden">
         {/* Header */}
         <div className="px-4 py-3 border-b bg-muted/30 flex items-center gap-2">
