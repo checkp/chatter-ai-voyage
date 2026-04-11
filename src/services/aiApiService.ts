@@ -127,3 +127,37 @@ export const callGeminiAPI = async (
     return response.data.content;
   }).catch(e => { throw friendlyError(e, 'Gemini'); });
 };
+
+export const callMistralAPI = async (
+  conversationHistory: Array<{role: 'user' | 'assistant', content: string}>,
+  user: SupabaseUser,
+  model: string = 'mistral-large-latest'
+): Promise<string> => {
+  return withRetry(async () => {
+    const session = await getValidSession();
+    const response = await supabase.functions.invoke('mistral-chat', {
+      body: { messages: conversationHistory, model, user_id: user.id },
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    if (response.error) throw new Error(response.error.message || 'Mistral API call failed');
+    if (!response.data?.content) throw new Error('Mistral API returned empty response');
+    return response.data.content;
+  }).catch(e => { throw friendlyError(e, 'Mistral'); });
+};
+
+export const callPerplexityAPI = async (
+  conversationHistory: Array<{role: 'user' | 'assistant', content: string}>,
+  user: SupabaseUser,
+  model: string = 'sonar-pro'
+): Promise<string> => {
+  return withRetry(async () => {
+    const session = await getValidSession();
+    const response = await supabase.functions.invoke('perplexity-chat', {
+      body: { messages: conversationHistory, model, user_id: user.id },
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    if (response.error) throw new Error(response.error.message || 'Perplexity API call failed');
+    if (!response.data?.content) throw new Error('Perplexity API returned empty response');
+    return response.data.content;
+  }).catch(e => { throw friendlyError(e, 'Perplexity'); });
+};
