@@ -1,49 +1,48 @@
 
 
-## Rework Image Generation Panel
+## Plan: Streamline Onboarding, Fix Side-by-Side Layout, and Add Concise Default Mode
 
-### Current State
-- Only supports OpenAI DALL-E 2/3 and GPT Image 1
-- Plain card-based layout, basic form with model/size selects
-- Edge function only calls OpenAI's image API
+### 1. Shorten the Onboarding (WelcomeScreen.tsx)
 
-### Changes
+**Problem**: Page 2 is massive -- 4 sample prompts + a huge Conductor prompt + a pro tip card.
 
-**1. `src/components/ImageGeneration.tsx` — UI Redesign + New Engines**
-- Add engine selector with visual cards instead of plain dropdown: **OpenAI** (DALL-E 3, GPT Image 1), **Google Gemini** (Gemini Image, Gemini Pro Image), **Grok** (Aurora)
-- Replace plain input with a larger textarea for prompts
-- Add style preset chips (Photorealistic, Digital Art, Anime, Oil Painting, 3D Render, Watercolor)
-- Show selected engine's badge with cost, speed indicator, and capabilities
-- Improve gallery: add lightbox-style image preview on click, better grid with masonry-like layout, date grouping
-- Add aspect ratio visual selector (square, landscape, portrait icons) instead of text dropdown
-- Update `getTokenCost` to cover all new engines
+**Solution**: Collapse pages 1 and 2 into a single screen:
+- Keep the 3 feature cards (Multi-AI, Private Agent, Conductor) from page 1
+- Remove page 2 entirely (sample prompts and conductor prompt) -- users don't need to copy prompts manually
+- Keep "What's New" as optional page 2
+- Single "Start Chatting" button that calls `onGetStarted` directly
 
-**2. `supabase/functions/generate-image/index.ts` — Multi-Engine Support**
-- Add routing logic based on `model` parameter:
-  - `dall-e-3`, `gpt-image-1` → OpenAI API (existing)
-  - `gemini-image`, `gemini-pro-image` → Lovable AI Gateway (`google/gemini-2.5-flash-image`, `google/gemini-3-pro-image-preview`)
-  - `grok-aurora` → Grok/xAI image API using `XAI_API_KEY`
-- Extract base64 from each provider's response format
-- Keep existing storage upload + token deduction logic unchanged
+### 2. Fix Side-by-Side Layout (SideBySideLayout.tsx)
 
-**3. `src/hooks/useImageGeneration.ts` — No structural changes**
-- Only minor: pass `style` parameter through to edge function if style presets are selected
+**Problem**: The outer `ScrollArea` wraps the flex container but there's no horizontal scroll, and individual agent windows lack proper vertical scrolling.
 
-**4. `src/pages/ImageGeneration.tsx` — Minor polish**
-- Add gradient background accent to header area
+**Changes**:
+- Replace the outer `ScrollArea` with a div that has `overflow-x-auto` for horizontal scrolling
+- Give the inner flex container a fixed height (`h-full`) so agent windows fill the available space
+- Each agent window already has `ScrollArea` on `flex-1` -- ensure the parent container has a defined height so the scroll area activates properly
+- Set agent windows to a reasonable `w-80` with `flex-shrink-0` instead of just `min-w-80`
 
-### Technical Details
+### 3. Default to Concise "Simple" Mode (usePlatforms.ts)
 
-Engine routing in edge function:
-```text
-model param        → API endpoint
-─────────────────────────────────────
-dall-e-3           → OpenAI /v1/images/generations
-gpt-image-1        → OpenAI /v1/images/generations  
-gemini-image       → Lovable AI Gateway (gemini-2.5-flash-image)
-gemini-pro-image   → Lovable AI Gateway (gemini-3-pro-image-preview)
-grok-aurora        → xAI grok-2-image-gen endpoint
-```
+**Problem**: Agents are too verbose and don't have awareness of the chat environment by default, leading to a poor first impression.
 
-Size options vary by engine — the UI will dynamically show valid sizes per selected model.
+**Changes in `usePlatforms.ts` `callAIAPI` function**:
+- Inject a system-level context message that:
+  - Tells agents they're in a multi-AI collaborative chat app
+  - Instructs them to be **concise** -- short paragraphs, direct answers, no filler
+  - Sets a "keep it under 150 words unless complexity demands more" guideline
+- Update both the `discussion` and `isolated` context messages to include conciseness instructions
+- Change the context injection from `role: 'user'` to `role: 'system'` (OpenAI/DeepSeek/Grok support this; for Claude it gets handled as the first user message which is fine)
+
+**Updated prompt examples**:
+- Discussion mode: "You are {name} in a multi-AI chat app alongside {others}. Be concise and direct. Keep responses under 150 words unless the topic requires depth. Add unique value, don't repeat what others said."
+- Isolated mode: "You are {name}. Be concise and direct. Keep responses under 150 words unless the topic requires depth."
+
+### Files to Edit
+
+| File | Change |
+|------|--------|
+| `src/components/WelcomeScreen.tsx` | Merge pages 1+2 into single page, remove sample prompts |
+| `src/components/SideBySideLayout.tsx` | Fix horizontal scroll, ensure per-agent vertical scroll |
+| `src/hooks/usePlatforms.ts` | Update context prompts to be concise-by-default |
 
