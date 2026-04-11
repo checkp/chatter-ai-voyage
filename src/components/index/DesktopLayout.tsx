@@ -188,6 +188,16 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
       {/* Contact Us Button */}
       <ContactUsButton />
+
+      {/* Guided Tour Overlay */}
+      <GuidedTour
+        isActive={tour.isActive}
+        currentStep={tour.currentStep}
+        steps={tour.visibleSteps}
+        onNext={tour.nextStep}
+        onPrev={tour.prevStep}
+        onEnd={tour.endTour}
+      />
     </div>
   );
 };
