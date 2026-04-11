@@ -39,7 +39,7 @@ const LandingPage: React.FC = () => {
             <img 
               src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png" 
               alt="RoboHeard Logo" 
-              className="w-full max-w-lg h-auto object-contain cursor-pointer hover:opacity-80 transition-opacity"
+              className="w-full max-w-sm h-auto object-contain cursor-pointer hover-scale hover:brightness-110 transition-all duration-300"
               onClick={() => navigate('/auth')}
             />
           </div>
