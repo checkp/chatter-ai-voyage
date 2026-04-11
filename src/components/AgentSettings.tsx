@@ -36,6 +36,8 @@ const AgentSettings = () => {
     { id: 'deepseek', name: 'DeepSeek', icon: '🔍' },
     { id: 'grok', name: 'Grok (X.AI)', icon: '🚀' },
     { id: 'google', name: 'Gemini (Google)', icon: '💎' },
+    { id: 'mistral', name: 'Mistral AI', icon: '🌀' },
+    { id: 'perplexity', name: 'Perplexity AI', icon: '🔮' },
   ];
 
   const loadSettings = useCallback(async () => {
