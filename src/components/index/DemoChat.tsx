@@ -77,15 +77,6 @@ const DemoChat: React.FC = () => {
 
     setMessages(prev => [...prev, { sender: 'user', content: userMessage }]);
 
-    if (newSendCount >= 2) {
-      setTimeout(() => {
-        const allMessages = [...messages, { sender: 'user' as const, content: userMessage }];
-        localStorage.setItem('demo_conversation', JSON.stringify(allMessages));
-        setShowCTA(true);
-      }, 500);
-      return;
-    }
-
     setIsLoading(true);
 
     try {
@@ -117,6 +108,18 @@ const DemoChat: React.FC = () => {
       ]);
     } finally {
       setIsLoading(false);
+    }
+
+    // After the 2nd message, save conversation and show CTA
+    if (newSendCount >= 2) {
+      setTimeout(() => {
+        setMessages(prev => {
+          const allMessages = prev.filter(m => !m.typing);
+          localStorage.setItem('demo_conversation', JSON.stringify(allMessages));
+          return prev;
+        });
+        setShowCTA(true);
+      }, 500);
     }
   };
 
