@@ -90,7 +90,7 @@ const FloatingActivityConsole: React.FC = () => {
 
       {/* Expanded log entries */}
       {isExpanded && (
-        <div ref={scrollRef} className="max-h-32 overflow-y-auto border-t border-border/30">
+        <div ref={scrollRef} className="max-h-24 overflow-y-auto border-t border-border/30">
           {entries.length === 0 ? (
             <div className="px-3 py-4 text-center text-[11px] text-muted-foreground font-mono">
               No activity yet...
