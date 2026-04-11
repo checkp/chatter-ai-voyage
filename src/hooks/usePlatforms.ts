@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform, Message, ChatMode } from '@/types/chat';
-import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI, callGeminiAPI } from '@/services/aiApiService';
+import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI, callGeminiAPI, callMistralAPI, callPerplexityAPI } from '@/services/aiApiService';
 import { getDefaultModel, getModelConfig } from '@/config/aiModels';
 
 const resolvePlatformModel = (platformId: string, model?: string | null) => {
@@ -65,6 +65,26 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       hasApiKey: true,
       selectedModel: getDefaultModel('google'),
       displayOrder: 5
+    },
+    { 
+      id: 'mistral', 
+      name: 'Mistral', 
+      enabled: true,
+      color: 'bg-agent-mistral border-agent-mistral text-cyber-bg', 
+      icon: '🌀',
+      hasApiKey: true,
+      selectedModel: getDefaultModel('mistral'),
+      displayOrder: 6
+    },
+    { 
+      id: 'perplexity', 
+      name: 'Perplexity', 
+      enabled: true,
+      color: 'bg-agent-perplexity border-agent-perplexity text-cyber-bg', 
+      icon: '🔮',
+      hasApiKey: true,
+      selectedModel: getDefaultModel('perplexity'),
+      displayOrder: 7
     },
   ]);
 
@@ -322,6 +342,10 @@ Messages from other agents appear as [Agent Name responded]. Build on ideas, res
         return await callGrokAPI(conversationHistory, user, selectedModel);
       case 'google':
         return await callGeminiAPI(conversationHistory, user, selectedModel);
+      case 'mistral':
+        return await callMistralAPI(conversationHistory, user, selectedModel);
+      case 'perplexity':
+        return await callPerplexityAPI(conversationHistory, user, selectedModel);
       default:
         throw new Error(`Unsupported platform: ${platform.id}`);
     }

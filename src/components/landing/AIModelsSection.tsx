@@ -5,12 +5,12 @@ import { Badge } from '@/components/ui/badge';
 const AIModelsSection = () => {
   const aiModels = [
     { name: "GPT-5", provider: "OpenAI", color: "bg-green-100 text-green-800", tag: "Reasoning" },
-    { name: "GPT-4o", provider: "OpenAI", color: "bg-green-100 text-green-800", tag: "Multimodal" },
     { name: "Claude 4", provider: "Anthropic", color: "bg-orange-100 text-orange-800", tag: "Analysis" },
-    { name: "DeepSeek-R2", provider: "DeepSeek AI", color: "bg-blue-100 text-blue-800", tag: "Open-Source" },
+    { name: "Gemini 2.5", provider: "Google", color: "bg-red-100 text-red-800", tag: "Long Context" },
     { name: "Grok-4", provider: "xAI", color: "bg-purple-100 text-purple-800", tag: "Real-Time" },
-    { name: "Grok", provider: "xAI", color: "bg-purple-100 text-purple-800", tag: "Wit & Speed" },
-    { name: "Gemini 2.5", provider: "Google", color: "bg-red-100 text-red-800", tag: "Long Context" }
+    { name: "DeepSeek-R2", provider: "DeepSeek AI", color: "bg-blue-100 text-blue-800", tag: "Open-Source" },
+    { name: "Mistral Large", provider: "Mistral AI", color: "bg-amber-100 text-amber-800", tag: "Multilingual" },
+    { name: "Sonar Pro", provider: "Perplexity", color: "bg-teal-100 text-teal-800", tag: "Live Search" }
   ];
 
   return (
