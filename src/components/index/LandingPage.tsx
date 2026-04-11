@@ -30,19 +30,22 @@ const LandingPage: React.FC = () => {
         </Button>
       </header>
       <div className="container mx-auto px-4 py-8 md:py-16">
-        {/* Desktop: side-by-side | Mobile: hero only */}
-        <div className="hidden md:flex items-stretch gap-8 mb-16">
+        {/* Desktop: demo chat left, logo right */}
+        <div className="hidden md:flex items-center gap-8 mb-8">
           <div className="flex-1 min-w-0">
             <DemoChat />
           </div>
-          <div className="flex-1 min-w-0 flex items-center">
-            <LandingHero />
+          <div className="flex-1 min-w-0 flex items-center justify-center">
+            <img 
+              src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png" 
+              alt="RoboHeard Logo" 
+              className="w-full max-w-lg h-auto object-contain cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => navigate('/auth')}
+            />
           </div>
         </div>
-        {/* Mobile: stacked */}
-        <div className="md:hidden">
-          <LandingHero />
-        </div>
+        {/* Hero text — always centered, full width */}
+        <LandingHero />
         <ConductorShowcase />
         <FeaturesGrid />
         <AITestimonials />
