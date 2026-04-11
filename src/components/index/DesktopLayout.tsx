@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatHeader from '@/components/ChatHeader';
 import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
@@ -7,9 +7,13 @@ import ContactUsButton from '@/components/ContactUsButton';
 import FloatingActivityConsole from '@/components/FloatingActivityConsole';
 import ConductorSummary from '@/components/ConductorSummary';
 import GuidedTour from '@/components/GuidedTour';
+import ChangelogDialog from '@/components/ChangelogDialog';
 import { useTour } from '@/hooks/useTour';
+import { changelog } from '@/data/changelog';
 import MainContent from './MainContent';
 import type { DesktopInterfaceProps } from './types';
+
+const CHANGELOG_STORAGE_KEY = 'roboheard_last_seen_changelog';
 
 interface DesktopLayoutProps extends DesktopInterfaceProps {
   conductorState: any;
@@ -82,6 +86,34 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   conductorIsProcessing
 }) => {
   const tour = useTour();
+  const [showChangelog, setShowChangelog] = useState(false);
+
+  // Auto-launch tour for users who haven't completed it
+  useEffect(() => {
+    if (!tour.hasCompletedTour && !tour.isActive) {
+      const timer = setTimeout(() => tour.startTour(), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [tour.hasCompletedTour, tour.isActive]);
+
+  // Auto-show changelog when version changes
+  useEffect(() => {
+    const lastSeen = localStorage.getItem(CHANGELOG_STORAGE_KEY);
+    const latestVersion = changelog[0]?.version;
+    if (latestVersion && lastSeen !== latestVersion) {
+      // Don't show changelog if tour is about to start (first-time users)
+      if (tour.hasCompletedTour) {
+        setShowChangelog(true);
+      }
+    }
+  }, [tour.hasCompletedTour]);
+
+  const handleChangelogClose = (open: boolean) => {
+    setShowChangelog(open);
+    if (!open) {
+      localStorage.setItem(CHANGELOG_STORAGE_KEY, changelog[0]?.version || '');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex h-screen overflow-hidden">
@@ -198,6 +230,9 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         onPrev={tour.prevStep}
         onEnd={tour.endTour}
       />
+
+      {/* What's New Dialog */}
+      <ChangelogDialog open={showChangelog} onOpenChange={handleChangelogClose} />
     </div>
   );
 };
