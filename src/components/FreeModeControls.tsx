@@ -33,7 +33,7 @@ const FreeModeControls: React.FC<FreeModeControlsProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" data-tour="free-mode">
       {!isFreeModeRunning ? (
         <>
           <Tooltip>
