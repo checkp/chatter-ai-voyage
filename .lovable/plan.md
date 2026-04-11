@@ -1,80 +1,55 @@
 
 
-## Plan: Add Interactive Demo Chat on Landing Page
+## Plan: Side-by-Side Hero Layout with Demo Chat + Cooler Opening Lines
 
-### Concept
-A small embedded chat widget on the landing page where visitors can type a message and see simulated multi-AI responses (from GPT, Claude, DeepSeek). After the user sends their 2nd message (3rd total send = user's 2nd), they get redirected to auth with their demo conversation preserved via localStorage so it loads into their first real chat.
+### Layout Change
 
-### New Files
+Restructure the hero section into a two-column layout on desktop:
+- **Left column**: The DemoChat widget (remove it from its current standalone position below hero)
+- **Right column**: The RoboHeard logo image + badge + headline + CTA buttons
+- **Mobile**: Stack vertically — hero text first, then demo chat below (same as current)
 
-**`src/components/index/DemoChat.tsx`**
-- A compact chat window component (~400px tall) styled like a mini version of the main chat
-- Shows agent avatars/names with colored badges (GPT, Claude, DeepSeek)
-- Pre-seeded with a welcome message from each agent greeting the user
-- Text input at the bottom with send button
-- On first user message: fire real API calls to 3 agents (using the existing edge functions but without auth -- OR use pre-canned simulated responses that type out with a streaming animation)
-- On second user message: show a "Sign up to continue this conversation" overlay, redirect to `/auth`
-- Save the conversation to `localStorage` under a key like `demo_conversation`
-
-**Decision: Real API vs Simulated responses**
-- Real API calls require auth tokens -- won't work for anonymous users
-- Better approach: **pre-scripted typewriter responses** for the demo. Each agent has 2-3 canned responses per common topic. If the user's message doesn't match, use generic "great question" responses. This is zero-cost and instant.
-
-### Changes to Existing Files
+### File Changes
 
 **`src/components/index/LandingPage.tsx`**
-- Import and render `<DemoChat />` between `LandingHero` and `ConductorShowcase`
-- Add a heading like "Try it now -- no signup needed"
+- Remove standalone `<DemoChat />` from below `<LandingHero />`
+- Create a new flex container wrapping `<DemoChat />` (left) and `<LandingHero />` (right) side by side on `md:` breakpoint
+- On mobile, hide demo chat here (desktop only) — mobile users go straight to hero + features
 
-**`src/components/AuthPage.tsx`**
-- After successful auth redirect, check for `demo_conversation` in localStorage
-- If present, pass it via URL state or keep in localStorage for Index to pick up
+**`src/components/index/LandingHero.tsx`**
+- Remove `text-center` and `mx-auto` centering — align text left on desktop
+- Keep the image, badge, headline, description, and CTAs but left-aligned when in the two-column context
+- Make it work both standalone (mobile) and as a right-column element (desktop)
 
-**`src/pages/Index.tsx`**
-- After auth, check `localStorage` for `demo_conversation`
-- If found, create a new chat and seed it with those messages, then clear localStorage
+**`src/components/index/DemoChat.tsx`**
+- Update the 3 initial greeting messages to be more personalized and compelling:
+  - GPT: Something warm and direct referencing the time of day, like "Welcome in. I'm GPT — ask me something wild and watch what happens."
+  - Claude: Something thoughtful, like "I'm Claude. I tend to see angles others miss. Test me."
+  - DeepSeek: Something edgy/technical, like "DeepSeek here. I dig deep where others skim. Let's go."
+- Remove the outer heading/subheading ("Try it now — real AI, no signup") — the widget speaks for itself in the hero
+- Adjust max-width to fill its column (`w-full` instead of `max-w-2xl mx-auto`)
+- Remove the `my-12` margin since it'll be inside the hero flex container
 
-### DemoChat Component Details
+### Visual Result (Desktop)
 
 ```text
-+------------------------------------------+
-|  Try RoboHeard -- Live Demo              |
-+------------------------------------------+
-| 🤖 GPT: Hey! Ask us anything.           |
-| 🎭 Claude: We're ready to collaborate.  |
-| 🔍 DeepSeek: Fire away!                 |
-|                                          |
-| [User]: What's the best programming     |
-|         language for AI?                 |
-|                                          |
-| 🤖 GPT: Python dominates for ML...      |
-| 🎭 Claude: I'd add that Rust is...      |
-| 🔍 DeepSeek: From a research angle...   |
-+------------------------------------------+
-| [Type a message...]          [Send]      |
-+------------------------------------------+
++---------------------------+----------------------------+
+|                           |                            |
+|   [Demo Chat Widget]      |   [RoboHeard Logo]         |
+|   GPT: Welcome in...      |   2026 — Agentic AI        |
+|   Claude: I see angles..  |   Seven Frontier Models,   |
+|   DeepSeek: Let's go.     |   One Conductor            |
+|                           |                            |
+|   [input field] [send]    |   [CTA Buttons]            |
+|                           |                            |
++---------------------------+----------------------------+
 ```
 
-- Typewriter effect for agent responses (30ms per char)
-- Track `sendCount` state -- on 2nd user send, show signup CTA overlay
-- Store messages in state as `{sender, content, platform}[]`
-- Save to `localStorage('demo_conversation')` on redirect
+### Files to Edit
 
-### Conversation Preservation Flow
-
-1. User sends 2 messages in demo
-2. Demo saves messages to `localStorage`
-3. Redirect to `/auth`
-4. After auth success, Index.tsx checks localStorage
-5. Creates a new chat, inserts demo messages via Supabase
-6. Clears localStorage key
-7. User lands in main chat with their demo conversation intact
-
-### Files to Create/Edit
-
-| File | Action |
+| File | Change |
 |------|--------|
-| `src/components/index/DemoChat.tsx` | Create -- demo chat widget |
-| `src/components/index/LandingPage.tsx` | Edit -- add DemoChat section |
-| `src/pages/Index.tsx` | Edit -- hydrate demo conversation after auth |
+| `src/components/index/LandingPage.tsx` | Two-column hero layout, remove standalone DemoChat |
+| `src/components/index/LandingHero.tsx` | Left-align on desktop, responsive adjustments |
+| `src/components/index/DemoChat.tsx` | Cooler opening lines, remove outer heading/margins, full-width |
 
