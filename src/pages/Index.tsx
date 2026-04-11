@@ -79,6 +79,48 @@ const Index = () => {
     };
   }, [hooks.chats, hooks.activeChatId, hooks.messages]);
 
+  // Hydrate demo conversation after auth
+  useEffect(() => {
+    const hydrateDemoConversation = async () => {
+      if (!hooks.user) return;
+      const stored = localStorage.getItem('demo_conversation');
+      if (!stored) return;
+      
+      try {
+        const demoMessages = JSON.parse(stored);
+        localStorage.removeItem('demo_conversation');
+        
+        const { data: conv, error: convError } = await supabase
+          .from('conversations')
+          .insert({ title: 'Demo Conversation', user_id: hooks.user.id })
+          .select()
+          .single();
+        
+        if (convError || !conv) return;
+
+        const messagesToInsert = demoMessages
+          .filter((m: any) => m.content && !m.typing)
+          .map((m: any) => ({
+            conversation_id: conv.id,
+            content: m.content,
+            sender: m.sender === 'user' ? 'user' : 'ai',
+            platform: m.platform || null,
+          }));
+
+        if (messagesToInsert.length > 0) {
+          await supabase.from('messages').insert(messagesToInsert);
+        }
+
+        hooks.setActiveChatId(conv.id);
+      } catch (e) {
+        console.error('Failed to hydrate demo conversation:', e);
+        localStorage.removeItem('demo_conversation');
+      }
+    };
+
+    hydrateDemoConversation();
+  }, [hooks.user]);
+
   // Show loading while auth is being determined
   if (hooks.loading || hooks.isLoadingOnboarding) {
     return (
