@@ -133,6 +133,20 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             setActiveTab={setActiveTab}
           />
 
+          {/* Guided Tour */}
+          {onStartTour && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="Guided Tour" onClick={onStartTour}>
+                  <Navigation className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Take a Tour</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+
           {/* Help */}
           <Tooltip>
             <TooltipTrigger asChild>
