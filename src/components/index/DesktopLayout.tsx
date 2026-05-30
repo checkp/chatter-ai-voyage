@@ -176,6 +176,8 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           </div>
         )}
 
+        {activeTab === 'chat' && <PreReleaseBanner />}
+
         <MainContent
           activeTab={activeTab}
           activeChatMode={activeChatMode}
