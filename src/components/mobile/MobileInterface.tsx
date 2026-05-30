@@ -115,6 +115,7 @@ const MobileInterface = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         {activeView === 'chat' ? (
           <>
+            <PreReleaseBanner />
             <ScrollArea className="flex-1 px-4" ref={scrollAreaRef}>
               <ChatMessages
                 messages={messages}
