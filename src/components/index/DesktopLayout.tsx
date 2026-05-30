@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import PreReleaseBanner from '@/components/PreReleaseBanner';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatHeader from '@/components/ChatHeader';
 import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
@@ -174,6 +175,8 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             />
           </div>
         )}
+
+        {activeTab === 'chat' && <PreReleaseBanner />}
 
         <MainContent
           activeTab={activeTab}
