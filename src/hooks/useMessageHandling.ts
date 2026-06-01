@@ -232,16 +232,46 @@ export const useMessageHandling = (
     const platform = platforms.find(p => p.id === platformId);
     if (!platform) throw new Error('Platform not found');
 
-    console.log('Sending single agent message to:', platform.name);
+    console.log('Sending single agent message to:', platform.name, '| message length:', message.length);
 
-    // Get current messages
-    const currentMessages = queryClient.getQueryData(['messages', chatId]) as Message[] || [];
+    // 1. Append the user's private message (if any) to local cache + DB FIRST,
+    //    otherwise the agent never sees what the user just typed.
+    let messagesForAI = (queryClient.getQueryData(['messages', chatId]) as Message[]) || [];
+
+    if (message && message.trim().length > 0) {
+      const userMessage: Message = {
+        id: generateChatId(),
+        content: message,
+        sender: 'user',
+        platform: null as any,
+        created_at: new Date().toISOString(),
+        conversation_id: chatId,
+        timestamp: new Date(),
+      };
+
+      messagesForAI = [...messagesForAI, userMessage];
+
+      queryClient.setQueryData(['messages', chatId], (prev: Message[] = []) => [...prev, userMessage]);
+
+      const { error: userInsertError } = await supabase.from('messages').insert({
+        id: userMessage.id,
+        conversation_id: chatId,
+        content: userMessage.content,
+        sender: userMessage.sender,
+        platform: null,
+        created_at: userMessage.created_at,
+      });
+      if (userInsertError) {
+        console.error('Failed to persist private user message:', userInsertError);
+      }
+    }
 
     try {
       updateActiveStatus(platform.id, true);
-      const response = await callAIAPI(platform, currentMessages, [platform], chatMode);
+      // Force isolated context so the agent sees its own past replies + the new prompt,
+      // and is not polluted by other agents' responses in this private thread.
+      const response = await callAIAPI(platform, messagesForAI, [platform], 'isolated');
 
-      // Create AI message
       const aiMessage: Message = {
         id: generateChatId(),
         content: response,
@@ -249,25 +279,22 @@ export const useMessageHandling = (
         platform: platform.id,
         created_at: new Date().toISOString(),
         conversation_id: chatId,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
-      // Add to local state
-      queryClient.setQueryData(['messages', chatId], (prev: Message[] = []) => {
-        return [...prev, aiMessage];
-      });
+      queryClient.setQueryData(['messages', chatId], (prev: Message[] = []) => [...prev, aiMessage]);
 
-      // Save to database
-      await supabase
-        .from('messages')
-        .insert({
-          id: aiMessage.id,
-          conversation_id: chatId,
-          content: aiMessage.content,
-          sender: aiMessage.sender,
-          platform: aiMessage.platform,
-          created_at: aiMessage.created_at
-        });
+      const { error: aiInsertError } = await supabase.from('messages').insert({
+        id: aiMessage.id,
+        conversation_id: chatId,
+        content: aiMessage.content,
+        sender: aiMessage.sender,
+        platform: aiMessage.platform,
+        created_at: aiMessage.created_at,
+      });
+      if (aiInsertError) {
+        console.error('Failed to persist single-agent AI reply:', aiInsertError);
+      }
 
       console.log(`Single agent message from ${platform.name} saved`);
     } catch (error) {
@@ -276,7 +303,7 @@ export const useMessageHandling = (
     } finally {
       updateActiveStatus(platform.id, false);
     }
-  }, [user, platforms, callAIAPI, queryClient, updateActiveStatus, chatMode]);
+  }, [user, platforms, callAIAPI, queryClient, updateActiveStatus]);
 
   useEffect(() => {
     return () => {
