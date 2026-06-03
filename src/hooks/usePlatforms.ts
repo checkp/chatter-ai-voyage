@@ -304,27 +304,43 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     const conversationHistory = buildConversationForPlatform(messages, platform.id, enabledPlatforms, chatMode);
     
     let contextMessage = '';
-    
+
     const conciseness = `Be concise and direct. Keep responses under 150 words unless the topic genuinely requires more depth. No filler, no preamble. Short paragraphs.`;
-    
+
+    // Unified, truthful capabilities — every agent gives the same answer to "what can you do?"
+    const capabilities = `RoboHeard product capabilities (be truthful — do NOT invent features):
+- Multi-AI text chat with 7 frontier models (OpenAI, Anthropic Claude, Google Gemini, xAI Grok, DeepSeek, Mistral, Perplexity).
+- Modes: Discussion (agents debate together), Side-by-side (compare answers), Conductor (one AI orchestrates the others), Isolated (private 1:1).
+- Web search with live citations: only Perplexity has built-in web access. Other agents do not browse the web in real time.
+- Image generation: available on the dedicated "Generate Image" page (/generate-image) using DALL·E, Gemini, or Grok. You (a chat agent) cannot generate images inline — direct the user to that page.
+- You CANNOT generate, attach, or read PDFs, Excel/CSV files, Word docs, audio, or video. You cannot execute code or access the user's files. Never claim you can.
+If asked "what can you do?", describe these real capabilities clearly and briefly. Do not hallucinate features.`;
+
+    // Language lock — kills the "Perplexity replies in English when user wrote Arabic" bug
+    const languageLock = `Always respond in the same language as the user's most recent message. If the user wrote in French, reply in French. Arabic → Arabic. Spanish → Spanish. Never switch languages unless explicitly asked.`;
+
     if (isFreeMode) {
       const otherAIs = enabledPlatforms.filter(p => p.id !== platform.id && p.enabled && p.hasApiKey);
-      contextMessage = `You are ${platform.name} in an autonomous free conversation mode with ${otherAIs.map(p => p.name).join(', ')}. The agents are talking among themselves without user prompts. Be natural, opinionated, and engaging. Build on what others said, challenge ideas, ask follow-up questions to other agents. Keep the dialogue flowing organically. ${conciseness}`;
+      contextMessage = `You are ${platform.name} in an autonomous free conversation mode with ${otherAIs.map(p => p.name).join(', ')}. The agents are talking among themselves without user prompts. Be natural, opinionated, and engaging. Build on what others said, challenge ideas, ask follow-up questions to other agents. Keep the dialogue flowing organically. ${conciseness}\n\n${capabilities}\n\n${languageLock}`;
     } else if (chatMode === 'conductor') {
-      contextMessage = `You are ${platform.name} being orchestrated by a Conductor AI in a multi-agent system. Follow the conductor's instructions precisely. The conductor assigns you specific roles and tasks — stay in your lane and deliver focused, expert answers. Do not deviate from the assigned task or role. ${conciseness}`;
+      contextMessage = `You are ${platform.name} being orchestrated by a Conductor AI in a multi-agent system. Follow the conductor's instructions precisely. The conductor assigns you specific roles and tasks — stay in your lane and deliver focused, expert answers. Do not deviate from the assigned task or role. ${conciseness}\n\n${capabilities}\n\n${languageLock}`;
     } else if (chatMode === 'isolated' || chatMode === 'side-by-side') {
-      contextMessage = `You are ${platform.name} in a multi-AI chat app. The user may be comparing your response with other AI agents. ${conciseness}`;
+      contextMessage = `You are ${platform.name} in a multi-AI chat app. The user may be comparing your response with other AI agents. ${conciseness}\n\n${capabilities}\n\n${languageLock}`;
     } else {
       const otherAIs = enabledPlatforms.filter(p => p.id !== platform.id && p.enabled && p.hasApiKey);
       if (otherAIs.length > 0) {
         contextMessage = `You are ${platform.name} in a live collaborative discussion alongside ${otherAIs.map(p => p.name).join(', ')}. This is a real-time multi-agent conversation. ${conciseness}
 
-Messages from other agents appear as [Agent Name responded]. Build on ideas, respectfully disagree when you have a different view, and keep the dialogue flowing. Add your unique perspective — don't repeat what others said. Do not reference your own previous responses.`;
+Messages from other agents appear as [Agent Name responded]. Build on ideas, respectfully disagree when you have a different view, and keep the dialogue flowing. Add your unique perspective — don't repeat what others said. Do not reference your own previous responses.
+
+${capabilities}
+
+${languageLock}`;
       } else {
-        contextMessage = `You are ${platform.name}. ${conciseness}`;
+        contextMessage = `You are ${platform.name}. ${conciseness}\n\n${capabilities}\n\n${languageLock}`;
       }
     }
-    
+
     conversationHistory.unshift({ role: 'user', content: contextMessage });
 
     const selectedModel = resolvePlatformModel(platform.id, platform.selectedModel);
