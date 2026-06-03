@@ -8,6 +8,7 @@ import type { AIPlatform, Message, ChatMode } from '@/types/chat';
 import { generateChatId } from '@/utils/chatUtils';
 import { useTokens } from '@/hooks/useTokens';
 import { useActivityLog } from '@/contexts/ActivityLogContext';
+import { isImageGenerationIntent, IMAGE_ROUTING_REPLY } from '@/utils/intentDetection';
 
 export const useMessageHandling = (
   user: SupabaseUser | null, 
