@@ -56,6 +56,6 @@ export const isImageGenerationIntent = (text: string): boolean => {
 
 export const IMAGE_ROUTING_REPLY = `🎨 Image generation lives on a dedicated page — chat agents can't render images inline.
 
-👉 **[Open the Image Generator](/generate-image)** to create images with DALL·E, Gemini, or Grok.
+👉 Open the Image Generator here: /generate-image
 
-Paste your prompt there and you'll get an image in seconds.`;
+You can create images with DALL·E, Gemini, or Grok. Paste your prompt there and you'll get an image in seconds.`;
