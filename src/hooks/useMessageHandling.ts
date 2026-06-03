@@ -211,9 +211,63 @@ export const useMessageHandling = (
   const handleSend = useCallback(async (chatId: string | null) => {
     if (!input.trim() || !chatId || sendMessageMutation.isPending) return;
 
+    const trimmed = input.trim();
+
+    // Short-circuit: image generation requests should route to /generate-image
+    // instead of all 7 agents refusing in 7 different ways.
+    if (isImageGenerationIntent(trimmed)) {
+      console.log('Image-intent detected — routing to /generate-image instead of agent fanout');
+      try {
+        // Persist user message
+        const userMsg: Message = {
+          id: generateChatId(),
+          content: trimmed,
+          sender: 'user',
+          created_at: new Date().toISOString(),
+          conversation_id: chatId,
+          timestamp: new Date(),
+        };
+        queryClient.setQueryData(['messages', chatId], (prev: Message[] = []) => [...prev, userMsg]);
+        await supabase.from('messages').insert({
+          id: userMsg.id,
+          conversation_id: chatId,
+          content: userMsg.content,
+          sender: userMsg.sender,
+          created_at: userMsg.created_at,
+        });
+
+        // Persist system routing reply (no token cost, no agent call)
+        const systemMsg: Message = {
+          id: generateChatId(),
+          content: IMAGE_ROUTING_REPLY,
+          sender: 'ai',
+          platform: 'system',
+          created_at: new Date().toISOString(),
+          conversation_id: chatId,
+          timestamp: new Date(),
+        };
+        queryClient.setQueryData(['messages', chatId], (prev: Message[] = []) => [...prev, systemMsg]);
+        await supabase.from('messages').insert({
+          id: systemMsg.id,
+          conversation_id: chatId,
+          content: systemMsg.content,
+          sender: systemMsg.sender,
+          platform: 'system',
+          created_at: systemMsg.created_at,
+        });
+
+        addEntry('system', 'Image-generation intent — routed user to /generate-image');
+        setInput('');
+      } catch (e) {
+        console.error('Image-intent routing failed:', e);
+        toast.error('Could not route to image generator');
+      }
+      return;
+    }
+
     console.log('handleSend called with chatId:', chatId, 'input length:', input.length);
     sendMessageMutation.mutate({ chatId, userMessage: input.trim() });
-  }, [input, sendMessageMutation]);
+  }, [input, sendMessageMutation, queryClient, addEntry]);
 
   const handleStop = useCallback(() => {
     console.log('Stopping AI responses...');
