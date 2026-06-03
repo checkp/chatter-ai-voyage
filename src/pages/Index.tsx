@@ -144,6 +144,7 @@ const Index = () => {
         skipOnboarding={hooks.skipOnboarding}
         chats={hooks.chats}
         handleCreateChat={handlers.handleCreateChat}
+        setActiveChatId={hooks.setActiveChatId}
       />
     );
   }
