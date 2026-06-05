@@ -54,8 +54,6 @@ const LandingHero: React.FC = () => {
             >
               Start
             </text>
-
-            </text>
           </svg>
         </button>
         <style>{`
