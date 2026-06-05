@@ -67,7 +67,7 @@ const LandingHero: React.FC = () => {
                 letterSpacing: '3px',
               }}
             >
-              STEP INSIDE →
+              pasture
             </text>
           </svg>
         </button>
