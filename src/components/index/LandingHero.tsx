@@ -16,7 +16,7 @@ const LandingHero: React.FC = () => {
           onClick={handleGetStarted}
           aria-label="Launch RoboHeard"
           className="group transition-transform duration-300 hover:scale-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/40 rounded-full"
-          style={{ filter: 'drop-shadow(0 18px 32px rgba(180, 120, 60, 0.25))' }}
+          style={{ filter: 'drop-shadow(0 18px 32px rgba(120, 140, 90, 0.22))' }}
         >
           <svg
             viewBox="0 0 280 160"
@@ -25,15 +25,15 @@ const LandingHero: React.FC = () => {
           >
             <defs>
               <radialGradient id="cloudWarm" cx="50%" cy="38%" r="75%">
-                <stop offset="0%" stopColor="#fff8ee" />
-                <stop offset="55%" stopColor="#ffe8c8" />
-                <stop offset="100%" stopColor="#f5b97a" />
+                <stop offset="0%" stopColor="#fbfaf0" />
+                <stop offset="55%" stopColor="#e6e8c9" />
+                <stop offset="100%" stopColor="#b6c89a" />
               </radialGradient>
             </defs>
             <path
               d="M60,120 Q20,120 20,85 Q20,55 55,55 Q60,25 100,30 Q120,5 155,20 Q190,5 215,35 Q255,30 255,70 Q280,80 270,110 Q265,135 235,135 L75,135 Q60,135 60,120 Z"
               fill="url(#cloudWarm)"
-              stroke="#fff4e0"
+              stroke="#f4f2e0"
               strokeWidth="2"
             />
             <text
@@ -45,7 +45,7 @@ const LandingHero: React.FC = () => {
                 fontFamily: '"Fredoka", "Nunito", system-ui, sans-serif',
                 fontWeight: 700,
                 fontSize: '44px',
-                fill: '#7a3b12',
+                fill: '#4a5a2e',
                 letterSpacing: '1px',
               }}
             >
@@ -59,12 +59,13 @@ const LandingHero: React.FC = () => {
                 fontFamily: '"Nunito", system-ui, sans-serif',
                 fontWeight: 600,
                 fontSize: '12px',
-                fill: '#b07a4a',
+                fill: '#7a8a5a',
                 letterSpacing: '3px',
               }}
             >
               STEP INSIDE →
             </text>
+
           </svg>
         </button>
       </div>
