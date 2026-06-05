@@ -32,17 +32,18 @@ type Bubble = {
   variant: 'sheep' | 'quote';
 };
 
+// Positions roughly above the sheep heads in the logo (upper half of the image).
+// Each bubble's tail is drawn pointing down toward where a sheep head sits.
 const positions = [
-  { top: '6%', left: '8%' },
-  { top: '12%', left: '72%' },
-  { top: '34%', left: '4%' },
-  { top: '28%', left: '78%' },
-  { top: '52%', left: '10%' },
-  { top: '48%', left: '74%' },
-  { top: '70%', left: '6%' },
-  { top: '74%', left: '70%' },
-  { top: '18%', left: '40%' },
+  { top: '2%',  left: '14%', tail: 'left' as const },
+  { top: '-4%', left: '40%', tail: 'left' as const },
+  { top: '0%',  left: '64%', tail: 'right' as const },
+  { top: '8%',  left: '5%',  tail: 'right' as const },
+  { top: '6%',  left: '78%', tail: 'left' as const },
+  { top: '14%', left: '28%', tail: 'right' as const },
+  { top: '12%', left: '52%', tail: 'left' as const },
 ];
+
 
 let nextId = 1;
 
