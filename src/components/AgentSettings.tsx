@@ -25,9 +25,10 @@ const resolvePlatformModel = (platformId: string, model?: string | null) => {
 };
 
 const AgentSettings = () => {
+  useAIModels(); // hydrate model catalog from DB and re-render on load
   const [selectedModels, setSelectedModels] = useState<Record<string, string>>({});
   const [enabledPlatforms, setEnabledPlatforms] = useState<Record<string, boolean>>({});
-  
+
   const [hasLoaded, setHasLoaded] = useState(false);
 
   const platforms = [
