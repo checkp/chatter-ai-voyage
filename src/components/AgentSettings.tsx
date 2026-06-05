@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Settings } from 'lucide-react';
 import ModelSelector from './ModelSelector';
-import { getDefaultModel, getModelConfig } from '@/config/aiModels';
+import { getDefaultModel, getModelConfig, useAIModels } from '@/config/aiModels';
 
 interface AgentSetting {
   platform: string;
