@@ -52,7 +52,8 @@ const LandingHero: React.FC = () => {
                 letterSpacing: '1px',
               }}
             >
-              Launch
+              Go To
+
             </text>
             <text
               x="140"
@@ -66,7 +67,7 @@ const LandingHero: React.FC = () => {
                 letterSpacing: '3px',
               }}
             >
-              STEP INSIDE →
+              pasture
             </text>
           </svg>
         </button>
