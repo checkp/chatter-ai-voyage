@@ -15,25 +15,28 @@ const LandingHero: React.FC = () => {
         <button
           onClick={handleGetStarted}
           aria-label="Launch RoboHeard"
-          className="group transition-transform duration-300 hover:scale-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/40 rounded-full"
-          style={{ filter: 'drop-shadow(0 18px 32px rgba(120, 140, 90, 0.22))' }}
+          className="group focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/40 rounded-full hover:scale-105 transition-transform duration-300"
+          style={{
+            filter: 'drop-shadow(0 14px 22px rgba(180, 150, 50, 0.35)) drop-shadow(0 4px 8px rgba(120, 100, 30, 0.2))',
+            animation: 'cloudFloat 5s ease-in-out infinite',
+          }}
         >
           <svg
             viewBox="0 0 280 160"
-            className="w-64 sm:w-80 md:w-[28rem]"
+            className="w-44 sm:w-52 md:w-64"
             aria-hidden
           >
             <defs>
               <radialGradient id="cloudWarm" cx="50%" cy="38%" r="75%">
-                <stop offset="0%" stopColor="#fbfaf0" />
-                <stop offset="55%" stopColor="#e6e8c9" />
-                <stop offset="100%" stopColor="#b6c89a" />
+                <stop offset="0%" stopColor="#fffbe0" />
+                <stop offset="55%" stopColor="#ffe89a" />
+                <stop offset="100%" stopColor="#e8b94a" />
               </radialGradient>
             </defs>
             <path
               d="M60,120 Q20,120 20,85 Q20,55 55,55 Q60,25 100,30 Q120,5 155,20 Q190,5 215,35 Q255,30 255,70 Q280,80 270,110 Q265,135 235,135 L75,135 Q60,135 60,120 Z"
               fill="url(#cloudWarm)"
-              stroke="#f4f2e0"
+              stroke="#fff5c2"
               strokeWidth="2"
             />
             <text
@@ -45,7 +48,7 @@ const LandingHero: React.FC = () => {
                 fontFamily: '"Fredoka", "Nunito", system-ui, sans-serif',
                 fontWeight: 700,
                 fontSize: '44px',
-                fill: '#4a5a2e',
+                fill: '#6b4a12',
                 letterSpacing: '1px',
               }}
             >
@@ -59,15 +62,23 @@ const LandingHero: React.FC = () => {
                 fontFamily: '"Nunito", system-ui, sans-serif',
                 fontWeight: 600,
                 fontSize: '12px',
-                fill: '#7a8a5a',
+                fill: '#a07a2a',
                 letterSpacing: '3px',
               }}
             >
               STEP INSIDE →
             </text>
-
           </svg>
         </button>
+        <style>{`
+          @keyframes cloudFloat {
+            0%, 100% { transform: translate(0, 0) rotate(-0.5deg); }
+            25%      { transform: translate(4px, -6px) rotate(0.4deg); }
+            50%      { transform: translate(-2px, -10px) rotate(-0.3deg); }
+            75%      { transform: translate(-5px, -4px) rotate(0.5deg); }
+          }
+        `}</style>
+
       </div>
 
       {/* Logo only on mobile */}
