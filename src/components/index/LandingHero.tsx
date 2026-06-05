@@ -41,33 +41,18 @@ const LandingHero: React.FC = () => {
             />
             <text
               x="140"
-              y="92"
+              y="100"
               textAnchor="middle"
               className="select-none"
               style={{
                 fontFamily: '"Fredoka", "Nunito", system-ui, sans-serif',
                 fontWeight: 700,
-                fontSize: '44px',
+                fontSize: '52px',
                 fill: '#6b4a12',
                 letterSpacing: '1px',
               }}
             >
-              Go To
-
-            </text>
-            <text
-              x="140"
-              y="115"
-              textAnchor="middle"
-              style={{
-                fontFamily: '"Nunito", system-ui, sans-serif',
-                fontWeight: 600,
-                fontSize: '12px',
-                fill: '#a07a2a',
-                letterSpacing: '3px',
-              }}
-            >
-              pasture
+              Start
             </text>
           </svg>
         </button>
