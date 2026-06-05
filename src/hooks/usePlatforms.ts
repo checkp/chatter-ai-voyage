@@ -90,6 +90,8 @@ export const usePlatforms = (user: SupabaseUser | null) => {
 
   const loadingRef = useRef(false);
   const lastUserIdRef = useRef<string | null>(null);
+  const globalSystemPromptRef = useRef<string>('');
+
 
   const loadAgentSettings = useCallback(async () => {
     if (!user) {
