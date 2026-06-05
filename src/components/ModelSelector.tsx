@@ -2,7 +2,7 @@
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { AI_MODELS, ModelConfig } from '@/config/aiModels';
+import { ModelConfig, useAIModels } from '@/config/aiModels';
 
 interface ModelSelectorProps {
   platformId: string;
@@ -17,7 +17,8 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   onModelChange,
   disabled = false
 }) => {
-  const models = AI_MODELS[platformId] || [];
+  const { models } = useAIModels(platformId);
+  const modelList = models as ModelConfig[];
   
   const getSpeedColor = (speed: string) => {
     switch (speed) {
