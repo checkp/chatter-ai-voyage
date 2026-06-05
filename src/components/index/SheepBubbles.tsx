@@ -30,7 +30,9 @@ type Bubble = {
   left: string;
   rotate: number;
   variant: 'sheep' | 'quote';
+  tail: 'left' | 'right';
 };
+
 
 // Positions roughly above the sheep heads in the logo (upper half of the image).
 // Each bubble's tail is drawn pointing down toward where a sheep head sits.
