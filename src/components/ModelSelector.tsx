@@ -2,7 +2,7 @@
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { AI_MODELS, ModelConfig } from '@/config/aiModels';
+import { ModelConfig, useAIModels } from '@/config/aiModels';
 
 interface ModelSelectorProps {
   platformId: string;
@@ -17,7 +17,8 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   onModelChange,
   disabled = false
 }) => {
-  const models = AI_MODELS[platformId] || [];
+  const { models } = useAIModels(platformId);
+  const modelList = models as ModelConfig[];
   
   const getSpeedColor = (speed: string) => {
     switch (speed) {
@@ -37,7 +38,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
     }
   };
 
-  if (models.length === 0) {
+  if (modelList.length === 0) {
     return null;
   }
 
@@ -49,7 +50,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
           <SelectValue placeholder="Select a model" />
         </SelectTrigger>
         <SelectContent>
-          {models.map((model: ModelConfig) => (
+          {modelList.map((model: ModelConfig) => (
             <SelectItem key={model.id} value={model.id} className="space-y-2">
               <div className="flex flex-col w-full">
                 <div className="flex items-center justify-between">

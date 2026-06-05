@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Settings } from 'lucide-react';
 import ModelSelector from './ModelSelector';
-import { getDefaultModel, getModelConfig } from '@/config/aiModels';
+import { getDefaultModel, getModelConfig, useAIModels } from '@/config/aiModels';
 
 interface AgentSetting {
   platform: string;
@@ -25,9 +25,10 @@ const resolvePlatformModel = (platformId: string, model?: string | null) => {
 };
 
 const AgentSettings = () => {
+  useAIModels(); // hydrate model catalog from DB and re-render on load
   const [selectedModels, setSelectedModels] = useState<Record<string, string>>({});
   const [enabledPlatforms, setEnabledPlatforms] = useState<Record<string, boolean>>({});
-  
+
   const [hasLoaded, setHasLoaded] = useState(false);
 
   const platforms = [
