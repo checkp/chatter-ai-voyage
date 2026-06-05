@@ -26,7 +26,7 @@ const PRICING_MAP: Array<{
   { platform: 'openai', model_id: 'gpt-5',        cost_tier: 'high', api_cost_per_1k_tokens: 0.0075,   tokens_per_message: 22 },
 
   // Anthropic — Claude 4 family
-  { platform: 'anthropic', model_id: 'claude-haiku-4-20250514',  cost_tier: 'low',    api_cost_per_1k_tokens: 0.0025, tokens_per_message: 6 },
+  { platform: 'anthropic', model_id: 'claude-haiku-4-5',  cost_tier: 'low',    api_cost_per_1k_tokens: 0.0025, tokens_per_message: 6 },
   { platform: 'anthropic', model_id: 'claude-sonnet-4-20250514', cost_tier: 'medium', api_cost_per_1k_tokens: 0.009,  tokens_per_message: 12 },
   { platform: 'anthropic', model_id: 'claude-opus-4-20250514',   cost_tier: 'high',   api_cost_per_1k_tokens: 0.045,  tokens_per_message: 24 },
 
