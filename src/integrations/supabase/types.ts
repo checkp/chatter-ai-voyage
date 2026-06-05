@@ -155,6 +155,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          custom_system_prompt: string | null
           email: string | null
           full_name: string | null
           has_completed_onboarding: boolean | null
@@ -166,6 +167,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          custom_system_prompt?: string | null
           email?: string | null
           full_name?: string | null
           has_completed_onboarding?: boolean | null
@@ -177,6 +179,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          custom_system_prompt?: string | null
           email?: string | null
           full_name?: string | null
           has_completed_onboarding?: boolean | null
@@ -256,6 +259,7 @@ export type Database = {
       user_agent_settings: {
         Row: {
           created_at: string
+          custom_instructions: string | null
           display_order: number | null
           enabled: boolean
           id: string
@@ -266,6 +270,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          custom_instructions?: string | null
           display_order?: number | null
           enabled?: boolean
           id?: string
@@ -276,6 +281,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          custom_instructions?: string | null
           display_order?: number | null
           enabled?: boolean
           id?: string
