@@ -59,10 +59,12 @@ const randomBubble = (): Bubble => {
     text,
     top: pos.top,
     left: pos.left,
-    rotate: Math.random() * 16 - 8,
+    rotate: Math.random() * 10 - 5,
     variant: isQuote ? 'quote' : 'sheep',
+    tail: pos.tail,
   };
 };
+
 
 const SheepBubbles: React.FC = () => {
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
