@@ -9,6 +9,8 @@ import AITestimonials from './AITestimonials';
 import CTASection from './CTASection';
 import ConductorShowcase from './ConductorShowcase';
 import DemoChat from './DemoChat';
+import SheepBubbles from './SheepBubbles';
+
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -35,15 +37,17 @@ const LandingPage: React.FC = () => {
           <div className="flex-1 min-w-0">
             <DemoChat />
           </div>
-          <div className="flex-1 min-w-0 flex items-center justify-center">
+          <div className="flex-1 min-w-0 flex items-center justify-center relative">
             <img
               src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png"
               alt="RoboHeard Logo"
               className="h-full w-auto max-w-full max-h-[600px] object-contain cursor-pointer hover-scale hover:brightness-110 transition-all duration-300"
               onClick={() => navigate('/auth')}
             />
+            <SheepBubbles />
           </div>
         </div>
+
 
         {/* Hero text — always centered, full width */}
         <LandingHero />
