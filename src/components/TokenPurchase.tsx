@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Coins, Zap } from 'lucide-react';
 import { useTokenPackages } from '@/hooks/useTokenPackages';
-import PayPalPurchaseButton from './PayPalPurchaseButton';
+import StripePurchaseButton from './StripePurchaseButton';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface TokenPurchaseProps {
@@ -94,7 +94,7 @@ const TokenPurchase: React.FC<TokenPurchaseProps> = ({ user }) => {
                   {(pricePerToken / 100).toFixed(4)}¢ per token
                 </div>
 
-                <PayPalPurchaseButton
+                <StripePurchaseButton
                   packageId={pkg.id}
                   packageName={pkg.name}
                 />

@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,31 +12,36 @@ const Success = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const processedRef = useRef(false);
 
-  const orderId = searchParams.get('token'); // PayPal order ID
+  const sessionId = searchParams.get('session_id');
 
   useEffect(() => {
     const processPayment = async () => {
-      if (isCompleted || isProcessing || !orderId) return;
+      if (processedRef.current || !sessionId) return;
+      processedRef.current = true;
 
       setIsProcessing(true);
 
       try {
-        // Process PayPal payment
-        const response = await supabase.functions.invoke('capture-paypal-payment', {
-          body: { orderId },
+        const response = await supabase.functions.invoke('verify-stripe-session', {
+          body: { session_id: sessionId },
           headers: {
             Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
           },
         });
 
         if (response.error) {
-          throw new Error(response.error.message || 'Failed to process PayPal payment');
+          throw new Error(response.error.message || 'Failed to verify payment');
         }
 
         if (response.data?.success) {
           setIsCompleted(true);
-          toast.success(`Successfully added ${response.data.tokensAdded} tokens to your account!`);
+          if (response.data.alreadyProcessed) {
+            toast.success('Payment already processed.');
+          } else {
+            toast.success(`Successfully added ${response.data.tokensAdded.toLocaleString()} tokens to your account!`);
+          }
         }
       } catch (error: any) {
         console.error('Payment processing error:', error);
@@ -49,7 +53,7 @@ const Success = () => {
     };
 
     processPayment();
-  }, [orderId, isCompleted, isProcessing]);
+  }, [sessionId]);
 
   const handleReturnHome = () => {
     navigate('/');
@@ -75,32 +79,25 @@ const Success = () => {
         <CardContent className="text-center space-y-4">
           {isProcessing && (
             <p className="text-muted-foreground">
-              Please wait while we process your PayPal payment...
+              Please wait while we verify your payment...
             </p>
           )}
-          
+
           {error && (
             <div className="space-y-2">
               <p className="text-destructive">{error}</p>
-              <Button 
-                onClick={handleReturnHome}
-                variant="outline"
-                className="w-full"
-              >
+              <Button onClick={handleReturnHome} variant="outline" className="w-full">
                 Return to Homepage
               </Button>
             </div>
           )}
-          
+
           {isCompleted && !error && (
             <div className="space-y-4">
               <p className="text-muted-foreground">
                 Your tokens have been added to your account. You can now continue using AI agents.
               </p>
-              <Button 
-                onClick={handleReturnHome}
-                className="w-full"
-              >
+              <Button onClick={handleReturnHome} className="w-full">
                 Continue to Chat
               </Button>
             </div>
