@@ -360,9 +360,17 @@ ${languageLock}`;
         contextMessage = `You are ${platform.name}. ${conciseness}\n\n${engagement}\n\n${capabilities}\n\n${languageLock}`;
       }
     }
+    const userOverrides = [
+      globalSystemPromptRef.current?.trim() ? `User's global instructions (highest priority — follow these):\n${globalSystemPromptRef.current.trim()}` : '',
+      platform.customInstructions?.trim() ? `User's instructions specifically for ${platform.name} (highest priority — follow these):\n${platform.customInstructions.trim()}` : '',
+    ].filter(Boolean).join('\n\n');
 
+    if (userOverrides) {
+      contextMessage += `\n\n${userOverrides}`;
+    }
 
     conversationHistory.unshift({ role: 'user', content: contextMessage });
+
 
     const selectedModel = resolvePlatformModel(platform.id, platform.selectedModel);
 
