@@ -73,16 +73,17 @@ const SheepBubbles: React.FC = () => {
     let timer: number;
     const pop = () => {
       const bubble = randomBubble();
-      setBubbles((prev) => [...prev.slice(-3), bubble]);
-      // remove after lifetime
+      setBubbles((prev) => [...prev.slice(-2), bubble]);
       window.setTimeout(() => {
         setBubbles((prev) => prev.filter((b) => b.id !== bubble.id));
-      }, 2600);
-      timer = window.setTimeout(pop, 900 + Math.random() * 1800);
+      }, 3200);
+      // average ~2.5s between pops (1.5s – 3.5s)
+      timer = window.setTimeout(pop, 1500 + Math.random() * 2000);
     };
-    timer = window.setTimeout(pop, 600);
+    timer = window.setTimeout(pop, 1200);
     return () => window.clearTimeout(timer);
   }, []);
+
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-visible">
