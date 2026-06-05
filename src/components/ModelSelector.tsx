@@ -38,7 +38,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
     }
   };
 
-  if (models.length === 0) {
+  if (modelList.length === 0) {
     return null;
   }
 
@@ -50,7 +50,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
           <SelectValue placeholder="Select a model" />
         </SelectTrigger>
         <SelectContent>
-          {models.map((model: ModelConfig) => (
+          {modelList.map((model: ModelConfig) => (
             <SelectItem key={model.id} value={model.id} className="space-y-2">
               <div className="flex flex-col w-full">
                 <div className="flex items-center justify-between">
