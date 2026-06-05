@@ -36,4 +36,6 @@ export interface AIPlatform {
   endpoint?: string;
   selectedModel?: string;
   displayOrder?: number;
+  customInstructions?: string;
 }
+
