@@ -90,6 +90,8 @@ export const usePlatforms = (user: SupabaseUser | null) => {
 
   const loadingRef = useRef(false);
   const lastUserIdRef = useRef<string | null>(null);
+  const globalSystemPromptRef = useRef<string>('');
+
 
   const loadAgentSettings = useCallback(async () => {
     if (!user) {
@@ -111,10 +113,19 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     lastUserIdRef.current = user.id;
 
     try {
-      const { data: settings, error } = await supabase
-        .from('user_agent_settings')
-        .select('platform, enabled, model, display_order')
-        .eq('user_id', user.id);
+      const [{ data: settings, error }, { data: profile }] = await Promise.all([
+        supabase
+          .from('user_agent_settings')
+          .select('platform, enabled, model, display_order, custom_instructions')
+          .eq('user_id', user.id),
+        supabase
+          .from('profiles')
+          .select('custom_system_prompt')
+          .eq('id', user.id)
+          .maybeSingle(),
+      ]);
+
+      globalSystemPromptRef.current = (profile as any)?.custom_system_prompt || '';
 
       if (error) {
         console.error('Error loading agent settings:', error);
@@ -126,12 +137,13 @@ export const usePlatforms = (user: SupabaseUser | null) => {
         return;
       }
 
-      const settingsMap = new Map((settings || []).map(setting => [
+      const settingsMap = new Map((settings || []).map((setting: any) => [
         setting.platform,
         {
           enabled: setting.enabled,
           model: setting.model,
           displayOrder: setting.display_order,
+          customInstructions: setting.custom_instructions || '',
         },
       ]));
       
@@ -143,9 +155,11 @@ export const usePlatforms = (user: SupabaseUser | null) => {
           enabled: settingsMap.has(platform.id) ? Boolean(savedSetting?.enabled) : true,
           selectedModel: resolvePlatformModel(platform.id, savedSetting?.model),
           displayOrder: savedSetting?.displayOrder ?? platform.displayOrder,
+          customInstructions: savedSetting?.customInstructions ?? '',
           hasApiKey: true,
         };
       }));
+
     } catch (error: any) {
       console.error('Failed to load agent settings:', error);
     } finally {
@@ -346,9 +360,17 @@ ${languageLock}`;
         contextMessage = `You are ${platform.name}. ${conciseness}\n\n${engagement}\n\n${capabilities}\n\n${languageLock}`;
       }
     }
+    const userOverrides = [
+      globalSystemPromptRef.current?.trim() ? `User's global instructions (highest priority — follow these):\n${globalSystemPromptRef.current.trim()}` : '',
+      platform.customInstructions?.trim() ? `User's instructions specifically for ${platform.name} (highest priority — follow these):\n${platform.customInstructions.trim()}` : '',
+    ].filter(Boolean).join('\n\n');
 
+    if (userOverrides) {
+      contextMessage += `\n\n${userOverrides}`;
+    }
 
     conversationHistory.unshift({ role: 'user', content: contextMessage });
+
 
     const selectedModel = resolvePlatformModel(platform.id, platform.selectedModel);
 
