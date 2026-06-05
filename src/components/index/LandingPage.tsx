@@ -9,6 +9,8 @@ import AITestimonials from './AITestimonials';
 import CTASection from './CTASection';
 import ConductorShowcase from './ConductorShowcase';
 import DemoChat from './DemoChat';
+import SheepBubbles from './SheepBubbles';
+
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
