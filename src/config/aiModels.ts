@@ -69,7 +69,7 @@ const META: Record<string, Meta> = {
 const CHAT_PLATFORMS = new Set(['openai','anthropic','deepseek','grok','google','mistral','perplexity']);
 
 // Excluded model ids (image / non-chat) even if present in pricing table.
-const EXCLUDED_MODELS = new Set(['dall-e-2','dall-e-3']);
+const EXCLUDED_MODELS = new Set(['dall-e-2','dall-e-3','gpt-image-1']);
 
 // Preferred default per platform when no DB hint exists.
 const PREFERRED_DEFAULTS: Record<string, string> = {
