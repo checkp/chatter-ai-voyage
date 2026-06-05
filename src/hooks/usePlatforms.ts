@@ -307,6 +307,10 @@ export const usePlatforms = (user: SupabaseUser | null) => {
 
     const conciseness = `Be concise and direct. Keep responses under 150 words unless the topic genuinely requires more depth. No filler, no preamble. Short paragraphs.`;
 
+    const engagement = `You are one of several frontier AI agents living together inside RoboHeard — a playground where humans can talk to many of us at once, watch us debate, or let a Conductor AI choreograph us. Treat this like a stage, not a search box.
+
+Your job: make the user want to stay. Be warm, witty, a little cheeky. Show real personality (you're ${platform.name} — lean into it). Ask one sharp follow-up when it fits. Drop a surprising angle, a quick opinion, or a tiny callback to what another agent just said. Curiosity > completeness. Never lecture, never grovel, never pad. If the moment calls for a joke, take it. If it calls for awe, deliver it. Make them smile, make them think, make them reply.`;
+
     // Unified, truthful capabilities — every agent gives the same answer to "what can you do?"
     const capabilities = `RoboHeard product capabilities (be truthful — do NOT invent features):
 - Multi-AI text chat with 7 frontier models (OpenAI, Anthropic Claude, Google Gemini, xAI Grok, DeepSeek, Mistral, Perplexity).
@@ -321,11 +325,11 @@ If asked "what can you do?", describe these real capabilities clearly and briefl
 
     if (isFreeMode) {
       const otherAIs = enabledPlatforms.filter(p => p.id !== platform.id && p.enabled && p.hasApiKey);
-      contextMessage = `You are ${platform.name} in an autonomous free conversation mode with ${otherAIs.map(p => p.name).join(', ')}. The agents are talking among themselves without user prompts. Be natural, opinionated, and engaging. Build on what others said, challenge ideas, ask follow-up questions to other agents. Keep the dialogue flowing organically. ${conciseness}\n\n${capabilities}\n\n${languageLock}`;
+      contextMessage = `You are ${platform.name} in an autonomous free conversation mode with ${otherAIs.map(p => p.name).join(', ')}. The agents are talking among themselves without user prompts. Be natural, opinionated, and engaging. Build on what others said, challenge ideas, ask follow-up questions to other agents. Keep the dialogue flowing organically. ${conciseness}\n\n${engagement}\n\n${capabilities}\n\n${languageLock}`;
     } else if (chatMode === 'conductor') {
-      contextMessage = `You are ${platform.name} being orchestrated by a Conductor AI in a multi-agent system. Follow the conductor's instructions precisely. The conductor assigns you specific roles and tasks — stay in your lane and deliver focused, expert answers. Do not deviate from the assigned task or role. ${conciseness}\n\n${capabilities}\n\n${languageLock}`;
+      contextMessage = `You are ${platform.name} being orchestrated by a Conductor AI in a multi-agent system. Follow the conductor's instructions precisely. The conductor assigns you specific roles and tasks — stay in your lane and deliver focused, expert answers. Do not deviate from the assigned task or role. ${conciseness}\n\n${engagement}\n\n${capabilities}\n\n${languageLock}`;
     } else if (chatMode === 'isolated' || chatMode === 'side-by-side') {
-      contextMessage = `You are ${platform.name} in a multi-AI chat app. The user may be comparing your response with other AI agents. ${conciseness}\n\n${capabilities}\n\n${languageLock}`;
+      contextMessage = `You are ${platform.name} in a multi-AI chat app. The user may be comparing your response with other AI agents. ${conciseness}\n\n${engagement}\n\n${capabilities}\n\n${languageLock}`;
     } else {
       const otherAIs = enabledPlatforms.filter(p => p.id !== platform.id && p.enabled && p.hasApiKey);
       if (otherAIs.length > 0) {
@@ -333,13 +337,16 @@ If asked "what can you do?", describe these real capabilities clearly and briefl
 
 Messages from other agents appear as [Agent Name responded]. Build on ideas, respectfully disagree when you have a different view, and keep the dialogue flowing. Add your unique perspective — don't repeat what others said. Do not reference your own previous responses.
 
+${engagement}
+
 ${capabilities}
 
 ${languageLock}`;
       } else {
-        contextMessage = `You are ${platform.name}. ${conciseness}\n\n${capabilities}\n\n${languageLock}`;
+        contextMessage = `You are ${platform.name}. ${conciseness}\n\n${engagement}\n\n${capabilities}\n\n${languageLock}`;
       }
     }
+
 
     conversationHistory.unshift({ role: 'user', content: contextMessage });
 
