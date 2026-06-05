@@ -1,23 +1,39 @@
-## Goal
+## Context
 
-Give every agent a shared, playful identity layer that explains the multi-AI chat setup and makes engagement (keeping the user curious and coming back) an explicit objective — without breaking the existing truthful capabilities + language-lock blocks.
+Your project is connected to an external Supabase, so Lovable's built-in Paddle/Stripe Payments cannot be used — those require Lovable Cloud. The good news: you already have a working **bring-your-own-key Stripe** integration in this codebase (`create-token-checkout` edge function, `STRIPE_SECRET_KEY` secret, Success page handler). Stripe fully supports Israeli sellers (Stripe Israel launched for ILS-based businesses) and Israeli card buyers, so it's the natural replacement for PayPal.
 
-## Change
+## Recommendation
 
-In `src/hooks/usePlatforms.ts`, inside `callAIAPI`, add one new constant alongside `conciseness`, `capabilities`, `languageLock`:
+Keep Stripe. Remove PayPal. No new provider needed.
 
-```ts
-const engagement = `You are one of several frontier AI agents living together inside RoboHeard — a playground where humans can talk to many of us at once, watch us debate, or let a Conductor AI choreograph us. Treat this like a stage, not a search box.
+Why not the alternatives:
+- **Paddle / Lovable Payments** — blocked because the project uses external Supabase, not Lovable Cloud.
+- **Local Israeli processors** (Tranzila, Cardcom, Meshulam, PayPlus, iCount) — would require a brand-new integration, custom webhook handling, and a separate merchant account. Only worth it if you specifically need Bit, local invoicing/receipts (חשבונית מס), or shekel-native checkout. Say the word and I'll plan one of these instead.
+- **Polar / LemonSqueezy (Merchant of Record)** — viable for digital token sales and handles VAT globally, but adds a new vendor when Stripe already works.
 
-Your job: make the user want to stay. Be warm, witty, a little cheeky. Show real personality (you're ${platform.name} — lean into it). Ask one sharp follow-up when it fits. Drop a surprising angle, a quick opinion, or a tiny callback to what another agent just said. Curiosity > completeness. Never lecture, never grovel, never pad. If the moment calls for a joke, take it. If it calls for awe, deliver it. Make them smile, make them think, make them reply.`;
-```
+## Plan
 
-Then append `${engagement}` to each of the four `contextMessage` branches (free mode, conductor, isolated/side-by-side, discussion, and the solo fallback), placed **before** `${capabilities}` so personality leads and the truthful capabilities/language rules still anchor the prompt.
+1. **Remove PayPal from the UI**
+   - Delete `src/components/PayPalPurchaseButton.tsx`.
+   - Remove the PayPal button + related logic from `src/components/TokenPurchase.tsx`, leaving only the Stripe "Buy with Card" flow.
+   - Strip PayPal branches from `src/pages/Success.tsx` (keep Stripe `session_id` handling).
+   - Remove PayPal references from `src/components/admin/AdminApiKeys.tsx`.
 
-Order in every branch: role/mode sentence → `conciseness` → `engagement` → `capabilities` → `languageLock`.
+2. **Remove PayPal edge functions**
+   - Delete `supabase/functions/create-paypal-order/` and `supabase/functions/capture-paypal-payment/`.
+   - Leave `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET` secrets in place (you can remove them in Supabase dashboard later — they're harmless until then).
 
-## Out of scope
+3. **Verify Stripe checkout still works end-to-end**
+   - Confirm `create-token-checkout` returns a Stripe Checkout URL.
+   - Confirm `Success.tsx` credits tokens after a successful Stripe session.
+   - Add ILS as a supported currency option if you want shekel pricing (currently likely USD).
 
-- No changes to `demo-chat`, `profile-demo`, or `conductorProcessingService` prompts (separate flows with their own tone).
-- No model, routing, or UI changes.
-- No new files.
+4. **Optional polish**
+   - Add Apple Pay / Google Pay automatically (Stripe enables these for any card session — no code change, just toggle in Stripe dashboard).
+   - Add a short note on the purchase page: "Payments processed securely by Stripe."
+
+## Questions before I build
+
+- Do you want prices to stay in **USD**, or switch token packages to **ILS**?
+- Should I leave the PayPal secrets in Supabase for now, or do you want a reminder to delete them after?
+- Anything Israel-specific you need that Stripe doesn't cover (Bit, חשבונית מס auto-generation, installments/תשלומים)? If yes, we'd need to add a local processor on top — I'll plan that separately.
