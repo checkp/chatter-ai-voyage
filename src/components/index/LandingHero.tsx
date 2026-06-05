@@ -52,7 +52,8 @@ const LandingHero: React.FC = () => {
                 letterSpacing: '1px',
               }}
             >
-              Launch
+              Go To
+
             </text>
             <text
               x="140"
