@@ -87,73 +87,101 @@ const SheepBubbles: React.FC = () => {
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-visible">
-      {bubbles.map((b) => (
-        <div
-          key={b.id}
-          className="absolute"
-          style={{
-            top: b.top,
-            left: b.left,
-            transform: `rotate(${b.rotate}deg)`,
-            animation: 'bubblePop 2.6s ease-out forwards',
-          }}
-        >
-          {b.variant === 'sheep' ? (
-            <div
-              className="relative px-4 py-2 rounded-2xl bg-white border-[3px] border-foreground text-foreground font-extrabold text-base md:text-lg whitespace-nowrap"
-              style={{
-                fontFamily: '"Fredoka", "Bangers", "Comic Sans MS", system-ui, sans-serif',
-                boxShadow: '4px 4px 0 hsl(var(--foreground))',
-              }}
-            >
-              {b.text}
-              <span
-                className="absolute -bottom-2 left-6 w-0 h-0"
+      {bubbles.map((b) => {
+        const isQuote = b.variant === 'quote';
+        return (
+          <div
+            key={b.id}
+            className="absolute"
+            style={{
+              top: b.top,
+              left: b.left,
+              transform: `rotate(${b.rotate}deg)`,
+              animation: 'bubblePop 3.2s ease-out forwards',
+            }}
+          >
+            {/* Thought-cloud bubble */}
+            <div className="relative">
+              <div
+                className="relative px-5 py-3 text-foreground font-extrabold text-base md:text-lg whitespace-nowrap text-center"
                 style={{
-                  borderLeft: '8px solid transparent',
-                  borderRight: '8px solid transparent',
-                  borderTop: '10px solid hsl(var(--foreground))',
+                  fontFamily: '"Fredoka", "Bangers", "Comic Sans MS", system-ui, sans-serif',
+                  background: isQuote
+                    ? 'radial-gradient(ellipse at 30% 30%, #fffce8 0%, #fde68a 70%, #f5c451 100%)'
+                    : 'radial-gradient(ellipse at 30% 30%, #ffffff 0%, #f6f7fb 70%, #dbe2ee 100%)',
+                  // Bumpy cloud edge using overlapping radial gradients via mask-like border-radius
+                  borderRadius: '60% 50% 55% 65% / 70% 60% 70% 55%',
+                  border: '3px solid hsl(var(--foreground))',
+                  boxShadow: '3px 3px 0 hsl(var(--foreground))',
+                  maxWidth: isQuote ? 240 : 200,
+                  whiteSpace: isQuote ? 'normal' : 'nowrap',
+                  fontSize: isQuote ? '0.95rem' : undefined,
                 }}
-              />
-              <span
-                className="absolute -bottom-[5px] left-[27px] w-0 h-0"
+              >
+                {/* Cloud bumps — extra puffs on top */}
+                <span
+                  className="absolute -top-2 left-4 w-5 h-5 rounded-full"
+                  style={{
+                    background: 'inherit',
+                    border: '3px solid hsl(var(--foreground))',
+                    backgroundColor: isQuote ? '#fde68a' : '#ffffff',
+                  }}
+                />
+                <span
+                  className="absolute -top-3 left-10 w-6 h-6 rounded-full"
+                  style={{
+                    border: '3px solid hsl(var(--foreground))',
+                    backgroundColor: isQuote ? '#fde68a' : '#ffffff',
+                  }}
+                />
+                <span
+                  className="absolute -top-2 right-6 w-4 h-4 rounded-full"
+                  style={{
+                    border: '3px solid hsl(var(--foreground))',
+                    backgroundColor: isQuote ? '#fde68a' : '#ffffff',
+                  }}
+                />
+                {isQuote ? `“${b.text}”` : b.text}
+              </div>
+
+              {/* Thought-bubble trail (small circles toward sheep head) */}
+              <div
+                className="absolute"
                 style={{
-                  borderLeft: '5px solid transparent',
-                  borderRight: '5px solid transparent',
-                  borderTop: '7px solid white',
-                }}
-              />
+                  bottom: -14,
+                  [b.tail]: 24,
+                } as React.CSSProperties}
+              >
+                <span
+                  className="block w-3 h-3 rounded-full mb-1"
+                  style={{
+                    backgroundColor: isQuote ? '#fde68a' : '#ffffff',
+                    border: '2px solid hsl(var(--foreground))',
+                  }}
+                />
+                <span
+                  className="block w-2 h-2 rounded-full"
+                  style={{
+                    backgroundColor: isQuote ? '#fde68a' : '#ffffff',
+                    border: '2px solid hsl(var(--foreground))',
+                    marginLeft: 6,
+                  }}
+                />
+              </div>
             </div>
-          ) : (
-            <div
-              className="relative px-4 py-2 rounded-2xl bg-[hsl(var(--primary))] border-[3px] border-foreground text-foreground font-bold text-sm md:text-base max-w-[220px] text-center"
-              style={{
-                fontFamily: '"Fredoka", "Bangers", system-ui, sans-serif',
-                boxShadow: '4px 4px 0 hsl(var(--foreground))',
-              }}
-            >
-              “{b.text}”
-              <span
-                className="absolute -bottom-2 right-6 w-0 h-0"
-                style={{
-                  borderLeft: '8px solid transparent',
-                  borderRight: '8px solid transparent',
-                  borderTop: '10px solid hsl(var(--foreground))',
-                }}
-              />
-            </div>
-          )}
-        </div>
-      ))}
+          </div>
+        );
+      })}
       <style>{`
         @keyframes bubblePop {
-          0%   { opacity: 0; transform: scale(0.5) translateY(8px) rotate(var(--r, 0deg)); }
-          15%  { opacity: 1; transform: scale(1.1) translateY(0) rotate(var(--r, 0deg)); }
-          25%  { transform: scale(1) translateY(0) rotate(var(--r, 0deg)); }
-          85%  { opacity: 1; transform: scale(1) translateY(-4px) rotate(var(--r, 0deg)); }
-          100% { opacity: 0; transform: scale(0.9) translateY(-12px) rotate(var(--r, 0deg)); }
+          0%   { opacity: 0; transform: scale(0.4) translateY(10px); }
+          10%  { opacity: 1; transform: scale(1.08) translateY(-2px); }
+          18%  { transform: scale(1) translateY(0); }
+          85%  { opacity: 1; transform: scale(1) translateY(-3px); }
+          100% { opacity: 0; transform: scale(0.92) translateY(-10px); }
         }
       `}</style>
+
     </div>
   );
 };
