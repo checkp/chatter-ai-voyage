@@ -49,11 +49,27 @@ const positions = [
 
 let nextId = 1;
 
-const randomBubble = (): Bubble => {
+const pickNearbyIndex = (prev: number | null): number => {
+  if (prev === null) return Math.floor(Math.random() * positions.length);
+  const prevPos = positions[prev];
+  const prevTop = parseFloat(prevPos.top);
+  const prevLeft = parseFloat(prevPos.left);
+  const candidates = positions
+    .map((p, i) => ({
+      i,
+      dist: Math.hypot(parseFloat(p.top) - prevTop, parseFloat(p.left) - prevLeft),
+    }))
+    .filter((c) => c.i !== prev)
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, 3);
+  return candidates[Math.floor(Math.random() * candidates.length)].i;
+};
+
+const randomBubble = (posIndex: number): Bubble => {
   const isQuote = Math.random() < 0.35;
   const pool = isQuote ? ANTI_AI_QUOTES : SHEEP_TALK;
   const text = pool[Math.floor(Math.random() * pool.length)];
-  const pos = positions[Math.floor(Math.random() * positions.length)];
+  const pos = positions[posIndex];
   return {
     id: nextId++,
     text,
@@ -70,18 +86,30 @@ const SheepBubbles: React.FC = () => {
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
 
   useEffect(() => {
-    let timer: number;
-    const pop = () => {
-      const bubble = randomBubble();
-      setBubbles((prev) => [...prev.slice(-2), bubble]);
-      window.setTimeout(() => {
-        setBubbles((prev) => prev.filter((b) => b.id !== bubble.id));
-      }, 3200);
-      // average ~2.5s between pops (1.5s – 3.5s)
-      timer = window.setTimeout(pop, 1500 + Math.random() * 2000);
+    let popTimer: number;
+    let clearTimer: number;
+    let lastPosIndex: number | null = null;
+
+    const scheduleNext = (gap: number) => {
+      popTimer = window.setTimeout(() => {
+        const posIndex = pickNearbyIndex(lastPosIndex);
+        lastPosIndex = posIndex;
+        const bubble = randomBubble(posIndex);
+        const lifetime = 1800 + Math.random() * 1400; // 1.8s–3.2s on screen
+        setBubbles([bubble]);
+        clearTimer = window.setTimeout(() => {
+          setBubbles((prev) => prev.filter((b) => b.id !== bubble.id));
+          // 0.5s–2s gap before next bubble
+          scheduleNext(500 + Math.random() * 1500);
+        }, lifetime);
+      }, gap);
     };
-    timer = window.setTimeout(pop, 1200);
-    return () => window.clearTimeout(timer);
+
+    scheduleNext(800);
+    return () => {
+      window.clearTimeout(popTimer);
+      window.clearTimeout(clearTimer);
+    };
   }, []);
 
 
