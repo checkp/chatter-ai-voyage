@@ -27,7 +27,7 @@ const META: Record<string, Meta> = {
   'gpt-5':        { name: 'ChatGPT 5',    description: 'Next-gen multimodal reasoning',              maxTokens: 200000, capabilities: ['text','vision','reasoning','coding'],        speed: 'medium' },
 
   // Anthropic
-  'claude-haiku-4-20250514':  { name: 'Claude Haiku 4',  description: 'Fast and cost-effective Claude', maxTokens: 200000, capabilities: ['text','reasoning'],                       speed: 'fast' },
+  'claude-haiku-4-5':  { name: 'Claude Haiku 4',  description: 'Fast and cost-effective Claude', maxTokens: 200000, capabilities: ['text','reasoning'],                       speed: 'fast' },
   'claude-sonnet-4-20250514': { name: 'Claude Sonnet 4', description: 'Balanced Claude with strong reasoning', maxTokens: 200000, capabilities: ['text','reasoning','coding','analysis'], speed: 'medium' },
   'claude-opus-4-20250514':   { name: 'Claude Opus 4',   description: 'Most powerful Claude for complex tasks', maxTokens: 200000, capabilities: ['text','reasoning','coding','analysis','creative'], speed: 'slow' },
 
