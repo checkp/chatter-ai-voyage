@@ -31,19 +31,20 @@ const LandingPage: React.FC = () => {
       </header>
       <div className="container mx-auto px-4 py-8 md:py-16">
         {/* Desktop: demo chat left, logo right */}
-        <div className="hidden md:flex items-center gap-8 mb-8">
+        <div className="hidden md:flex items-stretch gap-8 mb-8">
           <div className="flex-1 min-w-0">
             <DemoChat />
           </div>
           <div className="flex-1 min-w-0 flex items-center justify-center">
-            <img 
-              src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png" 
-              alt="RoboHeard Logo" 
-              className="w-full max-w-sm h-auto object-contain cursor-pointer hover-scale hover:brightness-110 transition-all duration-300"
+            <img
+              src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png"
+              alt="RoboHeard Logo"
+              className="h-full w-auto max-w-full max-h-[600px] object-contain cursor-pointer hover-scale hover:brightness-110 transition-all duration-300"
               onClick={() => navigate('/auth')}
             />
           </div>
         </div>
+
         {/* Hero text — always centered, full width */}
         <LandingHero />
         <ConductorShowcase />
