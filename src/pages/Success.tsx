@@ -15,17 +15,25 @@ const Success = () => {
   const processedRef = useRef(false);
 
   const sessionId = searchParams.get('session_id');
+  const checkoutId = searchParams.get('checkout_id');
+  const provider = searchParams.get('provider');
 
   useEffect(() => {
     const processPayment = async () => {
-      if (processedRef.current || !sessionId) return;
+      if (processedRef.current) return;
+      if (!sessionId && !checkoutId) return;
       processedRef.current = true;
 
       setIsProcessing(true);
 
       try {
-        const response = await supabase.functions.invoke('verify-stripe-session', {
-          body: { session_id: sessionId },
+        const fnName = provider === 'lemonsqueezy' || checkoutId
+          ? 'verify-lemonsqueezy-order'
+          : 'verify-stripe-session';
+        const body = checkoutId ? { checkout_id: checkoutId } : { session_id: sessionId };
+
+        const response = await supabase.functions.invoke(fnName, {
+          body,
           headers: {
             Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
           },
@@ -53,7 +61,7 @@ const Success = () => {
     };
 
     processPayment();
-  }, [sessionId]);
+  }, [sessionId, checkoutId, provider]);
 
   const handleReturnHome = () => {
     navigate('/');
