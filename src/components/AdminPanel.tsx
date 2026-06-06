@@ -214,6 +214,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
           <AdminModelPricing />
         </TabsContent>
 
+        <TabsContent value="packages" className="space-y-4">
+          <AdminTokenPackages />
+        </TabsContent>
+
         <TabsContent value="api-keys" className="space-y-4">
           <AdminApiKeys />
         </TabsContent>
