@@ -39,11 +39,8 @@ serve(async (req) => {
     if (authError || !user) {
       console.error('Authentication failed:', authError)
       return new Response(
-        JSON.stringify({ error: 'Authentication failed: ' + (authError?.message || 'User not found') }), 
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -82,16 +79,20 @@ serve(async (req) => {
       tokenData = newTokenData;
     }
 
-    // Get pricing data for this model
+    // Validate model against allowlist (model_pricing table)
     const { data: pricingData, error: pricingError } = await supabaseClient
       .from('model_pricing')
       .select('api_cost_per_1k_tokens')
       .eq('platform', 'anthropic')
       .eq('model_id', model)
-      .single();
+      .maybeSingle();
 
     if (pricingError || !pricingData) {
-      console.log('No pricing data found for model:', model, 'using default cost');
+      console.warn('Invalid model requested:', model);
+      return new Response(
+        JSON.stringify({ error: 'Invalid model' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Use centralized Anthropic API key
@@ -122,11 +123,8 @@ serve(async (req) => {
       const errorText = await response.text()
       console.error('Claude API error:', response.status, errorText)
       return new Response(
-        JSON.stringify({ error: `Claude API error: ${response.status} - ${errorText}` }), 
-        { 
-          status: response.status, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        JSON.stringify({ error: 'Upstream AI request failed' }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -190,11 +188,8 @@ serve(async (req) => {
   } catch (error) {
     console.error('Edge function error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }), 
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      JSON.stringify({ error: 'Request failed' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })
