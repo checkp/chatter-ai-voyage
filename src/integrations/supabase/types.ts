@@ -196,6 +196,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_active: boolean | null
+          lemonsqueezy_variant_id: string | null
           name: string
           price_cents: number
           sort_order: number | null
@@ -206,6 +207,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          lemonsqueezy_variant_id?: string | null
           name: string
           price_cents: number
           sort_order?: number | null
@@ -216,6 +218,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          lemonsqueezy_variant_id?: string | null
           name?: string
           price_cents?: number
           sort_order?: number | null
