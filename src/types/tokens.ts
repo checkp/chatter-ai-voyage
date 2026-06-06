@@ -23,4 +23,5 @@ export interface TokenPackage {
   bonus_percentage: number;
   is_active: boolean;
   sort_order: number;
+  lemonsqueezy_variant_id?: string | null;
 }
