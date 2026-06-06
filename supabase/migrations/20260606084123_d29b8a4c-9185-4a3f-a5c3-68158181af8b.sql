@@ -1,0 +1,1 @@
+ALTER TABLE public.token_packages ADD COLUMN IF NOT EXISTS lemonsqueezy_variant_id text;
