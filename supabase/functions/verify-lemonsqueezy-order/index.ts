@@ -6,6 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const LS_STORE_ID = "399091";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -16,23 +18,88 @@ serve(async (req) => {
     );
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("Missing authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const token = authHeader.replace("Bearer ", "");
     const { data: { user } } = await supabase.auth.getUser(token);
-    if (!user?.id) throw new Error("User not authenticated");
+    if (!user?.id || !user.email) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    const { checkout_id } = await req.json();
-    if (!checkout_id) throw new Error("checkout_id required");
+    const { package_id } = await req.json();
+    if (!package_id || typeof package_id !== "string") {
+      return new Response(JSON.stringify({ error: "Invalid request" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const apiKey = Deno.env.get("LEMONSQUEEZY_API_KEY");
     if (!apiKey) throw new Error("LEMONSQUEEZY_API_KEY not configured");
 
-    // Idempotency
+    // Idempotency: only credit once per (user_id, package_id, ls_order_id)
+    const { data: pkg } = await supabase
+      .from("token_packages")
+      .select("tokens, bonus_percentage, name, price_cents")
+      .eq("id", package_id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (!pkg) {
+      return new Response(JSON.stringify({ error: "Package not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const tokensToAdd = pkg.tokens + Math.floor(pkg.tokens * pkg.bonus_percentage / 100);
+
+    // Fetch up to 25 most-recent orders for this user's email
+    const ordersRes = await fetch(
+      `https://api.lemonsqueezy.com/v1/orders?filter[store_id]=${LS_STORE_ID}&filter[user_email]=${encodeURIComponent(user.email)}&page[size]=25&sort=-created_at`,
+      { headers: { Accept: "application/vnd.api+json", Authorization: `Bearer ${apiKey}` } }
+    );
+    const ordersJson = await ordersRes.json();
+    if (!ordersRes.ok) {
+      console.error("LS orders fetch error:", ordersJson);
+      return new Response(JSON.stringify({ error: "Verification failed" }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Find newest paid order whose custom data matches this user + package
+    const matchedOrder = (ordersJson.data || []).find((o: any) => {
+      const status = o?.attributes?.status;
+      if (status !== "paid") return false;
+      const c = o?.attributes?.first_order_item?.checkout_data?.custom
+        || o?.attributes?.checkout_data?.custom
+        || {};
+      return c.user_id === user.id && c.package_id === package_id;
+    });
+
+    if (!matchedOrder) {
+      return new Response(JSON.stringify({ error: "Order not found yet — please refresh in a moment." }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const lsOrderId = matchedOrder.id;
+
+    // Idempotency check by LS order id
     const { data: existing } = await supabase
       .from("token_transactions")
       .select("id, amount")
       .eq("user_id", user.id)
-      .contains("metadata", { ls_checkout_id: checkout_id })
+      .contains("metadata", { ls_order_id: lsOrderId })
       .maybeSingle();
 
     if (existing) {
@@ -41,51 +108,6 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         success: true, tokensAdded: existing.amount, newBalance: t?.balance, alreadyProcessed: true
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    // Find order by checkout_id via orders list filter (LS exposes filter[checkout_id] indirectly via custom data)
-    // Best approach: query orders with filter[user_email]+ recent and match by checkout via custom data
-    const checkoutRes = await fetch(`https://api.lemonsqueezy.com/v1/checkouts/${checkout_id}`, {
-      headers: { Accept: "application/vnd.api+json", Authorization: `Bearer ${apiKey}` },
-    });
-    const checkoutJson = await checkoutRes.json();
-    if (!checkoutRes.ok) {
-      console.error("LS checkout fetch error:", checkoutJson);
-      throw new Error("Failed to fetch checkout from Lemon Squeezy");
-    }
-
-    const custom = checkoutJson?.data?.attributes?.checkout_data?.custom || {};
-    if (custom.user_id !== user.id) throw new Error("User ID mismatch");
-
-    const tokensToAdd = parseInt(custom.tokens || "0", 10);
-    if (!tokensToAdd) throw new Error("No tokens in checkout custom data");
-
-    // Verify payment occurred. LS doesn't surface order on the checkout object directly,
-    // so query orders filtered by user email and match by custom data.
-    const ordersRes = await fetch(
-      `https://api.lemonsqueezy.com/v1/orders?filter[store_id]=399091&filter[user_email]=${encodeURIComponent(user.email!)}&page[size]=25&sort=-created_at`,
-      { headers: { Accept: "application/vnd.api+json", Authorization: `Bearer ${apiKey}` } }
-    );
-    const ordersJson = await ordersRes.json();
-    if (!ordersRes.ok) {
-      console.error("LS orders fetch error:", ordersJson);
-      throw new Error("Failed to verify order");
-    }
-
-    const matchedOrder = (ordersJson.data || []).find((o: any) => {
-      const c = o?.attributes?.first_order_item?.checkout_data?.custom
-        || o?.attributes?.checkout_data?.custom
-        || {};
-      return c.user_id === user.id && c.package_id === custom.package_id;
-    });
-
-    if (!matchedOrder) {
-      throw new Error("Order not found yet — please refresh in a moment.");
-    }
-
-    const status = matchedOrder?.attributes?.status;
-    if (status !== "paid") {
-      throw new Error(`Payment not completed (status: ${status})`);
     }
 
     const { data: tokenData, error: tErr } = await supabase
@@ -107,9 +129,8 @@ serve(async (req) => {
       description: `Lemon Squeezy token purchase - ${tokensToAdd.toLocaleString()} tokens`,
       metadata: {
         payment_method: "lemonsqueezy",
-        ls_checkout_id: checkout_id,
-        ls_order_id: matchedOrder.id,
-        package_id: custom.package_id,
+        ls_order_id: lsOrderId,
+        package_id,
         amount_paid: matchedOrder?.attributes?.total_formatted,
         currency: matchedOrder?.attributes?.currency,
       },
@@ -121,7 +142,7 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("verify-lemonsqueezy-order error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: "Verification failed" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
