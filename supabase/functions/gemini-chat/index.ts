@@ -79,10 +79,14 @@ serve(async (req) => {
       .select("api_cost_per_1k_tokens")
       .eq("platform", "google")
       .eq("model_id", resolvedModel)
-      .single();
+      .maybeSingle();
 
     if (pricingError || !pricingData) {
-      console.log("No pricing data found for model:", resolvedModel, "using default cost");
+      console.warn("Invalid model requested:", resolvedModel);
+      return new Response(JSON.stringify({ error: "Invalid model" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const geminiApiKey = Deno.env.get("GOOGLE_API_KEY");
@@ -170,7 +174,7 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error("Gemini function error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: 'Request failed' }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

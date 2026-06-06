@@ -57,17 +57,19 @@ serve(async (req) => {
       tokenData = newTokenData;
     }
 
-    // Get pricing data for this model
     const { data: pricingData, error: pricingError } = await supabaseClient
       .from('model_pricing')
       .select('api_cost_per_1k_tokens')
       .eq('platform', 'openai')
       .eq('model_id', model)
-      .single();
+      .maybeSingle();
 
     if (pricingError || !pricingData) {
-      console.log('No pricing data found for model:', model, 'using default cost');
-      // Use default pricing if not found
+      console.warn('Invalid model requested:', model);
+      return new Response(JSON.stringify({ error: 'Invalid model' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const openaiApiKey = Deno.env.get("OPENAI_API_KEY");

@@ -52,9 +52,14 @@ serve(async (req) => {
     const iv = combined.slice(16, 28);
     const encrypted = combined.slice(28);
 
+    const encryptionSecret = Deno.env.get("API_KEY_ENCRYPTION_SECRET");
+    if (!encryptionSecret || encryptionSecret.length < 32) {
+      console.error("API_KEY_ENCRYPTION_SECRET is not configured or too short");
+      throw new Error("Server misconfiguration");
+    }
     const keyMaterial = await crypto.subtle.importKey(
       "raw",
-      encoder.encode(Deno.env.get("API_KEY_ENCRYPTION_SECRET") || "default-secret-key-32-chars-long"),
+      encoder.encode(encryptionSecret),
       { name: "PBKDF2" },
       false,
       ["deriveBits", "deriveKey"]
