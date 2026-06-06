@@ -36,7 +36,7 @@ const Success = () => {
         const accessToken = session?.access_token;
 
         if (!accessToken) {
-          if (retryCountRef.current < 8) {
+          if (retryCountRef.current < 24) {
             retryCountRef.current += 1;
             shouldRetry = true;
             processedRef.current = false;
