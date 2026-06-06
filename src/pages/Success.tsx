@@ -21,6 +21,8 @@ const Success = () => {
 
   useEffect(() => {
     const processPayment = async () => {
+      let shouldRetry = false;
+
       if (processedRef.current) return;
       if (!sessionId && !checkoutId && !packageId) return;
       processedRef.current = true;
@@ -46,6 +48,7 @@ const Success = () => {
         }
 
         if (response.data?.pending) {
+          shouldRetry = true;
           processedRef.current = false;
           setTimeout(() => {
             void processPayment();
@@ -66,7 +69,7 @@ const Success = () => {
         setError(error.message);
         toast.error('Failed to process payment: ' + error.message);
       } finally {
-        if (!isCompleted) {
+        if (!shouldRetry && !isCompleted) {
           setIsProcessing(false);
         }
       }
