@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Coins, Zap } from 'lucide-react';
 import { useTokenPackages } from '@/hooks/useTokenPackages';
-import StripePurchaseButton from './StripePurchaseButton';
 import LemonSqueezyPurchaseButton from './LemonSqueezyPurchaseButton';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -95,15 +94,13 @@ const TokenPurchase: React.FC<TokenPurchaseProps> = ({ user }) => {
                   {(pricePerToken / 100).toFixed(4)}¢ per token
                 </div>
 
-                <div className="space-y-2">
-                  <StripePurchaseButton
-                    packageId={pkg.id}
-                    packageName={pkg.name}
-                  />
+                <div className="pt-2">
                   <LemonSqueezyPurchaseButton
                     packageId={pkg.id}
                     packageName={pkg.name}
+                    priceCents={pkg.price_cents}
                     hasVariant={!!pkg.lemonsqueezy_variant_id}
+                    seed={pkg.id}
                   />
                 </div>
               </CardContent>
