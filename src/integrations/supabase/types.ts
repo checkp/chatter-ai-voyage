@@ -359,6 +359,10 @@ export type Database = {
     Functions: {
       add_daily_tokens: { Args: never; Returns: undefined }
       is_current_user_admin: { Args: never; Returns: boolean }
+      set_user_admin: {
+        Args: { make_admin: boolean; target_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
