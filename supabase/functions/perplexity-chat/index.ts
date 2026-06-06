@@ -75,7 +75,15 @@ serve(async (req) => {
       .select('api_cost_per_1k_tokens')
       .eq('platform', 'perplexity')
       .eq('model_id', model)
-      .single();
+      .maybeSingle();
+
+    if (!pricingData) {
+      console.warn('Invalid model requested:', model);
+      return new Response(JSON.stringify({ error: 'Invalid model' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const perplexityApiKey = Deno.env.get("PERPLEXITY_API_KEY");
     if (!perplexityApiKey) throw new Error("Perplexity API key not configured");

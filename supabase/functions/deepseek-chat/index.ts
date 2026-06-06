@@ -57,16 +57,19 @@ serve(async (req) => {
       tokenData = newTokenData;
     }
 
-    // Get pricing data for this model
     const { data: pricingData, error: pricingError } = await supabaseClient
       .from('model_pricing')
       .select('api_cost_per_1k_tokens')
       .eq('platform', 'deepseek')
       .eq('model_id', model)
-      .single();
+      .maybeSingle();
 
     if (pricingError || !pricingData) {
-      console.log('No pricing data found for model:', model, 'using default cost');
+      console.warn('Invalid model requested:', model);
+      return new Response(JSON.stringify({ error: 'Invalid model' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const deepseekApiKey = Deno.env.get("DEEPSEEK_API_KEY");

@@ -31,12 +31,17 @@ serve(async (req) => {
       throw new Error("Platform and API key are required");
     }
 
-    // Simple encryption using Web Crypto API (in production, use a more robust solution)
+    const encryptionSecret = Deno.env.get("API_KEY_ENCRYPTION_SECRET");
+    if (!encryptionSecret || encryptionSecret.length < 32) {
+      console.error("API_KEY_ENCRYPTION_SECRET is not configured or too short");
+      throw new Error("Server misconfiguration");
+    }
+
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
     const keyMaterial = await crypto.subtle.importKey(
       "raw",
-      encoder.encode(Deno.env.get("API_KEY_ENCRYPTION_SECRET") || "default-secret-key-32-chars-long"),
+      encoder.encode(encryptionSecret),
       { name: "PBKDF2" },
       false,
       ["deriveBits", "deriveKey"]
@@ -97,7 +102,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('API key encryption error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: 'Request failed' }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
