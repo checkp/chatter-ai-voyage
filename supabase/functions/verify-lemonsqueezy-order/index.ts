@@ -61,6 +61,28 @@ serve(async (req) => {
 
     const tokensToAdd = pkg.tokens + Math.floor(pkg.tokens * pkg.bonus_percentage / 100);
 
+    // Fast path: webhook may have already credited this purchase
+    const { data: webhookCredited } = await supabase
+      .from("token_transactions")
+      .select("id, amount, created_at, metadata")
+      .eq("user_id", user.id)
+      .eq("transaction_type", "purchase")
+      .contains("metadata", { package_id, payment_method: "lemonsqueezy" })
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (webhookCredited) {
+      const { data: t } = await supabase
+        .from("user_tokens").select("balance").eq("user_id", user.id).single();
+      return new Response(JSON.stringify({
+        success: true,
+        tokensAdded: webhookCredited.amount,
+        newBalance: t?.balance,
+        alreadyProcessed: true,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // Fetch up to 25 most-recent orders for this user's email
     const ordersRes = await fetch(
       `https://api.lemonsqueezy.com/v1/orders?filter[store_id]=${LS_STORE_ID}&filter[user_email]=${encodeURIComponent(user.email)}&page[size]=25&sort=-createdAt`,
