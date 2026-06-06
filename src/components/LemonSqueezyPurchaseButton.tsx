@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Lemon } from 'lucide-react';
+import { Loader2, Citrus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -54,7 +54,7 @@ const LemonSqueezyPurchaseButton: React.FC<Props> = ({ packageId, disabled, hasV
         </>
       ) : (
         <>
-          <Lemon className="w-4 h-4 mr-2" />
+          <Citrus className="w-4 h-4 mr-2" />
           Pay with Lemon Squeezy
         </>
       )}
