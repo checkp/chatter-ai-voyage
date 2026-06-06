@@ -86,8 +86,12 @@ serve(async (req) => {
     });
 
     if (!matchedOrder) {
-      return new Response(JSON.stringify({ error: "Order not found yet — please refresh in a moment." }), {
-        status: 404,
+      return new Response(JSON.stringify({
+        success: false,
+        pending: true,
+        error: "Order not found yet — waiting for Lemon Squeezy to finalize payment.",
+      }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

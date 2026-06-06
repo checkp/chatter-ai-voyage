@@ -13,6 +13,7 @@ const Success = () => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const processedRef = useRef(false);
+  const retryCountRef = useRef(0);
 
   const sessionId = searchParams.get('session_id');
   const checkoutId = searchParams.get('checkout_id');
@@ -21,13 +22,33 @@ const Success = () => {
 
   useEffect(() => {
     const processPayment = async () => {
+      let shouldRetry = false;
+
       if (processedRef.current) return;
       if (!sessionId && !checkoutId && !packageId) return;
       processedRef.current = true;
 
       setIsProcessing(true);
+      setError(null);
 
       try {
+        const session = (await supabase.auth.getSession()).data.session;
+        const accessToken = session?.access_token;
+
+        if (!accessToken) {
+          if (retryCountRef.current < 8) {
+            retryCountRef.current += 1;
+            shouldRetry = true;
+            processedRef.current = false;
+            setTimeout(() => {
+              void processPayment();
+            }, 1000);
+            return;
+          }
+
+          throw new Error('You need to be signed in to finish this purchase.');
+        }
+
         const isLemon = provider === 'lemonsqueezy' || !!packageId || !!checkoutId;
         const fnName = isLemon ? 'verify-lemonsqueezy-order' : 'verify-stripe-session';
         const body = isLemon
@@ -37,7 +58,7 @@ const Success = () => {
         const response = await supabase.functions.invoke(fnName, {
           body,
           headers: {
-            Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         });
 
@@ -45,7 +66,17 @@ const Success = () => {
           throw new Error(response.error.message || 'Failed to verify payment');
         }
 
+        if (response.data?.pending) {
+          shouldRetry = true;
+          processedRef.current = false;
+          setTimeout(() => {
+            void processPayment();
+          }, 2500);
+          return;
+        }
+
         if (response.data?.success) {
+          retryCountRef.current = 0;
           setIsCompleted(true);
           if (response.data.alreadyProcessed) {
             toast.success('Payment already processed.');
@@ -58,12 +89,14 @@ const Success = () => {
         setError(error.message);
         toast.error('Failed to process payment: ' + error.message);
       } finally {
-        setIsProcessing(false);
+        if (!shouldRetry && !isCompleted) {
+          setIsProcessing(false);
+        }
       }
     };
 
     processPayment();
-  }, [sessionId, checkoutId, packageId, provider]);
+  }, [sessionId, checkoutId, packageId, provider, isCompleted]);
 
   const handleReturnHome = () => {
     navigate('/');
