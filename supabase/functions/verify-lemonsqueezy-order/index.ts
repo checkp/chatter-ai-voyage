@@ -63,7 +63,7 @@ serve(async (req) => {
 
     // Fetch up to 25 most-recent orders for this user's email
     const ordersRes = await fetch(
-      `https://api.lemonsqueezy.com/v1/orders?filter[store_id]=${LS_STORE_ID}&filter[user_email]=${encodeURIComponent(user.email)}&page[size]=25&sort=-created_at`,
+      `https://api.lemonsqueezy.com/v1/orders?filter[store_id]=${LS_STORE_ID}&filter[user_email]=${encodeURIComponent(user.email)}&page[size]=25&sort=-createdAt`,
       { headers: { Accept: "application/vnd.api+json", Authorization: `Bearer ${apiKey}` } }
     );
     const ordersJson = await ordersRes.json();
