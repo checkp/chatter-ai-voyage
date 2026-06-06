@@ -56,7 +56,7 @@ serve(async (req) => {
             },
           },
           product_options: {
-            redirect_url: `${origin}/success?provider=lemonsqueezy&checkout_id={checkout_id}`,
+            redirect_url: `${origin}/success?provider=lemonsqueezy&package_id=${encodeURIComponent(package_id)}`,
             receipt_button_text: "Return to App",
             receipt_link_url: origin,
           },
@@ -89,15 +89,10 @@ serve(async (req) => {
     }
 
     const checkoutId = lsJson.data.id;
-    let url: string = lsJson.data.attributes.url;
-    // Replace our placeholder with the actual checkout id (LS doesn't substitute it)
-    url = url; // url returned doesn't include redirect; the redirect_url stored already has placeholder
-    // Manually replace placeholder in the stored URL by re-constructing success url client-side via custom data fallback.
-    // LS will redirect to redirect_url verbatim — replace {checkout_id} now:
-    // (We persist checkoutId on our side via metadata; client uses ?checkout_id on return)
+    const url: string = lsJson.data.attributes.url;
 
     return new Response(
-      JSON.stringify({ url: url.replace("{checkout_id}", checkoutId), checkout_id: checkoutId }),
+      JSON.stringify({ url, checkout_id: checkoutId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {
