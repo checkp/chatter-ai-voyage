@@ -45,6 +45,14 @@ const Success = () => {
           throw new Error(response.error.message || 'Failed to verify payment');
         }
 
+        if (response.data?.pending) {
+          processedRef.current = false;
+          setTimeout(() => {
+            void processPayment();
+          }, 2500);
+          return;
+        }
+
         if (response.data?.success) {
           setIsCompleted(true);
           if (response.data.alreadyProcessed) {
@@ -58,12 +66,14 @@ const Success = () => {
         setError(error.message);
         toast.error('Failed to process payment: ' + error.message);
       } finally {
-        setIsProcessing(false);
+        if (!isCompleted) {
+          setIsProcessing(false);
+        }
       }
     };
 
     processPayment();
-  }, [sessionId, checkoutId, packageId, provider]);
+  }, [sessionId, checkoutId, packageId, provider, isCompleted]);
 
   const handleReturnHome = () => {
     navigate('/');
