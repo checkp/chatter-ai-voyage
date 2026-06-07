@@ -90,6 +90,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 }) => {
   const tour = useTour();
   const [showChangelog, setShowChangelog] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Auto-launch tour for users who haven't completed it
   useEffect(() => {
