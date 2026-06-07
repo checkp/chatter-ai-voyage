@@ -3,61 +3,47 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
-  
-  <!-- Homepage -->
+
   <url>
-    <loc>https://roboheard.ai/</loc>
-    <lastmod>2026-04-11</lastmod>
+    <loc>https://chatter-ai-voyage.lovable.app/</loc>
+    <lastmod>2026-06-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
-  
-  <!-- Landing page -->
+
   <url>
-    <loc>https://roboheard.ai/landing</loc>
-    <lastmod>2026-04-08</lastmod>
+    <loc>https://chatter-ai-voyage.lovable.app/landing</loc>
+    <lastmod>2026-06-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
-  
-  <!-- Authentication page -->
+
   <url>
-    <loc>https://roboheard.ai/auth</loc>
-    <lastmod>2026-04-08</lastmod>
+    <loc>https://chatter-ai-voyage.lovable.app/auth</loc>
+    <lastmod>2026-06-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
-  
-  <!-- Purchase page -->
+
   <url>
-    <loc>https://roboheard.ai/purchase</loc>
-    <lastmod>2026-04-08</lastmod>
+    <loc>https://chatter-ai-voyage.lovable.app/purchase</loc>
+    <lastmod>2026-06-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
-  
-  <!-- Help page -->
+
   <url>
-    <loc>https://roboheard.ai/help</loc>
-    <lastmod>2026-04-08</lastmod>
+    <loc>https://chatter-ai-voyage.lovable.app/help</loc>
+    <lastmod>2026-06-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
-  
-  <!-- Image Generation page -->
+
   <url>
-    <loc>https://roboheard.ai/images</loc>
-    <lastmod>2026-04-08</lastmod>
+    <loc>https://chatter-ai-voyage.lovable.app/images</loc>
+    <lastmod>2026-06-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
-  </url>
-  
-  <!-- Success page -->
-  <url>
-    <loc>https://roboheard.ai/success</loc>
-    <lastmod>2026-04-08</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
   </url>
 
 </urlset>
