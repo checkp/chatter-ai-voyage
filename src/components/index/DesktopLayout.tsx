@@ -121,15 +121,40 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
   return (
     <div className="min-h-screen bg-background flex h-screen overflow-hidden">
-      <ChatSidebar 
-        chats={chats}
-        isLoadingChats={isLoadingChats}
-        activeChatId={activeChatId}
-        setActiveChatId={setActiveChatId}
-        onCreateChat={() => handleCreateChat()}
-        onDeleteChat={handleDeleteChat}
-        isCreatingChat={createChatMutation.isPending}
-      />
+      {sidebarCollapsed ? (
+        <div className="w-12 bg-secondary border-r border-border flex flex-col items-center py-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setSidebarCollapsed(false)}
+            aria-label="Expand sidebar"
+          >
+            <PanelLeftOpen className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : (
+        <div className="relative">
+          <ChatSidebar
+            chats={chats}
+            isLoadingChats={isLoadingChats}
+            activeChatId={activeChatId}
+            setActiveChatId={setActiveChatId}
+            onCreateChat={() => handleCreateChat()}
+            onDeleteChat={handleDeleteChat}
+            isCreatingChat={createChatMutation.isPending}
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-3 right-2 h-7 w-7 z-10"
+            onClick={() => setSidebarCollapsed(true)}
+            aria-label="Collapse sidebar"
+          >
+            <PanelLeftClose className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       {/* Main Chat Area */}
       <main className="flex-1 flex flex-col h-full overflow-hidden">        
