@@ -82,7 +82,7 @@ const Help: React.FC = () => {
       <main className="container mx-auto px-4 py-8">
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Overview</CardTitle>
+            <h2 className="text-2xl font-semibold leading-none tracking-tight">Overview</h2>
           </CardHeader>
           <CardContent className="text-sm leading-relaxed">
             <p className="mb-3">
@@ -102,7 +102,7 @@ const Help: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Chat vs Conductor</CardTitle>
+              <h2 className="text-2xl font-semibold leading-none tracking-tight">Chat vs Conductor</h2>
             </CardHeader>
             <CardContent className="text-sm">
               <Accordion type="single" collapsible className="w-full">
@@ -133,7 +133,7 @@ const Help: React.FC = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Quick Tips</CardTitle>
+              <h2 className="text-2xl font-semibold leading-none tracking-tight">Quick Tips</h2>
             </CardHeader>
             <CardContent className="text-sm space-y-2">
               <ul className="list-disc pl-5 space-y-1">
@@ -149,7 +149,7 @@ const Help: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Starter Prompts — Conversation</CardTitle>
+              <h2 className="text-2xl font-semibold leading-none tracking-tight">Starter Prompts — Conversation</h2>
             </CardHeader>
             <CardContent className="space-y-3">
               {prompts.conversation.map((p, i) => (
@@ -165,7 +165,7 @@ const Help: React.FC = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Starter Prompts — Conductor</CardTitle>
+              <h2 className="text-2xl font-semibold leading-none tracking-tight">Starter Prompts — Conductor</h2>
             </CardHeader>
             <CardContent className="space-y-3">
               {prompts.conductor.map((p, i) => (
