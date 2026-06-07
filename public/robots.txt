@@ -1,4 +1,3 @@
-
 User-agent: *
 Allow: /
 Allow: /landing
@@ -8,7 +7,7 @@ Allow: /help
 Allow: /images
 
 # Sitemap
-Sitemap: https://roboheard.ai/sitemap.xml
+Sitemap: https://chatter-ai-voyage.lovable.app/sitemap.xml
 
 # Crawl-delay for polite crawling
 Crawl-delay: 1
@@ -17,7 +16,7 @@ Crawl-delay: 1
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: Twitterbot  
+User-agent: Twitterbot
 Allow: /
 
 User-agent: LinkedInBot
