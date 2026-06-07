@@ -1,0 +1,13 @@
+# RoboHeard
+
+> Agentic AI orchestration platform. Conductor Mode delegates, debates, and synthesizes responses across GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek-R2, Mistral Large, and Perplexity Sonar in real time.
+
+RoboHeard lets you chat with multiple frontier AI models at once, orchestrate them with a Conductor agent that plans and delegates work, or compare answers side-by-side. Free Mode supports rapid multi-agent exploration; Image Generation routes prompts to DALL-E, Gemini, and Grok.
+
+## Pages
+
+- [Home](/): Multi-agent chat workspace with Conductor, Discussion, Isolated, and Side-by-Side modes.
+- [Landing](/landing): Product overview, features, and AI model lineup.
+- [Help](/help): Getting started guide, mode explanations, and starter prompts.
+- [Purchase](/purchase): Token packages for accessing the AI models.
+- [Images](/images): Multi-provider image generation interface.

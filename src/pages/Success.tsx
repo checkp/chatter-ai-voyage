@@ -102,8 +102,10 @@ const Success = () => {
     navigate('/');
   };
 
+  const heading = isProcessing ? 'Processing Payment...' : error ? 'Payment Error' : 'Payment Successful!';
+
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <main className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
@@ -115,9 +117,7 @@ const Success = () => {
               <CheckCircle className="w-16 h-16 text-green-500" />
             )}
           </div>
-          <CardTitle className="text-2xl">
-            {isProcessing ? 'Processing Payment...' : error ? 'Payment Error' : 'Payment Successful!'}
-          </CardTitle>
+          <h1 className="text-2xl font-semibold leading-none tracking-tight">{heading}</h1>
         </CardHeader>
         <CardContent className="text-center space-y-4">
           {isProcessing && (
@@ -147,7 +147,7 @@ const Success = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+    </main>
   );
 };
 
