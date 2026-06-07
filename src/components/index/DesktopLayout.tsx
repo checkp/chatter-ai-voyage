@@ -3,9 +3,9 @@ import React, { useEffect, useState } from 'react';
 import PreReleaseBanner from '@/components/PreReleaseBanner';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatHeader from '@/components/ChatHeader';
-import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
+import { Button } from '@/components/ui/button';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
-import FloatingActivityConsole from '@/components/FloatingActivityConsole';
 import ConductorSummary from '@/components/ConductorSummary';
 import GuidedTour from '@/components/GuidedTour';
 import ChangelogDialog from '@/components/ChangelogDialog';
