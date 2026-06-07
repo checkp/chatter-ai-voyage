@@ -16,7 +16,7 @@ const LandingHeader = () => {
             alt="RoboHeard" 
             className="h-8 w-8" 
           />
-          <h1 className="text-2xl font-bold">RoboHeard</h1>
+          <span className="text-2xl font-bold">RoboHeard</span>
         </div>
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost">
