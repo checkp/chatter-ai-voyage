@@ -4,8 +4,10 @@ import PreReleaseBanner from '@/components/PreReleaseBanner';
 import ChatSidebar from '@/components/ChatSidebar';
 import ChatHeader from '@/components/ChatHeader';
 import DraggableAIStatusBar from '@/components/DraggableAIStatusBar';
+import { Button } from '@/components/ui/button';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
-import FloatingActivityConsole from '@/components/FloatingActivityConsole';
+
 import ConductorSummary from '@/components/ConductorSummary';
 import GuidedTour from '@/components/GuidedTour';
 import ChangelogDialog from '@/components/ChangelogDialog';
@@ -88,6 +90,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 }) => {
   const tour = useTour();
   const [showChangelog, setShowChangelog] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Auto-launch tour for users who haven't completed it
   useEffect(() => {
@@ -118,15 +121,40 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
   return (
     <div className="min-h-screen bg-background flex h-screen overflow-hidden">
-      <ChatSidebar 
-        chats={chats}
-        isLoadingChats={isLoadingChats}
-        activeChatId={activeChatId}
-        setActiveChatId={setActiveChatId}
-        onCreateChat={() => handleCreateChat()}
-        onDeleteChat={handleDeleteChat}
-        isCreatingChat={createChatMutation.isPending}
-      />
+      {sidebarCollapsed ? (
+        <div className="w-12 bg-secondary border-r border-border flex flex-col items-center py-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setSidebarCollapsed(false)}
+            aria-label="Expand sidebar"
+          >
+            <PanelLeftOpen className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : (
+        <div className="relative">
+          <ChatSidebar
+            chats={chats}
+            isLoadingChats={isLoadingChats}
+            activeChatId={activeChatId}
+            setActiveChatId={setActiveChatId}
+            onCreateChat={() => handleCreateChat()}
+            onDeleteChat={handleDeleteChat}
+            isCreatingChat={createChatMutation.isPending}
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-3 right-2 h-7 w-7 z-10"
+            onClick={() => setSidebarCollapsed(true)}
+            aria-label="Collapse sidebar"
+          >
+            <PanelLeftClose className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       {/* Main Chat Area */}
       <main className="flex-1 flex flex-col h-full overflow-hidden">        
@@ -218,8 +246,8 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         />
       )}
 
-      {/* Floating Activity Console */}
-      <FloatingActivityConsole />
+
+
 
 
       {/* Guided Tour Overlay */}
