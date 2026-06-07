@@ -246,8 +246,8 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
         />
       )}
 
-      {/* Floating Activity Console */}
-      <FloatingActivityConsole />
+
+
 
 
       {/* Guided Tour Overlay */}
