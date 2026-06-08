@@ -87,6 +87,8 @@ const AgentSettings = () => {
       setEnabledPlatforms(enabledMap);
       setCustomInstructions(instructionsMap);
       setGlobalPrompt((profile as any)?.custom_system_prompt || '');
+      setConductorPrompt((profile as any)?.custom_conductor_prompt || '');
+
       setHasLoaded(true);
     } catch (error: any) {
       console.error('Failed to load agent settings:', error);
