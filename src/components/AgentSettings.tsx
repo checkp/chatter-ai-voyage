@@ -11,6 +11,7 @@ import { Settings, Sparkles, Wand2 } from 'lucide-react';
 import ModelSelector from './ModelSelector';
 import { getDefaultModel, getModelConfig, useAIModels } from '@/config/aiModels';
 import { DEFAULT_CONDUCTOR_PROMPT } from '@/config/conductorPrompt';
+import { DEFAULT_GLOBAL_SYSTEM_PROMPT, DEFAULT_AGENT_INSTRUCTIONS } from '@/config/defaultPrompts';
 
 
 interface AgentSetting {
@@ -74,19 +75,22 @@ const AgentSettings = () => {
       (data as AgentSetting[] | null)?.forEach(setting => {
         modelsMap[setting.platform] = resolvePlatformModel(setting.platform, setting.model);
         enabledMap[setting.platform] = setting.enabled;
-        instructionsMap[setting.platform] = setting.custom_instructions || '';
+        instructionsMap[setting.platform] =
+          setting.custom_instructions ?? DEFAULT_AGENT_INSTRUCTIONS[setting.platform] ?? '';
       });
 
       PLATFORMS.forEach(p => {
         if (!modelsMap[p.id]) modelsMap[p.id] = getDefaultModel(p.id);
         if (enabledMap[p.id] === undefined) enabledMap[p.id] = false;
-        if (instructionsMap[p.id] === undefined) instructionsMap[p.id] = '';
+        if (instructionsMap[p.id] === undefined) {
+          instructionsMap[p.id] = DEFAULT_AGENT_INSTRUCTIONS[p.id] ?? '';
+        }
       });
 
       setSelectedModels(modelsMap);
       setEnabledPlatforms(enabledMap);
       setCustomInstructions(instructionsMap);
-      setGlobalPrompt((profile as any)?.custom_system_prompt || '');
+      setGlobalPrompt((profile as any)?.custom_system_prompt ?? DEFAULT_GLOBAL_SYSTEM_PROMPT);
       setConductorPrompt(
         (profile as any)?.custom_conductor_prompt ?? DEFAULT_CONDUCTOR_PROMPT
       );
