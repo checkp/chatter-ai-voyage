@@ -172,7 +172,7 @@ export const processConductorMessageFlow = async (params: ProcessConductorParams
   if (!conductorPlatform) throw new Error('Conductor platform not found');
 
   // Phase 1: Get conductor's decision about coordination
-  const decisionPrompt = createDecisionPrompt(userMessage, platforms);
+  const decisionPrompt = createDecisionPrompt(userMessage, platforms, conductorSystemPrompt);
   const conductorMsgObj = await getConductorResponse(
     conductorPlatform,
     updatedConductorMessages,
