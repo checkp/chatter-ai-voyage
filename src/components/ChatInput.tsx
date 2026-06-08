@@ -42,6 +42,15 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const isDisabled = isLoadingResponse || isPending;
   const looksLikeImage = isImageGenerationIntent(input);
 
+  const onSendClick = () => {
+    if (looksLikeImage && onGenerateImages) {
+      setPickerOpen(true);
+      return;
+    }
+    onSendClick();
+  };
+
+
   return (
     <footer className="border-t bg-secondary border-border p-4 flex-shrink-0" data-tour="chat-input">
       <div className="flex items-center gap-2">
@@ -52,7 +61,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
               if (!isDisabled) {
-                handleSend();
+                onSendClick();
               }
             }
           }}
@@ -82,7 +91,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
-                  onClick={handleSend} 
+                  onClick={onSendClick} 
                   disabled={isDisabled || !input.trim()}
                   size="icon"
                 >
