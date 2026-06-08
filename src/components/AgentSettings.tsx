@@ -11,6 +11,7 @@ import { Settings, Sparkles, Wand2 } from 'lucide-react';
 import ModelSelector from './ModelSelector';
 import { getDefaultModel, getModelConfig, useAIModels } from '@/config/aiModels';
 import { DEFAULT_CONDUCTOR_PROMPT } from '@/config/conductorPrompt';
+import { DEFAULT_GLOBAL_SYSTEM_PROMPT, DEFAULT_AGENT_INSTRUCTIONS } from '@/config/defaultPrompts';
 
 
 interface AgentSetting {
