@@ -90,7 +90,7 @@ const ImageModelPicker: React.FC<Props> = ({ open, onOpenChange, userPrompt, onC
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>Your balance</span>
-            <span className="font-mono">{tokenBalance ?? '…'}t</span>
+            <span className="font-mono">{balance}t</span>
           </div>
           {insufficient && (
             <div className="text-xs text-destructive">Insufficient tokens.</div>
