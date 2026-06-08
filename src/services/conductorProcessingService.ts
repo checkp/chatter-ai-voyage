@@ -152,8 +152,10 @@ export const processConductorMessageFlow = async (params: ProcessConductorParams
     platforms,
     conductorAgent,
     conductorConversationId,
-    callAIAPI
+    callAIAPI,
+    conductorSystemPrompt
   } = params;
+
 
   console.log('Processing conductor message:', {
     originalChatId: chatId,
