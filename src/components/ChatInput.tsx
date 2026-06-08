@@ -154,6 +154,12 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </div>
         )}
       </div>
+
+      {looksLikeImage && onGenerateImages && (
+        <div className="mt-1 text-[8pt] leading-none text-muted-foreground/70 text-right pr-1">
+          ~{DEFAULT_IMAGE_COST}t · image gen
+        </div>
+      )}
       
       {pendingCount > 0 && (
         <div className="mt-2 text-xs text-muted-foreground">
