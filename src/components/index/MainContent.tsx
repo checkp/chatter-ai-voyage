@@ -1,11 +1,16 @@
 
 import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInput from '@/components/ChatInput';
 import SettingsPanel from '@/components/SettingsPanel';
 import SideBySideLayout from '@/components/SideBySideLayout';
 import ConductorLayout from '@/components/ConductorLayout';
+import { useMultiImageGeneration } from '@/hooks/useMultiImageGeneration';
+import { IMAGE_PANEL_PLATFORM } from '@/config/imageModels';
 import type { AIPlatform, ChatMode } from '@/types/chat';
 
 interface MainContentProps {
@@ -68,16 +73,43 @@ const MainContent: React.FC<MainContentProps> = ({
   handleConductorSend,
   user
 }) => {
-  // Transform the status strings to booleans for SideBySideLayout
   const activeAIStatusesBool = Object.keys(transformedStatuses).reduce((acc, key) => {
     acc[key] = transformedStatuses[key] === 'responding' || transformedStatuses[key] === 'thinking';
     return acc;
   }, {} as Record<string, boolean>);
 
-  // Handle direct agent send in conductor mode
+  const queryClient = useQueryClient();
+  const { generate: generateMultiImages, isGenerating: isGeneratingImages } = useMultiImageGeneration();
+
+  const handleGenerateImages = async (prompt: string, models: string[]) => {
+    if (!activeChatId || !prompt.trim() || models.length === 0) return;
+
+    // Persist user prompt + placeholder so it appears immediately
+    const now = new Date().toISOString();
+    await supabase.from('messages').insert([
+      { conversation_id: activeChatId, content: prompt, sender: 'user', created_at: now },
+    ]);
+    queryClient.invalidateQueries({ queryKey: ['messages', activeChatId] });
+
+    const result = await generateMultiImages(prompt, models);
+    if (!result) return;
+
+    await supabase.from('messages').insert([
+      {
+        conversation_id: activeChatId,
+        content: JSON.stringify(result),
+        sender: 'ai',
+        platform: IMAGE_PANEL_PLATFORM,
+        created_at: new Date().toISOString(),
+      },
+    ]);
+    queryClient.invalidateQueries({ queryKey: ['messages', activeChatId] });
+    queryClient.invalidateQueries({ queryKey: ['tokens'] });
+    queryClient.invalidateQueries({ queryKey: ['generated-images'] });
+  };
+
   const handleAgentSend = (message: string) => {
     if (activeChatId && message.trim()) {
-      // Use the existing handleSend but set input first
       setInput(message);
       handleSend(activeChatId);
     }
@@ -138,18 +170,19 @@ const MainContent: React.FC<MainContentProps> = ({
 
       {/* Chat Input - only show for non-conductor modes */}
       {activeTab === 'chat' && activeChatMode !== 'conductor' && (
-        <ChatInput 
+        <ChatInput
           input={input}
           setInput={setInput}
           handleSend={() => handleSend(activeChatId)}
           handleStop={handleStop}
-          isLoadingResponse={isLoadingResponse}
-          isPending={sendMessageMutation.isPending}
+          isLoadingResponse={isLoadingResponse || isGeneratingImages}
+          isPending={sendMessageMutation.isPending || isGeneratingImages}
           canStop={canStop}
           pendingCount={getPendingCount()}
           isFreeMode={isFreeMode}
           isFreeModeRunning={isFreeModeRunning}
           onSendAndStartConversation={handleSendAndStartConversation}
+          onGenerateImages={activeChatId ? handleGenerateImages : undefined}
         />
       )}
     </>

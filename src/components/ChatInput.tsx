@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Send, RefreshCw, Square, Play, Image } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Send, RefreshCw, Square, Play, Sparkles } from 'lucide-react';
+import ImageModelPicker from '@/components/chat/ImageModelPicker';
+import { isImageGenerationIntent } from '@/utils/intentDetection';
 
 interface ChatInputProps {
   input: string;
@@ -19,6 +20,7 @@ interface ChatInputProps {
   isFreeModeRunning?: boolean;
   onSendAndStartConversation?: () => void;
   placeholder?: string;
+  onGenerateImages?: (prompt: string, models: string[]) => void;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -33,10 +35,12 @@ const ChatInput: React.FC<ChatInputProps> = ({
   isFreeMode = false,
   isFreeModeRunning = false,
   onSendAndStartConversation,
-  placeholder = "Type your message here..."
+  placeholder = "Type your message here...",
+  onGenerateImages,
 }) => {
-  const navigate = useNavigate();
+  const [pickerOpen, setPickerOpen] = useState(false);
   const isDisabled = isLoadingResponse || isPending;
+  const looksLikeImage = isImageGenerationIntent(input);
 
   return (
     <footer className="border-t bg-secondary border-border p-4 flex-shrink-0" data-tour="chat-input">
@@ -112,20 +116,23 @@ const ChatInput: React.FC<ChatInputProps> = ({
               </Tooltip>
             )}
             
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  onClick={() => navigate('/images')}
-                  variant="outline"
-                  size="icon"
-                >
-                  <Image className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Generate AI Images</p>
-              </TooltipContent>
-            </Tooltip>
+            {onGenerateImages && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setPickerOpen(true)}
+                    variant={looksLikeImage ? 'default' : 'outline'}
+                    size="icon"
+                    className={looksLikeImage ? 'animate-pulse' : ''}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{looksLikeImage ? '🎨 Image request detected — fan out to all models' : 'Generate images with multiple AIs'}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
         )}
       </div>
@@ -140,6 +147,18 @@ const ChatInput: React.FC<ChatInputProps> = ({
         <div className="mt-2 text-xs text-blue-600 font-medium">
           🤖 Free Mode: Agents are conversing autonomously
         </div>
+      )}
+
+      {onGenerateImages && (
+        <ImageModelPicker
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          userPrompt={input}
+          onConfirm={(models) => {
+            onGenerateImages(input, models);
+            setInput('');
+          }}
+        />
       )}
     </footer>
   );
