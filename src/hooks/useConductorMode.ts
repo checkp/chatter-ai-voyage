@@ -15,7 +15,22 @@ export const useConductorMode = (
 ) => {
   const [conductorAgent, setConductorAgentState] = useState('openai');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [conductorSystemPrompt, setConductorSystemPrompt] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  // Load user's custom conductor prompt
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('profiles')
+      .select('custom_conductor_prompt')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setConductorSystemPrompt((data as any)?.custom_conductor_prompt ?? null);
+      });
+  }, [user]);
+
 
   // Load conductor_platform from the conversation when activeChatId changes
   useEffect(() => {
@@ -67,8 +82,10 @@ export const useConductorMode = (
         platforms,
         conductorAgent,
         conductorConversationId,
-        callAIAPI
+        callAIAPI,
+        conductorSystemPrompt
       });
+
 
       queryClient.invalidateQueries({ queryKey: ['conductor_messages'] });
       queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
@@ -81,7 +98,7 @@ export const useConductorMode = (
     } finally {
       setIsProcessing(false);
     }
-  }, [user, platforms, conductorAgent, callAIAPI, queryClient]);
+  }, [user, platforms, conductorAgent, callAIAPI, queryClient, conductorSystemPrompt]);
 
   return {
     conductorAgent,

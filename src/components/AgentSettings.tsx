@@ -7,9 +7,11 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Settings, Sparkles } from 'lucide-react';
+import { Settings, Sparkles, Wand2 } from 'lucide-react';
 import ModelSelector from './ModelSelector';
 import { getDefaultModel, getModelConfig, useAIModels } from '@/config/aiModels';
+import { DEFAULT_CONDUCTOR_PROMPT } from '@/config/conductorPrompt';
+
 
 interface AgentSetting {
   platform: string;
@@ -39,6 +41,8 @@ const AgentSettings = () => {
   const [enabledPlatforms, setEnabledPlatforms] = useState<Record<string, boolean>>({});
   const [customInstructions, setCustomInstructions] = useState<Record<string, string>>({});
   const [globalPrompt, setGlobalPrompt] = useState('');
+  const [conductorPrompt, setConductorPrompt] = useState('');
+
   const [hasLoaded, setHasLoaded] = useState(false);
 
   const debounceTimers = useRef<Record<string, any>>({});
@@ -56,7 +60,7 @@ const AgentSettings = () => {
           .eq('user_id', user.id),
         supabase
           .from('profiles')
-          .select('custom_system_prompt')
+          .select('custom_system_prompt, custom_conductor_prompt')
           .eq('id', user.id)
           .maybeSingle(),
       ]);
@@ -83,6 +87,8 @@ const AgentSettings = () => {
       setEnabledPlatforms(enabledMap);
       setCustomInstructions(instructionsMap);
       setGlobalPrompt((profile as any)?.custom_system_prompt || '');
+      setConductorPrompt((profile as any)?.custom_conductor_prompt || '');
+
       setHasLoaded(true);
     } catch (error: any) {
       console.error('Failed to load agent settings:', error);
@@ -158,6 +164,26 @@ const AgentSettings = () => {
     }, 800);
   }, []);
 
+  const handleConductorPromptChange = useCallback((value: string) => {
+    setConductorPrompt(value);
+    if (debounceTimers.current['__conductor__']) clearTimeout(debounceTimers.current['__conductor__']);
+    debounceTimers.current['__conductor__'] = setTimeout(async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { error } = await supabase
+          .from('profiles')
+          .update({ custom_conductor_prompt: value || null })
+          .eq('id', user.id);
+        if (error) throw error;
+        toast.success('Conductor prompt saved');
+      } catch (error: any) {
+        toast.error('Failed to save: ' + error.message);
+      }
+    }, 800);
+  }, []);
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
@@ -185,6 +211,28 @@ const AgentSettings = () => {
           />
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Wand2 className="w-5 h-5" />
+            Conductor Orchestration Prompt
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Label htmlFor="conductor-prompt" className="text-sm text-muted-foreground">
+            Controls how the AI Conductor briefs the panel and decides when to coordinate multiple agents. Leave blank to use the built-in default.
+          </Label>
+          <Textarea
+            id="conductor-prompt"
+            value={conductorPrompt}
+            onChange={(e) => handleConductorPromptChange(e.target.value)}
+            placeholder={DEFAULT_CONDUCTOR_PROMPT}
+            rows={8}
+          />
+        </CardContent>
+      </Card>
+
 
       <div className="grid gap-4">
         {PLATFORMS.map((platform) => (

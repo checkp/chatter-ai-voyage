@@ -1,6 +1,7 @@
 
 import { generateChatId } from '@/utils/chatUtils';
 import type { AIPlatform, Message } from '@/types/chat';
+import { resolveConductorPrompt } from '@/config/conductorPrompt';
 import {
   saveConductorUserMessage,
   saveConductorAIMessage,
@@ -18,13 +19,16 @@ interface ProcessConductorParams {
   conductorAgent: string;
   conductorConversationId: string;
   callAIAPI: (platform: AIPlatform, messages: Message[], enabledPlatforms: AIPlatform[]) => Promise<string>;
+  conductorSystemPrompt?: string | null;
 }
 
 export const createDecisionPrompt = (
   userMessage: string,
-  platforms: AIPlatform[]
+  platforms: AIPlatform[],
+  conductorSystemPrompt?: string | null
 ): string => {
-  return `You are the AI Conductor. Analyze this user message and decide if it needs multi-agent coordination.
+  const framing = resolveConductorPrompt(conductorSystemPrompt);
+  return `${framing}
 
 User message: "${userMessage}"
 
@@ -33,17 +37,19 @@ Available AI agents: ${platforms.filter(p => p.enabled).map(p => p.name).join(',
 Respond with:
 1. Your direct response to the user
 2. At the end, add a decision marker: [COORDINATION_NEEDED: YES/NO]
-3. If YES, briefly explain why multiple agents would be beneficial
-
-Only suggest coordination if the question would truly benefit from multiple AI perspectives (e.g., complex analysis, comparing approaches, multi-faceted problems).`;
+3. If YES, briefly explain why multiple agents would be beneficial`;
 };
 
 export const createAgentCoordinationPrompt = (
   userMessage: string,
   conductorAnalysis: string,
-  platforms: AIPlatform[]
+  platforms: AIPlatform[],
+  conductorSystemPrompt?: string | null
 ): string => {
-  return `As the AI Conductor, I'm coordinating a multi-agent discussion based on this user request:
+  const framing = resolveConductorPrompt(conductorSystemPrompt);
+  return `${framing}
+
+I'm coordinating a multi-agent discussion based on this user request:
 
 Original message: "${userMessage}"
 
@@ -56,14 +62,19 @@ Please provide your specialized perspective on this request. Focus on your uniqu
 
 export const createSummaryPrompt = (
   agentResponses: Message[],
-  platforms: AIPlatform[]
+  platforms: AIPlatform[],
+  conductorSystemPrompt?: string | null
 ): string => {
-  return `Now summarize and synthesize these responses from the AI agents:
+  const framing = resolveConductorPrompt(conductorSystemPrompt);
+  return `${framing}
+
+Now summarize and synthesize these responses from the AI agents:
 
 ${agentResponses.map(msg => `${platforms.find(p => p.id === msg.platform)?.name}: ${msg.content}`).join('\n\n')}
 
 Provide a coherent, synthesized response that captures the best insights from all agents.`;
 };
+
 
 export const getConductorResponse = async (
   conductorPlatform: AIPlatform,
@@ -141,8 +152,10 @@ export const processConductorMessageFlow = async (params: ProcessConductorParams
     platforms,
     conductorAgent,
     conductorConversationId,
-    callAIAPI
+    callAIAPI,
+    conductorSystemPrompt
   } = params;
+
 
   console.log('Processing conductor message:', {
     originalChatId: chatId,
@@ -159,7 +172,7 @@ export const processConductorMessageFlow = async (params: ProcessConductorParams
   if (!conductorPlatform) throw new Error('Conductor platform not found');
 
   // Phase 1: Get conductor's decision about coordination
-  const decisionPrompt = createDecisionPrompt(userMessage, platforms);
+  const decisionPrompt = createDecisionPrompt(userMessage, platforms, conductorSystemPrompt);
   const conductorMsgObj = await getConductorResponse(
     conductorPlatform,
     updatedConductorMessages,
@@ -179,8 +192,10 @@ export const processConductorMessageFlow = async (params: ProcessConductorParams
     const coordinationPrompt = createAgentCoordinationPrompt(
       userMessage,
       conductorMsgObj.content,
-      platforms
+      platforms,
+      conductorSystemPrompt
     );
+
     
     const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
     agentResponses = await processAgentResponsesWithConductorPrompt(
@@ -193,7 +208,7 @@ export const processConductorMessageFlow = async (params: ProcessConductorParams
 
     // Step 4: Generate conductor summary if we have agent responses
     if (agentResponses.length > 0) {
-      const summaryPrompt = createSummaryPrompt(agentResponses, platforms);
+      const summaryPrompt = createSummaryPrompt(agentResponses, platforms, conductorSystemPrompt);
       await getConductorResponse(
         conductorPlatform,
         [...updatedConductorMessages, conductorMsgObj],
