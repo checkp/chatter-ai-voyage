@@ -148,6 +148,18 @@ const ChatInput: React.FC<ChatInputProps> = ({
           🤖 Free Mode: Agents are conversing autonomously
         </div>
       )}
+
+      {onGenerateImages && (
+        <ImageModelPicker
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          userPrompt={input}
+          onConfirm={(models) => {
+            onGenerateImages(input, models);
+            setInput('');
+          }}
+        />
+      )}
     </footer>
   );
 };
