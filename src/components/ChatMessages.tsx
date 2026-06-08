@@ -3,6 +3,8 @@ import React from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshCw } from 'lucide-react';
 import { useAutoScroll } from '@/hooks/useAutoScroll';
+import ImagePanel from '@/components/chat/ImagePanel';
+import { IMAGE_PANEL_PLATFORM, type ImagePanelData } from '@/config/imageModels';
 import type { Message, AIPlatform } from '@/types/chat';
 
 interface ChatMessagesProps {
