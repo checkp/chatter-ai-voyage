@@ -82,8 +82,10 @@ export const useConductorMode = (
         platforms,
         conductorAgent,
         conductorConversationId,
-        callAIAPI
+        callAIAPI,
+        conductorSystemPrompt
       });
+
 
       queryClient.invalidateQueries({ queryKey: ['conductor_messages'] });
       queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
