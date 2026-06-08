@@ -87,7 +87,9 @@ const AgentSettings = () => {
       setEnabledPlatforms(enabledMap);
       setCustomInstructions(instructionsMap);
       setGlobalPrompt((profile as any)?.custom_system_prompt || '');
-      setConductorPrompt((profile as any)?.custom_conductor_prompt || '');
+      setConductorPrompt(
+        (profile as any)?.custom_conductor_prompt ?? DEFAULT_CONDUCTOR_PROMPT
+      );
 
       setHasLoaded(true);
     } catch (error: any) {
