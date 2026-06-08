@@ -41,6 +41,8 @@ const AgentSettings = () => {
   const [enabledPlatforms, setEnabledPlatforms] = useState<Record<string, boolean>>({});
   const [customInstructions, setCustomInstructions] = useState<Record<string, string>>({});
   const [globalPrompt, setGlobalPrompt] = useState('');
+  const [conductorPrompt, setConductorPrompt] = useState('');
+
   const [hasLoaded, setHasLoaded] = useState(false);
 
   const debounceTimers = useRef<Record<string, any>>({});
