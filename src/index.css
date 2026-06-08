@@ -53,11 +53,11 @@
     --cyber-success: 142 90% 60%;
 
     /* Magazine markdown palette (light) */
-    --md-accent-1: 340 82% 55%;  /* magenta/coral */
-    --md-accent-2: 32 95% 55%;   /* amber */
-    --md-accent-3: 175 70% 38%;  /* teal */
-    --md-accent-4: 265 70% 60%;  /* violet */
-    --md-quote-bg: 42 100% 95%;
+    --md-accent-1: 82 28% 42%;   /* moss green */
+    --md-accent-2: 48 38% 58%;   /* khaki */
+    --md-accent-3: 150 22% 48%;  /* sage */
+    --md-accent-4: 68 25% 38%;   /* olive */
+    --md-quote-bg: 62 32% 92%;   /* pale khaki cream */
     --md-serif: 'Instrument Serif','DM Serif Display','Playfair Display',Georgia,serif;
   }
 
@@ -89,11 +89,11 @@
     --chart-5: 85 50% 60%;
 
     /* Magazine markdown palette (dark) */
-    --md-accent-1: 340 85% 68%;
-    --md-accent-2: 38 95% 65%;
-    --md-accent-3: 172 70% 55%;
-    --md-accent-4: 265 80% 75%;
-    --md-quote-bg: 30 20% 14%;
+    --md-accent-1: 82 32% 68%;
+    --md-accent-2: 48 42% 72%;
+    --md-accent-3: 150 28% 65%;
+    --md-accent-4: 68 28% 62%;
+    --md-quote-bg: 70 12% 14%;
   }
 
   /* Theme-specific styles */
