@@ -6,6 +6,15 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Send, RefreshCw, Square, Play, Sparkles } from 'lucide-react';
 import ImageModelPicker from '@/components/chat/ImageModelPicker';
 import { isImageGenerationIntent } from '@/utils/intentDetection';
+import { IMAGE_MODEL_OPTIONS, PROMPT_COLLAB_COST } from '@/config/imageModels';
+
+const DEFAULT_IMAGE_MODELS = ['gemini-image'];
+const DEFAULT_IMAGE_COST =
+  PROMPT_COLLAB_COST +
+  DEFAULT_IMAGE_MODELS.reduce(
+    (s, id) => s + (IMAGE_MODEL_OPTIONS.find(m => m.id === id)?.cost ?? 0),
+    0
+  );
 
 interface ChatInputProps {
   input: string;
