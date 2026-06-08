@@ -51,6 +51,14 @@
     --cyber-warning: 38 100% 60%;
     --cyber-error: 0 85% 60%;
     --cyber-success: 142 90% 60%;
+
+    /* Magazine markdown palette (light) */
+    --md-accent-1: 340 82% 55%;  /* magenta/coral */
+    --md-accent-2: 32 95% 55%;   /* amber */
+    --md-accent-3: 175 70% 38%;  /* teal */
+    --md-accent-4: 265 70% 60%;  /* violet */
+    --md-quote-bg: 42 100% 95%;
+    --md-serif: 'Instrument Serif','DM Serif Display','Playfair Display',Georgia,serif;
   }
 
   .dark {
@@ -79,6 +87,13 @@
     --chart-3: 120 40% 55%;
     --chart-4: 45 60% 65%;
     --chart-5: 85 50% 60%;
+
+    /* Magazine markdown palette (dark) */
+    --md-accent-1: 340 85% 68%;
+    --md-accent-2: 38 95% 65%;
+    --md-accent-3: 172 70% 55%;
+    --md-accent-4: 265 80% 75%;
+    --md-quote-bg: 30 20% 14%;
   }
 
   /* Theme-specific styles */
