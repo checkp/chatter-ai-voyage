@@ -89,11 +89,11 @@
     --chart-5: 85 50% 60%;
 
     /* Magazine markdown palette (dark) */
-    --md-accent-1: 340 85% 68%;
-    --md-accent-2: 38 95% 65%;
-    --md-accent-3: 172 70% 55%;
-    --md-accent-4: 265 80% 75%;
-    --md-quote-bg: 30 20% 14%;
+    --md-accent-1: 82 32% 68%;
+    --md-accent-2: 48 42% 72%;
+    --md-accent-3: 150 28% 65%;
+    --md-accent-4: 68 28% 62%;
+    --md-quote-bg: 70 12% 14%;
   }
 
   /* Theme-specific styles */
