@@ -47,7 +47,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       setPickerOpen(true);
       return;
     }
-    handleSend();
+    onSendClick();
   };
 
 
@@ -61,7 +61,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
               if (!isDisabled) {
-                handleSend();
+                onSendClick();
               }
             }
           }}
@@ -91,7 +91,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
-                  onClick={handleSend} 
+                  onClick={onSendClick} 
                   disabled={isDisabled || !input.trim()}
                   size="icon"
                 >
