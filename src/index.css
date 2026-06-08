@@ -39,6 +39,9 @@
     --agent-deepseek: 210 50% 70%; /* Soft blue */
     --agent-grok: 270 40% 75%; /* Soft purple */
     --agent-google: 0 40% 75%; /* Soft red */
+    --agent-mistral: 25 70% 65%; /* Warm orange */
+    --agent-perplexity: 180 45% 60%; /* Teal */
+    --agent-qwen: 340 55% 70%; /* Soft rose — Qwen */
 
     /* Cyber theme colors (for dark mode) */
     --cyber-bg: 222 25% 7%;
