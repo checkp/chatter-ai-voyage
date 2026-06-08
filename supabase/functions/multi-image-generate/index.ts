@@ -25,8 +25,9 @@ const IMAGE_MODELS: Record<string, { provider: "openai" | "gemini"; cost: number
 
 const COLLAB_COST = 50;
 
-async function callGateway(systemPrompt: string, userPrompt: string, model = "google/gemini-2.5-flash-lite"): Promise<string> {
+async function callGateway(systemPrompt: string, userPrompt: string, model = "google/gemini-2.5-flash"): Promise<string> {
   const key = Deno.env.get("LOVABLE_API_KEY");
+  if (!key) throw new Error("LOVABLE_API_KEY not set");
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -36,10 +37,13 @@ async function callGateway(systemPrompt: string, userPrompt: string, model = "go
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      max_tokens: 120,
     }),
   });
-  if (!res.ok) throw new Error(`Gateway ${res.status}: ${await res.text()}`);
+  if (!res.ok) {
+    const text = await res.text();
+    console.error(`Gateway ${model} ${res.status}: ${text}`);
+    throw new Error(`Gateway ${res.status}: ${text.slice(0, 200)}`);
+  }
   const data = await res.json();
   return data.choices?.[0]?.message?.content?.trim() ?? "";
 }
