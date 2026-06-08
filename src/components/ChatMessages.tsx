@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshCw } from 'lucide-react';
 import { useAutoScroll } from '@/hooks/useAutoScroll';
 import ImagePanel from '@/components/chat/ImagePanel';
+import MarkdownMessage from '@/components/chat/MarkdownMessage';
 import { IMAGE_PANEL_PLATFORM, type ImagePanelData } from '@/config/imageModels';
 import type { Message, AIPlatform } from '@/types/chat';
 
@@ -68,9 +69,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                   'border-l-border bg-muted/50'
                 : 'border-l-border bg-muted/50'}`
               }`}>
-              <div className="whitespace-pre-wrap leading-relaxed text-card-foreground">
-                {message.content}
-              </div>
+              {message.sender === 'ai' ? (
+                <MarkdownMessage content={message.content} />
+              ) : (
+                <div className="whitespace-pre-wrap leading-relaxed text-card-foreground">
+                  {message.content}
+                </div>
+              )}
               {message.sender === 'ai' && message.platform && (
                 <div className={`mt-2 text-xs font-medium ${
                   message.platform === 'openai' ? 'text-[#6B8E6B]' :
