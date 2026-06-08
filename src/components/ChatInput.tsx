@@ -39,8 +39,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onGenerateImages,
 }) => {
   const [pickerOpen, setPickerOpen] = useState(false);
-  const navigate = useNavigate();
   const isDisabled = isLoadingResponse || isPending;
+  const looksLikeImage = isImageGenerationIntent(input);
 
   return (
     <footer className="border-t bg-secondary border-border p-4 flex-shrink-0" data-tour="chat-input">
