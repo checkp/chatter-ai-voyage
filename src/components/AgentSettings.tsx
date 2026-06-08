@@ -7,9 +7,11 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Settings, Sparkles } from 'lucide-react';
+import { Settings, Sparkles, Wand2 } from 'lucide-react';
 import ModelSelector from './ModelSelector';
 import { getDefaultModel, getModelConfig, useAIModels } from '@/config/aiModels';
+import { DEFAULT_CONDUCTOR_PROMPT } from '@/config/conductorPrompt';
+
 
 interface AgentSetting {
   platform: string;
