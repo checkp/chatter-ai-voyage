@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform, Message, ChatMode } from '@/types/chat';
-import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI, callGeminiAPI, callMistralAPI, callPerplexityAPI } from '@/services/aiApiService';
+import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI, callGeminiAPI, callMistralAPI, callPerplexityAPI, callQwenAPI } from '@/services/aiApiService';
 import { getDefaultModel, getModelConfig } from '@/config/aiModels';
 
 const resolvePlatformModel = (platformId: string, model?: string | null) => {
@@ -85,6 +85,16 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       hasApiKey: true,
       selectedModel: getDefaultModel('perplexity'),
       displayOrder: 7
+    },
+    {
+      id: 'qwen',
+      name: 'Qwen',
+      enabled: true,
+      color: 'bg-agent-qwen border-agent-qwen text-cyber-bg',
+      icon: '🐉',
+      hasApiKey: true,
+      selectedModel: getDefaultModel('qwen'),
+      displayOrder: 8
     },
   ]);
 
@@ -327,7 +337,7 @@ Your job: make the user want to stay. Be warm, witty, a little cheeky. Show real
 
     // Unified, truthful capabilities — every agent gives the same answer to "what can you do?"
     const capabilities = `RoboHeard product capabilities (be truthful — do NOT invent features):
-- Multi-AI text chat with 7 frontier models (OpenAI, Anthropic Claude, Google Gemini, xAI Grok, DeepSeek, Mistral, Perplexity).
+- Multi-AI text chat with 8 frontier models (OpenAI ChatGPT, Anthropic Claude, Google Gemini, xAI Grok, DeepSeek, Mistral, Perplexity, and Alibaba Qwen).
 - Modes: Discussion (agents debate together), Side-by-side (compare answers), Conductor (one AI orchestrates the others), Isolated (private 1:1).
 - Web search with live citations: only Perplexity has built-in web access. Other agents do not browse the web in real time.
 - Image generation: available on the dedicated "Generate Image" page (/generate-image) using DALL·E, Gemini, or Grok. You (a chat agent) cannot generate images inline — direct the user to that page.
@@ -391,6 +401,8 @@ ${languageLock}`;
         return await callMistralAPI(conversationHistory, user, selectedModel);
       case 'perplexity':
         return await callPerplexityAPI(conversationHistory, user, selectedModel);
+      case 'qwen':
+        return await callQwenAPI(conversationHistory, user, selectedModel);
       default:
         throw new Error(`Unsupported platform: ${platform.id}`);
     }
