@@ -208,7 +208,7 @@ export const processConductorMessageFlow = async (params: ProcessConductorParams
 
     // Step 4: Generate conductor summary if we have agent responses
     if (agentResponses.length > 0) {
-      const summaryPrompt = createSummaryPrompt(agentResponses, platforms);
+      const summaryPrompt = createSummaryPrompt(agentResponses, platforms, conductorSystemPrompt);
       await getConductorResponse(
         conductorPlatform,
         [...updatedConductorMessages, conductorMsgObj],
