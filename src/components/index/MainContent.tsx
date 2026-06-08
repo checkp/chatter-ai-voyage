@@ -73,16 +73,43 @@ const MainContent: React.FC<MainContentProps> = ({
   handleConductorSend,
   user
 }) => {
-  // Transform the status strings to booleans for SideBySideLayout
   const activeAIStatusesBool = Object.keys(transformedStatuses).reduce((acc, key) => {
     acc[key] = transformedStatuses[key] === 'responding' || transformedStatuses[key] === 'thinking';
     return acc;
   }, {} as Record<string, boolean>);
 
-  // Handle direct agent send in conductor mode
+  const queryClient = useQueryClient();
+  const { generate: generateMultiImages, isGenerating: isGeneratingImages } = useMultiImageGeneration();
+
+  const handleGenerateImages = async (prompt: string, models: string[]) => {
+    if (!activeChatId || !prompt.trim() || models.length === 0) return;
+
+    // Persist user prompt + placeholder so it appears immediately
+    const now = new Date().toISOString();
+    await supabase.from('messages').insert([
+      { conversation_id: activeChatId, content: prompt, sender: 'user', created_at: now },
+    ]);
+    queryClient.invalidateQueries({ queryKey: ['messages', activeChatId] });
+
+    const result = await generateMultiImages(prompt, models);
+    if (!result) return;
+
+    await supabase.from('messages').insert([
+      {
+        conversation_id: activeChatId,
+        content: JSON.stringify(result),
+        sender: 'ai',
+        platform: IMAGE_PANEL_PLATFORM,
+        created_at: new Date().toISOString(),
+      },
+    ]);
+    queryClient.invalidateQueries({ queryKey: ['messages', activeChatId] });
+    queryClient.invalidateQueries({ queryKey: ['tokens'] });
+    queryClient.invalidateQueries({ queryKey: ['generated-images'] });
+  };
+
   const handleAgentSend = (message: string) => {
     if (activeChatId && message.trim()) {
-      // Use the existing handleSend but set input first
       setInput(message);
       handleSend(activeChatId);
     }
