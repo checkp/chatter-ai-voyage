@@ -49,13 +49,15 @@ async function callGateway(systemPrompt: string, userPrompt: string, model = "go
 }
 
 async function generateWithOpenAI(prompt: string, model: string): Promise<Uint8Array> {
+  const body: Record<string, unknown> = { model, prompt, n: 1, size: "1024x1024" };
+  if (model === "dall-e-3") body.response_format = "b64_json";
   const r = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${Deno.env.get("OPENAI_API_KEY")}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ model, prompt, n: 1, size: "1024x1024", response_format: "b64_json" }),
+    body: JSON.stringify(body),
   });
   if (!r.ok) throw new Error(`OpenAI image ${r.status}: ${await r.text()}`);
   const d = await r.json();
