@@ -192,8 +192,10 @@ export const processConductorMessageFlow = async (params: ProcessConductorParams
     const coordinationPrompt = createAgentCoordinationPrompt(
       userMessage,
       conductorMsgObj.content,
-      platforms
+      platforms,
+      conductorSystemPrompt
     );
+
     
     const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
     agentResponses = await processAgentResponsesWithConductorPrompt(
