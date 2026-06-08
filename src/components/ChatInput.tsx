@@ -53,7 +53,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
   const onSendClick = () => {
     if (looksLikeImage && onGenerateImages) {
-      setPickerOpen(true);
+      onGenerateImages(input, DEFAULT_IMAGE_MODELS);
       return;
     }
     handleSend();
