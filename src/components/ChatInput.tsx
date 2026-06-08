@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Send, RefreshCw, Square, Play, Image } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Send, RefreshCw, Square, Play, Sparkles } from 'lucide-react';
+import ImageModelPicker from '@/components/chat/ImageModelPicker';
+import { isImageGenerationIntent } from '@/utils/intentDetection';
 
 interface ChatInputProps {
   input: string;
@@ -19,6 +20,7 @@ interface ChatInputProps {
   isFreeModeRunning?: boolean;
   onSendAndStartConversation?: () => void;
   placeholder?: string;
+  onGenerateImages?: (prompt: string, models: string[]) => void;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -33,8 +35,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
   isFreeMode = false,
   isFreeModeRunning = false,
   onSendAndStartConversation,
-  placeholder = "Type your message here..."
+  placeholder = "Type your message here...",
+  onGenerateImages,
 }) => {
+  const [pickerOpen, setPickerOpen] = useState(false);
   const navigate = useNavigate();
   const isDisabled = isLoadingResponse || isPending;
 
