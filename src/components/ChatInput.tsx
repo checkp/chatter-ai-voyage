@@ -116,20 +116,23 @@ const ChatInput: React.FC<ChatInputProps> = ({
               </Tooltip>
             )}
             
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  onClick={() => navigate('/images')}
-                  variant="outline"
-                  size="icon"
-                >
-                  <Image className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Generate AI Images</p>
-              </TooltipContent>
-            </Tooltip>
+            {onGenerateImages && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setPickerOpen(true)}
+                    variant={looksLikeImage ? 'default' : 'outline'}
+                    size="icon"
+                    className={looksLikeImage ? 'animate-pulse' : ''}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{looksLikeImage ? '🎨 Image request detected — fan out to all models' : 'Generate images with multiple AIs'}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
         )}
       </div>
