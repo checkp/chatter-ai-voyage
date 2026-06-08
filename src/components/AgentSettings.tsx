@@ -60,7 +60,7 @@ const AgentSettings = () => {
           .eq('user_id', user.id),
         supabase
           .from('profiles')
-          .select('custom_system_prompt')
+          .select('custom_system_prompt, custom_conductor_prompt')
           .eq('id', user.id)
           .maybeSingle(),
       ]);
