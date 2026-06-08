@@ -275,6 +275,18 @@
   color: rgb(var(--agent-google));
 }
 
+.bg-agent-mistral { background-color: rgb(var(--agent-mistral)); }
+.border-agent-mistral { border-color: rgb(var(--agent-mistral)); }
+.text-agent-mistral { color: rgb(var(--agent-mistral)); }
+
+.bg-agent-perplexity { background-color: rgb(var(--agent-perplexity)); }
+.border-agent-perplexity { border-color: rgb(var(--agent-perplexity)); }
+.text-agent-perplexity { color: rgb(var(--agent-perplexity)); }
+
+.bg-agent-qwen { background-color: rgb(var(--agent-qwen)); }
+.border-agent-qwen { border-color: rgb(var(--agent-qwen)); }
+.text-agent-qwen { color: rgb(var(--agent-qwen)); }
+
 /* Modern agent styling */
 .modern-glow-hover:hover {
   box-shadow: 0 0 20px rgba(var(--agent-openai), 0.3);
