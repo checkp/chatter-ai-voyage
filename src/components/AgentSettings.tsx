@@ -164,6 +164,26 @@ const AgentSettings = () => {
     }, 800);
   }, []);
 
+  const handleConductorPromptChange = useCallback((value: string) => {
+    setConductorPrompt(value);
+    if (debounceTimers.current['__conductor__']) clearTimeout(debounceTimers.current['__conductor__']);
+    debounceTimers.current['__conductor__'] = setTimeout(async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { error } = await supabase
+          .from('profiles')
+          .update({ custom_conductor_prompt: value || null })
+          .eq('id', user.id);
+        if (error) throw error;
+        toast.success('Conductor prompt saved');
+      } catch (error: any) {
+        toast.error('Failed to save: ' + error.message);
+      }
+    }, 800);
+  }, []);
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
