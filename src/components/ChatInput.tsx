@@ -47,7 +47,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       setPickerOpen(true);
       return;
     }
-    onSendClick();
+    handleSend();
   };
 
 

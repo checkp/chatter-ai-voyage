@@ -150,7 +150,7 @@ serve(async (req) => {
       const merged = await callGateway(
         `You are the Conductor. Synthesize the agents' proposals into ONE vivid, detailed image prompt (max 60 words). Merge their unique angles. Respond ONLY with the final prompt.`,
         `Original request: ${userPrompt}\n\nProposals:\n${proposalList}`,
-        "google/gemini-3-flash-preview",
+        "google/gemini-2.5-flash",
       );
       if (merged) masterPrompt = merged;
     } catch (e) {
