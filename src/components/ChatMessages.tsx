@@ -3,6 +3,8 @@ import React from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshCw } from 'lucide-react';
 import { useAutoScroll } from '@/hooks/useAutoScroll';
+import ImagePanel from '@/components/chat/ImagePanel';
+import { IMAGE_PANEL_PLATFORM, type ImagePanelData } from '@/config/imageModels';
 import type { Message, AIPlatform } from '@/types/chat';
 
 interface ChatMessagesProps {
@@ -48,31 +50,40 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     <>
       {messages.map((message) => (
         <div key={message.id} className={`mb-4 flex flex-col ${message.sender === 'user' ? 'items-end' : 'items-start'}`}>
-          <div className={`max-w-3xl rounded-lg p-4 text-sm ${message.sender === 'user'
-            ? 'bg-primary text-primary-foreground'
-            : `bg-card border-l-4 ${message.platform ? 
-                message.platform === 'openai' ? 'border-l-[#8FBC8F] bg-[#8FBC8F]/5' :
-                message.platform === 'anthropic' ? 'border-l-[#98D982] bg-[#98D982]/5' :
-                message.platform === 'deepseek' ? 'border-l-[#87CEEB] bg-[#87CEEB]/5' :
-                message.platform === 'grok' ? 'border-l-[#DDA0DD] bg-[#DDA0DD]/5' :
-                'border-l-border bg-muted/50'
-              : 'border-l-border bg-muted/50'}`
-            }`}>
-            <div className="whitespace-pre-wrap leading-relaxed text-card-foreground">
-              {message.content}
-            </div>
-            {message.sender === 'ai' && message.platform && (
-              <div className={`mt-2 text-xs font-medium ${
-                message.platform === 'openai' ? 'text-[#6B8E6B]' :
-                message.platform === 'anthropic' ? 'text-[#7AC464]' :
-                message.platform === 'deepseek' ? 'text-[#69B7CD]' :
-                message.platform === 'grok' ? 'text-[#C082C0]' :
-                'text-muted-foreground'
+          {message.platform === IMAGE_PANEL_PLATFORM ? (() => {
+            try {
+              const data = JSON.parse(message.content) as ImagePanelData;
+              return <ImagePanel data={data} />;
+            } catch {
+              return <div className="text-xs text-destructive">Failed to render image panel</div>;
+            }
+          })() : (
+            <div className={`max-w-3xl rounded-lg p-4 text-sm ${message.sender === 'user'
+              ? 'bg-primary text-primary-foreground'
+              : `bg-card border-l-4 ${message.platform ?
+                  message.platform === 'openai' ? 'border-l-[#8FBC8F] bg-[#8FBC8F]/5' :
+                  message.platform === 'anthropic' ? 'border-l-[#98D982] bg-[#98D982]/5' :
+                  message.platform === 'deepseek' ? 'border-l-[#87CEEB] bg-[#87CEEB]/5' :
+                  message.platform === 'grok' ? 'border-l-[#DDA0DD] bg-[#DDA0DD]/5' :
+                  'border-l-border bg-muted/50'
+                : 'border-l-border bg-muted/50'}`
               }`}>
-                — {getPlatformName(message.platform)}
+              <div className="whitespace-pre-wrap leading-relaxed text-card-foreground">
+                {message.content}
               </div>
-            )}
-          </div>
+              {message.sender === 'ai' && message.platform && (
+                <div className={`mt-2 text-xs font-medium ${
+                  message.platform === 'openai' ? 'text-[#6B8E6B]' :
+                  message.platform === 'anthropic' ? 'text-[#7AC464]' :
+                  message.platform === 'deepseek' ? 'text-[#69B7CD]' :
+                  message.platform === 'grok' ? 'text-[#C082C0]' :
+                  'text-muted-foreground'
+                }`}>
+                  — {getPlatformName(message.platform)}
+                </div>
+              )}
+            </div>
+          )}
           <div className="text-xs text-muted-foreground mt-1">
             {new Date(message.created_at).toLocaleTimeString()}
           </div>
