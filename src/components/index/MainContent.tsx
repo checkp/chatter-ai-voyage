@@ -170,18 +170,19 @@ const MainContent: React.FC<MainContentProps> = ({
 
       {/* Chat Input - only show for non-conductor modes */}
       {activeTab === 'chat' && activeChatMode !== 'conductor' && (
-        <ChatInput 
+        <ChatInput
           input={input}
           setInput={setInput}
           handleSend={() => handleSend(activeChatId)}
           handleStop={handleStop}
-          isLoadingResponse={isLoadingResponse}
-          isPending={sendMessageMutation.isPending}
+          isLoadingResponse={isLoadingResponse || isGeneratingImages}
+          isPending={sendMessageMutation.isPending || isGeneratingImages}
           canStop={canStop}
           pendingCount={getPendingCount()}
           isFreeMode={isFreeMode}
           isFreeModeRunning={isFreeModeRunning}
           onSendAndStartConversation={handleSendAndStartConversation}
+          onGenerateImages={activeChatId ? handleGenerateImages : undefined}
         />
       )}
     </>
