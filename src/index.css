@@ -39,6 +39,9 @@
     --agent-deepseek: 210 50% 70%; /* Soft blue */
     --agent-grok: 270 40% 75%; /* Soft purple */
     --agent-google: 0 40% 75%; /* Soft red */
+    --agent-mistral: 25 70% 65%; /* Warm orange */
+    --agent-perplexity: 180 45% 60%; /* Teal */
+    --agent-qwen: 340 55% 70%; /* Soft rose — Qwen */
 
     /* Cyber theme colors (for dark mode) */
     --cyber-bg: 222 25% 7%;
@@ -271,6 +274,18 @@
 .text-agent-google {
   color: rgb(var(--agent-google));
 }
+
+.bg-agent-mistral { background-color: rgb(var(--agent-mistral)); }
+.border-agent-mistral { border-color: rgb(var(--agent-mistral)); }
+.text-agent-mistral { color: rgb(var(--agent-mistral)); }
+
+.bg-agent-perplexity { background-color: rgb(var(--agent-perplexity)); }
+.border-agent-perplexity { border-color: rgb(var(--agent-perplexity)); }
+.text-agent-perplexity { color: rgb(var(--agent-perplexity)); }
+
+.bg-agent-qwen { background-color: rgb(var(--agent-qwen)); }
+.border-agent-qwen { border-color: rgb(var(--agent-qwen)); }
+.text-agent-qwen { color: rgb(var(--agent-qwen)); }
 
 /* Modern agent styling */
 .modern-glow-hover:hover {

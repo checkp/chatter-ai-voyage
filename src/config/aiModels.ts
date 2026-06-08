@@ -63,10 +63,16 @@ const META: Record<string, Meta> = {
   'sonar':               { name: 'Sonar',               description: 'Fast lightweight search',                    maxTokens: 128000, capabilities: ['text','search','citations'],          speed: 'fast' },
   'sonar-pro':           { name: 'Sonar Pro',           description: 'Multi-step reasoning with web search',       maxTokens: 128000, capabilities: ['text','reasoning','search','citations'], speed: 'medium' },
   'sonar-reasoning-pro': { name: 'Sonar Reasoning Pro', description: 'Advanced chain-of-thought with web search',  maxTokens: 128000, capabilities: ['text','reasoning','search','citations','analysis'], speed: 'slow' },
+
+  // Qwen (Alibaba DashScope)
+  'qwen-max':   { name: 'Qwen Max',   description: 'Most capable Qwen for complex tasks',  maxTokens: 32000,  capabilities: ['text','reasoning','coding','multilingual'], speed: 'slow' },
+  'qwen-plus':  { name: 'Qwen Plus',  description: 'Balanced Qwen for everyday tasks',     maxTokens: 131072, capabilities: ['text','reasoning','multilingual'],          speed: 'medium' },
+  'qwen-turbo': { name: 'Qwen Turbo', description: 'Fast & cost-effective Qwen',           maxTokens: 1000000,capabilities: ['text','multilingual'],                      speed: 'fast' },
+  'qwen3-max':  { name: 'Qwen3 Max',  description: 'Latest flagship Qwen3 generation',     maxTokens: 32000,  capabilities: ['text','reasoning','coding','multilingual'], speed: 'slow' },
 };
 
 // Chat-capable platforms only — image-only models like dall-e are ignored.
-const CHAT_PLATFORMS = new Set(['openai','anthropic','deepseek','grok','google','mistral','perplexity']);
+const CHAT_PLATFORMS = new Set(['openai','anthropic','deepseek','grok','google','mistral','perplexity','qwen']);
 
 // Excluded model ids (image / non-chat) even if present in pricing table.
 const EXCLUDED_MODELS = new Set(['dall-e-2','dall-e-3','gpt-image-1']);
@@ -80,11 +86,12 @@ const PREFERRED_DEFAULTS: Record<string, string> = {
   google:     'gemini-2.5-flash',
   mistral:    'mistral-large-latest',
   perplexity: 'sonar-pro',
+  qwen:       'qwen-plus',
 };
 
 // Mutable cache populated from DB.
 export const AI_MODELS: Record<string, ModelConfig[]> = {
-  openai: [], anthropic: [], deepseek: [], grok: [], google: [], mistral: [], perplexity: [],
+  openai: [], anthropic: [], deepseek: [], grok: [], google: [], mistral: [], perplexity: [], qwen: [],
 };
 
 let loadPromise: Promise<void> | null = null;
@@ -127,7 +134,7 @@ export const loadAIModelsFromDB = async (): Promise<void> => {
       }
 
       const next: Record<string, ModelConfig[]> = {
-        openai: [], anthropic: [], deepseek: [], grok: [], google: [], mistral: [], perplexity: [],
+        openai: [], anthropic: [], deepseek: [], grok: [], google: [], mistral: [], perplexity: [], qwen: [],
       };
       for (const row of data) {
         if (!CHAT_PLATFORMS.has(row.platform)) continue;

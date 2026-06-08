@@ -161,3 +161,20 @@ export const callPerplexityAPI = async (
     return response.data.content;
   }).catch(e => { throw friendlyError(e, 'Perplexity'); });
 };
+
+export const callQwenAPI = async (
+  conversationHistory: Array<{role: 'user' | 'assistant', content: string}>,
+  user: SupabaseUser,
+  model: string = 'qwen-plus'
+): Promise<string> => {
+  return withRetry(async () => {
+    const session = await getValidSession();
+    const response = await supabase.functions.invoke('qwen-chat', {
+      body: { messages: conversationHistory, model, user_id: user.id },
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    if (response.error) throw new Error(response.error.message || 'Qwen API call failed');
+    if (!response.data?.content) throw new Error('Qwen API returned empty response');
+    return response.data.content;
+  }).catch(e => { throw friendlyError(e, 'Qwen'); });
+};
