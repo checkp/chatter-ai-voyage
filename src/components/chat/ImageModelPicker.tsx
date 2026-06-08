@@ -19,6 +19,10 @@ const ImageModelPicker: React.FC<Props> = ({ open, onOpenChange, userPrompt, onC
   const { tokenBalance } = useTokenBalance(user);
   const [selected, setSelected] = useState<string[]>(['gemini-image']);
 
+  const balance = typeof tokenBalance === 'number'
+    ? tokenBalance
+    : (tokenBalance as any)?.balance ?? 0;
+
   const toggle = (id: string) => {
     setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
   };
@@ -28,7 +32,7 @@ const ImageModelPicker: React.FC<Props> = ({ open, onOpenChange, userPrompt, onC
     return sum + (m?.cost ?? 0);
   }, 0);
   const total = imageCost + PROMPT_COLLAB_COST;
-  const insufficient = (tokenBalance ?? 0) < total;
+  const insufficient = balance < total;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
