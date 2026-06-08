@@ -98,7 +98,7 @@ export const useConductorMode = (
     } finally {
       setIsProcessing(false);
     }
-  }, [user, platforms, conductorAgent, callAIAPI, queryClient]);
+  }, [user, platforms, conductorAgent, callAIAPI, queryClient, conductorSystemPrompt]);
 
   return {
     conductorAgent,
