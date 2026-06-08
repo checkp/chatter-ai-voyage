@@ -145,11 +145,12 @@ serve(async (req) => {
 
     let masterPrompt = userPrompt;
     try {
-      masterPrompt = await callGateway(
+      const merged = await callGateway(
         `You are the Conductor. Synthesize the agents' proposals into ONE vivid, detailed image prompt (max 60 words). Merge their unique angles. Respond ONLY with the final prompt.`,
         `Original request: ${userPrompt}\n\nProposals:\n${proposalList}`,
         "google/gemini-3-flash-preview",
       );
+      if (merged) masterPrompt = merged;
     } catch (e) {
       console.error("Conductor merge failed:", e);
     }
