@@ -23,7 +23,8 @@ export const ensureDefaultAgentSettings = async (userId: string) => {
       { platform: 'deepseek', model: 'deepseek-chat', enabled: true },
       { platform: 'grok', model: 'grok-3', enabled: true },
       { platform: 'mistral', model: 'mistral-large-latest', enabled: true },
-      { platform: 'perplexity', model: 'sonar-pro', enabled: true }
+      { platform: 'perplexity', model: 'sonar-pro', enabled: true },
+      { platform: 'qwen', model: 'qwen-plus', enabled: true }
     ];
     
     const settingsToInsert = [];

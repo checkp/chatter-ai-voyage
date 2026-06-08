@@ -34,6 +34,7 @@ const PLATFORMS = [
   { id: 'google', name: 'Gemini (Google)', icon: '💎', placeholder: 'e.g. Prefer code examples over prose.' },
   { id: 'mistral', name: 'Mistral AI', icon: '🌀', placeholder: 'e.g. Always reply in French.' },
   { id: 'perplexity', name: 'Perplexity AI', icon: '🔮', placeholder: 'e.g. Cite at most 2 sources. Skip the Sources section unless I ask.' },
+  { id: 'qwen', name: 'Qwen (Alibaba)', icon: '🐉', placeholder: 'e.g. Always reply in Mandarin when the user writes Chinese.' },
 ];
 
 const AgentSettings = () => {
