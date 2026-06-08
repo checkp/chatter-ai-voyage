@@ -212,6 +212,28 @@ const AgentSettings = () => {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Wand2 className="w-5 h-5" />
+            Conductor Orchestration Prompt
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Label htmlFor="conductor-prompt" className="text-sm text-muted-foreground">
+            Controls how the AI Conductor briefs the panel and decides when to coordinate multiple agents. Leave blank to use the built-in default.
+          </Label>
+          <Textarea
+            id="conductor-prompt"
+            value={conductorPrompt}
+            onChange={(e) => handleConductorPromptChange(e.target.value)}
+            placeholder={DEFAULT_CONDUCTOR_PROMPT}
+            rows={8}
+          />
+        </CardContent>
+      </Card>
+
+
       <div className="grid gap-4">
         {PLATFORMS.map((platform) => (
           <Card key={platform.id}>
