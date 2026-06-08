@@ -1,11 +1,16 @@
 
 import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInput from '@/components/ChatInput';
 import SettingsPanel from '@/components/SettingsPanel';
 import SideBySideLayout from '@/components/SideBySideLayout';
 import ConductorLayout from '@/components/ConductorLayout';
+import { useMultiImageGeneration } from '@/hooks/useMultiImageGeneration';
+import { IMAGE_PANEL_PLATFORM } from '@/config/imageModels';
 import type { AIPlatform, ChatMode } from '@/types/chat';
 
 interface MainContentProps {
