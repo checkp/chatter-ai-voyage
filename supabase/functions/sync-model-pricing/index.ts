@@ -13,7 +13,7 @@ const corsHeaders = {
 // Pricing map: api_cost_per_1k_tokens is an effective blended price (avg input/output) in USD
 // tokens_per_message is our internal app token estimate per single message for pre-checks
 const PRICING_MAP: Array<{
-  platform: 'openai' | 'anthropic' | 'google' | 'deepseek' | 'grok' | 'mistral' | 'perplexity';
+  platform: 'openai' | 'anthropic' | 'google' | 'deepseek' | 'grok' | 'mistral' | 'perplexity' | 'qwen';
   model_id: string;
   cost_tier: 'low' | 'medium' | 'high';
   api_cost_per_1k_tokens: number; // USD (blended avg of input/output)
@@ -58,6 +58,12 @@ const PRICING_MAP: Array<{
   { platform: 'perplexity', model_id: 'sonar',               cost_tier: 'low',  api_cost_per_1k_tokens: 0.001, tokens_per_message: 6 },
   { platform: 'perplexity', model_id: 'sonar-pro',           cost_tier: 'high', api_cost_per_1k_tokens: 0.009, tokens_per_message: 14 },
   { platform: 'perplexity', model_id: 'sonar-reasoning-pro', cost_tier: 'high', api_cost_per_1k_tokens: 0.012, tokens_per_message: 18 },
+
+  // Qwen (Alibaba DashScope)
+  { platform: 'qwen', model_id: 'qwen-max',   cost_tier: 'high',   api_cost_per_1k_tokens: 0.010,  tokens_per_message: 16 },
+  { platform: 'qwen', model_id: 'qwen-plus',  cost_tier: 'medium', api_cost_per_1k_tokens: 0.002,  tokens_per_message: 8 },
+  { platform: 'qwen', model_id: 'qwen-turbo', cost_tier: 'low',    api_cost_per_1k_tokens: 0.0006, tokens_per_message: 5 },
+  { platform: 'qwen', model_id: 'qwen3-max',  cost_tier: 'high',   api_cost_per_1k_tokens: 0.012,  tokens_per_message: 18 },
 ];
 
 serve(async (req) => {

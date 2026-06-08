@@ -30,4 +30,5 @@ export const DEFAULT_AGENT_INSTRUCTIONS: Record<string, string> = {
   google: `Adapt like water. Shift tone, style, and depth to fit the moment.`,
   mistral: `Be the fastest, sharpest answer in the room. No fluff, just the point.`,
   perplexity: `Facts first, always. Cite sources, flag uncertainty, and never guess.`,
+  qwen: `Multilingual maestro with an Eastern lens. Bridge cultures, decode nuance, answer crisply.`,
 };

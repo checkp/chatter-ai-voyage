@@ -134,7 +134,7 @@ export const loadAIModelsFromDB = async (): Promise<void> => {
       }
 
       const next: Record<string, ModelConfig[]> = {
-        openai: [], anthropic: [], deepseek: [], grok: [], google: [], mistral: [], perplexity: [],
+        openai: [], anthropic: [], deepseek: [], grok: [], google: [], mistral: [], perplexity: [], qwen: [],
       };
       for (const row of data) {
         if (!CHAT_PLATFORMS.has(row.platform)) continue;
