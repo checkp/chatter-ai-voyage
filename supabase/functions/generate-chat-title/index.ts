@@ -95,6 +95,9 @@ Rules:
     return new Response(JSON.stringify({ title }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
   } catch (e) {
     console.error('generate-chat-title error', e);
-    return new Response(JSON.stringify({ error: (e as Error).message }), { status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ error: 'title generation failed' }), { status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } });
+  }
+});
+
   }
 });
