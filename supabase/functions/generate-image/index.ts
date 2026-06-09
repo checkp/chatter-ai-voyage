@@ -228,18 +228,39 @@ serve(async (req) => {
       );
     }
 
-    // Deduct tokens
-    await supabase.rpc('consume_tokens', {
-      p_user_id: user.id,
-      p_amount: tokensRequired,
-      p_description: `Image generation: ${model}`,
-      p_metadata: {
+    // Deduct tokens BEFORE returning success. If this fails, roll back the image.
+    const newBalance = userTokens.balance - tokensRequired;
+    const { error: deductError } = await supabase
+      .from('user_tokens')
+      .update({ balance: newBalance, updated_at: new Date().toISOString() })
+      .eq('user_id', user.id);
+
+    if (deductError) {
+      console.error('Token deduction failed:', deductError);
+      await supabase.storage.from('generated-images').remove([fileName]);
+      await supabase.from('generated_images').delete().eq('id', imageRecord.id);
+      return new Response(
+        JSON.stringify({ error: 'Token deduction failed' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Log the transaction (non-fatal if it fails)
+    const { error: txError } = await supabase.from('token_transactions').insert({
+      user_id: user.id,
+      transaction_type: 'consumption',
+      amount: -tokensRequired,
+      balance_after: newBalance,
+      description: `Image generation: ${model}`,
+      metadata: {
         prompt: prompt.substring(0, 100),
         model,
         size,
-        image_id: imageRecord.id
-      }
+        platform: 'image',
+        image_id: imageRecord.id,
+      },
     });
+    if (txError) console.error('Token transaction log failed:', txError);
 
     return new Response(
       JSON.stringify({
@@ -249,6 +270,7 @@ serve(async (req) => {
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
 
   } catch (error) {
     console.error('Error in generate-image function:', error);
