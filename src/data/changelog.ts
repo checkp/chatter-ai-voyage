@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.6.1",
+    date: "2026-06-09",
+    title: "Pollinations FLUX Joins the Image Studio",
+    description: "A 7th image generator powered by open-source FLUX — fast, low-cost, and always on.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "🌻 Pollinations FLUX: Open-source FLUX image model added as the 7th parallel renderer (just 10t per image)" },
+      { type: "improvement", description: "✅ Enabled by default alongside the other 6 image models" }
+    ]
+  },
+  {
     version: "2.6.0",
     date: "2026-06-09",
     title: "Multi-Agent Image Studio & 6 Image Models",
