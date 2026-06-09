@@ -203,6 +203,30 @@ async function generateWithQwen(prompt: string): Promise<Uint8Array> {
   return new Uint8Array(await imgRes.arrayBuffer());
 }
 
+async function generateWithPollinations(prompt: string): Promise<Uint8Array> {
+  const key = Deno.env.get("POLLINATIONS_API_KEY");
+  const seed = Math.floor(Math.random() * 1_000_000);
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&model=flux&nologo=true&private=true&safe=false&seed=${seed}`;
+  let lastErr = "";
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const r = await fetch(url, {
+        headers: key ? { Authorization: `Bearer ${key}` } : {},
+      });
+      if (!r.ok) {
+        lastErr = `Pollinations ${r.status}: ${(await r.text()).slice(0, 200)}`;
+        if (r.status < 500 && r.status !== 429) throw new Error(lastErr);
+      } else {
+        return new Uint8Array(await r.arrayBuffer());
+      }
+    } catch (e) {
+      lastErr = String(e);
+    }
+    await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+  }
+  throw new Error(lastErr || "Pollinations failed");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
