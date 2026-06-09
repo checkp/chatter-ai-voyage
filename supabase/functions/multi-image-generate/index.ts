@@ -185,6 +185,8 @@ async function generateWithQwen(prompt: string): Promise<Uint8Array> {
   if (!imgRes.ok) throw new Error(`Qwen image download ${imgRes.status}`);
   return new Uint8Array(await imgRes.arrayBuffer());
 }
+
+serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
