@@ -95,6 +95,16 @@ serve(async (req) => {
       );
     }
 
+    // Pre-call balance check (prevents zero-balance users from triggering paid API calls)
+    const minTokens = pricingData?.tokens_per_message || 1;
+    if (tokenData.balance < minTokens) {
+      return new Response(JSON.stringify({ error: 'Insufficient tokens', required: minTokens, available: tokenData.balance }), {
+        status: 402,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+
     // Use centralized Anthropic API key
     const claudeApiKey = Deno.env.get("ANTHROPIC_API_KEY");
     if (!claudeApiKey) {
