@@ -101,9 +101,9 @@ async function generateWithOpenAI(prompt: string, model: string): Promise<Uint8A
 
 async function generateWithGemini(prompt: string, model: string): Promise<Uint8Array> {
   const directModel = model === "gemini-pro-image"
-    ? "gemini-3-pro-image"
+    ? "gemini-3-pro-image-preview"
     : "gemini-2.5-flash-image";
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1/models/${directModel}:generateContent?key=${Deno.env.get("GOOGLE_API_KEY")}`, {
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${directModel}:generateContent?key=${Deno.env.get("GOOGLE_API_KEY")}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
