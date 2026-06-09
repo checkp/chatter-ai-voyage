@@ -27,7 +27,7 @@ const ImagePanel: React.FC<Props> = ({ data }) => {
       <Collapsible open={showProposals} onOpenChange={setShowProposals}>
         <CollapsibleTrigger className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
           <ChevronDown className={`h-3 w-3 transition-transform ${showProposals ? 'rotate-180' : ''}`} />
-          {showProposals ? 'Hide' : 'Show'} 7 agent proposals
+          {showProposals ? 'Hide' : 'Show'} {data.proposals.length} agent proposals
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-2 space-y-1.5">
           {data.proposals.map(p => (
