@@ -234,6 +234,10 @@ async function generateWithQwen(prompt: string): Promise<Uint8Array> {
       try {
         const buf = meta.provider === "openai"
           ? await generateWithOpenAI(masterPrompt, model)
+          : meta.provider === "grok"
+          ? await generateWithGrok(masterPrompt)
+          : meta.provider === "qwen"
+          ? await generateWithQwen(masterPrompt)
           : await generateWithGemini(masterPrompt, model);
 
         const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.png`;
