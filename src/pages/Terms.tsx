@@ -34,16 +34,19 @@ const Terms: React.FC = () => {
     ['your-account', '3. Your Account'],
     ['tokens', '4. Tokens & Payments'],
     ['ai-output', '5. About What the AI Says'],
-    ['your-content', '6. Your Content'],
-    ['fair-use', '7. Fair Use (a.k.a. Please Be Cool)'],
-    ['ip', '8. Intellectual Property'],
-    ['privacy', '9. Privacy'],
-    ['termination', '10. Ending Things'],
-    ['warranty', '11. Warranties (or Lack Thereof)'],
-    ['liability', '12. Liability'],
-    ['changes', '13. Changes to These Terms'],
-    ['law', '14. Governing Law'],
-    ['contact', '15. Get in Touch'],
+    ['your-content', '6. Your Content & Your Responsibility'],
+    ['fair-use', '7. Acceptable Use'],
+    ['third-party', '8. Third-Party Model Providers'],
+    ['ip', '9. Intellectual Property'],
+    ['privacy', '10. Privacy'],
+    ['termination', '11. Ending Things'],
+    ['warranty', '12. Warranty Disclaimer'],
+    ['liability', '13. Limitation of Liability'],
+    ['indemnity', '14. Indemnification'],
+    ['assumption-of-risk', '15. Assumption of Risk'],
+    ['changes', '16. Changes to These Terms'],
+    ['law', '17. Governing Law & Disputes'],
+    ['contact', '18. Get in Touch'],
   ] as const;
 
   return (
@@ -115,77 +118,140 @@ const Terms: React.FC = () => {
 
         <Section id="ai-output" title="5. About What the AI Says">
           <p>
-            AI models are powerful, occasionally brilliant, and sometimes confidently wrong. RoboHeard surfaces answers from frontier providers but does not guarantee accuracy, completeness, or that any model has any idea what it's talking about on a given Tuesday.
+            AI models are powerful, occasionally brilliant, and sometimes confidently wrong. RoboHeard surfaces answers from third-party frontier providers and <strong className="text-foreground">makes no representation or warranty</strong> as to the accuracy, completeness, timeliness, legality, safety, or fitness for any purpose of any output. Outputs may be biased, hallucinated, offensive, factually incorrect, or outdated.
           </p>
           <p>
-            Do not rely on AI output for medical, legal, financial, or other high-stakes decisions without consulting a qualified human. Treat outputs as a starting point, not a verdict.
+            <strong className="text-foreground">No professional advice.</strong> Nothing produced by RoboHeard constitutes medical, legal, financial, tax, psychological, engineering, safety, or other professional advice. Do not use outputs as the sole basis for any decision with real-world consequences. Always consult a qualified licensed professional.
+          </p>
+          <p>
+            <strong className="text-foreground">You verify before you act.</strong> You are solely responsible for reviewing, fact-checking, and validating any output before relying on, publishing, distributing, or acting upon it. Any decision you make based on AI output is made at your own risk.
           </p>
         </Section>
 
-        <Section id="your-content" title="6. Your Content">
+        <Section id="your-content" title="6. Your Content & Your Responsibility">
           <p>
-            You own what you put in. By using RoboHeard you grant us a limited license to process your prompts and content solely to operate the service (sending them to the model providers you select, storing your chat history, etc.).
+            You retain ownership of the prompts, files, and content you submit ("Your Content"). You grant us a worldwide, non-exclusive, royalty-free license to host, process, transmit, and display Your Content solely to operate and improve the service, including forwarding it to the AI providers you select.
           </p>
-          <p>Don't upload anything you don't have the right to share. That includes other people's secrets, copyrighted material you don't own, and your friend's bad poetry without permission.</p>
+          <p>
+            <strong className="text-foreground">You represent and warrant</strong> that: (a) you own or have all necessary rights, licenses, consents, and permissions to submit Your Content; (b) Your Content and your use of any output does not and will not violate any law, contract, intellectual property right, privacy right, publicity right, or third-party right; and (c) you are solely responsible for Your Content and any consequences of submitting it.
+          </p>
+          <p>
+            <strong className="text-foreground">You are solely responsible</strong> for any output you generate, save, download, share, publish, or otherwise use, including any commercial use. We do not pre-screen, endorse, or guarantee the originality, non-infringement, or legality of any output.
+          </p>
         </Section>
 
-        <Section id="fair-use" title="7. Fair Use (a.k.a. Please Be Cool)">
-          <p>Don't use RoboHeard to:</p>
+        <Section id="fair-use" title="7. Acceptable Use">
+          <p>You agree NOT to use RoboHeard, directly or indirectly, to:</p>
           <ul className="list-disc pl-6 space-y-1.5">
-            <li>Generate illegal content, harassment, CSAM, or anything designed to harm people.</li>
-            <li>Build weapons, malware, or large-scale disinformation campaigns.</li>
-            <li>Scrape, resell, or rebrand the service as your own.</li>
-            <li>Try to extract other users' data, reverse-engineer the platform, or DDoS our poor servers.</li>
-            <li>Pretend AI output is human-written in contexts where that matters (school, journalism, court).</li>
+            <li>Violate any applicable law, regulation, sanction, or third-party right.</li>
+            <li>Generate, request, or distribute child sexual abuse material (CSAM), non-consensual intimate imagery, terrorist content, or content depicting real-world violence against identifiable people.</li>
+            <li>Harass, defame, threaten, stalk, dox, or impersonate any person or entity.</li>
+            <li>Generate malware, exploits, phishing content, or instructions to build weapons (chemical, biological, radiological, nuclear, or conventional capable of mass harm).</li>
+            <li>Produce content that infringes copyright, trademark, trade secret, patent, or other intellectual property rights.</li>
+            <li>Process biometric data, health data, government IDs, or other sensitive personal data without lawful basis and proper consent.</li>
+            <li>Generate deepfakes, voice clones, or synthetic media of real people without their verifiable consent, or for fraud, election interference, or market manipulation.</li>
+            <li>Conduct automated scraping, reverse engineering, model extraction, security probing, or denial-of-service attacks against the service.</li>
+            <li>Misrepresent AI output as human-generated where such disclosure is legally or ethically required (academic, journalistic, judicial, regulatory contexts).</li>
+            <li>Resell, sublicense, white-label, or build a competing AI aggregation service using our output.</li>
           </ul>
-          <p>We may suspend or terminate accounts that violate this section. We'd rather not. Be cool.</p>
-        </Section>
-
-        <Section id="ip" title="8. Intellectual Property">
           <p>
-            The RoboHeard name, logo, interface, and the conductor-of-models orchestration approach are ours. You get a license to use them as part of the service, not to slap them on a T-shirt and sell it at a market (unless we say so — we like T-shirts).
+            <strong className="text-foreground">Enforcement.</strong> We may, at our sole discretion and without notice, remove content, throttle, suspend, or permanently terminate accounts, and cooperate with law enforcement regarding any suspected violation. You waive any claim against us arising from such enforcement.
           </p>
         </Section>
 
-        <Section id="privacy" title="9. Privacy">
+        <Section id="third-party" title="8. Third-Party Model Providers">
           <p>
-            We handle data according to our privacy practices. In short: we store what's needed to run your account and chats, we don't sell your data, and prompts you send go to the AI providers you selected. Model providers have their own policies.
+            RoboHeard routes prompts to third-party AI providers (including but not limited to OpenAI, Anthropic, Google, xAI, Mistral, DeepSeek, Perplexity, and Alibaba/Qwen). Your use of those models is also subject to the respective provider's terms and usage policies. We are not responsible for outages, output, policy changes, data handling, or any act or omission of any third-party provider, and we disclaim all liability arising from them.
           </p>
         </Section>
 
-        <Section id="termination" title="10. Ending Things">
+        <Section id="ip" title="9. Intellectual Property">
           <p>
-            You can stop using RoboHeard anytime. We can suspend or terminate accounts for serious or repeated breaches of these terms. Sections that should reasonably survive termination (IP, liability, etc.) — survive.
+            The RoboHeard name, logo, interface, source code, design, and orchestration methodology are owned by us or our licensors and protected by intellectual property laws. We grant you a limited, revocable, non-exclusive, non-transferable license to use the service for its intended purpose. All rights not expressly granted are reserved.
+          </p>
+          <p>
+            Ownership of AI-generated output as between you and us is yours to the extent permitted by law and the applicable provider's terms — but we make no warranty that any output is original, non-infringing, or copyrightable.
           </p>
         </Section>
 
-        <Section id="warranty" title="11. Warranties (or Lack Thereof)">
+        <Section id="privacy" title="10. Privacy">
           <p>
-            RoboHeard is provided "as is" and "as available". We don't promise uninterrupted, error-free, or telepathically-accurate service. To the maximum extent allowed by law, we disclaim implied warranties of merchantability, fitness for a particular purpose, and non-infringement.
+            We process personal data as described in our privacy practices. Prompts and content you submit are transmitted to the AI providers you select; each provider has its own data handling. Do not submit confidential, regulated, or sensitive information you are not authorized to share with such providers.
           </p>
         </Section>
 
-        <Section id="liability" title="12. Liability">
+        <Section id="termination" title="11. Ending Things">
           <p>
-            To the extent permitted by law, our total liability arising from your use of RoboHeard is limited to the amount you paid us in the 3 months before the claim. We are not liable for indirect, incidental, or consequential damages — including but not limited to lost profits, lost data, or existential dread caused by reading too many AI takes.
+            You may stop using RoboHeard at any time. We may suspend or terminate your access immediately, with or without notice, for any reason, including suspected breach of these terms. Upon termination, your right to use the service ceases. Sections that by their nature should survive (IP, disclaimers, liability, indemnity, governing law) survive termination.
           </p>
         </Section>
 
-        <Section id="changes" title="13. Changes to These Terms">
+        <Section id="warranty" title="12. Warranty Disclaimer">
+          <p className="uppercase text-xs tracking-wider text-foreground font-medium">Important — please read.</p>
           <p>
-            We may update these terms as the service evolves. Material changes will be flagged in-app or via email. Continued use after changes take effect means you accept them.
+            THE SERVICE AND ALL OUTPUTS ARE PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS, IMPLIED, OR STATUTORY. TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE DISCLAIM ALL WARRANTIES INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, ACCURACY, QUIET ENJOYMENT, AND ANY WARRANTIES ARISING FROM COURSE OF DEALING OR USAGE OF TRADE.
+          </p>
+          <p>
+            WE DO NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, SECURE, ERROR-FREE, OR THAT ANY OUTPUT WILL BE ACCURATE, RELIABLE, COMPLETE, LAWFUL, OR SUITABLE FOR YOUR PURPOSE.
           </p>
         </Section>
 
-        <Section id="law" title="14. Governing Law">
+        <Section id="liability" title="13. Limitation of Liability">
           <p>
-            These terms are governed by the laws of the jurisdiction where RoboHeard is operated, without regard to conflict-of-law rules. Disputes go to the competent courts of that jurisdiction. If a clause is found invalid, the rest still stands.
+            TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL ROBOHEARD, ITS OWNERS, OPERATORS, AFFILIATES, OFFICERS, EMPLOYEES, AGENTS, OR LICENSORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES; OR FOR ANY LOSS OF PROFITS, REVENUE, DATA, GOODWILL, BUSINESS OPPORTUNITY, OR REPUTATIONAL HARM, WHETHER BASED ON CONTRACT, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY, OR ANY OTHER THEORY, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+          </p>
+          <p>
+            OUR TOTAL AGGREGATE LIABILITY ARISING OUT OF OR RELATING TO THESE TERMS OR THE SERVICE SHALL NOT EXCEED THE GREATER OF (A) THE AMOUNT YOU PAID US IN THE THREE (3) MONTHS IMMEDIATELY PRECEDING THE EVENT GIVING RISE TO THE CLAIM, OR (B) USD $50.
+          </p>
+          <p>
+            Some jurisdictions do not allow certain limitations; in those jurisdictions, our liability is limited to the smallest extent permitted by law.
           </p>
         </Section>
 
-        <Section id="contact" title="15. Get in Touch">
+        <Section id="indemnity" title="14. Indemnification">
           <p>
-            Questions, concerns, or compliments for the conductor? Reach us through the in-app contact button or via the help page. A real human will reply — eventually, and politely.
+            <strong className="text-foreground">You agree to defend, indemnify, and hold harmless</strong> RoboHeard and its owners, operators, affiliates, officers, directors, employees, contractors, agents, and licensors from and against any and all claims, demands, actions, investigations, liabilities, damages, losses, judgments, fines, penalties, costs, and expenses (including reasonable attorneys' fees) arising out of or in any way connected with:
+          </p>
+          <ul className="list-disc pl-6 space-y-1.5">
+            <li>your access to or use of the service;</li>
+            <li>Your Content or any output you generate, save, share, publish, or act upon;</li>
+            <li>your violation of these terms, applicable law, or any third-party right (including intellectual property, privacy, publicity, or contractual rights);</li>
+            <li>any decision you make or action you take in reliance on AI output;</li>
+            <li>your misrepresentation of AI output as human-generated, or vice versa;</li>
+            <li>any dispute between you and a third party arising from your use of the service.</li>
+          </ul>
+          <p>
+            We reserve the right, at our own expense, to assume the exclusive defense and control of any matter otherwise subject to indemnification by you, in which case you agree to cooperate with our defense.
+          </p>
+        </Section>
+
+        <Section id="assumption-of-risk" title="15. Assumption of Risk">
+          <p>
+            You acknowledge that generative AI is an emerging technology with known and unknown risks, including hallucination, bias, factual error, copyright uncertainty, prompt-injection, and unexpected outputs. <strong className="text-foreground">You knowingly and voluntarily assume all such risks</strong> when using the service. You agree that any loss or harm you suffer in connection with AI output is your responsibility, not ours.
+          </p>
+        </Section>
+
+        <Section id="changes" title="16. Changes to These Terms">
+          <p>
+            We may update these terms as the service evolves or as legal requirements change. Material changes will be flagged in-app or via email. Continued use after changes take effect constitutes acceptance.
+          </p>
+        </Section>
+
+        <Section id="law" title="17. Governing Law & Disputes">
+          <p>
+            These terms are governed by the laws of the jurisdiction in which RoboHeard is operated, without regard to conflict-of-law principles. The United Nations Convention on Contracts for the International Sale of Goods does not apply.
+          </p>
+          <p>
+            Any dispute, controversy, or claim arising out of or relating to these terms or the service shall be brought exclusively in the competent courts of that jurisdiction, and you consent to personal jurisdiction there. <strong className="text-foreground">You agree to resolve disputes on an individual basis and waive any right to participate in a class action, collective action, or representative proceeding.</strong>
+          </p>
+          <p>
+            Any claim must be filed within one (1) year after the cause of action arose, or be permanently barred. If any provision of these terms is found unenforceable, the remaining provisions remain in full effect.
+          </p>
+        </Section>
+
+        <Section id="contact" title="18. Get in Touch">
+          <p>
+            Questions, concerns, legal notices, or compliments for the conductor? Reach us through the in-app contact button or the help page. A real human will reply — eventually, and politely.
           </p>
         </Section>
 
