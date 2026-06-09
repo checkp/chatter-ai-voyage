@@ -140,10 +140,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
 
   const toggleUserAdmin = async (userId: string, currentIsAdmin: boolean) => {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_admin: !currentIsAdmin })
-        .eq('id', userId);
+      const { error } = await supabase.rpc('set_user_admin', {
+        target_user_id: userId,
+        make_admin: !currentIsAdmin,
+      });
 
       if (error) throw error;
 
@@ -155,6 +155,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
       toast.error('Failed to update user admin status');
     }
   };
+
 
   if (!userProfile?.is_admin) {
     return (
