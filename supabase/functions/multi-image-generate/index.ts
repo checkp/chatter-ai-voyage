@@ -184,7 +184,11 @@ async function generateWithQwen(prompt: string): Promise<Uint8Array> {
     const pd = await poll.json();
     const status = pd.output?.task_status;
     if (status === "SUCCEEDED") {
-      imageUrl = pd.output?.results?.[0]?.url ?? pd.output?.result_url ?? pd.output?.image_url;
+      imageUrl =
+        pd.output?.choices?.[0]?.message?.content?.find((item: any) => item?.type === "image")?.image ??
+        pd.output?.results?.[0]?.url ??
+        pd.output?.result_url ??
+        pd.output?.image_url;
       break;
     }
     if (status === "FAILED" || status === "CANCELED" || status === "UNKNOWN") {
