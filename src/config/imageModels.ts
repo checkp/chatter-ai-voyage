@@ -8,6 +8,8 @@ export interface ImageModelOption {
 
 export const IMAGE_MODEL_OPTIONS: ImageModelOption[] = [
   { id: 'gemini-image', label: 'Gemini 2.5 Flash Image', provider: 'Google', cost: 15, description: 'Fast & cheap' },
+  { id: 'grok-aurora', label: 'Grok Aurora', provider: 'xAI', cost: 25, description: 'Bold & playful' },
+  { id: 'qwen-image', label: 'Qwen Wanx', provider: 'Alibaba', cost: 20, description: 'Vivid & detailed' },
   { id: 'gpt-image-1', label: 'GPT-Image-1', provider: 'OpenAI', cost: 30, description: 'Efficient OpenAI' },
   { id: 'gemini-pro-image', label: 'Gemini 3 Pro Image', provider: 'Google', cost: 35, description: 'Higher quality' },
   { id: 'dall-e-3', label: 'DALL·E 3', provider: 'OpenAI', cost: 40, description: 'Iconic & detailed' },

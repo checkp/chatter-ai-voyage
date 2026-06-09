@@ -8,7 +8,7 @@ import ImageModelPicker from '@/components/chat/ImageModelPicker';
 import { isImageGenerationIntent } from '@/utils/intentDetection';
 import { IMAGE_MODEL_OPTIONS, PROMPT_COLLAB_COST } from '@/config/imageModels';
 
-const DEFAULT_IMAGE_MODELS = ['gemini-image'];
+const DEFAULT_IMAGE_MODELS = ['gemini-image', 'grok-aurora', 'qwen-image'];
 const DEFAULT_IMAGE_COST =
   PROMPT_COLLAB_COST +
   DEFAULT_IMAGE_MODELS.reduce(
