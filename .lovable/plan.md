@@ -1,35 +1,26 @@
+## Problem
 
-## Add Pollinations.ai as 7th image provider
+New chats stay titled "New Chat" forever. Searching the codebase confirms there's no auto-rename logic — `createChatMutation` inserts `title: 'New Chat'` and nothing ever updates it (no `updateChatTitle`/title-update call exists in any hook or service).
 
-### 1. Secret
-Add `POLLINATIONS_API_KEY` via the secrets tool so the edge function can read it from `Deno.env`.
+## Plan
 
-### 2. Model catalog (`src/config/imageModels.ts`)
-Add one entry, enabled by default alongside the existing 6:
-```
-{ id: 'pollinations-flux', label: 'Pollinations FLUX', provider: 'Pollinations', cost: 10, description: 'Open-source FLUX' }
-```
-Lowest cost in the lineup since Pollinations is free.
+Add automatic chat renaming based on the first user message.
 
-### 3. Edge function (`supabase/functions/multi-image-generate/index.ts`)
-- Extend `IMAGE_MODELS` map with `pollinations-flux` → provider `pollinations`, cost 10.
-- Add `generateWithPollinations(prompt)`:
-  - GET `https://image.pollinations.ai/prompt/{encodeURIComponent(prompt)}?width=1024&height=1024&model=flux&nologo=true&private=true&safe=false&seed={random}`
-  - Header `Authorization: Bearer ${POLLINATIONS_API_KEY}` (token unlocks tier, removes watermark, raises rate limits)
-  - Response is the raw PNG/JPEG bytes → return as `Uint8Array`
-  - Wrap in 3-retry exponential backoff per project's AI resilience rule
-- Add `pollinations` branch in the provider switch inside the parallel image-gen block.
+### Behavior
+- When a user sends a message into a chat whose title is still the default (`"New Chat"` — and not a Conductor chat, which uses `Conductor: …`), derive a title from that first message:
+  - Strip newlines/extra whitespace.
+  - Truncate to ~50 chars, appending `…` if cut.
+  - Empty fallback: keep `"New Chat"`.
+- Update the title once, only if current title equals `"New Chat"` (so user-renamed chats and Conductor chats are untouched).
+- Update both the DB (`conversations.title`) and the local React Query cache so the sidebar reflects it immediately.
 
-### 4. Default selection (`src/components/chat/ImageModelPicker.tsx`)
-Append `'pollinations-flux'` to `DEFAULT_SELECTED_MODELS` so all 7 providers are checked by default.
+### Where the change lands
+- `src/hooks/useChatManagement.ts` — add a small `renameChatIfDefault(chatId, firstMessage)` mutation/helper that:
+  - `UPDATE conversations SET title = $new WHERE id = $chatId AND user_id = $uid AND title = 'New Chat'`
+  - invalidates / patches the `chats` query cache.
+- `src/hooks/useMessageHandling.ts` (and the conductor send path if it shares a different entry) — right after the user message is persisted in `handleSend`, call the rename helper when the chat's current title is `"New Chat"`.
 
-### 5. Changelog (`src/data/changelog.ts`)
-New entry: "Added Pollinations FLUX as a 7th image generator (open-source, low cost)."
-
-### 6. Deploy
-Redeploy `multi-image-generate` after edits.
-
-### Notes
-- No DB schema changes — uses existing `generated_images` table and `generated-images` bucket.
-- No frontend logic changes beyond the model list; UI already iterates `data.images` dynamically.
-- Pollinations returns image bytes directly, so no polling (unlike Qwen) and no base64 decode (unlike OpenAI/Gemini).
+### Out of scope
+- No DB schema/migration changes (column already exists).
+- No change to Conductor titles or to chats the user has manually renamed.
+- No AI-generated summarization of the title (just trimmed first message); can be a follow-up if you want smarter titles.
