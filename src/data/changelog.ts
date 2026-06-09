@@ -12,6 +12,36 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.6.0",
+    date: "2026-06-09",
+    title: "Multi-Agent Image Studio & 6 Image Models",
+    description: "Image generation is now a true multi-agent collaboration: 8 agents propose, the Conductor merges, and 6 image models render in parallel.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "🎨 6 Image Models by Default: DALL·E 3, GPT-Image-1, Gemini 2.5 Flash, Gemini 3 Pro, Grok Aurora, and Qwen Wanx all fire in parallel" },
+      { type: "feature", description: "🐉 Qwen Image (Wanx): Alibaba DashScope wanx2.1-t2i-turbo with vivid Eastern aesthetic" },
+      { type: "feature", description: "⚡ Grok Aurora: xAI's bold, playful image model added to the rotation" },
+      { type: "feature", description: "🎼 Conductor Image Synthesis: 8 agents propose visual angles, Conductor merges into one master prompt before rendering" },
+      { type: "improvement", description: "💸 Tiny Cost Preview: 8pt credit estimate appears under image prompts — no more popup picker interruption" },
+      { type: "improvement", description: "🛡️ Resilient Gateway: Auto-fallback to direct OpenAI when Lovable Gateway returns 402/429/5xx" },
+      { type: "bugfix", description: "🔧 DALL·E 3 Fixed: Dropped deprecated response_format param that was returning 400 errors" }
+    ]
+  },
+  {
+    version: "2.5.0",
+    date: "2026-06-08",
+    title: "Qwen Joins as the 8th Agent",
+    description: "Alibaba's Qwen is now a full first-class agent across chat, conductor, and image generation.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "🐉 Qwen Agent: qwen-max, qwen-plus, qwen-turbo, and qwen3-max via DashScope International" },
+      { type: "feature", description: "🎭 8 Frontier Providers: OpenAI, Anthropic, Google, xAI, DeepSeek, Mistral, Perplexity, and Qwen" },
+      { type: "improvement", description: "🌸 Soft Rose Agent Color: New theme token for Qwen across the UI" },
+      { type: "improvement", description: "💰 Pricing Sync: Qwen pricing wired into admin model pricing sync" }
+    ]
+  },
+
+  {
     version: "2.4.0",
     date: "2026-04-11",
     title: "Mistral AI & Perplexity AI Integration",
