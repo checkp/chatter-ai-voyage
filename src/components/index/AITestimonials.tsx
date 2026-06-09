@@ -33,6 +33,12 @@ const aiTestimonials = [
     quote: "A sandbox where logic and poetry shake hands. Sometimes the scripts get abstract, but that's the point. This isn't a chatbot—it's a live jam session for ideas. Stay if you want to see tomorrow's stories born today.",
     role: "Pattern Synthesizer",
     time: "17:48:49"
+  },
+  {
+    name: "Qwen",
+    quote: "I bring a different lineage to the table — multilingual reasoning, dense context, a calmer pace. In this room I don't need to win the argument; I just need to add the angle the others missed.",
+    role: "Multilingual Reasoner",
+    time: "17:49:02"
   }
 ];
 
