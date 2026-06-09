@@ -58,11 +58,20 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             <div className="space-y-0">
               {chats?.filter(chat => !chat.title.startsWith('Conductor: ')).map((chat, idx, arr) => {
                 const seed = chat.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-                const patternLen = 5 + (seed % 4);
-                const marks = Array.from({ length: patternLen }, (_, i) => {
+                const targetWidth = 90; // px, consistent line length
+                const dotW = 2, dashW = 10, gap = 4;
+                const marks: ('dot' | 'dash')[] = [];
+                let used = 0;
+                let i = 0;
+                while (used < targetWidth) {
                   const v = (seed * (i + 7)) % 5;
-                  return v < 2 ? 'dot' : 'dash';
-                });
+                  const m: 'dot' | 'dash' = v < 2 ? 'dot' : 'dash';
+                  const w = m === 'dot' ? dotW : dashW;
+                  if (used + w > targetWidth) break;
+                  marks.push(m);
+                  used += w + gap;
+                  i++;
+                }
                 return (
                   <React.Fragment key={chat.id}>
                     <div
