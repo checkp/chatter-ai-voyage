@@ -13,6 +13,8 @@ import Purchase from "./pages/Purchase";
 import ImageGenerationPage from "./pages/ImageGeneration";
 import AuthPage from "./components/AuthPage";
 import Help from "./pages/Help";
+import Features from "./pages/Features";
+import WhatsNew from "./pages/WhatsNew";
 import { loadAIModelsFromDB } from "@/config/aiModels";
 
 // Hydrate the AI model catalog from the DB pricing table at app boot.
@@ -35,6 +37,8 @@ const App = () => (
             <Route path="/images" element={<ImageGenerationPage />} />
             <Route path="/success" element={<Success />} />
             <Route path="/help" element={<Help />} />
+            <Route path="/features" element={<Features />} />
+            <Route path="/whats-new" element={<WhatsNew />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
