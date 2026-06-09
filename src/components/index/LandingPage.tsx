@@ -77,6 +77,7 @@ const LandingPage: React.FC = () => {
         <AITestimonials />
         <CTASection />
       </div>
+      <LandingFooter />
     </div>
   );
 };
