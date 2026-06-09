@@ -38,6 +38,17 @@ const DemoChat: React.FC = () => {
     }
   }, [messages]);
 
+  // Ensure we have a session (anonymous is fine) so the demo function can rate-limit per user
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        await supabase.auth.signInAnonymously();
+      }
+    })();
+  }, []);
+
+
   const typewriterAppend = async (platform: string, text: string) => {
     setMessages(prev => [...prev, { sender: 'ai', content: '', platform, typing: true }]);
 
