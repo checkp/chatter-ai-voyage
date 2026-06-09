@@ -77,7 +77,8 @@ async function callGateway(systemPrompt: string, userPrompt: string, model = "go
 }
 
 async function generateWithOpenAI(prompt: string, model: string): Promise<Uint8Array> {
-  const body: Record<string, unknown> = { model, prompt, n: 1, size: "1024x1024" };
+  const resolvedModel = model === "dall-e-3" ? "gpt-image-1" : model;
+  const body: Record<string, unknown> = { model: resolvedModel, prompt, n: 1, size: "1024x1024" };
   const r = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
     headers: {
@@ -99,26 +100,24 @@ async function generateWithOpenAI(prompt: string, model: string): Promise<Uint8A
 }
 
 async function generateWithGemini(prompt: string, model: string): Promise<Uint8Array> {
-  const gw = model === "gemini-pro-image"
-    ? "google/gemini-3-pro-image-preview"
-    : "google/gemini-2.5-flash-image";
-  const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  const directModel = model === "gemini-pro-image"
+    ? "gemini-3-pro-image"
+    : "gemini-2.5-flash-image";
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1/models/${directModel}:generateContent?key=${Deno.env.get("GOOGLE_API_KEY")}`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: gw,
-      messages: [{ role: "user", content: prompt }],
-      modalities: ["image", "text"],
+      contents: [{ parts: [{ text: prompt }] }],
     }),
   });
   if (!r.ok) throw new Error(`Gemini image ${r.status}: ${await r.text()}`);
   const d = await r.json();
-  const url = d.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-  if (!url) throw new Error("No image returned from Gemini");
-  const b64 = url.replace(/^data:image\/\w+;base64,/, "");
+  const parts = d.candidates?.[0]?.content?.parts ?? [];
+  const imagePart = parts.find((part: any) => part.inlineData?.data || part.inline_data?.data);
+  const b64 = imagePart?.inlineData?.data ?? imagePart?.inline_data?.data;
+  if (!b64) throw new Error("No image returned from Gemini");
   return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
 }
 
@@ -129,17 +128,22 @@ async function generateWithGrok(prompt: string): Promise<Uint8Array> {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "grok-2-image",
+      model: "grok-imagine-image-quality",
       prompt,
       n: 1,
-      response_format: "b64_json",
     }),
   });
   if (!r.ok) throw new Error(`Grok image ${r.status}: ${await r.text()}`);
   const d = await r.json();
-  const b64 = d.data?.[0]?.b64_json;
-  if (!b64) throw new Error("Grok returned no image");
-  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const item = d.data?.[0];
+  const b64 = item?.b64_json;
+  if (b64) return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  if (item?.url) {
+    const imgRes = await fetch(item.url);
+    if (!imgRes.ok) throw new Error(`Grok image download ${imgRes.status}`);
+    return new Uint8Array(await imgRes.arrayBuffer());
+  }
+  throw new Error("Grok returned no image");
 }
 
 async function generateWithQwen(prompt: string): Promise<Uint8Array> {
@@ -147,7 +151,7 @@ async function generateWithQwen(prompt: string): Promise<Uint8Array> {
   if (!key) throw new Error("DASHSCOPE_API_KEY not set");
   // Submit async task
   const submit = await fetch(
-    "https://dashscope-intl.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis",
+    "https://dashscope-intl.aliyuncs.com/api/v1/services/aigc/image-generation/generation",
     {
       method: "POST",
       headers: {
@@ -156,9 +160,11 @@ async function generateWithQwen(prompt: string): Promise<Uint8Array> {
         "X-DashScope-Async": "enable",
       },
       body: JSON.stringify({
-        model: "wanx2.1-t2i-turbo",
-        input: { prompt },
-        parameters: { size: "1024*1024", n: 1 },
+        model: "wan2.6-t2i",
+        input: {
+          messages: [{ role: "user", content: [{ text: prompt }] }],
+        },
+        parameters: { size: "1280*1280", n: 1, watermark: false, prompt_extend: true, negative_prompt: "" },
       }),
     },
   );
@@ -178,7 +184,11 @@ async function generateWithQwen(prompt: string): Promise<Uint8Array> {
     const pd = await poll.json();
     const status = pd.output?.task_status;
     if (status === "SUCCEEDED") {
-      imageUrl = pd.output?.results?.[0]?.url;
+      imageUrl =
+        pd.output?.choices?.[0]?.message?.content?.find((item: any) => item?.type === "image")?.image ??
+        pd.output?.results?.[0]?.url ??
+        pd.output?.result_url ??
+        pd.output?.image_url;
       break;
     }
     if (status === "FAILED" || status === "CANCELED" || status === "UNKNOWN") {
