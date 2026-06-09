@@ -46,7 +46,7 @@ serve(async (req) => {
 
     const { data: pricingData } = await supabaseClient
       .from('model_pricing')
-      .select('api_cost_per_1k_tokens')
+      .select('api_cost_per_1k_tokens, tokens_per_message')
       .eq('platform', 'mistral')
       .eq('model_id', model)
       .maybeSingle();

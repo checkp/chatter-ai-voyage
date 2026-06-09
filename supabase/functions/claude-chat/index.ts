@@ -82,7 +82,7 @@ serve(async (req) => {
     // Validate model against allowlist (model_pricing table)
     const { data: pricingData, error: pricingError } = await supabaseClient
       .from('model_pricing')
-      .select('api_cost_per_1k_tokens')
+      .select('api_cost_per_1k_tokens, tokens_per_message')
       .eq('platform', 'anthropic')
       .eq('model_id', model)
       .maybeSingle();
