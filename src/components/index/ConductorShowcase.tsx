@@ -15,7 +15,7 @@ const ConductorShowcase: React.FC = () => {
     {
       icon: Users,
       title: "Cross-Model Reasoning",
-      description: "GPT-5's reasoning meets Claude 4's analysis and DeepSeek-R2's open-source depth — perspectives combine into answers no single model can produce."
+      description: "GPT-5's reasoning, Claude 4's analysis, DeepSeek-R2's depth and Qwen's multilingual lens combine into answers no single model can produce."
     },
     {
       icon: Target,
