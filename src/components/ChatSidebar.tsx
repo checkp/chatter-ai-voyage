@@ -55,37 +55,61 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
               ))}
             </div>
           ) : (
-            <div className="space-y-1">
-              {chats?.filter(chat => !chat.title.startsWith('Conductor: ')).map((chat) => (
-                <div
-                  key={chat.id}
-                  className={`group flex items-center justify-between p-2 rounded cursor-pointer transition-colors ${
-                    activeChatId === chat.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'hover:bg-muted'
-                  }`}
-                  onClick={() => setActiveChatId(chat.id)}
-                >
-                  <span className="truncate flex-1 text-sm">
-                    {chat.title}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 ${
-                      activeChatId === chat.id 
-                        ? 'text-primary-foreground hover:text-primary-foreground/80' 
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteChat(chat.id);
-                    }}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
+            <div className="space-y-0">
+              {chats?.filter(chat => !chat.title.startsWith('Conductor: ')).map((chat, idx, arr) => {
+                const seed = chat.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+                const patternLen = 5 + (seed % 4);
+                const marks = Array.from({ length: patternLen }, (_, i) => {
+                  const v = (seed * (i + 7)) % 5;
+                  return v < 2 ? 'dot' : 'dash';
+                });
+                return (
+                  <React.Fragment key={chat.id}>
+                    <div
+                      className={`group flex items-center justify-between p-2 rounded cursor-pointer transition-colors ${
+                        activeChatId === chat.id
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-muted'
+                      }`}
+                      onClick={() => setActiveChatId(chat.id)}
+                    >
+                      <span className="truncate flex-1 text-sm">
+                        {chat.title}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 ${
+                          activeChatId === chat.id
+                            ? 'text-primary-foreground hover:text-primary-foreground/80'
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteChat(chat.id);
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    {idx < arr.length - 1 && (
+                      <div className="flex items-center gap-1 px-3 py-1.5 select-none" aria-hidden="true">
+                        {marks.map((m, i) => (
+                          <span
+                            key={i}
+                            className="inline-block rounded-full"
+                            style={{
+                              backgroundColor: 'hsl(70 22% 32% / 0.55)',
+                              height: '2px',
+                              width: m === 'dot' ? '2px' : '8px',
+                            }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </div>
           )}
         </div>
