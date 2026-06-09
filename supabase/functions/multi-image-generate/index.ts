@@ -91,7 +91,75 @@ async function generateWithGemini(prompt: string, model: string): Promise<Uint8A
   return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
 }
 
-serve(async (req) => {
+async function generateWithGrok(prompt: string): Promise<Uint8Array> {
+  const key = Deno.env.get("GROK_API_KEY");
+  if (!key) throw new Error("GROK_API_KEY not set");
+  const r = await fetch("https://api.x.ai/v1/images/generations", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "grok-2-image",
+      prompt,
+      n: 1,
+      response_format: "b64_json",
+    }),
+  });
+  if (!r.ok) throw new Error(`Grok image ${r.status}: ${await r.text()}`);
+  const d = await r.json();
+  const b64 = d.data?.[0]?.b64_json;
+  if (!b64) throw new Error("Grok returned no image");
+  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+}
+
+async function generateWithQwen(prompt: string): Promise<Uint8Array> {
+  const key = Deno.env.get("DASHSCOPE_API_KEY");
+  if (!key) throw new Error("DASHSCOPE_API_KEY not set");
+  // Submit async task
+  const submit = await fetch(
+    "https://dashscope-intl.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+        "X-DashScope-Async": "enable",
+      },
+      body: JSON.stringify({
+        model: "wanx2.1-t2i-turbo",
+        input: { prompt },
+        parameters: { size: "1024*1024", n: 1 },
+      }),
+    },
+  );
+  if (!submit.ok) throw new Error(`Qwen submit ${submit.status}: ${await submit.text()}`);
+  const submitData = await submit.json();
+  const taskId = submitData.output?.task_id;
+  if (!taskId) throw new Error("Qwen returned no task_id");
+
+  // Poll task (max ~60s)
+  let imageUrl: string | undefined;
+  for (let i = 0; i < 30; i++) {
+    await new Promise(r => setTimeout(r, 2000));
+    const poll = await fetch(`https://dashscope-intl.aliyuncs.com/api/v1/tasks/${taskId}`, {
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    if (!poll.ok) continue;
+    const pd = await poll.json();
+    const status = pd.output?.task_status;
+    if (status === "SUCCEEDED") {
+      imageUrl = pd.output?.results?.[0]?.url;
+      break;
+    }
+    if (status === "FAILED" || status === "CANCELED" || status === "UNKNOWN") {
+      throw new Error(`Qwen task ${status}: ${pd.output?.message ?? ""}`);
+    }
+  }
+  if (!imageUrl) throw new Error("Qwen task timed out");
+
+  const imgRes = await fetch(imageUrl);
+  if (!imgRes.ok) throw new Error(`Qwen image download ${imgRes.status}`);
+  return new Uint8Array(await imgRes.arrayBuffer());
+}
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
