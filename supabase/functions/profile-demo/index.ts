@@ -2,11 +2,19 @@
 // On signup, three AI agents play detective and "expose" what they can infer about the user
 // from purely client-side signals (IP geo via header, UA, language, timezone, hour, referrer, screen).
 
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+const supabaseAdmin = createClient(
+  Deno.env.get('SUPABASE_URL')!,
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+);
+
 
 interface Signals {
   language?: string;
