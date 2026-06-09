@@ -28,9 +28,28 @@ const IMAGE_MODELS: Record<string, { provider: "openai" | "gemini" | "grok" | "q
 
 const COLLAB_COST = 50;
 
+async function callOpenAIChat(systemPrompt: string, userPrompt: string): Promise<string> {
+  const key = Deno.env.get("OPENAI_API_KEY");
+  if (!key) throw new Error("OPENAI_API_KEY not set");
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content?.trim() ?? "";
+}
+
 async function callGateway(systemPrompt: string, userPrompt: string, model = "google/gemini-2.5-flash"): Promise<string> {
   const key = Deno.env.get("LOVABLE_API_KEY");
-  if (!key) throw new Error("LOVABLE_API_KEY not set");
+  if (!key) return callOpenAIChat(systemPrompt, userPrompt);
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -45,6 +64,12 @@ async function callGateway(systemPrompt: string, userPrompt: string, model = "go
   if (!res.ok) {
     const text = await res.text();
     console.error(`Gateway ${model} ${res.status}: ${text}`);
+    // Fall back to direct OpenAI on payment/rate issues
+    if (res.status === 402 || res.status === 429 || res.status >= 500) {
+      try { return await callOpenAIChat(systemPrompt, userPrompt); } catch (e) {
+        throw new Error(`Gateway ${res.status} and OpenAI fallback failed: ${e}`);
+      }
+    }
     throw new Error(`Gateway ${res.status}: ${text.slice(0, 200)}`);
   }
   const data = await res.json();
