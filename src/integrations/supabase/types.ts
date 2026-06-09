@@ -47,6 +47,51 @@ export type Database = {
         }
         Relationships: []
       }
+      demo_daily_usage: {
+        Row: {
+          day: string
+          total_calls: number
+          updated_at: string
+        }
+        Insert: {
+          day: string
+          total_calls?: number
+          updated_at?: string
+        }
+        Update: {
+          day?: string
+          total_calls?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      demo_rate_limits: {
+        Row: {
+          day_count: number
+          day_window_start: string
+          hour_count: number
+          hour_window_start: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          day_count?: number
+          day_window_start?: string
+          hour_count?: number
+          hour_window_start?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          day_count?: number
+          day_window_start?: string
+          hour_count?: number
+          hour_window_start?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       generated_images: {
         Row: {
           created_at: string
