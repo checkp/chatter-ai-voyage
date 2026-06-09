@@ -9,13 +9,14 @@ const corsHeaders = {
 };
 
 async function generateWithOpenAI(prompt: string, model: string, size: string): Promise<Uint8Array> {
+  const resolvedModel = model === 'dall-e-3' ? 'gpt-image-1' : model;
   const response = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ model, prompt, n: 1, size, response_format: 'b64_json' }),
+    body: JSON.stringify({ model: resolvedModel, prompt, n: 1, size }),
   });
 
   if (!response.ok) {
@@ -25,25 +26,28 @@ async function generateWithOpenAI(prompt: string, model: string, size: string): 
   }
 
   const data = await response.json();
-  const b64 = data.data[0].b64_json;
-  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const item = data.data?.[0];
+  if (item?.b64_json) return Uint8Array.from(atob(item.b64_json), c => c.charCodeAt(0));
+  if (item?.url) {
+    const imgResponse = await fetch(item.url);
+    if (!imgResponse.ok) throw new Error('Failed to download OpenAI image');
+    return new Uint8Array(await imgResponse.arrayBuffer());
+  }
+  throw new Error('OpenAI returned no image data');
 }
 
 async function generateWithGemini(prompt: string, model: string): Promise<Uint8Array> {
-  const gatewayModel = model === 'gemini-pro-image'
-    ? 'google/gemini-3-pro-image-preview'
-    : 'google/gemini-2.5-flash-image';
+  const directModel = model === 'gemini-pro-image'
+    ? 'gemini-3-pro-image'
+    : 'gemini-2.5-flash-image';
 
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/${directModel}:generateContent?key=${Deno.env.get('GOOGLE_API_KEY')}`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: gatewayModel,
-      messages: [{ role: 'user', content: prompt }],
-      modalities: ['image', 'text'],
+      contents: [{ parts: [{ text: prompt }] }],
     }),
   });
 
@@ -54,11 +58,10 @@ async function generateWithGemini(prompt: string, model: string): Promise<Uint8A
   }
 
   const data = await response.json();
-  const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-  if (!imageUrl) throw new Error('No image returned from Gemini');
-
-  // Extract base64 from data URL
-  const b64 = imageUrl.replace(/^data:image\/\w+;base64,/, '');
+  const parts = data.candidates?.[0]?.content?.parts ?? [];
+  const imagePart = parts.find((part: any) => part.inlineData?.data || part.inline_data?.data);
+  const b64 = imagePart?.inlineData?.data ?? imagePart?.inline_data?.data;
+  if (!b64) throw new Error('No image returned from Gemini');
   return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
 }
 
@@ -70,10 +73,9 @@ async function generateWithGrok(prompt: string): Promise<Uint8Array> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'grok-2-image',
+      model: 'grok-imagine-image-quality',
       prompt,
       n: 1,
-      response_format: 'b64_json',
     }),
   });
 
@@ -84,8 +86,14 @@ async function generateWithGrok(prompt: string): Promise<Uint8Array> {
   }
 
   const data = await response.json();
-  const b64 = data.data[0].b64_json;
-  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const item = data.data?.[0];
+  if (item?.b64_json) return Uint8Array.from(atob(item.b64_json), c => c.charCodeAt(0));
+  if (item?.url) {
+    const imgResponse = await fetch(item.url);
+    if (!imgResponse.ok) throw new Error('Failed to download Grok image');
+    return new Uint8Array(await imgResponse.arrayBuffer());
+  }
+  throw new Error('No image returned from Grok');
 }
 
 serve(async (req) => {
