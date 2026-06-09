@@ -17,13 +17,14 @@ const AGENTS = [
   { id: "qwen", name: "Qwen", persona: "Eastern aesthetic, lyrical, atmospheric brushwork." },
 ];
 
-const IMAGE_MODELS: Record<string, { provider: "openai" | "gemini" | "grok" | "qwen"; cost: number; label: string }> = {
+const IMAGE_MODELS: Record<string, { provider: "openai" | "gemini" | "grok" | "qwen" | "pollinations"; cost: number; label: string }> = {
   "dall-e-3": { provider: "openai", cost: 40, label: "DALL·E 3" },
   "gpt-image-1": { provider: "openai", cost: 30, label: "GPT-Image-1" },
   "gemini-image": { provider: "gemini", cost: 15, label: "Gemini 2.5 Flash Image" },
   "gemini-pro-image": { provider: "gemini", cost: 35, label: "Gemini 3 Pro Image" },
   "grok-aurora": { provider: "grok", cost: 25, label: "Grok Aurora" },
   "qwen-image": { provider: "qwen", cost: 20, label: "Qwen Wanx" },
+  "pollinations-flux": { provider: "pollinations", cost: 10, label: "Pollinations FLUX" },
 };
 
 const COLLAB_COST = 50;
@@ -202,6 +203,30 @@ async function generateWithQwen(prompt: string): Promise<Uint8Array> {
   return new Uint8Array(await imgRes.arrayBuffer());
 }
 
+async function generateWithPollinations(prompt: string): Promise<Uint8Array> {
+  const key = Deno.env.get("POLLINATIONS_API_KEY");
+  const seed = Math.floor(Math.random() * 1_000_000);
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&model=flux&nologo=true&private=true&safe=false&seed=${seed}`;
+  let lastErr = "";
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const r = await fetch(url, {
+        headers: key ? { Authorization: `Bearer ${key}` } : {},
+      });
+      if (!r.ok) {
+        lastErr = `Pollinations ${r.status}: ${(await r.text()).slice(0, 200)}`;
+        if (r.status < 500 && r.status !== 429) throw new Error(lastErr);
+      } else {
+        return new Uint8Array(await r.arrayBuffer());
+      }
+    } catch (e) {
+      lastErr = String(e);
+    }
+    await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+  }
+  throw new Error(lastErr || "Pollinations failed");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -281,6 +306,8 @@ serve(async (req) => {
           ? await generateWithGrok(masterPrompt)
           : meta.provider === "qwen"
           ? await generateWithQwen(masterPrompt)
+          : meta.provider === "pollinations"
+          ? await generateWithPollinations(masterPrompt)
           : await generateWithGemini(masterPrompt, model);
 
         const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.png`;
