@@ -1,3 +1,5 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -21,10 +23,25 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
 
   try {
+    // Require a valid JWT
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
+    const { data: { user }, error: authErr } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+    if (authErr || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
+
     const { messages } = await req.json() as { messages: InMsg[] };
     if (!Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: 'messages required' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
+
 
     // Build a compact transcript (last 8 messages, trim each)
     const transcript = messages.slice(-8).map(m => {
@@ -78,6 +95,9 @@ Rules:
     return new Response(JSON.stringify({ title }), { headers: { ...CORS, 'Content-Type': 'application/json' } });
   } catch (e) {
     console.error('generate-chat-title error', e);
-    return new Response(JSON.stringify({ error: (e as Error).message }), { status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ error: 'title generation failed' }), { status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } });
+  }
+});
+
   }
 });

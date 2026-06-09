@@ -76,7 +76,7 @@ serve(async (req) => {
 
     const { data: pricingData, error: pricingError } = await supabaseClient
       .from("model_pricing")
-      .select("api_cost_per_1k_tokens")
+      .select("api_cost_per_1k_tokens, tokens_per_message")
       .eq("platform", "google")
       .eq("model_id", resolvedModel)
       .maybeSingle();
@@ -88,6 +88,16 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Pre-call balance check (prevents zero-balance users from triggering paid API calls)
+    const minTokens = pricingData?.tokens_per_message || 1;
+    if (tokenData.balance < minTokens) {
+      return new Response(JSON.stringify({ error: 'Insufficient tokens', required: minTokens, available: tokenData.balance }), {
+        status: 402,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
 
     const geminiApiKey = Deno.env.get("GOOGLE_API_KEY");
     if (!geminiApiKey) {
@@ -115,11 +125,10 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      return new Response(JSON.stringify({ error: `Gemini API error: ${response.status} - ${errorText}` }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: response.status,
-      });
+      console.error('Gemini API error:', response.status, errorText);
+      throw new Error('Gemini API request failed');
     }
+
 
     const data_response = await response.json();
     const content = data_response.candidates?.[0]?.content?.parts?.[0]?.text;

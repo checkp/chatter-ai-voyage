@@ -2,11 +2,19 @@
 // On signup, three AI agents play detective and "expose" what they can infer about the user
 // from purely client-side signals (IP geo via header, UA, language, timezone, hour, referrer, screen).
 
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+const supabaseAdmin = createClient(
+  Deno.env.get('SUPABASE_URL')!,
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+);
+
 
 interface Signals {
   language?: string;
@@ -84,8 +92,19 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
   try {
+    // Require a valid JWT (signed-in users only — this powers onboarding)
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
+    const { data: { user }, error: authErr } = await supabaseAdmin.auth.getUser(authHeader.replace('Bearer ', ''));
+    if (authErr || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...CORS, 'Content-Type': 'application/json' } });
+    }
+
     const body = await req.json();
     const signals: Signals = body.signals || {};
+
 
     // Pull IP from request headers if not provided
     if (!signals.ip) {
@@ -136,7 +155,7 @@ ${brief || "(no signals captured)"}`;
     );
   } catch (err) {
     console.error("profile-demo error:", err);
-    return new Response(JSON.stringify({ error: (err as Error).message }), {
+    return new Response(JSON.stringify({ error: 'Request failed' }), {
       status: 500,
       headers: { ...CORS, "Content-Type": "application/json" },
     });

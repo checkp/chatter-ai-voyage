@@ -45,7 +45,7 @@ serve(async (req) => {
 
     const { data: pricingData } = await supabaseClient
       .from('model_pricing')
-      .select('api_cost_per_1k_tokens')
+      .select('api_cost_per_1k_tokens, tokens_per_message')
       .eq('platform', 'qwen')
       .eq('model_id', model)
       .maybeSingle();
@@ -57,6 +57,16 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // Pre-call balance check
+    const minTokens = pricingData?.tokens_per_message || 1;
+    if (tokenData.balance < minTokens) {
+      return new Response(JSON.stringify({ error: 'Insufficient tokens', required: minTokens, available: tokenData.balance }), {
+        status: 402,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
 
     const apiKey = Deno.env.get("DASHSCOPE_API_KEY");
     if (!apiKey) throw new Error("DashScope API key not configured");
