@@ -84,6 +84,31 @@ export const useMessageHandling = (
 
       console.log('User message saved to database');
 
+      // Auto-rename chat from first user message if still "New Chat"
+      try {
+        const chats = queryClient.getQueryData(['chats', user.id]) as any[] | undefined;
+        const currentChat = chats?.find(c => c.id === chatId);
+        if (currentChat && currentChat.title === 'New Chat') {
+          const cleaned = userMessage.replace(/\s+/g, ' ').trim();
+          if (cleaned.length > 0) {
+            const newTitle = cleaned.length > 50 ? cleaned.substring(0, 50) + '…' : cleaned;
+            const { error: titleErr } = await supabase
+              .from('conversations')
+              .update({ title: newTitle })
+              .eq('id', chatId)
+              .eq('user_id', user.id)
+              .eq('title', 'New Chat');
+            if (!titleErr) {
+              queryClient.setQueryData(['chats', user.id], (old: any[] = []) =>
+                old.map(c => (c.id === chatId ? { ...c, title: newTitle } : c))
+              );
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Auto-rename chat failed:', e);
+      }
+
       // Get enabled platforms
       const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
       console.log('Enabled platforms:', enabledPlatforms.map(p => p.name));
