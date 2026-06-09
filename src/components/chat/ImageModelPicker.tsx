@@ -7,6 +7,8 @@ import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { useAuth } from '@/hooks/useAuth';
 import { Sparkles } from 'lucide-react';
 
+const DEFAULT_SELECTED_MODELS = IMAGE_MODEL_OPTIONS.map(model => model.id);
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -17,7 +19,7 @@ interface Props {
 const ImageModelPicker: React.FC<Props> = ({ open, onOpenChange, userPrompt, onConfirm }) => {
   const { user } = useAuth();
   const { tokenBalance } = useTokenBalance(user);
-  const [selected, setSelected] = useState<string[]>(['gemini-image']);
+  const [selected, setSelected] = useState<string[]>(DEFAULT_SELECTED_MODELS);
 
   const balance = typeof tokenBalance === 'number'
     ? tokenBalance
