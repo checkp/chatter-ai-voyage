@@ -31,3 +31,6 @@ verify_jwt = false
 
 [functions.multi-image-generate]
 verify_jwt = true
+
+[functions.generate-chat-title]
+verify_jwt = true

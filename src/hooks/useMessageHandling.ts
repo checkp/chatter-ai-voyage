@@ -84,30 +84,9 @@ export const useMessageHandling = (
 
       console.log('User message saved to database');
 
-      // Auto-rename chat from first user message if still "New Chat"
-      try {
-        const chats = queryClient.getQueryData(['chats', user.id]) as any[] | undefined;
-        const currentChat = chats?.find(c => c.id === chatId);
-        if (currentChat && currentChat.title === 'New Chat') {
-          const cleaned = userMessage.replace(/\s+/g, ' ').trim();
-          if (cleaned.length > 0) {
-            const newTitle = cleaned.length > 50 ? cleaned.substring(0, 50) + '…' : cleaned;
-            const { error: titleErr } = await supabase
-              .from('conversations')
-              .update({ title: newTitle })
-              .eq('id', chatId)
-              .eq('user_id', user.id)
-              .eq('title', 'New Chat');
-            if (!titleErr) {
-              queryClient.setQueryData(['chats', user.id], (old: any[] = []) =>
-                old.map(c => (c.id === chatId ? { ...c, title: newTitle } : c))
-              );
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('Auto-rename chat failed:', e);
-      }
+      // Note: chat auto-rename is handled AFTER AI responses complete (see below),
+      // using an AI-generated laconic title rather than the raw first message.
+
 
       // Get enabled platforms
       const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
@@ -207,7 +186,50 @@ export const useMessageHandling = (
       const results = await Promise.allSettled(aiPromises);
       console.log('All AI responses completed');
 
+      // Auto-rename chat with an AI-generated laconic title.
+      // Trigger only when the title is still "New Chat" AND we have enough
+      // context (>= 2 user messages, OR 1 user + at least 1 AI reply).
+      try {
+        const chats = queryClient.getQueryData(['chats', user.id]) as any[] | undefined;
+        const currentChat = chats?.find(c => c.id === chatId);
+        if (currentChat && currentChat.title === 'New Chat') {
+          const allMsgs = (queryClient.getQueryData(['messages', chatId]) as Message[]) || [];
+          const userCount = allMsgs.filter(m => m.sender === 'user').length;
+          const aiCount = allMsgs.filter(m => m.sender === 'ai').length;
+          const hasEnoughContext = userCount >= 2 || (userCount >= 1 && aiCount >= 1);
+
+          if (hasEnoughContext) {
+            const payload = allMsgs.slice(-8).map(m => ({
+              sender: m.sender,
+              content: m.content,
+              platform: m.platform,
+            }));
+            const { data: titleData, error: titleFnErr } = await supabase.functions.invoke(
+              'generate-chat-title',
+              { body: { messages: payload } }
+            );
+            const newTitle: string | undefined = titleData?.title;
+            if (!titleFnErr && newTitle && newTitle.length > 0) {
+              const { error: updErr } = await supabase
+                .from('conversations')
+                .update({ title: newTitle })
+                .eq('id', chatId)
+                .eq('user_id', user.id)
+                .eq('title', 'New Chat');
+              if (!updErr) {
+                queryClient.setQueryData(['chats', user.id], (old: any[] = []) =>
+                  old.map(c => (c.id === chatId ? { ...c, title: newTitle } : c))
+                );
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('AI chat-title generation failed:', e);
+      }
+
       return results.filter(result => result.status === 'fulfilled' && result.value !== null);
+
     },
     onSuccess: () => {
       console.log('=== SEND MESSAGE MUTATION SUCCESS ===');
