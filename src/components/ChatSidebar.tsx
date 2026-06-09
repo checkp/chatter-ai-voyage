@@ -93,15 +93,16 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                       </Button>
                     </div>
                     {idx < arr.length - 1 && (
-                      <div className="flex items-center gap-1 px-3 py-1.5 select-none" aria-hidden="true">
+                      <div className="flex items-center px-3 py-0.5 select-none" aria-hidden="true">
                         {marks.map((m, i) => (
                           <span
                             key={i}
                             className="inline-block rounded-full"
                             style={{
-                              backgroundColor: 'hsl(70 22% 32% / 0.55)',
+                              backgroundColor: 'hsl(70 22% 32% / 0.6)',
                               height: '2px',
                               width: m === 'dot' ? '2px' : '8px',
+                              marginRight: i === marks.length - 1 ? 0 : '3px',
                             }}
                           />
                         ))}
