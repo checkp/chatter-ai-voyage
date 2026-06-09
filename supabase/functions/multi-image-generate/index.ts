@@ -362,7 +362,7 @@ serve(async (req) => {
 
   } catch (e) {
     console.error("multi-image-generate error:", e);
-    return new Response(JSON.stringify({ error: String(e).slice(0, 300) }), {
+    return new Response(JSON.stringify({ error: 'Request failed' }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
