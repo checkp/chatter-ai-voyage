@@ -115,11 +115,10 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      return new Response(JSON.stringify({ error: `Gemini API error: ${response.status} - ${errorText}` }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: response.status,
-      });
+      console.error('Gemini API error:', response.status, errorText);
+      throw new Error('Gemini API request failed');
     }
+
 
     const data_response = await response.json();
     const content = data_response.candidates?.[0]?.content?.parts?.[0]?.text;
