@@ -36,8 +36,8 @@ const ConductorShowcase: React.FC = () => {
       badge: "Engineering"
     },
     {
-      scenario: "Research Synthesis",
-      description: "Paste a paper or topic — Gemini 2.5 extracts key claims with million-token context, Grok-4 cross-references real-time data, and the Conductor produces an annotated brief.",
+      scenario: "Market Research",
+      description: "Ask a market question — Perplexity pulls live citations, Gemini 2.5 reads the long-form sources, Qwen adds regional nuance, and the Conductor returns a sourced brief.",
       badge: "Research"
     },
     {
