@@ -40,9 +40,10 @@ const ImagePanel: React.FC<Props> = ({ data }) => {
       </Collapsible>
 
       {/* Image grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {data.images.map(img => (
-          <div key={img.model} className="space-y-2">
+          <div key={img.model} className="space-y-1.5 flex-shrink-0 w-28">
+
             <div className="flex items-center justify-between text-xs">
               <span className="font-medium">{img.label}</span>
               <span className="text-muted-foreground font-mono">{img.cost}t</span>
