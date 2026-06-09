@@ -59,7 +59,7 @@ serve(async (req) => {
 
     const { data: pricingData, error: pricingError } = await supabaseClient
       .from('model_pricing')
-      .select('api_cost_per_1k_tokens')
+      .select('api_cost_per_1k_tokens, tokens_per_message')
       .eq('platform', 'grok')
       .eq('model_id', model)
       .maybeSingle();
@@ -71,6 +71,16 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // Pre-call balance check (prevents zero-balance users from triggering paid API calls)
+    const minTokens = pricingData?.tokens_per_message || 1;
+    if (tokenData.balance < minTokens) {
+      return new Response(JSON.stringify({ error: 'Insufficient tokens', required: minTokens, available: tokenData.balance }), {
+        status: 402,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
 
     const grokApiKey = Deno.env.get("GROK_API_KEY");
     if (!grokApiKey) {
