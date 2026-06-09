@@ -11,6 +11,8 @@ import ConductorShowcase from './ConductorShowcase';
 import DemoChat from './DemoChat';
 import SheepBubbles from './SheepBubbles';
 import UseCases from './UseCases';
+import LandingFooter from '@/components/landing/LandingFooter';
+import { Link } from 'react-router-dom';
 
 
 const LandingPage: React.FC = () => {
