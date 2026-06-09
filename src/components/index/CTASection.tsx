@@ -9,21 +9,22 @@ const CTASection: React.FC = () => {
   };
 
   return (
-    <div className="text-center bg-primary/5 rounded-2xl p-12">
-      <h2 className="text-3xl font-bold text-foreground mb-4">
-        Stop Prompting Alone — Start Orchestrating
+    <div className="text-center bg-primary/5 rounded-2xl p-10 md:p-14 border border-border/40">
+      <h2 className="text-2xl md:text-3xl font-semibold text-foreground mb-4 tracking-tight">
+        Try it with your own question
       </h2>
-      <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-        In 2026, the smartest teams let seven frontier models debate, challenge, and refine each other's ideas. 
-        Conductor Mode makes multi-agent collaboration as easy as sending a single message.
+      <p className="text-base md:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
+        Free to start, no credit card. Bring a real problem — research, a draft, a decision — and watch
+        eight frontier models work it through together.
       </p>
-      <Button 
+      <Button
         size="lg"
+        variant="default"
         onClick={handleGetStarted}
-        className="text-lg px-12 py-6"
+        className="px-10 py-6 text-base font-medium"
       >
-        Get Started Free
-        <ArrowRight className="ml-2 h-5 w-5" />
+        Open RoboHeard
+        <ArrowRight className="ml-2 h-4 w-4" />
       </Button>
     </div>
   );
