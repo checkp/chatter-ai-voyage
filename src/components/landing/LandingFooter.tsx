@@ -32,6 +32,9 @@ const LandingFooter = () => {
             <Link to="/auth" className="text-muted-foreground hover:text-foreground transition-colors">
               Sign in
             </Link>
+            <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
+              Terms
+            </Link>
           </nav>
 
           <p className="text-muted-foreground text-xs text-center md:text-right">
