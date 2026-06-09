@@ -77,17 +77,17 @@ const LandingHero: React.FC = () => {
 
       <Badge variant="outline" className="mb-4 md:mb-6 text-primary border-primary/20">
         <Sparkles className="mr-2 h-4 w-4" />
-        2026 — Agentic AI Is Here
+        2026 — Agentic AI, refined
       </Badge>
 
       <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold text-foreground mb-4 md:mb-6">
-        Seven Frontier Models,
+        Eight Frontier Models,
         <span className="text-primary"> One Conductor</span>
       </h1>
 
       <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 md:mb-8 leading-relaxed px-4 md:px-0">
-        Our <strong>Conductor AI</strong> orchestrates GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek-R2, Mistral, and Perplexity
-        in real-time debates — seven frontier models as one collaborative super-intelligence.
+        A quiet orchestrator for <strong>GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek-R2, Mistral, Perplexity</strong> and now <strong>Qwen</strong>.
+        Compare answers side by side, run live market research, or let eight minds debate a single question — together.
       </p>
     </div>
   );
