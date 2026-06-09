@@ -10,6 +10,7 @@ import CTASection from './CTASection';
 import ConductorShowcase from './ConductorShowcase';
 import DemoChat from './DemoChat';
 import SheepBubbles from './SheepBubbles';
+import UseCases from './UseCases';
 
 
 const LandingPage: React.FC = () => {
