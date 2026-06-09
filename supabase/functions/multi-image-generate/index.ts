@@ -78,7 +78,6 @@ async function callGateway(systemPrompt: string, userPrompt: string, model = "go
 
 async function generateWithOpenAI(prompt: string, model: string): Promise<Uint8Array> {
   const body: Record<string, unknown> = { model, prompt, n: 1, size: "1024x1024" };
-  if (model === "dall-e-3") body.response_format = "b64_json";
   const r = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
     headers: {
@@ -89,7 +88,14 @@ async function generateWithOpenAI(prompt: string, model: string): Promise<Uint8A
   });
   if (!r.ok) throw new Error(`OpenAI image ${r.status}: ${await r.text()}`);
   const d = await r.json();
-  return Uint8Array.from(atob(d.data[0].b64_json), c => c.charCodeAt(0));
+  const item = d.data?.[0];
+  if (item?.b64_json) return Uint8Array.from(atob(item.b64_json), c => c.charCodeAt(0));
+  if (item?.url) {
+    const imgRes = await fetch(item.url);
+    if (!imgRes.ok) throw new Error(`OpenAI image download ${imgRes.status}`);
+    return new Uint8Array(await imgRes.arrayBuffer());
+  }
+  throw new Error("OpenAI returned no image");
 }
 
 async function generateWithGemini(prompt: string, model: string): Promise<Uint8Array> {
