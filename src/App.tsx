@@ -37,6 +37,8 @@ const App = () => (
             <Route path="/images" element={<ImageGenerationPage />} />
             <Route path="/success" element={<Success />} />
             <Route path="/help" element={<Help />} />
+            <Route path="/features" element={<Features />} />
+            <Route path="/whats-new" element={<WhatsNew />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
