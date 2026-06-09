@@ -13,6 +13,7 @@ export const IMAGE_MODEL_OPTIONS: ImageModelOption[] = [
   { id: 'gpt-image-1', label: 'GPT-Image-1', provider: 'OpenAI', cost: 30, description: 'Efficient OpenAI' },
   { id: 'gemini-pro-image', label: 'Gemini 3 Pro Image', provider: 'Google', cost: 35, description: 'Higher quality' },
   { id: 'dall-e-3', label: 'DALL·E 3', provider: 'OpenAI', cost: 40, description: 'Iconic & detailed' },
+  { id: 'pollinations-flux', label: 'Pollinations FLUX', provider: 'Pollinations', cost: 10, description: 'Open-source FLUX' },
 ];
 
 export const PROMPT_COLLAB_COST = 50;

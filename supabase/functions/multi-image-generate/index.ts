@@ -17,13 +17,14 @@ const AGENTS = [
   { id: "qwen", name: "Qwen", persona: "Eastern aesthetic, lyrical, atmospheric brushwork." },
 ];
 
-const IMAGE_MODELS: Record<string, { provider: "openai" | "gemini" | "grok" | "qwen"; cost: number; label: string }> = {
+const IMAGE_MODELS: Record<string, { provider: "openai" | "gemini" | "grok" | "qwen" | "pollinations"; cost: number; label: string }> = {
   "dall-e-3": { provider: "openai", cost: 40, label: "DALL·E 3" },
   "gpt-image-1": { provider: "openai", cost: 30, label: "GPT-Image-1" },
   "gemini-image": { provider: "gemini", cost: 15, label: "Gemini 2.5 Flash Image" },
   "gemini-pro-image": { provider: "gemini", cost: 35, label: "Gemini 3 Pro Image" },
   "grok-aurora": { provider: "grok", cost: 25, label: "Grok Aurora" },
   "qwen-image": { provider: "qwen", cost: 20, label: "Qwen Wanx" },
+  "pollinations-flux": { provider: "pollinations", cost: 10, label: "Pollinations FLUX" },
 };
 
 const COLLAB_COST = 50;
