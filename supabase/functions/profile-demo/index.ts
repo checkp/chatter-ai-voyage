@@ -155,7 +155,7 @@ ${brief || "(no signals captured)"}`;
     );
   } catch (err) {
     console.error("profile-demo error:", err);
-    return new Response(JSON.stringify({ error: (err as Error).message }), {
+    return new Response(JSON.stringify({ error: 'Request failed' }), {
       status: 500,
       headers: { ...CORS, "Content-Type": "application/json" },
     });
