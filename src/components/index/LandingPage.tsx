@@ -53,6 +53,7 @@ const LandingPage: React.FC = () => {
         {/* Hero text — always centered, full width */}
         <LandingHero />
         <ConductorShowcase />
+        <UseCases />
         <FeaturesGrid />
         <AITestimonials />
         <CTASection />
