@@ -59,6 +59,16 @@ serve(async (req) => {
       });
     }
 
+    // Pre-call balance check
+    const minTokens = pricingData?.tokens_per_message || 1;
+    if (tokenData.balance < minTokens) {
+      return new Response(JSON.stringify({ error: 'Insufficient tokens', required: minTokens, available: tokenData.balance }), {
+        status: 402,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+
     const mistralApiKey = Deno.env.get("MISTRAL_API_KEY");
     if (!mistralApiKey) throw new Error("Mistral API key not configured");
 
