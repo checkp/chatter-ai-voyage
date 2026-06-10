@@ -62,8 +62,9 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onAgent
             className={`w-2 h-2 rounded-full ${getStatusColor(status, isEnabled)} ${getStatusAnimation(status, isEnabled)}`}
           />
         </div>
-        <Badge 
+        <Badge
           variant="outline"
+          title={`${platform.name}: ${isEnabled ? status : 'disabled'}`}
           className={`text-xs cursor-pointer hover:opacity-80 transition-opacity ${
             !isEnabled ? 'bg-gray-100 text-gray-400 border-gray-300' :
             status === 'thinking' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
@@ -73,7 +74,7 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onAgent
             'text-muted-foreground'
           }`}
         >
-          {platform.name}: {isEnabled ? status : 'disabled'}
+          {platform.name}
         </Badge>
       </div>
     </div>
