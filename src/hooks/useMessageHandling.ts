@@ -169,6 +169,10 @@ export const useMessageHandling = (
             console.error(`Error saving ${platform.name} message:`, aiMsgError);
           } else {
             console.log(`${platform.name} message saved to database`);
+            // Fire-and-forget: embed AI message for shared context
+            supabase.functions.invoke('embed-messages', {
+              body: { mode: 'single', items: [{ message_id: aiMessage.id, conversation_id: chatId, content: aiMessage.content }] },
+            }).catch(e => console.warn('embed ai message failed:', e));
           }
 
           return aiMessage;
