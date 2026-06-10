@@ -613,3 +613,78 @@
   box-shadow: 0 10px 24px -14px hsl(var(--md-accent-1) / 0.5);
   margin: 0.7rem 0;
 }
+
+/* ============ Fun Mode markdown overrides ============ */
+.markdown-body.fun-md {
+  color: inherit;
+  font-family: var(--fun-font-body);
+}
+.markdown-body.fun-md h1,
+.markdown-body.fun-md h2,
+.markdown-body.fun-md h3,
+.markdown-body.fun-md h4,
+.markdown-body.fun-md h5,
+.markdown-body.fun-md h6 {
+  font-family: var(--fun-font-heading);
+  color: var(--fun-accent);
+  border-color: var(--fun-accent);
+}
+.markdown-body.fun-md a {
+  color: var(--fun-accent);
+  text-decoration-color: var(--fun-accent);
+}
+.markdown-body.fun-md blockquote {
+  border-left: 3px solid var(--fun-accent);
+  background: color-mix(in srgb, var(--fun-accent) 10%, transparent);
+  color: inherit;
+  padding: 0.5rem 0.9rem;
+  border-radius: calc(var(--fun-radius) * 0.5);
+}
+.markdown-body.fun-md code {
+  background: color-mix(in srgb, var(--fun-accent) 15%, transparent);
+  color: inherit;
+  border-radius: 4px;
+  padding: 0 0.25rem;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+.markdown-body.fun-md pre {
+  background: color-mix(in srgb, var(--fun-page-bg) 70%, var(--fun-accent));
+  color: inherit;
+  border-radius: var(--fun-radius);
+}
+.markdown-body.fun-md hr {
+  border-color: var(--fun-accent);
+  opacity: 0.5;
+}
+.markdown-body.fun-md mark {
+  background: color-mix(in srgb, var(--fun-accent) 35%, transparent);
+  color: inherit;
+  padding: 0 0.15rem;
+  border-radius: 3px;
+}
+.markdown-body.fun-md kbd {
+  background: color-mix(in srgb, var(--fun-accent) 20%, transparent);
+  border: 1px solid var(--fun-accent);
+  border-radius: 4px;
+  padding: 0 0.35rem;
+  font-size: 0.85em;
+}
+.markdown-body.fun-md details {
+  border: 1px solid color-mix(in srgb, var(--fun-accent) 40%, transparent);
+  border-radius: calc(var(--fun-radius) * 0.5);
+  padding: 0.4rem 0.7rem;
+  margin: 0.4rem 0;
+}
+.markdown-body.fun-md summary {
+  cursor: pointer;
+  color: var(--fun-accent);
+  font-family: var(--fun-font-heading);
+}
+.markdown-body.fun-md table th {
+  background: color-mix(in srgb, var(--fun-accent) 20%, transparent);
+  color: inherit;
+  border-color: var(--fun-accent);
+}
+.markdown-body.fun-md table td {
+  border-color: color-mix(in srgb, var(--fun-accent) 30%, transparent);
+}
