@@ -126,6 +126,16 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
           )}
         </div>
       </ScrollArea>
+
+      {/* Version */}
+      <div className="px-4 py-2 border-t border-border/50">
+        <Link
+          to="/whats-new"
+          className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+        >
+          v{changelog[0]?.version}
+        </Link>
+      </div>
     </aside>
   );
 };
