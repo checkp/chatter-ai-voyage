@@ -1,9 +1,11 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Trash2 } from 'lucide-react';
 import { Chat } from '@/types/chat';
 import Logo from './Logo';
+import { changelog } from '@/data/changelog';
 
 interface ChatSidebarProps {
   chats: Chat[] | undefined;
