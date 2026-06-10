@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { chargeUser, usdToTokens } from "../_shared/billing.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,17 +18,20 @@ const AGENTS = [
   { id: "qwen", name: "Qwen", persona: "Eastern aesthetic, lyrical, atmospheric brushwork." },
 ];
 
-const IMAGE_MODELS: Record<string, { provider: "openai" | "gemini" | "grok" | "qwen" | "pollinations"; cost: number; label: string }> = {
-  "dall-e-3": { provider: "openai", cost: 40, label: "DALL·E 3" },
-  "gpt-image-1": { provider: "openai", cost: 30, label: "GPT-Image-1" },
-  "gemini-image": { provider: "gemini", cost: 15, label: "Gemini 2.5 Flash Image" },
-  "gemini-pro-image": { provider: "gemini", cost: 35, label: "Gemini 3 Pro Image" },
-  "grok-aurora": { provider: "grok", cost: 25, label: "Grok Aurora" },
-  "qwen-image": { provider: "qwen", cost: 20, label: "Qwen Wanx" },
-  "pollinations-flux": { provider: "pollinations", cost: 10, label: "Pollinations FLUX" },
+// Real USD provider cost per generated image (also mirrored in public.image_model_pricing).
+const IMAGE_MODELS: Record<string, { provider: "openai" | "gemini" | "grok" | "qwen" | "pollinations"; platform: string; usdPerImage: number; label: string }> = {
+  "dall-e-3":         { provider: "openai",       platform: "openai",       usdPerImage: 0.040, label: "DALL·E 3" },
+  "gpt-image-1":      { provider: "openai",       platform: "openai",       usdPerImage: 0.040, label: "GPT-Image-1" },
+  "gemini-image":     { provider: "gemini",       platform: "google",       usdPerImage: 0.020, label: "Gemini 2.5 Flash Image" },
+  "gemini-pro-image": { provider: "gemini",       platform: "google",       usdPerImage: 0.040, label: "Gemini 3 Pro Image" },
+  "grok-aurora":      { provider: "grok",         platform: "xai",          usdPerImage: 0.030, label: "Grok Aurora" },
+  "qwen-image":       { provider: "qwen",         platform: "alibaba",      usdPerImage: 0.020, label: "Qwen Wanx" },
+  "pollinations-flux":{ provider: "pollinations", platform: "pollinations", usdPerImage: 0.000, label: "Pollinations FLUX" },
 };
 
-const COLLAB_COST = 50;
+// Real provider cost of the 7-agent + conductor orchestration phase.
+// 8 gateway calls × ~$0.0006 each (Gemini 2.5 Flash, ~500 in/out tokens).
+const ORCHESTRATION_USD = 0.005;
 
 async function callOpenAIChat(systemPrompt: string, userPrompt: string): Promise<string> {
   const key = Deno.env.get("OPENAI_API_KEY");
