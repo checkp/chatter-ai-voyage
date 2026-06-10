@@ -187,15 +187,8 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
         const model = String(meta.model || 'unknown');
         const providerTokens = Number(meta.total_tokens) || 0;
 
-        // Realized USD cost: prefer metadata.api_cost_dollars; else compute from pricing; else fallback.
-        // Sanitize legacy rows (pre-2025-06-10) where api_cost_per_1k_tokens was mis-stored as
-        // whole dollars (e.g. 3.0 instead of 0.003), producing $7+ per call. Real provider rates
-        // top out around $0.05/1k, so anything above $0.20/1k is treated as corrupt and recomputed.
-        const loggedPer1k = Number(meta.api_cost_per_1k_tokens);
-        const loggedCost = Number(meta.api_cost_dollars);
-        const legacyCorrupt = Number.isFinite(loggedPer1k) && loggedPer1k > 0.2;
-        let cost = loggedCost;
-        if (legacyCorrupt || !Number.isFinite(cost) || cost <= 0) {
+        let cost = Number(meta.api_cost_dollars);
+        if (!Number.isFinite(cost) || cost <= 0) {
           const p = pricingMap.get(`${platform}::${model}`);
           if (p?.api_cost_per_1k_tokens && providerTokens > 0) {
             cost = (providerTokens / 1000) * p.api_cost_per_1k_tokens;
@@ -203,6 +196,7 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
             cost = app * FALLBACK_COST_PER_TOKEN;
           }
         }
+
 
         apiCostUsd += cost;
 
