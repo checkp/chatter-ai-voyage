@@ -237,6 +237,10 @@ export const useMessageHandling = (
         console.warn('AI chat-title generation failed:', e);
       }
 
+      // Fire-and-forget: refresh the user's long-term memory document (debounced server-side)
+      supabase.functions.invoke('update-memory', { body: {} })
+        .catch(e => console.warn('update-memory failed:', e));
+
       return results.filter(result => result.status === 'fulfilled' && result.value !== null);
 
     },
