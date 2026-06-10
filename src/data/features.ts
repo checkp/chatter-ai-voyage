@@ -97,7 +97,7 @@ export const featureCategories: FeatureCategory[] = [
     blurb: "Transparent pricing, flexible access, no surprises.",
     features: [
       { title: "Token Balance", description: "Live balance in the header; per-message cost estimate before you send." },
-      { title: "Token Packages", description: "Buy credits via Stripe or LemonSqueezy — pay only for what you actually run." },
+      { title: "Token Packages", description: "Buy credits via LemonSqueezy — pay only for what you actually run." },
       { title: "Free Daily Conversations", description: "Free demo chat on the landing page; no signup required to try." },
       { title: "Transaction History", description: "Full record of token purchases and per-agent spend." }
     ]
