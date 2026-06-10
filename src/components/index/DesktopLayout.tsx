@@ -208,6 +208,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
 
         <MainContent
           activeTab={activeTab}
+          setActiveTab={setActiveTab}
           activeChatMode={activeChatMode}
           isolatedMode={isolatedMode}
           platforms={platforms}
