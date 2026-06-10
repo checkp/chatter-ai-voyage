@@ -6,7 +6,7 @@ import ImagePanel from '@/components/chat/ImagePanel';
 import MarkdownMessage from '@/components/chat/MarkdownMessage';
 import { IMAGE_PANEL_PLATFORM, type ImagePanelData } from '@/config/imageModels';
 import { useFunTheme } from '@/contexts/FunThemeContext';
-import { themeToCssVars } from '@/lib/funTheme';
+import { themeToCssVars, bubbleVariant } from '@/lib/funTheme';
 import type { Message, AIPlatform } from '@/types/chat';
 
 interface ChatMessagesProps {
