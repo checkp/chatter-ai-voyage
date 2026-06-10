@@ -255,15 +255,22 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
       }
     }
 
-    const revenueUsd = revenueCents / 100;
-    const sellPricePerToken = tokensSold > 0 ? revenueUsd / tokensSold : 0;
+    const grossSalesUsd = revenueCents / 100;
+    const sellPricePerToken = tokensSold > 0 ? grossSalesUsd / tokensSold : 0;
     const realizedCostPerToken = tokensConsumed > 0 ? apiCostUsd / tokensConsumed : 0;
     const impliedRevenueOnConsumed = tokensConsumed * sellPricePerToken;
     const grossMarginUsd = impliedRevenueOnConsumed - apiCostUsd;
     const grossMarginPct = impliedRevenueOnConsumed > 0 ? (grossMarginUsd / impliedRevenueOnConsumed) * 100 : 0;
 
+    // Cash profit so far: what we collected minus what we already paid providers.
+    const realizedProfitUsd = grossSalesUsd - apiCostUsd;
+    const realizedProfitPct = grossSalesUsd > 0 ? (realizedProfitUsd / grossSalesUsd) * 100 : 0;
+
     const subsidyTheoreticalUsd = dailyBonusGranted * (realizedCostPerToken || FALLBACK_COST_PER_TOKEN);
     const outstandingLiabilityUsd = outstandingBalance * (realizedCostPerToken || FALLBACK_COST_PER_TOKEN);
+    // What's left if every outstanding token gets burned at current cost.
+    const netProfitAfterLiabilityUsd = realizedProfitUsd - outstandingLiabilityUsd;
+
 
     const platformAggs: PlatformAgg[] = Array.from(platformBuckets.values())
       .map((b) => {
