@@ -21,6 +21,7 @@ export type Database = {
           created_at: string
           id: string
           isolated_mode: boolean | null
+          shared_context_enabled: boolean
           title: string
           updated_at: string
           user_id: string
@@ -31,6 +32,7 @@ export type Database = {
           created_at?: string
           id?: string
           isolated_mode?: boolean | null
+          shared_context_enabled?: boolean
           title: string
           updated_at?: string
           user_id: string
@@ -41,6 +43,7 @@ export type Database = {
           created_at?: string
           id?: string
           isolated_mode?: boolean | null
+          shared_context_enabled?: boolean
           title?: string
           updated_at?: string
           user_id?: string
@@ -161,6 +164,36 @@ export type Database = {
           size?: string
           updated_at?: string
           usd_per_image?: number
+        }
+        Relationships: []
+      }
+      message_embeddings: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          embedding: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          embedding: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          embedding?: string
+          id?: string
+          message_id?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -406,6 +439,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_memory: {
+        Row: {
+          content: string
+          created_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_tokens: {
         Row: {
           balance: number
@@ -443,6 +497,21 @@ export type Database = {
     Functions: {
       add_daily_tokens: { Args: never; Returns: undefined }
       is_current_user_admin: { Args: never; Returns: boolean }
+      match_user_context: {
+        Args: {
+          p_exclude_conversation?: string
+          p_match_count?: number
+          p_query_embedding: string
+          p_user_id: string
+        }
+        Returns: {
+          content: string
+          conversation_id: string
+          created_at: string
+          message_id: string
+          similarity: number
+        }[]
+      }
       set_user_admin: {
         Args: { make_admin: boolean; target_user_id: string }
         Returns: undefined
