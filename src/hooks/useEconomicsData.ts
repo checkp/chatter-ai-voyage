@@ -9,7 +9,10 @@ interface TxRow {
   amount: number;
   metadata: any;
   created_at: string;
+  user_id: string | null;
+  description: string | null;
 }
+
 
 interface PackageRow {
   id: string;
