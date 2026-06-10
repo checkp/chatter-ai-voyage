@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bot, Sparkles, Search, Zap, Gem, Brain } from 'lucide-react';
+import { Bot, Sparkles, Search, Zap, Gem, Brain, Wind, Globe, Cpu } from 'lucide-react';
 
 interface ConductorAgentSelectorProps {
   conductorAgent: string;
@@ -52,6 +52,30 @@ const ConductorAgentSelector: React.FC<ConductorAgentSelectorProps> = ({
       icon: Gem,
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-50'
+    },
+    { 
+      id: 'mistral', 
+      name: 'Mistral', 
+      description: 'Efficient European-engineered reasoning',
+      icon: Wind,
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-50'
+    },
+    { 
+      id: 'perplexity', 
+      name: 'Perplexity', 
+      description: 'Research-driven, citation-backed coordination',
+      icon: Globe,
+      color: 'text-teal-600',
+      bgColor: 'bg-teal-50'
+    },
+    { 
+      id: 'qwen', 
+      name: 'Qwen', 
+      description: 'Versatile multilingual orchestration',
+      icon: Cpu,
+      color: 'text-rose-600',
+      bgColor: 'bg-rose-50'
     }
   ];
 
