@@ -14,6 +14,8 @@ import AdminApiKeys from './admin/AdminApiKeys';
 import AdminPlatformUsage from './admin/AdminPlatformUsage';
 import AdminModelPricing from './admin/AdminModelPricing';
 import AdminTokenPackages from './admin/AdminTokenPackages';
+import AdminEconomics from './admin/AdminEconomics';
+
 
 interface AdminPanelProps {
   user: SupabaseUser;
