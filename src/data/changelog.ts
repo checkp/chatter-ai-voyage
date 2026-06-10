@@ -12,6 +12,19 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.7.0",
+    date: "2026-06-10",
+    title: "Shared Memory Across Chats",
+    description: "Every message is now embedded and recalled across chats, giving each agent persistent context and a lightweight long-term memory.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "🧠 Cross-chat shared context: relevant snippets from past conversations are auto-injected into new prompts" },
+      { type: "feature", description: "📌 Per-user memory: key facts are distilled after each response and reused as system context" },
+      { type: "improvement", description: "🔒 Hardened edge functions: removed dead BYO-key endpoints and rate-limited the chat-title generator" },
+      { type: "improvement", description: "🏷️ Version badge added to the chat sidebar — click to open What's New" }
+    ]
+  },
+  {
     version: "2.6.1",
     date: "2026-06-09",
     title: "Pollinations FLUX Joins the Image Studio",
