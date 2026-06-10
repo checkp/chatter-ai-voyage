@@ -169,7 +169,16 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
     for (const t of txs) {
       const meta = (t.metadata || {}) as any;
       if (t.transaction_type === 'purchase') {
-        const cents = Number(meta.price_cents) || 0;
+        let cents = Number(meta.price_cents) || 0;
+        if (!cents && typeof meta.amount_paid === 'string') {
+          // LemonSqueezy webhook stores "$20.00" / "20.00 USD" — parse to cents.
+          const m = meta.amount_paid.match(/[\d.]+/);
+          if (m) cents = Math.round(parseFloat(m[0]) * 100);
+        }
+        if (!cents && meta.package_id) {
+          const pkg = (pkgQ.data || []).find((p) => p.id === meta.package_id);
+          if (pkg) cents = pkg.price_cents;
+        }
         revenueCents += cents;
         tokensSold += t.amount;
         const pkgId = meta.package_id || null;
@@ -179,6 +188,7 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
         const existing = purchaseBuckets.get(key) || { id: pkgId, price_cents: cents, tokens: t.amount, units: 0 };
         existing.units += 1;
         purchaseBuckets.set(key, existing);
+
       } else if (t.transaction_type === 'consumption') {
         const app = Math.abs(t.amount);
         tokensConsumed += app;
