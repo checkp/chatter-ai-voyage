@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { chargeUser, usdToTokens } from "../_shared/billing.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,17 +18,20 @@ const AGENTS = [
   { id: "qwen", name: "Qwen", persona: "Eastern aesthetic, lyrical, atmospheric brushwork." },
 ];
 
-const IMAGE_MODELS: Record<string, { provider: "openai" | "gemini" | "grok" | "qwen" | "pollinations"; cost: number; label: string }> = {
-  "dall-e-3": { provider: "openai", cost: 40, label: "DALL·E 3" },
-  "gpt-image-1": { provider: "openai", cost: 30, label: "GPT-Image-1" },
-  "gemini-image": { provider: "gemini", cost: 15, label: "Gemini 2.5 Flash Image" },
-  "gemini-pro-image": { provider: "gemini", cost: 35, label: "Gemini 3 Pro Image" },
-  "grok-aurora": { provider: "grok", cost: 25, label: "Grok Aurora" },
-  "qwen-image": { provider: "qwen", cost: 20, label: "Qwen Wanx" },
-  "pollinations-flux": { provider: "pollinations", cost: 10, label: "Pollinations FLUX" },
+// Real USD provider cost per generated image (also mirrored in public.image_model_pricing).
+const IMAGE_MODELS: Record<string, { provider: "openai" | "gemini" | "grok" | "qwen" | "pollinations"; platform: string; usdPerImage: number; label: string }> = {
+  "dall-e-3":         { provider: "openai",       platform: "openai",       usdPerImage: 0.040, label: "DALL·E 3" },
+  "gpt-image-1":      { provider: "openai",       platform: "openai",       usdPerImage: 0.040, label: "GPT-Image-1" },
+  "gemini-image":     { provider: "gemini",       platform: "google",       usdPerImage: 0.020, label: "Gemini 2.5 Flash Image" },
+  "gemini-pro-image": { provider: "gemini",       platform: "google",       usdPerImage: 0.040, label: "Gemini 3 Pro Image" },
+  "grok-aurora":      { provider: "grok",         platform: "xai",          usdPerImage: 0.030, label: "Grok Aurora" },
+  "qwen-image":       { provider: "qwen",         platform: "alibaba",      usdPerImage: 0.020, label: "Qwen Wanx" },
+  "pollinations-flux":{ provider: "pollinations", platform: "pollinations", usdPerImage: 0.000, label: "Pollinations FLUX" },
 };
 
-const COLLAB_COST = 50;
+// Real provider cost of the 7-agent + conductor orchestration phase.
+// 8 gateway calls × ~$0.0006 each (Gemini 2.5 Flash, ~500 in/out tokens).
+const ORCHESTRATION_USD = 0.005;
 
 async function callOpenAIChat(systemPrompt: string, userPrompt: string): Promise<string> {
   const key = Deno.env.get("OPENAI_API_KEY");
@@ -255,13 +259,17 @@ serve(async (req) => {
       });
     }
 
-    const imageCost = validModels.reduce((s: number, m: string) => s + IMAGE_MODELS[m].cost, 0);
-    const totalCost = COLLAB_COST + imageCost;
+    // Pre-call balance check: assume ALL requested images succeed (worst case).
+    const upfrontUsd = ORCHESTRATION_USD + validModels.reduce(
+      (s: number, m: string) => s + IMAGE_MODELS[m].usdPerImage,
+      0,
+    );
+    const upfrontTokens = usdToTokens(upfrontUsd);
 
     const { data: tokens } = await supabase
       .from("user_tokens").select("balance, total_consumed").eq("user_id", user.id).single();
-    if (!tokens || tokens.balance < totalCost) {
-      return new Response(JSON.stringify({ error: "Insufficient tokens", required: totalCost, available: tokens?.balance ?? 0 }), {
+    if (!tokens || tokens.balance < upfrontTokens) {
+      return new Response(JSON.stringify({ error: "Insufficient tokens", required: upfrontTokens, available: tokens?.balance ?? 0 }), {
         status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -318,46 +326,61 @@ serve(async (req) => {
         const { data: urlData } = await supabase.storage
           .from("generated-images").createSignedUrl(fileName, 3600 * 24 * 7);
 
+        const perImageTokens = usdToTokens(meta.usdPerImage);
+
         await supabase.from("generated_images").insert({
           user_id: user.id, prompt: masterPrompt, image_url: urlData?.signedUrl ?? "",
-          file_name: fileName, tokens_used: meta.cost, model_used: model, size: "1024x1024",
+          file_name: fileName, tokens_used: perImageTokens, model_used: model, size: "1024x1024",
         });
 
         return {
-          model, label: meta.label, cost: meta.cost,
+          model, label: meta.label, platform: meta.platform,
+          usdPerImage: meta.usdPerImage, tokensCharged: perImageTokens,
           fileName, url: urlData?.signedUrl ?? "", success: true,
         };
       } catch (e) {
         console.error(`Image gen failed for ${model}:`, e);
-        return { model, label: meta.label, cost: meta.cost, success: false, error: String(e).slice(0, 200) };
+        return { model, label: meta.label, platform: meta.platform, usdPerImage: meta.usdPerImage, tokensCharged: 0, success: false, error: String(e).slice(0, 200) };
       }
     }));
 
-    // Deduct tokens (only for successful images + collab)
-    const successCost = imageResults.filter(r => r.success).reduce((s, r) => s + r.cost, 0);
-    const finalCost = COLLAB_COST + successCost;
-    const newBalance = tokens.balance - finalCost;
+    // Bill ONE consumption row per successful image (rich metadata) + one for orchestration.
+    let totalCharged = 0;
+    try {
+      const orch = await chargeUser(supabase, user.id, {
+        platform: "multi-image",
+        model: "orchestrator",
+        apiCostUsd: ORCHESTRATION_USD,
+        description: "Multi-image orchestration (8 gateway calls)",
+        extra: { agents: AGENTS.length, models_requested: validModels },
+      });
+      totalCharged += orch.tokensCharged;
+    } catch (e) {
+      console.error("orchestration charge failed:", e);
+    }
 
-    await supabase.from("user_tokens").update({
-      balance: newBalance,
-      total_consumed: (tokens.total_consumed || 0) + finalCost,
-    }).eq("user_id", user.id);
-
-    await supabase.from("token_transactions").insert({
-      user_id: user.id,
-      transaction_type: "consumption",
-      amount: -finalCost,
-      balance_after: newBalance,
-      description: `Multi-image generation (${imageResults.filter(r => r.success).length}/${validModels.length} models)`,
-      metadata: { models: validModels, collab_cost: COLLAB_COST, image_cost: successCost },
-    });
+    for (const r of imageResults) {
+      if (!r.success) continue;
+      try {
+        const c = await chargeUser(supabase, user.id, {
+          platform: r.platform,
+          model: r.model,
+          apiCostUsd: r.usdPerImage,
+          description: `Image generation: ${r.label}`,
+          extra: { kind: "image", file_name: r.fileName, size: "1024x1024" },
+        });
+        totalCharged += c.tokensCharged;
+      } catch (e) {
+        console.error(`charge failed for ${r.model}:`, e);
+      }
+    }
 
     return new Response(JSON.stringify({
       success: true,
       proposals,
       masterPrompt,
       images: imageResults,
-      tokensUsed: finalCost,
+      tokensUsed: totalCharged,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 });
 
   } catch (e) {

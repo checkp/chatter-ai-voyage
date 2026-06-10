@@ -128,6 +128,42 @@ export type Database = {
         }
         Relationships: []
       }
+      image_model_pricing: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          model_id: string
+          notes: string | null
+          platform: string
+          size: string
+          updated_at: string
+          usd_per_image: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          model_id: string
+          notes?: string | null
+          platform: string
+          size?: string
+          updated_at?: string
+          usd_per_image?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          model_id?: string
+          notes?: string | null
+          platform?: string
+          size?: string
+          updated_at?: string
+          usd_per_image?: number
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string

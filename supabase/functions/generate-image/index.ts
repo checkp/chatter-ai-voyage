@@ -2,11 +2,27 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { usdToTokens } from "../_shared/billing.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Real USD provider cost per generated image, by (model, size).
+// Mirrors public.image_model_pricing — keep in sync.
+const IMAGE_USD: Record<string, { platform: string; bySize: Record<string, number>; default: number }> = {
+  'dall-e-3':         { platform: 'openai', bySize: { '1024x1024': 0.040, '1024x1792': 0.080, '1792x1024': 0.080 }, default: 0.040 },
+  'gpt-image-1':      { platform: 'openai', bySize: {}, default: 0.040 },
+  'gemini-image':     { platform: 'google', bySize: {}, default: 0.020 },
+  'gemini-pro-image': { platform: 'google', bySize: {}, default: 0.040 },
+  'grok-aurora':      { platform: 'xai',    bySize: {}, default: 0.030 },
+};
+function imageCostUsd(model: string, size: string): { platform: string; usd: number } {
+  const entry = IMAGE_USD[model] ?? IMAGE_USD['dall-e-3'];
+  return { platform: entry.platform, usd: entry.bySize[size] ?? entry.default };
+}
+
 
 async function generateWithOpenAI(prompt: string, model: string, size: string): Promise<Uint8Array> {
   const resolvedModel = model === 'dall-e-3' ? 'gpt-image-1' : model;
@@ -136,15 +152,10 @@ serve(async (req) => {
       );
     }
 
-    // Determine token cost based on model
-    const tokenCosts: Record<string, number> = {
-      'dall-e-3': 40,
-      'gpt-image-1': 30,
-      'gemini-image': 15,
-      'gemini-pro-image': 35,
-      'grok-aurora': 25,
-    };
-    const tokensRequired = tokenCosts[model] || 30;
+    // Real USD cost → app tokens via shared formula (ceil((usd × 1.20) / $0.001))
+    const { platform: imgPlatform, usd: apiCostUsd } = imageCostUsd(model, size);
+    const tokensRequired = usdToTokens(apiCostUsd);
+
 
     // Check balance
     const { data: userTokens, error: tokenError } = await supabase
@@ -254,13 +265,19 @@ serve(async (req) => {
       description: `Image generation: ${model}`,
       metadata: {
         prompt: prompt.substring(0, 100),
+        platform: imgPlatform,
         model,
         size,
-        platform: 'image',
+        kind: 'image',
+        api_cost_dollars: Number(apiCostUsd.toFixed(6)),
+        tokens_charged: tokensRequired,
+        app_token_usd: 0.001,
+        margin: 1.20,
         image_id: imageRecord.id,
       },
     });
     if (txError) console.error('Token transaction log failed:', txError);
+
 
     return new Response(
       JSON.stringify({
