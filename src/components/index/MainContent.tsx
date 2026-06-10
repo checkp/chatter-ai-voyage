@@ -49,6 +49,7 @@ interface MainContentProps {
 
 const MainContent: React.FC<MainContentProps> = ({
   activeTab,
+  setActiveTab,
   activeChatMode,
   isolatedMode,
   platforms,
