@@ -86,7 +86,10 @@ export interface PackageAgg {
   coverageRatio: number; // sell price / realized api cost per token
 }
 
-const FALLBACK_COST_PER_TOKEN = 0.10; // 1 app token ≈ $0.10 of provider cost
+// Single source of truth: 1 app token = $0.001 of provider cost (after 20% markup).
+// Old rows without api_cost_dollars (pre-2026-06-10) fall back to this rate.
+export const APP_TOKEN_USD = 0.001;
+const FALLBACK_COST_PER_TOKEN = APP_TOKEN_USD;
 
 export function useEconomicsData(range: EconomicsRange = '30d') {
   const since = sinceISO(range);

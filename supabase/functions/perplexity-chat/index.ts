@@ -131,7 +131,7 @@ serve(async (req) => {
 
     const apiCostPer1kTokens = pricingData?.api_cost_per_1k_tokens || 0.005;
     const actualApiCost = (totalTokens / 1000) * apiCostPer1kTokens;
-    const tokensToDeduct = Math.max(1, Math.ceil(actualApiCost * 10));
+    const tokensToDeduct = Math.max(1, Math.ceil((actualApiCost * 1.20) / 0.001));
 
     console.log(`Perplexity usage: ${totalTokens} tokens, cost: $${actualApiCost}, deducting: ${tokensToDeduct}`);
 
@@ -152,7 +152,7 @@ serve(async (req) => {
         amount: -tokensToDeduct,
         balance_after: newBalance,
         description: `Perplexity ${model} API call - ${totalTokens} tokens`,
-        metadata: { platform: 'perplexity', model, prompt_tokens: promptTokens, completion_tokens: completionTokens, total_tokens: totalTokens, api_cost_dollars: actualApiCost }
+        metadata: { platform: 'perplexity', model, prompt_tokens: promptTokens, completion_tokens: completionTokens, total_tokens: totalTokens, api_cost_dollars: actualApiCost, tokens_charged: tokensToDeduct, app_token_usd: 0.001, margin: 1.20 }
       });
 
     return new Response(JSON.stringify({ content }), {
