@@ -19,6 +19,7 @@ const ChatModeControls: React.FC<ChatModeControlsProps> = ({
   onChatModeChange,
   onIsolatedModeToggle
 }) => {
+  const { enabled: funEnabled, toggle: toggleFun, theme: funTheme } = useFunTheme();
   const getChatModeIcon = (mode: ChatMode) => {
     switch (mode) {
       case 'side-by-side': return Grid3X3;
