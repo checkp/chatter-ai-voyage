@@ -45,7 +45,7 @@ async function fetchAllTransactions(since: string | null): Promise<TxRow[]> {
   while (from < 50_000) {
     let q = supabase
       .from('token_transactions')
-      .select('transaction_type, amount, metadata, created_at')
+      .select('transaction_type, amount, metadata, created_at, user_id, description')
       .order('created_at', { ascending: false })
       .range(from, from + PAGE - 1);
     if (since) q = q.gte('created_at', since);
