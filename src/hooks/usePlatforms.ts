@@ -380,6 +380,24 @@ ${languageLock}`;
       contextMessage += `\n\n${userOverrides}`;
     }
 
+    // Shared context across all of the user's chats (memory + RAG).
+    // Best-effort: failures must never block the AI call.
+    const conversationId = messages[messages.length - 1]?.conversation_id;
+    const lastUserMsg = [...messages].reverse().find(m => m.sender === 'user')?.content || '';
+    if (!isFreeMode && lastUserMsg && conversationId) {
+      try {
+        const { data: ctxData } = await supabase.functions.invoke('shared-context', {
+          body: { query: lastUserMsg, conversation_id: conversationId, match_count: 6 },
+        });
+        const block: string = ctxData?.block || '';
+        if (block) {
+          contextMessage += `\n\n${block}`;
+        }
+      } catch (e) {
+        console.warn('shared-context fetch failed (continuing without it):', e);
+      }
+    }
+
     conversationHistory.unshift({ role: 'user', content: contextMessage });
 
 
