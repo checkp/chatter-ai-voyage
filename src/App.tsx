@@ -28,6 +28,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <ActivityLogProvider>
+      <FunThemeProvider>
       <TooltipProvider>
         
         <BrowserRouter>
@@ -46,6 +47,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </FunThemeProvider>
       </ActivityLogProvider>
     </ThemeProvider>
   </QueryClientProvider>
