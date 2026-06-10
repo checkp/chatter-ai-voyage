@@ -259,13 +259,17 @@ serve(async (req) => {
       });
     }
 
-    const imageCost = validModels.reduce((s: number, m: string) => s + IMAGE_MODELS[m].cost, 0);
-    const totalCost = COLLAB_COST + imageCost;
+    // Pre-call balance check: assume ALL requested images succeed (worst case).
+    const upfrontUsd = ORCHESTRATION_USD + validModels.reduce(
+      (s: number, m: string) => s + IMAGE_MODELS[m].usdPerImage,
+      0,
+    );
+    const upfrontTokens = usdToTokens(upfrontUsd);
 
     const { data: tokens } = await supabase
       .from("user_tokens").select("balance, total_consumed").eq("user_id", user.id).single();
-    if (!tokens || tokens.balance < totalCost) {
-      return new Response(JSON.stringify({ error: "Insufficient tokens", required: totalCost, available: tokens?.balance ?? 0 }), {
+    if (!tokens || tokens.balance < upfrontTokens) {
+      return new Response(JSON.stringify({ error: "Insufficient tokens", required: upfrontTokens, available: tokens?.balance ?? 0 }), {
         status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -322,46 +326,61 @@ serve(async (req) => {
         const { data: urlData } = await supabase.storage
           .from("generated-images").createSignedUrl(fileName, 3600 * 24 * 7);
 
+        const perImageTokens = usdToTokens(meta.usdPerImage);
+
         await supabase.from("generated_images").insert({
           user_id: user.id, prompt: masterPrompt, image_url: urlData?.signedUrl ?? "",
-          file_name: fileName, tokens_used: meta.cost, model_used: model, size: "1024x1024",
+          file_name: fileName, tokens_used: perImageTokens, model_used: model, size: "1024x1024",
         });
 
         return {
-          model, label: meta.label, cost: meta.cost,
+          model, label: meta.label, platform: meta.platform,
+          usdPerImage: meta.usdPerImage, tokensCharged: perImageTokens,
           fileName, url: urlData?.signedUrl ?? "", success: true,
         };
       } catch (e) {
         console.error(`Image gen failed for ${model}:`, e);
-        return { model, label: meta.label, cost: meta.cost, success: false, error: String(e).slice(0, 200) };
+        return { model, label: meta.label, platform: meta.platform, usdPerImage: meta.usdPerImage, tokensCharged: 0, success: false, error: String(e).slice(0, 200) };
       }
     }));
 
-    // Deduct tokens (only for successful images + collab)
-    const successCost = imageResults.filter(r => r.success).reduce((s, r) => s + r.cost, 0);
-    const finalCost = COLLAB_COST + successCost;
-    const newBalance = tokens.balance - finalCost;
+    // Bill ONE consumption row per successful image (rich metadata) + one for orchestration.
+    let totalCharged = 0;
+    try {
+      const orch = await chargeUser(supabase, user.id, {
+        platform: "multi-image",
+        model: "orchestrator",
+        apiCostUsd: ORCHESTRATION_USD,
+        description: "Multi-image orchestration (8 gateway calls)",
+        extra: { agents: AGENTS.length, models_requested: validModels },
+      });
+      totalCharged += orch.tokensCharged;
+    } catch (e) {
+      console.error("orchestration charge failed:", e);
+    }
 
-    await supabase.from("user_tokens").update({
-      balance: newBalance,
-      total_consumed: (tokens.total_consumed || 0) + finalCost,
-    }).eq("user_id", user.id);
-
-    await supabase.from("token_transactions").insert({
-      user_id: user.id,
-      transaction_type: "consumption",
-      amount: -finalCost,
-      balance_after: newBalance,
-      description: `Multi-image generation (${imageResults.filter(r => r.success).length}/${validModels.length} models)`,
-      metadata: { models: validModels, collab_cost: COLLAB_COST, image_cost: successCost },
-    });
+    for (const r of imageResults) {
+      if (!r.success) continue;
+      try {
+        const c = await chargeUser(supabase, user.id, {
+          platform: r.platform,
+          model: r.model,
+          apiCostUsd: r.usdPerImage,
+          description: `Image generation: ${r.label}`,
+          extra: { kind: "image", file_name: r.fileName, size: "1024x1024" },
+        });
+        totalCharged += c.tokensCharged;
+      } catch (e) {
+        console.error(`charge failed for ${r.model}:`, e);
+      }
+    }
 
     return new Response(JSON.stringify({
       success: true,
       proposals,
       masterPrompt,
       images: imageResults,
-      tokensUsed: finalCost,
+      tokensUsed: totalCharged,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 });
 
   } catch (e) {
