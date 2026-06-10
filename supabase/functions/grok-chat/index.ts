@@ -116,7 +116,7 @@ serve(async (req) => {
     // Calculate token cost - use default if no pricing data
     const apiCostPer1kTokens = pricingData?.api_cost_per_1k_tokens || 0.002; // Default Grok cost
     const actualApiCost = (totalTokens / 1000) * apiCostPer1kTokens;
-    const tokensToDeduct = Math.max(1, Math.ceil(actualApiCost * 10)); // Minimum 1 token
+    const tokensToDeduct = Math.max(1, Math.ceil((actualApiCost * 1.20) / 0.001)); // Minimum 1 token
 
     if (tokenData.balance < tokensToDeduct) {
       throw new Error('Insufficient tokens for this request');

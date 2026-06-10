@@ -99,7 +99,7 @@ serve(async (req) => {
 
     const apiCostPer1kTokens = pricingData?.api_cost_per_1k_tokens || 0.002;
     const actualApiCost = (totalTokens / 1000) * apiCostPer1kTokens;
-    const tokensToDeduct = Math.max(1, Math.ceil(actualApiCost * 10));
+    const tokensToDeduct = Math.max(1, Math.ceil((actualApiCost * 1.20) / 0.001));
 
     console.log(`Mistral usage: ${totalTokens} tokens, cost: $${actualApiCost}, deducting: ${tokensToDeduct}`);
 
