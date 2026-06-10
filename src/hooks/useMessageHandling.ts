@@ -84,6 +84,11 @@ export const useMessageHandling = (
 
       console.log('User message saved to database');
 
+      // Fire-and-forget: embed the user message for shared context (RAG)
+      supabase.functions.invoke('embed-messages', {
+        body: { mode: 'single', items: [{ message_id: userMessageObj.id, conversation_id: chatId, content: userMessageObj.content }] },
+      }).catch(e => console.warn('embed user message failed:', e));
+
       // Note: chat auto-rename is handled AFTER AI responses complete (see below),
       // using an AI-generated laconic title rather than the raw first message.
 
