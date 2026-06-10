@@ -205,6 +205,10 @@ const WhatsNew: React.FC = () => {
           </div>
         </section>
       </main>
+
+      <span className="fixed bottom-3 left-3 text-[10px] font-mono text-muted-foreground/40 select-none pointer-events-none">
+        v{changelog[0]?.version}
+      </span>
     </div>
   );
 };
