@@ -276,8 +276,9 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     chatMode: ChatMode = 'discussion'
   ): Array<{role: 'user' | 'assistant', content: string}> => {
     const conversationHistory: Array<{role: 'user' | 'assistant', content: string}> = [];
-    
-    const recentMessages = messages.slice(-15);
+
+    // Wider history window; older context is covered by RAG via shared-context.
+    const recentMessages = messages.slice(-30);
     
     recentMessages.forEach(message => {
       if (message.sender === 'user') {
