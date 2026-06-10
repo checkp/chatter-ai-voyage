@@ -164,13 +164,10 @@ const MainContent: React.FC<MainContentProps> = ({
         )}
 
         {activeTab === 'settings' && (
-          <ScrollArea className="h-full">
-            <div className="p-4">
-              <SettingsPanel />
-            </div>
-          </ScrollArea>
+          <SettingsOverlay onClose={() => setActiveTab('chat')} />
         )}
       </div>
+
 
       {/* Chat Input - only show for non-conductor modes */}
       {activeTab === 'chat' && activeChatMode !== 'conductor' && (
