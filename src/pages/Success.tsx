@@ -15,17 +15,15 @@ const Success = () => {
   const processedRef = useRef(false);
   const retryCountRef = useRef(0);
 
-  const sessionId = searchParams.get('session_id');
   const checkoutId = searchParams.get('checkout_id');
   const packageId = searchParams.get('package_id');
-  const provider = searchParams.get('provider');
 
   useEffect(() => {
     const processPayment = async () => {
       let shouldRetry = false;
 
       if (processedRef.current) return;
-      if (!sessionId && !checkoutId && !packageId) return;
+      if (!checkoutId && !packageId) return;
       processedRef.current = true;
 
       setIsProcessing(true);
@@ -49,11 +47,8 @@ const Success = () => {
           throw new Error('You need to be signed in to finish this purchase.');
         }
 
-        const isLemon = provider === 'lemonsqueezy' || !!packageId || !!checkoutId;
-        const fnName = isLemon ? 'verify-lemonsqueezy-order' : 'verify-stripe-session';
-        const body = isLemon
-          ? { package_id: packageId }
-          : { session_id: sessionId };
+        const fnName = 'verify-lemonsqueezy-order';
+        const body = { package_id: packageId };
 
         const response = await supabase.functions.invoke(fnName, {
           body,
@@ -96,7 +91,7 @@ const Success = () => {
     };
 
     processPayment();
-  }, [sessionId, checkoutId, packageId, provider, isCompleted]);
+  }, [checkoutId, packageId, isCompleted]);
 
   const handleReturnHome = () => {
     navigate('/');
