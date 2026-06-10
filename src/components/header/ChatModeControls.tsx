@@ -2,7 +2,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Grid3X3, Users, Shield, ShieldOff, Brain } from 'lucide-react';
+import { Grid3X3, Users, Shield, ShieldOff, Brain, Palette } from 'lucide-react';
+import { useFunTheme } from '@/contexts/FunThemeContext';
 import type { ChatMode } from '@/types/chat';
 
 interface ChatModeControlsProps {
@@ -18,6 +19,7 @@ const ChatModeControls: React.FC<ChatModeControlsProps> = ({
   onChatModeChange,
   onIsolatedModeToggle
 }) => {
+  const { enabled: funEnabled, toggle: toggleFun, theme: funTheme } = useFunTheme();
   const getChatModeIcon = (mode: ChatMode) => {
     switch (mode) {
       case 'side-by-side': return Grid3X3;
@@ -71,6 +73,23 @@ const ChatModeControls: React.FC<ChatModeControlsProps> = ({
           </TooltipContent>
         </Tooltip>
       )}
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant={funEnabled ? 'default' : 'ghost'}
+            size="sm"
+            onClick={toggleFun}
+            className="h-8 w-8 p-0"
+            aria-label="Fun mode"
+          >
+            <Palette className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{funEnabled ? `Fun mode on${funTheme?.vibe ? ` — ${funTheme.vibe}` : ''}` : 'Enable Fun mode (chat restyles itself)'}</p>
+        </TooltipContent>
+      </Tooltip>
     </div>
   );
 };
