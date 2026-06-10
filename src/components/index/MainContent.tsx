@@ -190,4 +190,39 @@ const MainContent: React.FC<MainContentProps> = ({
   );
 };
 
+const SettingsOverlay: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="absolute inset-0 z-40 bg-background/80 backdrop-blur-sm flex items-start justify-center overflow-y-auto"
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        className="relative w-full max-w-6xl my-8 mx-4 rounded-lg border bg-background shadow-xl"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="absolute right-2 top-2 z-10"
+          aria-label="Close settings"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+        <ScrollArea className="max-h-[85vh]">
+          <div className="p-4">
+            <SettingsPanel />
+          </div>
+        </ScrollArea>
+      </div>
+    </div>
+  );
+};
+
 export default MainContent;
