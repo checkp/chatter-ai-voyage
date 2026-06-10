@@ -57,15 +57,15 @@ const MarginPill: React.FC<{ value: number }> = ({ value }) => {
 
 const AdminEconomics: React.FC = () => {
   const [range, setRange] = useState<EconomicsRange>('30d');
-  const { kpis, platformAggs, modelAggs, packageAggs, isLoading, error, refetch } = useEconomicsData(range);
+  const { kpis, platformAggs, modelAggs, packageAggs, purchases, isLoading, error, refetch } = useEconomicsData(range);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold">Economics</h3>
+          <h3 className="text-lg font-semibold">Financials</h3>
           <p className="text-sm text-muted-foreground">
-            Revenue from token sales vs. the actual USD you pay providers per API call.
+            Cash in from token sales, cash out to AI providers, and what's left as profit.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -95,30 +95,46 @@ const AdminEconomics: React.FC = () => {
         </Card>
       )}
 
-      {/* KPIs */}
+      {/* Headline P&L */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Kpi label="Revenue" value={usd(kpis.revenueUsd)} sub={`${compact(kpis.tokensSold)} tokens sold`} tone="pos" />
         <Kpi
-          label="Sell price / token"
-          value={usdFine(kpis.sellPricePerToken)}
-          sub={kpis.tokensSold === 0 ? 'No purchases yet' : 'Effective, after bonuses'}
+          label="Gross sales"
+          value={usd(kpis.grossSalesUsd)}
+          sub={`${kpis.purchaseCount} purchase${kpis.purchaseCount === 1 ? '' : 's'} · ${compact(kpis.tokensSold)} tokens`}
         />
         <Kpi
-          label="Real API cost (consumed)"
+          label="API cost"
           value={usd(kpis.apiCostUsd)}
           sub={`${compact(kpis.tokensConsumed)} tokens consumed`}
           tone="neg"
         />
         <Kpi
-          label="Realized cost / token"
-          value={usdFine(kpis.realizedCostPerToken)}
-          sub="What 1 app token actually costs you"
+          label="Profit (realized)"
+          value={usd(kpis.realizedProfitUsd)}
+          sub={`${pct(kpis.realizedProfitPct)} of gross sales`}
+          tone={kpis.realizedProfitUsd >= 0 ? 'pos' : 'neg'}
         />
         <Kpi
-          label="Gross margin (consumed)"
-          value={usd(kpis.grossMarginUsd)}
-          sub={pct(kpis.grossMarginPct)}
-          tone={kpis.grossMarginUsd >= 0 ? 'pos' : 'neg'}
+          label="Net of liability"
+          value={usd(kpis.netProfitAfterLiabilityUsd)}
+          sub="Profit minus unspent token liability"
+          tone={kpis.netProfitAfterLiabilityUsd >= 0 ? 'pos' : 'warn'}
+        />
+        <Kpi
+          label="Avg sell / token"
+          value={usdFine(kpis.sellPricePerToken)}
+          sub={kpis.tokensSold === 0 ? 'No purchases yet' : 'Effective price paid'}
+        />
+        <Kpi
+          label="Avg cost / token"
+          value={usdFine(kpis.realizedCostPerToken)}
+          sub="What 1 app token actually costs"
+        />
+        <Kpi
+          label="Outstanding liability"
+          value={usd(kpis.outstandingLiabilityUsd)}
+          sub={`${compact(kpis.outstandingBalance)} tokens in wallets`}
+          tone="warn"
         />
         <Kpi
           label="Free-tier subsidy"
@@ -126,18 +142,52 @@ const AdminEconomics: React.FC = () => {
           sub={`${compact(kpis.dailyBonusGranted)} tokens given (if all spent)`}
           tone="warn"
         />
-        <Kpi
-          label="Outstanding liability"
-          value={usd(kpis.outstandingLiabilityUsd)}
-          sub={`${compact(kpis.outstandingBalance)} tokens in user wallets`}
-          tone="warn"
-        />
-        <Kpi
-          label="Other adjustments"
-          value={`${kpis.otherAmount >= 0 ? '+' : ''}${num(kpis.otherAmount)} tok`}
-          sub="Refunds, admin grants, etc."
-        />
       </div>
+
+      {/* Purchases list */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Purchases</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {purchases.length === 0 ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">No purchases in this window.</div>
+          ) : (
+            <div className="overflow-auto rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Package</TableHead>
+                    <TableHead>Method</TableHead>
+                    <TableHead>Order</TableHead>
+                    <TableHead className="text-right">Tokens</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {purchases.map((p, i) => (
+                    <TableRow key={`${p.created_at}-${i}`}>
+                      <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                        {new Date(p.created_at).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">{p.user_id ? `${p.user_id.slice(0, 8)}…` : '—'}</TableCell>
+                      <TableCell>{p.packageName}</TableCell>
+                      <TableCell className="capitalize">{p.paymentMethod}</TableCell>
+                      <TableCell className="font-mono text-xs">{p.orderRef ?? '—'}</TableCell>
+                      <TableCell className="text-right">{num(p.tokens)}</TableCell>
+                      <TableCell className="text-right font-medium">{usd(p.revenueUsd)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+
 
       {/* Per-platform breakdown */}
       <Card>
