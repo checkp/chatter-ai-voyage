@@ -1,9 +1,11 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Trash2 } from 'lucide-react';
 import { Chat } from '@/types/chat';
 import Logo from './Logo';
+import { changelog } from '@/data/changelog';
 
 interface ChatSidebarProps {
   chats: Chat[] | undefined;
@@ -124,6 +126,16 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
           )}
         </div>
       </ScrollArea>
+
+      {/* Version */}
+      <div className="px-4 py-2 border-t border-border/50">
+        <Link
+          to="/whats-new"
+          className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+        >
+          v{changelog[0]?.version}
+        </Link>
+      </div>
     </aside>
   );
 };
