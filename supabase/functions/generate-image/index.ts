@@ -265,13 +265,19 @@ serve(async (req) => {
       description: `Image generation: ${model}`,
       metadata: {
         prompt: prompt.substring(0, 100),
+        platform: imgPlatform,
         model,
         size,
-        platform: 'image',
+        kind: 'image',
+        api_cost_dollars: Number(apiCostUsd.toFixed(6)),
+        tokens_charged: tokensRequired,
+        app_token_usd: 0.001,
+        margin: 1.20,
         image_id: imageRecord.id,
       },
     });
     if (txError) console.error('Token transaction log failed:', txError);
+
 
     return new Response(
       JSON.stringify({
