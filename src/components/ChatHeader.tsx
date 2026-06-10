@@ -80,6 +80,9 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   onStartTour
 }) => {
   const activeChat = chats?.find(chat => chat.id === activeChatId);
+  const { setActiveChat } = useFunTheme();
+  useEffect(() => { setActiveChat(activeChatId); }, [activeChatId, setActiveChat]);
+
 
   return (
     <TooltipProvider>
