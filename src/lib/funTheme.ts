@@ -1,4 +1,5 @@
-// Fun mode theme helpers: font whitelist, contrast guard, CSS var mapping.
+// Fun mode theme helpers: font whitelist, contrast guard, CSS var mapping,
+// and per-bubble variations so individual messages feel distinct.
 
 export const FUN_FONTS = {
   Inter: `'Inter', system-ui, sans-serif`,
@@ -32,6 +33,10 @@ function parseHsl(s: string): { h: number; s: number; l: number } | null {
   return { h: +m[1], s: +m[2], l: +m[3] };
 }
 
+function fmtHsl(h: number, s: number, l: number) {
+  return `hsl(${Math.round(h)} ${Math.round(s)}% ${Math.round(l)}%)`;
+}
+
 function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   s /= 100; l /= 100;
   const k = (n: number) => (n + h / 30) % 12;
@@ -57,33 +62,53 @@ export function contrastRatio(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-/** Ensure fg has >=4.5:1 contrast on bg; if not, snap to near-black or near-white. */
+/** Ensure fg has >=minRatio contrast on bg by walking lightness toward extreme. */
 export function ensureReadable(fg: string, bg: string, minRatio = 4.5): string {
-  if (contrastRatio(fg, bg) >= minRatio) return fg;
+  const F = parseHsl(fg);
   const B = parseHsl(bg);
-  if (!B) return fg;
-  // Pick whichever extreme has the better contrast against bg.
-  return B.l >= 50 ? "hsl(0 0% 8%)" : "hsl(0 0% 98%)";
+  if (!F || !B) return fg;
+  if (contrastRatio(fg, bg) >= minRatio) return fg;
+  // Walk lightness away from bg lightness in 5% steps, keep hue/sat.
+  const goDark = B.l >= 50;
+  let l = F.l;
+  for (let i = 0; i < 18; i++) {
+    l = goDark ? Math.max(0, l - 5) : Math.min(100, l + 5);
+    const candidate = fmtHsl(F.h, F.s, l);
+    if (contrastRatio(candidate, bg) >= minRatio) return candidate;
+  }
+  return goDark ? "hsl(0 0% 6%)" : "hsl(0 0% 98%)";
 }
 
 /** Clamp page bg to safe lightness so it never goes pure black / pure white. */
 function clampPageBg(bg: string): string {
   const p = parseHsl(bg);
   if (!p) return bg;
-  const s = Math.min(p.s, 40);
-  const l = Math.min(Math.max(p.l, 8), 96);
-  return `hsl(${p.h} ${s}% ${l}%)`;
+  const s = Math.min(p.s, 45);
+  const l = Math.min(Math.max(p.l, 10), 95);
+  return fmtHsl(p.h, s, l);
 }
 
-/** Sanitize a theme: clamp page bg + enforce contrast on bubble texts. */
+/** Nudge a bubble bg lightness away from page bg if they're too similar. */
+function differentiate(bubble: string, page: string, minDelta = 8): string {
+  const Bb = parseHsl(bubble); const Pp = parseHsl(page);
+  if (!Bb || !Pp) return bubble;
+  const delta = Bb.l - Pp.l;
+  if (Math.abs(delta) >= minDelta) return bubble;
+  const goUp = Pp.l < 50; // light page → bubble slightly darker? prefer opposite of page
+  const newL = goUp ? Math.min(100, Pp.l + minDelta) : Math.max(0, Pp.l - minDelta);
+  return fmtHsl(Bb.h, Bb.s, newL);
+}
+
+/** Sanitize a theme: clamp page bg + enforce contrast + bubble differentiation. */
 export function sanitizeTheme(t: FunTheme): FunTheme {
   const bg = clampPageBg(t.bg);
-  return {
-    ...t,
-    bg,
-    userBubbleFg: ensureReadable(t.userBubbleFg, t.userBubbleBg),
-    aiBubbleFg: ensureReadable(t.aiBubbleFg, t.aiBubbleBg),
-  };
+  const userBubbleBg = differentiate(t.userBubbleBg, bg);
+  const aiBubbleBg = differentiate(t.aiBubbleBg, bg);
+  const userBubbleFg = ensureReadable(t.userBubbleFg, userBubbleBg, 4.5);
+  const aiBubbleFg = ensureReadable(t.aiBubbleFg, aiBubbleBg, 4.5);
+  // Accent should be visible against page bg (min 3:1 — large/decorative)
+  const accent = ensureReadable(t.accent, bg, 3);
+  return { ...t, bg, userBubbleBg, aiBubbleBg, userBubbleFg, aiBubbleFg, accent };
 }
 
 export const SHADOW_MAP = {
@@ -94,12 +119,14 @@ export const SHADOW_MAP = {
 
 /** Map theme → CSS variables to apply on a wrapper div. */
 export function themeToCssVars(t: FunTheme): React.CSSProperties {
+  // Page foreground should be readable against page bg.
+  const pageFg = ensureReadable(t.aiBubbleFg, t.bg, 4.5);
   return {
-    // Page surface
     background: t.bg,
-    color: t.aiBubbleFg,
+    color: pageFg,
     fontFamily: FUN_FONTS[t.bodyFont],
-    // Vars for bubbles
+    ["--fun-page-bg" as any]: t.bg,
+    ["--fun-page-fg" as any]: pageFg,
     ["--fun-user-bg" as any]: t.userBubbleBg,
     ["--fun-user-fg" as any]: t.userBubbleFg,
     ["--fun-ai-bg" as any]: t.aiBubbleBg,
@@ -113,3 +140,40 @@ export function themeToCssVars(t: FunTheme): React.CSSProperties {
 }
 
 export const FUN_THEME_CAP = 40;
+
+// ---- Per-bubble variation -----------------------------------------------
+
+const VARIANTS = 8;
+function hashId(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return Math.abs(h);
+}
+
+/** Per-message subtle style override so each bubble has its own personality. */
+export function bubbleVariant(
+  id: string,
+  role: "user" | "ai",
+  t: FunTheme | null,
+): React.CSSProperties {
+  if (!t) return {};
+  const v = hashId(id || role) % VARIANTS;
+  const accent = t.accent;
+  const base: React.CSSProperties = {};
+  switch (v) {
+    case 0: return { borderRadius: `${t.radius + 6}px ${Math.max(2, t.radius - 4)}px ${t.radius + 6}px ${Math.max(2, t.radius - 4)}px` };
+    case 1: return { borderLeft: role === "ai" ? `4px solid ${accent}` : undefined, borderRight: role === "user" ? `4px solid ${accent}` : undefined };
+    case 2: return { borderTop: `2px dashed ${accent}` };
+    case 3: return { transform: "rotate(-0.4deg)" };
+    case 4: return { transform: "rotate(0.5deg)" };
+    case 5: return { outline: `1px dotted ${accent}`, outlineOffset: "2px" };
+    case 6: return { backgroundImage: role === "user"
+        ? `linear-gradient(135deg, var(--fun-user-bg), color-mix(in srgb, var(--fun-user-bg) 80%, ${accent}))`
+        : `linear-gradient(135deg, var(--fun-ai-bg), color-mix(in srgb, var(--fun-ai-bg) 85%, ${accent}))` };
+    case 7: return { borderBottom: `3px double ${accent}` };
+    default: return base;
+  }
+}
