@@ -120,7 +120,7 @@ serve(async (req) => {
         amount: -tokensToDeduct,
         balance_after: newBalance,
         description: `Qwen ${model} API call - ${totalTokens} tokens`,
-        metadata: { platform: 'qwen', model, prompt_tokens: promptTokens, completion_tokens: completionTokens, total_tokens: totalTokens, api_cost_dollars: actualApiCost },
+        metadata: { platform: 'qwen', model, prompt_tokens: promptTokens, completion_tokens: completionTokens, total_tokens: totalTokens, api_cost_dollars: actualApiCost, tokens_charged: tokensToDeduct, app_token_usd: 0.001, margin: 1.20 },
       });
 
     return new Response(JSON.stringify({ content }), {
