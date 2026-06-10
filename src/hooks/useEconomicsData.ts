@@ -349,12 +349,15 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
 
     return {
       kpis: {
-        revenueUsd,
+        grossSalesUsd,
         tokensSold,
         sellPricePerToken,
         tokensConsumed,
         apiCostUsd,
         realizedCostPerToken,
+        realizedProfitUsd,
+        realizedProfitPct,
+        netProfitAfterLiabilityUsd,
         grossMarginUsd,
         grossMarginPct,
         dailyBonusGranted,
@@ -362,11 +365,14 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
         outstandingBalance,
         outstandingLiabilityUsd,
         otherAmount,
+        purchaseCount: purchaseRows.length,
       },
       platformAggs,
       modelAggs,
       packageAggs,
+      purchases: purchaseRows,
     };
+
   }, [txQ.data, pkgQ.data, pricingQ.data, balanceQ.data]);
 
   return {
