@@ -17,6 +17,7 @@ import type { AIPlatform, ChatMode } from '@/types/chat';
 
 interface MainContentProps {
   activeTab: string;
+  setActiveTab: (tab: string) => void;
   activeChatMode: ChatMode;
   isolatedMode: boolean;
   platforms: AIPlatform[];
