@@ -152,15 +152,10 @@ serve(async (req) => {
       );
     }
 
-    // Determine token cost based on model
-    const tokenCosts: Record<string, number> = {
-      'dall-e-3': 40,
-      'gpt-image-1': 30,
-      'gemini-image': 15,
-      'gemini-pro-image': 35,
-      'grok-aurora': 25,
-    };
-    const tokensRequired = tokenCosts[model] || 30;
+    // Real USD cost → app tokens via shared formula (ceil((usd × 1.20) / $0.001))
+    const { platform: imgPlatform, usd: apiCostUsd } = imageCostUsd(model, size);
+    const tokensRequired = usdToTokens(apiCostUsd);
+
 
     // Check balance
     const { data: userTokens, error: tokenError } = await supabase
