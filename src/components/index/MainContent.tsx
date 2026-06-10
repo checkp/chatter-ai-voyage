@@ -1,6 +1,8 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { X } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -15,6 +17,7 @@ import type { AIPlatform, ChatMode } from '@/types/chat';
 
 interface MainContentProps {
   activeTab: string;
+  setActiveTab: (tab: string) => void;
   activeChatMode: ChatMode;
   isolatedMode: boolean;
   platforms: AIPlatform[];
@@ -46,6 +49,7 @@ interface MainContentProps {
 
 const MainContent: React.FC<MainContentProps> = ({
   activeTab,
+  setActiveTab,
   activeChatMode,
   isolatedMode,
   platforms,
@@ -118,7 +122,7 @@ const MainContent: React.FC<MainContentProps> = ({
   return (
     <>
       {/* Chat Messages Area */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden relative">
         {activeTab === 'chat' && (
           <>
             {activeChatMode === 'conductor' ? (
@@ -160,13 +164,10 @@ const MainContent: React.FC<MainContentProps> = ({
         )}
 
         {activeTab === 'settings' && (
-          <ScrollArea className="h-full">
-            <div className="p-4">
-              <SettingsPanel />
-            </div>
-          </ScrollArea>
+          <SettingsOverlay onClose={() => setActiveTab('chat')} />
         )}
       </div>
+
 
       {/* Chat Input - only show for non-conductor modes */}
       {activeTab === 'chat' && activeChatMode !== 'conductor' && (
@@ -186,6 +187,41 @@ const MainContent: React.FC<MainContentProps> = ({
         />
       )}
     </>
+  );
+};
+
+const SettingsOverlay: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="absolute inset-0 z-40 bg-background/80 backdrop-blur-sm flex items-start justify-center overflow-y-auto"
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        className="relative w-full max-w-6xl my-8 mx-4 rounded-lg border bg-background shadow-xl"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="absolute right-2 top-2 z-10"
+          aria-label="Close settings"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+        <ScrollArea className="max-h-[85vh]">
+          <div className="p-4">
+            <SettingsPanel />
+          </div>
+        </ScrollArea>
+      </div>
+    </div>
   );
 };
 
