@@ -183,7 +183,7 @@ serve(async (req) => {
           input_tokens: inputTokens,
           output_tokens: outputTokens,
           total_tokens: totalTokens,
-          api_cost_dollars: actualApiCost,
+          api_cost_dollars: actualApiCost, tokens_charged: tokensToDeduct, app_token_usd: 0.001, margin: 1.20,
           api_cost_per_1k_tokens: apiCostPer1kTokens
         }
       });
