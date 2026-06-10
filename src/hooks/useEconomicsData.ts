@@ -9,7 +9,10 @@ interface TxRow {
   amount: number;
   metadata: any;
   created_at: string;
+  user_id: string | null;
+  description: string | null;
 }
+
 
 interface PackageRow {
   id: string;
@@ -42,7 +45,7 @@ async function fetchAllTransactions(since: string | null): Promise<TxRow[]> {
   while (from < 50_000) {
     let q = supabase
       .from('token_transactions')
-      .select('transaction_type, amount, metadata, created_at')
+      .select('transaction_type, amount, metadata, created_at, user_id, description')
       .order('created_at', { ascending: false })
       .range(from, from + PAGE - 1);
     if (since) q = q.gte('created_at', since);
@@ -166,12 +169,21 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
     type PkgBucket = { id: string | null; price_cents: number; tokens: number; units: number };
     const purchaseBuckets = new Map<string, PkgBucket>();
 
+    const purchaseRows: Array<{
+      created_at: string;
+      user_id: string | null;
+      packageName: string;
+      tokens: number;
+      revenueUsd: number;
+      paymentMethod: string;
+      orderRef: string | null;
+    }> = [];
+
     for (const t of txs) {
       const meta = (t.metadata || {}) as any;
       if (t.transaction_type === 'purchase') {
         let cents = Number(meta.price_cents) || 0;
         if (!cents && typeof meta.amount_paid === 'string') {
-          // LemonSqueezy webhook stores "$20.00" / "20.00 USD" — parse to cents.
           const m = meta.amount_paid.match(/[\d.]+/);
           if (m) cents = Math.round(parseFloat(m[0]) * 100);
         }
@@ -188,6 +200,18 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
         const existing = purchaseBuckets.get(key) || { id: pkgId, price_cents: cents, tokens: t.amount, units: 0 };
         existing.units += 1;
         purchaseBuckets.set(key, existing);
+
+        const pkg = pkgId ? (pkgQ.data || []).find((p) => p.id === pkgId) : null;
+        purchaseRows.push({
+          created_at: t.created_at,
+          user_id: t.user_id,
+          packageName: pkg?.name ?? (t.description || `${t.amount} tokens`),
+          tokens: t.amount,
+          revenueUsd: cents / 100,
+          paymentMethod: String(meta.payment_method || (meta.ls_order_id ? 'lemonsqueezy' : meta.stripe_session_id ? 'stripe' : 'unknown')),
+          orderRef: meta.ls_order_id ? `LS#${meta.ls_order_id}` : meta.stripe_session_id ? `Stripe ${String(meta.stripe_session_id).slice(0, 10)}…` : null,
+        });
+
 
       } else if (t.transaction_type === 'consumption') {
         const app = Math.abs(t.amount);
@@ -231,15 +255,22 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
       }
     }
 
-    const revenueUsd = revenueCents / 100;
-    const sellPricePerToken = tokensSold > 0 ? revenueUsd / tokensSold : 0;
+    const grossSalesUsd = revenueCents / 100;
+    const sellPricePerToken = tokensSold > 0 ? grossSalesUsd / tokensSold : 0;
     const realizedCostPerToken = tokensConsumed > 0 ? apiCostUsd / tokensConsumed : 0;
     const impliedRevenueOnConsumed = tokensConsumed * sellPricePerToken;
     const grossMarginUsd = impliedRevenueOnConsumed - apiCostUsd;
     const grossMarginPct = impliedRevenueOnConsumed > 0 ? (grossMarginUsd / impliedRevenueOnConsumed) * 100 : 0;
 
+    // Cash profit so far: what we collected minus what we already paid providers.
+    const realizedProfitUsd = grossSalesUsd - apiCostUsd;
+    const realizedProfitPct = grossSalesUsd > 0 ? (realizedProfitUsd / grossSalesUsd) * 100 : 0;
+
     const subsidyTheoreticalUsd = dailyBonusGranted * (realizedCostPerToken || FALLBACK_COST_PER_TOKEN);
     const outstandingLiabilityUsd = outstandingBalance * (realizedCostPerToken || FALLBACK_COST_PER_TOKEN);
+    // What's left if every outstanding token gets burned at current cost.
+    const netProfitAfterLiabilityUsd = realizedProfitUsd - outstandingLiabilityUsd;
+
 
     const platformAggs: PlatformAgg[] = Array.from(platformBuckets.values())
       .map((b) => {
@@ -318,12 +349,15 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
 
     return {
       kpis: {
-        revenueUsd,
+        grossSalesUsd,
         tokensSold,
         sellPricePerToken,
         tokensConsumed,
         apiCostUsd,
         realizedCostPerToken,
+        realizedProfitUsd,
+        realizedProfitPct,
+        netProfitAfterLiabilityUsd,
         grossMarginUsd,
         grossMarginPct,
         dailyBonusGranted,
@@ -331,11 +365,14 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
         outstandingBalance,
         outstandingLiabilityUsd,
         otherAmount,
+        purchaseCount: purchaseRows.length,
       },
       platformAggs,
       modelAggs,
       packageAggs,
+      purchases: purchaseRows,
     };
+
   }, [txQ.data, pkgQ.data, pricingQ.data, balanceQ.data]);
 
   return {
