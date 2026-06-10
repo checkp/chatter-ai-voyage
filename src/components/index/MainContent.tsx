@@ -122,7 +122,7 @@ const MainContent: React.FC<MainContentProps> = ({
   return (
     <>
       {/* Chat Messages Area */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden relative">
         {activeTab === 'chat' && (
           <>
             {activeChatMode === 'conductor' ? (
