@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import AdminStatsCards from './admin/AdminStatsCards';
 import AdminUsersTable from './admin/AdminUsersTable';
-import AdminApiKeys from './admin/AdminApiKeys';
+
 import AdminPlatformUsage from './admin/AdminPlatformUsage';
 import AdminModelPricing from './admin/AdminModelPricing';
 import AdminTokenPackages from './admin/AdminTokenPackages';
@@ -184,13 +184,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
       </div>
 
       <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="economics">Economics</TabsTrigger>
           <TabsTrigger value="model-pricing">Model Pricing</TabsTrigger>
           <TabsTrigger value="packages">Packages</TabsTrigger>
-          <TabsTrigger value="api-keys">API Keys</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
@@ -228,9 +227,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
           <AdminTokenPackages />
         </TabsContent>
 
-        <TabsContent value="api-keys" className="space-y-4">
-          <AdminApiKeys />
-        </TabsContent>
 
         <TabsContent value="settings" className="space-y-4">
           <Card>
