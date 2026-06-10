@@ -84,6 +84,11 @@ export const useMessageHandling = (
 
       console.log('User message saved to database');
 
+      // Fire-and-forget: embed the user message for shared context (RAG)
+      supabase.functions.invoke('embed-messages', {
+        body: { mode: 'single', items: [{ message_id: userMessageObj.id, conversation_id: chatId, content: userMessageObj.content }] },
+      }).catch(e => console.warn('embed user message failed:', e));
+
       // Note: chat auto-rename is handled AFTER AI responses complete (see below),
       // using an AI-generated laconic title rather than the raw first message.
 
@@ -164,6 +169,10 @@ export const useMessageHandling = (
             console.error(`Error saving ${platform.name} message:`, aiMsgError);
           } else {
             console.log(`${platform.name} message saved to database`);
+            // Fire-and-forget: embed AI message for shared context
+            supabase.functions.invoke('embed-messages', {
+              body: { mode: 'single', items: [{ message_id: aiMessage.id, conversation_id: chatId, content: aiMessage.content }] },
+            }).catch(e => console.warn('embed ai message failed:', e));
           }
 
           return aiMessage;
@@ -227,6 +236,10 @@ export const useMessageHandling = (
       } catch (e) {
         console.warn('AI chat-title generation failed:', e);
       }
+
+      // Fire-and-forget: refresh the user's long-term memory document (debounced server-side)
+      supabase.functions.invoke('update-memory', { body: {} })
+        .catch(e => console.warn('update-memory failed:', e));
 
       return results.filter(result => result.status === 'fulfilled' && result.value !== null);
 
