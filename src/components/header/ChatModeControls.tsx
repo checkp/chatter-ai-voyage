@@ -73,6 +73,23 @@ const ChatModeControls: React.FC<ChatModeControlsProps> = ({
           </TooltipContent>
         </Tooltip>
       )}
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant={funEnabled ? 'default' : 'ghost'}
+            size="sm"
+            onClick={toggleFun}
+            className="h-8 w-8 p-0"
+            aria-label="Fun mode"
+          >
+            <Palette className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{funEnabled ? `Fun mode on${funTheme?.vibe ? ` — ${funTheme.vibe}` : ''}` : 'Enable Fun mode (chat restyles itself)'}</p>
+        </TooltipContent>
+      </Tooltip>
     </div>
   );
 };
