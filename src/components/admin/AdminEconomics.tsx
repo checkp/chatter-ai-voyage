@@ -291,9 +291,9 @@ const AdminEconomics: React.FC = () => {
       </Card>
 
       <p className="text-xs text-muted-foreground">
-        "Implied revenue" = app tokens consumed × effective sell price / token. Older consumption rows missing
+        Billing formula: <code>ceil((real_api_cost_usd × 1.20) / $0.001)</code> app tokens per call (20% markup, $0.001 = 1 token). "Implied revenue" = app tokens consumed × effective sell price / token. Older rows missing
         <code className="mx-1">api_cost_dollars</code>
-        fall back to <code>model_pricing × provider tokens</code>, then to $0.10/token.
+        fall back to <code>model_pricing × provider tokens</code>, then to $0.001/token.
       </p>
     </div>
   );
