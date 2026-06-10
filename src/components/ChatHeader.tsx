@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import FreeModeControls from '@/components/FreeModeControls';
 import ConductorControls from '@/components/ConductorControls';
@@ -10,6 +10,7 @@ import UserControls from '@/components/header/UserControls';
 import { Button } from '@/components/ui/button';
 import { HelpCircle, Navigation } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useFunTheme } from '@/contexts/FunThemeContext';
 import type { Chat, ChatMode, AIPlatform } from '@/types/chat';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
