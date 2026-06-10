@@ -140,7 +140,7 @@ serve(async (req) => {
     const apiCostPer1kTokens = pricingData?.api_cost_per_1k_tokens || 0.001;
     const estimatedTokens = Math.ceil((messages.reduce((acc: number, msg: any) => acc + msg.content.length, 0) + content.length) / 4);
     const actualApiCost = (estimatedTokens / 1000) * apiCostPer1kTokens;
-    const tokensToDeduct = Math.max(1, Math.ceil(actualApiCost * 10));
+    const tokensToDeduct = Math.max(1, Math.ceil((actualApiCost * 1.20) / 0.001));
 
     console.log(`Gemini API usage: ~${estimatedTokens} tokens, cost: $${actualApiCost}, deducting: ${tokensToDeduct} tokens`);
 
