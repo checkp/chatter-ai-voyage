@@ -12,6 +12,19 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.8.0",
+    date: "2026-06-10",
+    title: "Fun Mode: Chats That Restyle Themselves",
+    description: "Toggle Fun mode and the chat window evolves its look after each reply — backgrounds, bubbles, accents, and fonts gradually drift to match the conversation's vibe. Readability is always guarded.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "🎨 Fun mode toggle in the chat header — chat surface restyles itself after each AI round" },
+      { type: "feature", description: "🌈 Themes evolve subtly: hues, bubble shapes, accents, and curated fonts shift round-by-round" },
+      { type: "improvement", description: "🔍 WCAG contrast guard auto-snaps bubble text to readable black/white if needed" },
+      { type: "improvement", description: "💾 Per-chat fun-mode state remembered locally; capped at 40 evolutions to keep costs sane" }
+    ]
+  },
+  {
     version: "2.7.0",
     date: "2026-06-10",
     title: "Shared Memory Across Chats",

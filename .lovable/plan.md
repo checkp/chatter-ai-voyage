@@ -1,43 +1,73 @@
-# Shared Context: Hybrid Memory + RAG
+## Fun Mode
 
-Give agents knowledge of all the user's chats via two layers: a persistent **memory document** (stable facts, preferences) and **semantic retrieval** (relevant snippets from any past conversation). On by default, opt-out per chat.
+A toggle that lets the chat window restyle itself based on what's being discussed. Each new assistant round nudges the look — colors, bubble shapes, accents, font pairing — so the same conversation gradually drifts into its own visual identity. Text always stays readable.
 
-## How it will work
+### How it works for the user
+- New **Fun mode** toggle in the chat header (sparkle/paint icon). Off by default.
+- When on, after each assistant reply the chat surface re-themes itself: page background tint, user bubble, AI bubble, accent line, heading font, corner radius, subtle shadow.
+- Each update is a small evolution of the previous theme, not a hard reset, so it "drifts" rather than flickers.
+- Turning it off snaps back to the standard look instantly. State is per-chat and remembered.
 
-1. Every saved message gets embedded (vector) in the background.
-2. When the user sends a message, the app fetches a "shared context" block: the user's memory doc + the top ~6 most relevant snippets from all their past chats.
-3. That block is injected into the system prompt for every agent in that turn.
-4. After conversation activity, an AI pass distills new stable facts into the memory document.
-5. A toggle in chat settings ("Shared context" — default ON) lets the user opt a chat out, both from contributing to and reading from shared context.
+### Readability guarantees
+- Foreground/background pairs are passed through a WCAG contrast check (≥ 4.5:1 for body, ≥ 3:1 for large text). If the AI picks a low-contrast pair, we auto-snap the foreground to near-black or near-white — whichever wins.
+- Font is restricted to a curated whitelist of legible Google fonts (e.g. Inter, Fraunces, Space Grotesk, DM Serif, JetBrains Mono, Caveat). The AI picks from the list; it can't invent fonts.
+- Saturation/lightness clamped so backgrounds never become neon or pitch-black, and bubbles always sit visibly on the page background.
 
-## Database (migration)
+### Where it applies
+- Standard chat (`ChatMessages.tsx`).
+- Side-by-side and Conductor panes read the same theme so all chat surfaces in the active conversation stay in sync.
+- Image panels, headers, sidebar, settings — untouched.
 
-- Enable `pgvector` extension.
-- `user_memory` table: one row per user with a markdown memory doc + `updated_at`. Owner-scoped RLS, grants for authenticated + service_role.
-- `message_embeddings` table: `user_id`, `conversation_id`, `message_id`, `content`, `embedding vector(1536)`, HNSW index. Owner-scoped RLS + grants.
-- `match_user_context(user_id, query_embedding, match_count)` SQL function for similarity search, excluding the current conversation.
-- `shared_context_enabled boolean default true` column on `conversations`.
+### Cost / safety
+- One generation per completed assistant round, debounced; skipped if the round produced no new assistant text.
+- Hard cap (e.g. 40 theme updates per chat) to keep token use bounded.
+- Falls back silently to the previous theme if the call fails or returns invalid JSON.
 
-## Edge functions
+---
 
-- **`embed-messages`** — embeds new messages via Lovable AI embeddings (`openai/text-embedding-3-small`, 1536 dims — cheap, high volume). Also handles a one-time backfill of existing messages in batches.
-- **`shared-context`** — embeds the user's incoming message, runs similarity search, fetches the memory doc, returns a compact context block. JWT-derived user_id, never from body (per project security rules).
-- **`update-memory`** — distills recent conversation content into the memory document using Gemini Flash; triggered after a conductor/discussion round completes (debounced, not per message).
+### Technical details
 
-## Frontend
+**New edge function** `supabase/functions/generate-fun-theme/`
+- `verify_jwt = true`, uses `LOVABLE_API_KEY` with `google/gemini-2.5-flash`.
+- Input: last ~6 messages (trimmed), previous theme JSON, evolution seed.
+- Prompt instructs the model to return strict JSON only, evolving the prior theme by ~10–25% (hue shift, one font swap allowed every N rounds, radius/shadow nudge), and pick from a fixed font whitelist.
+- Server-side `zod` validation; reject anything off-list; return 400 on parse failure.
+- Tokens: lightweight call, not metered against user balance for v1 (noted in changelog).
 
-- `buildConversationForPlatform` (usePlatforms.ts): fetch the shared-context block before AI calls and include it in the prompt — skipped when the chat's toggle is off.
-- Toggle in chat header settings, auto-saved (no save button, per project conventions), default ON.
-- Retry/backoff on the new edge function calls, matching the existing 3-retry AI resilience rule.
+**Theme shape**
+```ts
+type FunTheme = {
+  vibe: string;              // short label, e.g. "midnight library"
+  bg: string;                // page tint, hsl
+  userBubbleBg: string;
+  userBubbleFg: string;
+  aiBubbleBg: string;
+  aiBubbleFg: string;
+  accent: string;            // border-l / links
+  headingFont: FontKey;      // from whitelist
+  bodyFont: FontKey;         // from whitelist
+  radius: number;            // 6–24px
+  shadow: 'none'|'soft'|'lifted';
+};
+```
 
-## Context-quality fixes (bundled)
+**New client modules**
+- `src/lib/funTheme.ts` — font whitelist, contrast helpers (`ensureReadable(fg, bg)`), HSL clamps, theme→CSS-vars mapper.
+- `src/contexts/FunThemeContext.tsx` — provider keyed by `chatId`, exposes `{ enabled, toggle, theme, regenerate }`. Persists `enabled` + last theme per chat in `localStorage` (`fun-mode:<chatId>`).
+- `src/hooks/useFunModeTrigger.ts` — watches messages; when a new assistant message arrives and fun mode is on, calls `generate-fun-theme` (debounced, cap-checked), runs `ensureReadable`, updates context.
 
-1. **Proper system role** — the big context prompt is currently sent as a fake `user` message; switch to a real `system` message (OpenAI-style) / `system` param (Claude). Improves instruction-following for all 7 providers.
-2. **Claude output cap** — raise `max_tokens` from 1,000 to 4,096 to match OpenAI.
-3. **History window** — raise the hard 15-message slice to 30; older context is now covered by RAG instead of being silently dropped.
+**UI changes**
+- `ChatHeader.tsx` (or `header/ChatModeControls.tsx`): add toggle button with active state + tooltip showing current `vibe`.
+- `ChatMessages.tsx`: wrap output in a `<div data-fun={enabled}>` that consumes CSS vars (`--fun-bg`, `--fun-user-bg`, `--fun-user-fg`, `--fun-ai-bg`, `--fun-ai-fg`, `--fun-accent`, `--fun-radius`, `--fun-font-heading`, `--fun-font-body`). Existing platform-tinted classes stay as the off-state default.
+- Same wrapper applied in `SideBySideLayout.tsx` and `conductor/AgentPane.tsx` so all chat surfaces inherit the theme.
+- Fonts loaded once via a `<link>` in `index.html` (whitelist only).
 
-## Costs & notes
+**Fallback behavior**
+- No theme yet, or fun mode off → existing styling, no change.
+- Edge function error → keep previous theme, log to console, no toast spam.
 
-- Embeddings are very cheap (fractions of a cent per message) and run server-side off the user's token balance — no change to user-facing billing.
-- The shared-context block is capped (~800 tokens) so it doesn't blow up per-call costs.
-- Backfill of existing messages runs once, in batches, after deploy.
+### Out of scope (v1)
+- Animating between themes (cross-fade can come later).
+- Per-message stylistic flourishes.
+- Syncing theme to DB across devices — local only for v1.
+- Free/Discussion mode-specific tuning beyond the shared theme.
