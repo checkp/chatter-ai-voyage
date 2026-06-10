@@ -169,12 +169,21 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
     type PkgBucket = { id: string | null; price_cents: number; tokens: number; units: number };
     const purchaseBuckets = new Map<string, PkgBucket>();
 
+    const purchaseRows: Array<{
+      created_at: string;
+      user_id: string | null;
+      packageName: string;
+      tokens: number;
+      revenueUsd: number;
+      paymentMethod: string;
+      orderRef: string | null;
+    }> = [];
+
     for (const t of txs) {
       const meta = (t.metadata || {}) as any;
       if (t.transaction_type === 'purchase') {
         let cents = Number(meta.price_cents) || 0;
         if (!cents && typeof meta.amount_paid === 'string') {
-          // LemonSqueezy webhook stores "$20.00" / "20.00 USD" — parse to cents.
           const m = meta.amount_paid.match(/[\d.]+/);
           if (m) cents = Math.round(parseFloat(m[0]) * 100);
         }
@@ -191,6 +200,18 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
         const existing = purchaseBuckets.get(key) || { id: pkgId, price_cents: cents, tokens: t.amount, units: 0 };
         existing.units += 1;
         purchaseBuckets.set(key, existing);
+
+        const pkg = pkgId ? (pkgQ.data || []).find((p) => p.id === pkgId) : null;
+        purchaseRows.push({
+          created_at: t.created_at,
+          user_id: t.user_id,
+          packageName: pkg?.name ?? (t.description || `${t.amount} tokens`),
+          tokens: t.amount,
+          revenueUsd: cents / 100,
+          paymentMethod: String(meta.payment_method || (meta.ls_order_id ? 'lemonsqueezy' : meta.stripe_session_id ? 'stripe' : 'unknown')),
+          orderRef: meta.ls_order_id ? `LS#${meta.ls_order_id}` : meta.stripe_session_id ? `Stripe ${String(meta.stripe_session_id).slice(0, 10)}…` : null,
+        });
+
 
       } else if (t.transaction_type === 'consumption') {
         const app = Math.abs(t.amount);
