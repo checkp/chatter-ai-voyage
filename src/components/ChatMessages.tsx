@@ -6,7 +6,7 @@ import ImagePanel from '@/components/chat/ImagePanel';
 import MarkdownMessage from '@/components/chat/MarkdownMessage';
 import { IMAGE_PANEL_PLATFORM, type ImagePanelData } from '@/config/imageModels';
 import { useFunTheme } from '@/contexts/FunThemeContext';
-import { themeToCssVars } from '@/lib/funTheme';
+import { themeToCssVars, bubbleVariant } from '@/lib/funTheme';
 import type { Message, AIPlatform } from '@/types/chat';
 
 interface ChatMessagesProps {
@@ -95,7 +95,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             }
           })() : (
             <div
-              style={message.sender === 'user' ? userBubbleStyle : aiBubbleStyle}
+              style={message.sender === 'user'
+                ? { ...userBubbleStyle, ...bubbleVariant(message.id, 'user', funTheme) }
+                : { ...aiBubbleStyle, ...bubbleVariant(message.id, 'ai', funTheme) }}
               className={funActive ? 'max-w-3xl p-4 text-sm' : `max-w-3xl rounded-lg p-4 text-sm ${message.sender === 'user'
                 ? 'bg-primary text-primary-foreground'
                 : `bg-card border-l-4 ${message.platform ?
@@ -107,7 +109,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                   : 'border-l-border bg-muted/50'}`
                 }`}>
               {message.sender === 'ai' ? (
-                <MarkdownMessage content={message.content} />
+                <MarkdownMessage content={message.content} fun={funActive} />
               ) : (
                 <div className="whitespace-pre-wrap leading-relaxed" style={funActive ? { color: 'var(--fun-user-fg)' } : undefined}>
                   {message.content}
@@ -129,7 +131,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
               )}
             </div>
           )}
-          <div className="text-xs mt-1" style={funActive ? { color: 'var(--fun-ai-fg)', opacity: 0.6 } : undefined}>
+          <div className="text-xs mt-1" style={funActive ? { color: 'var(--fun-page-fg)', opacity: 0.6 } : undefined}>
             {!funActive && <span className="text-muted-foreground">{new Date(message.created_at).toLocaleTimeString()}</span>}
             {funActive && <span>{new Date(message.created_at).toLocaleTimeString()}</span>}
           </div>
@@ -137,8 +139,11 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       ))}
       {isLoadingResponse && (
         <div className="flex flex-col items-start mb-4">
-          <div className="bg-card rounded-lg p-4 text-sm border-l-4 border-l-amber-400 bg-amber-50/30">
-            <div className="flex items-center gap-2 text-card-foreground">
+          <div
+            className={funActive ? 'rounded-lg p-4 text-sm' : 'bg-card rounded-lg p-4 text-sm border-l-4 border-l-amber-400 bg-amber-50/30'}
+            style={funActive ? { background: 'var(--fun-ai-bg)', color: 'var(--fun-ai-fg)', borderLeft: '4px solid var(--fun-accent)', borderRadius: 'var(--fun-radius)', boxShadow: 'var(--fun-shadow)' } : undefined}
+          >
+            <div className="flex items-center gap-2" style={funActive ? { color: 'var(--fun-ai-fg)' } : undefined}>
               <RefreshCw className="h-4 w-4 animate-spin" />
               AI assistants are responding...
             </div>

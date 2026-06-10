@@ -72,6 +72,8 @@ Rules:
 - All colors must be valid CSS \`hsl(H S% L%)\` strings (space-separated, no commas, no alpha).
 - Keep page bg lightness in 8–22% (dark) OR 92–98% (light); pick one regime and stay consistent with previousTheme.
 - Bubble backgrounds must contrast meaningfully from page bg (different lightness).
+- READABILITY IS CRITICAL: each bubble's foreground text MUST have ≥4.5:1 WCAG contrast against its bubble bg. If bubble bg lightness is ≥50%, foreground lightness MUST be ≤25%. If bubble bg lightness is ≤50%, foreground lightness MUST be ≥80%.
+- Accent color MUST be visibly distinct from page bg (≥3:1 contrast).
 - Fonts MUST be from this list exactly: ${FONTS.join(", ")}.
 - Change fonts at most every 4 rounds; otherwise reuse previous fonts.
 - radius: integer 4–28. shadow: one of ${SHADOWS.join("|")}.
