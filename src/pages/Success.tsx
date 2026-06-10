@@ -91,7 +91,7 @@ const Success = () => {
     };
 
     processPayment();
-  }, [sessionId, checkoutId, packageId, provider, isCompleted]);
+  }, [checkoutId, packageId, isCompleted]);
 
   const handleReturnHome = () => {
     navigate('/');
