@@ -184,14 +184,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
       </div>
 
       <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="economics">Economics</TabsTrigger>
           <TabsTrigger value="model-pricing">Model Pricing</TabsTrigger>
           <TabsTrigger value="packages">Packages</TabsTrigger>
           <TabsTrigger value="api-keys">API Keys</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="users" className="space-y-4">
           <AdminUsersTable
