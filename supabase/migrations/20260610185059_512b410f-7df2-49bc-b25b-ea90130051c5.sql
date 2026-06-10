@@ -1,0 +1,1 @@
+UPDATE public.profiles SET custom_system_prompt = NULL WHERE custom_system_prompt IS NOT NULL;
