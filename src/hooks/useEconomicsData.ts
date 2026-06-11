@@ -410,15 +410,39 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
 
   }, [txQ.data, pkgQ.data, pricingQ.data, balanceQ.data]);
 
+      platformAggs,
+      modelAggs,
+      packageAggs,
+      purchases: purchaseRows,
+    };
+
+  }, [txQ.data, pkgQ.data, pricingQ.data, balanceQ.data]);
+
+  // Estimated avg cost per demo call: round-robin GPT-4o-mini / Claude Sonnet 4 / DeepSeek
+  // capped at 140 output tokens. Rough blended ≈ $0.0003 / call.
+  const DEMO_COST_PER_CALL = 0.0003;
+  const demoStats = useMemo(() => {
+    const d = demoQ.data;
+    if (!d) return null;
+    return {
+      ...d,
+      estCostUsd: d.totalCalls * DEMO_COST_PER_CALL,
+      estCostTodayUsd: d.todayCalls * DEMO_COST_PER_CALL,
+      costPerCallUsd: DEMO_COST_PER_CALL,
+    };
+  }, [demoQ.data]);
+
   return {
     ...derived,
-    isLoading: txQ.isLoading || pkgQ.isLoading || pricingQ.isLoading || balanceQ.isLoading,
-    error: txQ.error || pkgQ.error || pricingQ.error || balanceQ.error,
+    demoStats,
+    isLoading: txQ.isLoading || pkgQ.isLoading || pricingQ.isLoading || balanceQ.isLoading || demoQ.isLoading,
+    error: txQ.error || pkgQ.error || pricingQ.error || balanceQ.error || demoQ.error,
     refetch: () => {
       txQ.refetch();
       pkgQ.refetch();
       pricingQ.refetch();
       balanceQ.refetch();
+      demoQ.refetch();
     },
   };
 }
