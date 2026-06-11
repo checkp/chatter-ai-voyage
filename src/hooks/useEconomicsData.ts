@@ -410,13 +410,6 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
 
   }, [txQ.data, pkgQ.data, pricingQ.data, balanceQ.data]);
 
-      platformAggs,
-      modelAggs,
-      packageAggs,
-      purchases: purchaseRows,
-    };
-
-  }, [txQ.data, pkgQ.data, pricingQ.data, balanceQ.data]);
 
   // Estimated avg cost per demo call: round-robin GPT-4o-mini / Claude Sonnet 4 / DeepSeek
   // capped at 140 output tokens. Rough blended ≈ $0.0003 / call.
