@@ -496,6 +496,13 @@ export type Database = {
     }
     Functions: {
       add_daily_tokens: { Args: never; Returns: undefined }
+      deduct_user_tokens: {
+        Args: { p_tokens: number; p_user_id: string }
+        Returns: {
+          new_balance: number
+          new_total_consumed: number
+        }[]
+      }
       is_current_user_admin: { Args: never; Returns: boolean }
       match_user_context: {
         Args: {

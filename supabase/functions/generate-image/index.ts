@@ -239,22 +239,24 @@ serve(async (req) => {
       );
     }
 
-    // Deduct tokens BEFORE returning success. If this fails, roll back the image.
-    const newBalance = userTokens.balance - tokensRequired;
-    const { error: deductError } = await supabase
-      .from('user_tokens')
-      .update({ balance: newBalance, updated_at: new Date().toISOString() })
-      .eq('user_id', user.id);
+    // Atomic deduction (single UPDATE with `WHERE balance >= p_tokens`) prevents
+    // concurrent requests from both passing the pre-check and skipping a charge.
+    const { data: deductData, error: deductError } = await supabase.rpc('deduct_user_tokens', {
+      p_user_id: user.id,
+      p_tokens: tokensRequired,
+    });
 
-    if (deductError) {
+    const deductRow = Array.isArray(deductData) ? deductData[0] : deductData;
+    if (deductError || !deductRow) {
       console.error('Token deduction failed:', deductError);
       await supabase.storage.from('generated-images').remove([fileName]);
       await supabase.from('generated_images').delete().eq('id', imageRecord.id);
       return new Response(
-        JSON.stringify({ error: 'Token deduction failed' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: deductError ? 'Token deduction failed' : 'Insufficient tokens' }),
+        { status: deductError ? 500 : 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    const newBalance = deductRow.new_balance;
 
     // Log the transaction (non-fatal if it fails)
     const { error: txError } = await supabase.from('token_transactions').insert({
