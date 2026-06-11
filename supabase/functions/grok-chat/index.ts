@@ -118,21 +118,19 @@ serve(async (req) => {
     const actualApiCost = (totalTokens / 1000) * apiCostPer1kTokens;
     const tokensToDeduct = Math.max(1, Math.ceil((actualApiCost * 1.20) / 0.001)); // Minimum 1 token
 
-    if (tokenData.balance < tokensToDeduct) {
-      throw new Error('Insufficient tokens for this request');
+    const { data: deductData, error: deductErr } = await supabaseClient.rpc('deduct_user_tokens', {
+      p_user_id: user_id,
+      p_tokens: tokensToDeduct,
+    });
+    if (deductErr) throw new Error(`token deduction failed: ${deductErr.message}`);
+    const deductRow = Array.isArray(deductData) ? deductData[0] : deductData;
+    if (!deductRow) {
+      return new Response(JSON.stringify({ error: 'Insufficient tokens', required: tokensToDeduct, available: tokenData.balance }), {
+        status: 402,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
-
-    // Deduct tokens after successful response
-    const newBalance = tokenData.balance - tokensToDeduct;
-    
-    await supabaseClient
-      .from('user_tokens')
-      .update({ 
-        balance: newBalance,
-        total_consumed: (tokenData.total_consumed || 0) + tokensToDeduct
-      })
-      .eq('user_id', user_id);
-
+    const newBalance = deductRow.new_balance;
     // Log transaction with detailed metadata
     await supabaseClient
       .from('token_transactions')
