@@ -33,6 +33,7 @@ const App = () => (
       <TooltipProvider>
         
         <BrowserRouter>
+          <Analytics />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/landing" element={<Landing />} />
