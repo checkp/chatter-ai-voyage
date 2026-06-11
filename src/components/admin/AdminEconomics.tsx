@@ -57,7 +57,7 @@ const MarginPill: React.FC<{ value: number }> = ({ value }) => {
 
 const AdminEconomics: React.FC = () => {
   const [range, setRange] = useState<EconomicsRange>('30d');
-  const { kpis, platformAggs, modelAggs, packageAggs, purchases, isLoading, error, refetch } = useEconomicsData(range);
+  const { kpis, platformAggs, modelAggs, packageAggs, purchases, demoStats, isLoading, error, refetch } = useEconomicsData(range);
 
   return (
     <div className="space-y-6">
