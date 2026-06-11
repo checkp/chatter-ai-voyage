@@ -139,6 +139,41 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
     refetchOnWindowFocus: false,
   });
 
+  const demoQ = useQuery({
+    queryKey: ['economics-demo-usage', range],
+    queryFn: async () => {
+      const sinceDate = since ? since.slice(0, 10) : '1970-01-01';
+      let daily = supabase
+        .from('demo_daily_usage')
+        .select('day, total_calls')
+        .gte('day', sinceDate)
+        .order('day', { ascending: false });
+      const { data: dailyData, error: dailyErr } = await daily;
+      if (dailyErr) throw dailyErr;
+
+      let users = supabase
+        .from('demo_rate_limits')
+        .select('user_id, day_count, hour_count, updated_at', { count: 'exact' });
+      if (since) users = users.gte('updated_at', since);
+      const { data: usersData, error: usersErr, count: usersCount } = await users;
+      if (usersErr) throw usersErr;
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const totalCalls = (dailyData || []).reduce((s, r: any) => s + (r.total_calls || 0), 0);
+      const today = (dailyData || []).find((r: any) => r.day === todayStr)?.total_calls || 0;
+      const days = (dailyData || []).length || 1;
+      return {
+        totalCalls,
+        todayCalls: today,
+        avgCallsPerDay: totalCalls / days,
+        uniqueUsers: usersCount || (usersData?.length || 0),
+        daily: dailyData || [],
+      };
+    },
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
   const derived = useMemo(() => {
     const txs = txQ.data || [];
     const pkgs = pkgQ.data || [];
@@ -375,15 +410,32 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
 
   }, [txQ.data, pkgQ.data, pricingQ.data, balanceQ.data]);
 
+
+  // Estimated avg cost per demo call: round-robin GPT-4o-mini / Claude Sonnet 4 / DeepSeek
+  // capped at 140 output tokens. Rough blended ≈ $0.0003 / call.
+  const DEMO_COST_PER_CALL = 0.0003;
+  const demoStats = useMemo(() => {
+    const d = demoQ.data;
+    if (!d) return null;
+    return {
+      ...d,
+      estCostUsd: d.totalCalls * DEMO_COST_PER_CALL,
+      estCostTodayUsd: d.todayCalls * DEMO_COST_PER_CALL,
+      costPerCallUsd: DEMO_COST_PER_CALL,
+    };
+  }, [demoQ.data]);
+
   return {
     ...derived,
-    isLoading: txQ.isLoading || pkgQ.isLoading || pricingQ.isLoading || balanceQ.isLoading,
-    error: txQ.error || pkgQ.error || pricingQ.error || balanceQ.error,
+    demoStats,
+    isLoading: txQ.isLoading || pkgQ.isLoading || pricingQ.isLoading || balanceQ.isLoading || demoQ.isLoading,
+    error: txQ.error || pkgQ.error || pricingQ.error || balanceQ.error || demoQ.error,
     refetch: () => {
       txQ.refetch();
       pkgQ.refetch();
       pricingQ.refetch();
       balanceQ.refetch();
+      demoQ.refetch();
     },
   };
 }

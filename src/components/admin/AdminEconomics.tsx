@@ -57,7 +57,7 @@ const MarginPill: React.FC<{ value: number }> = ({ value }) => {
 
 const AdminEconomics: React.FC = () => {
   const [range, setRange] = useState<EconomicsRange>('30d');
-  const { kpis, platformAggs, modelAggs, packageAggs, purchases, isLoading, error, refetch } = useEconomicsData(range);
+  const { kpis, platformAggs, modelAggs, packageAggs, purchases, demoStats, isLoading, error, refetch } = useEconomicsData(range);
 
   return (
     <div className="space-y-6">
@@ -143,6 +143,66 @@ const AdminEconomics: React.FC = () => {
           tone="warn"
         />
       </div>
+
+      {/* Free demo chat usage (unauthenticated landing-page chat) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Free demo chat usage</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!demoStats ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">Loading…</div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                <Kpi
+                  label="Calls today"
+                  value={num(demoStats.todayCalls)}
+                  sub={`~${usdFine(demoStats.estCostTodayUsd)} est. cost`}
+                />
+                <Kpi
+                  label="Calls in range"
+                  value={num(demoStats.totalCalls)}
+                  sub={`Avg ${num(demoStats.avgCallsPerDay)} / day`}
+                />
+                <Kpi
+                  label="Unique demo users"
+                  value={num(demoStats.uniqueUsers)}
+                  sub="Anonymous sessions"
+                />
+                <Kpi
+                  label="Est. demo cost"
+                  value={usd(demoStats.estCostUsd)}
+                  sub={`@ ${usdFine(demoStats.costPerCallUsd)} / call`}
+                  tone="warn"
+                />
+              </div>
+              {demoStats.daily.length > 0 && (
+                <div className="mt-4 overflow-auto rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Day</TableHead>
+                        <TableHead className="text-right">Calls</TableHead>
+                        <TableHead className="text-right">Est. cost</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {demoStats.daily.slice(0, 14).map((d: any) => (
+                        <TableRow key={d.day}>
+                          <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{d.day}</TableCell>
+                          <TableCell className="text-right">{num(d.total_calls)}</TableCell>
+                          <TableCell className="text-right">{usdFine(d.total_calls * demoStats.costPerCallUsd)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Purchases list */}
       <Card>
