@@ -1,4 +1,5 @@
-// Single source of truth for converting provider USD cost into app tokens.
+// Single source of truth for converting provider USD cost into app tokens
+// and atomically deducting tokens to prevent TOCTOU race conditions.
 //
 // Formula:
 //   tokens = ceil((api_cost_usd * MARGIN) / APP_TOKEN_USD)
@@ -24,8 +25,8 @@ export function textCostUsd(per1kUsd: number, providerTokens: number): number {
 export interface ChargeOpts {
   platform: string;
   model: string;
-  providerTokens?: number;        // provider-side token count (text models)
-  apiCostUsd: number;             // real USD cost we pay the provider
+  providerTokens?: number;
+  apiCostUsd: number;
   description?: string;
   extra?: Record<string, unknown>;
 }
@@ -35,12 +36,20 @@ export interface ChargeResult {
   newBalance: number;
 }
 
+export class InsufficientTokensError extends Error {
+  constructor(public tokensRequired: number) {
+    super("Insufficient tokens");
+    this.name = "InsufficientTokensError";
+  }
+}
+
 /**
- * Deducts tokens from the user, writes a consumption transaction with full
- * pricing metadata, and returns the new balance.
+ * Atomically deducts tokens via the `deduct_user_tokens` RPC, which performs a
+ * single `UPDATE ... WHERE balance >= p_tokens RETURNING balance` so that two
+ * concurrent requests cannot both pass the check and skip a deduction.
  *
- * Throws if the user has no token row or the deduction fails — callers should
- * roll back any side effects (e.g. uploaded image) and surface a 500.
+ * Throws `InsufficientTokensError` if the user lacks balance (caller should
+ * return HTTP 402). Throws a generic Error on DB failure.
  */
 export async function chargeUser(
   // deno-lint-ignore no-explicit-any
@@ -50,28 +59,16 @@ export async function chargeUser(
 ): Promise<ChargeResult> {
   const tokensCharged = usdToTokens(opts.apiCostUsd);
 
-  const { data: tokenRow, error: readErr } = await supabase
-    .from("user_tokens")
-    .select("balance, total_consumed")
-    .eq("user_id", userId)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("deduct_user_tokens", {
+    p_user_id: userId,
+    p_tokens: tokensCharged,
+  });
 
-  if (readErr) throw new Error(`token read failed: ${readErr.message}`);
-  if (!tokenRow) throw new Error("user has no token balance row");
+  if (error) throw new Error(`token deduction failed: ${error.message}`);
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) throw new InsufficientTokensError(tokensCharged);
 
-  const newBalance = Math.max(0, (tokenRow.balance ?? 0) - tokensCharged);
-  const newConsumed = (tokenRow.total_consumed ?? 0) + tokensCharged;
-
-  const { error: updErr } = await supabase
-    .from("user_tokens")
-    .update({
-      balance: newBalance,
-      total_consumed: newConsumed,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", userId);
-
-  if (updErr) throw new Error(`token update failed: ${updErr.message}`);
+  const newBalance = row.new_balance ?? row.newBalance ?? 0;
 
   const { error: txErr } = await supabase.from("token_transactions").insert({
     user_id: userId,
@@ -92,7 +89,6 @@ export async function chargeUser(
   });
 
   if (txErr) {
-    // Tx log failure is non-fatal for the user but should be visible in logs.
     console.error("[billing] transaction log failed:", txErr.message);
   }
 
@@ -102,7 +98,6 @@ export async function chargeUser(
 /**
  * Pre-call balance check. Uses model_pricing.tokens_per_message as a
  * conservative floor so zero-balance users don't trigger paid API calls.
- * Returns the floor used; caller must compare with current balance and 402.
  */
 export function preflightFloor(tokensPerMessage: number | null | undefined): number {
   return Math.max(1, Number(tokensPerMessage) || 1);
