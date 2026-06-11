@@ -135,15 +135,19 @@ serve(async (req) => {
 
     console.log(`Perplexity usage: ${totalTokens} tokens, cost: $${actualApiCost}, deducting: ${tokensToDeduct}`);
 
-    if (tokenData.balance < tokensToDeduct) throw new Error('Insufficient tokens');
-
-    const newBalance = tokenData.balance - tokensToDeduct;
-    
-    await supabaseClient
-      .from('user_tokens')
-      .update({ balance: newBalance, total_consumed: (tokenData.total_consumed || 0) + tokensToDeduct })
-      .eq('user_id', user_id);
-
+    const { data: deductData, error: deductErr } = await supabaseClient.rpc('deduct_user_tokens', {
+      p_user_id: user_id,
+      p_tokens: tokensToDeduct,
+    });
+    if (deductErr) throw new Error(`token deduction failed: ${deductErr.message}`);
+    const deductRow = Array.isArray(deductData) ? deductData[0] : deductData;
+    if (!deductRow) {
+      return new Response(JSON.stringify({ error: 'Insufficient tokens', required: tokensToDeduct, available: tokenData.balance }), {
+        status: 402,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const newBalance = deductRow.new_balance;
     await supabaseClient
       .from('token_transactions')
       .insert({
