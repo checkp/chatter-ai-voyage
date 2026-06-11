@@ -17,6 +17,7 @@ import Help from "./pages/Help";
 import Features from "./pages/Features";
 import WhatsNew from "./pages/WhatsNew";
 import Terms from "./pages/Terms";
+import Analytics from "./components/Analytics";
 import { loadAIModelsFromDB } from "@/config/aiModels";
 
 // Hydrate the AI model catalog from the DB pricing table at app boot.
@@ -32,6 +33,7 @@ const App = () => (
       <TooltipProvider>
         
         <BrowserRouter>
+          <Analytics />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/landing" element={<Landing />} />
