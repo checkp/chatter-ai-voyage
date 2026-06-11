@@ -139,6 +139,41 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
     refetchOnWindowFocus: false,
   });
 
+  const demoQ = useQuery({
+    queryKey: ['economics-demo-usage', range],
+    queryFn: async () => {
+      const sinceDate = since ? since.slice(0, 10) : '1970-01-01';
+      let daily = supabase
+        .from('demo_daily_usage')
+        .select('day, total_calls')
+        .gte('day', sinceDate)
+        .order('day', { ascending: false });
+      const { data: dailyData, error: dailyErr } = await daily;
+      if (dailyErr) throw dailyErr;
+
+      let users = supabase
+        .from('demo_rate_limits')
+        .select('user_id, day_count, hour_count, updated_at', { count: 'exact' });
+      if (since) users = users.gte('updated_at', since);
+      const { data: usersData, error: usersErr, count: usersCount } = await users;
+      if (usersErr) throw usersErr;
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const totalCalls = (dailyData || []).reduce((s, r: any) => s + (r.total_calls || 0), 0);
+      const today = (dailyData || []).find((r: any) => r.day === todayStr)?.total_calls || 0;
+      const days = (dailyData || []).length || 1;
+      return {
+        totalCalls,
+        todayCalls: today,
+        avgCallsPerDay: totalCalls / days,
+        uniqueUsers: usersCount || (usersData?.length || 0),
+        daily: dailyData || [],
+      };
+    },
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
   const derived = useMemo(() => {
     const txs = txQ.data || [];
     const pkgs = pkgQ.data || [];
