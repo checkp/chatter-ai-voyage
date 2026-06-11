@@ -9,9 +9,41 @@ const LandingHero: React.FC = () => {
   };
 
   return (
-    <div className="text-center max-w-4xl mx-auto mb-8 md:mb-16">
-      {/* Cloud-shaped Launch button — warm palette, no background scene */}
-      <div className="flex justify-center mb-8 md:mb-12">
+    <div className="text-center md:text-left max-w-4xl mx-auto md:mx-0">
+      {/* Logo only on mobile — sits above everything */}
+      <img
+        src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png"
+        alt="RoboHeard Logo"
+        className="md:hidden w-full max-w-[140px] h-auto object-contain mx-auto mb-3 cursor-pointer hover:opacity-80 transition-opacity"
+        onClick={() => window.location.href = '/auth'}
+      />
+
+      <div className="flex justify-center md:justify-start mb-2">
+        <Badge variant="outline" className="text-primary border-primary/20">
+          <Sparkles className="mr-2 h-4 w-4" />
+          2026 — Agentic AI, refined
+        </Badge>
+      </div>
+
+      <h1
+        className="font-bold text-foreground mb-3 md:mb-4 leading-tight"
+        style={{ fontSize: 'clamp(1.75rem, 4.5vw + 0.5rem, 3.75rem)' }}
+      >
+        Eight Frontier Models,
+        <span className="text-primary"> One Conductor</span>
+      </h1>
+
+      <p
+        className="text-muted-foreground mb-4 md:mb-6 leading-relaxed px-2 md:px-0"
+        style={{ fontSize: 'clamp(0.95rem, 1.1vw + 0.5rem, 1.15rem)' }}
+      >
+        A quiet orchestrator for <strong>GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek-R2, Mistral, Perplexity</strong> and now <strong>Qwen</strong>.
+        Compare answers side by side, run live market research, or let eight minds debate a single question — together.
+      </p>
+
+      {/* Cloud-shaped Start button — dynamically sized to the viewport so it
+          never gets pushed off-screen on short displays. */}
+      <div className="flex justify-center md:justify-start">
         <button
           onClick={handleGetStarted}
           aria-label="Launch RoboHeard"
@@ -19,11 +51,12 @@ const LandingHero: React.FC = () => {
           style={{
             filter: 'drop-shadow(0 14px 22px rgba(180, 150, 50, 0.35)) drop-shadow(0 4px 8px rgba(120, 100, 30, 0.2))',
             animation: 'cloudFloat 5s ease-in-out infinite',
+            width: 'clamp(150px, 22vh, 240px)',
           }}
         >
           <svg
             viewBox="0 0 280 160"
-            className="w-44 sm:w-52 md:w-64"
+            className="w-full h-auto"
             aria-hidden
           >
             <defs>
@@ -64,31 +97,7 @@ const LandingHero: React.FC = () => {
             75%      { transform: translate(-5px, -4px) rotate(0.5deg); }
           }
         `}</style>
-
       </div>
-
-      {/* Logo only on mobile */}
-      <img
-        src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png"
-        alt="RoboHeard Logo"
-        className="md:hidden w-full max-w-[180px] h-auto object-contain mx-auto mb-4 cursor-pointer hover:opacity-80 transition-opacity"
-        onClick={() => window.location.href = '/auth'}
-      />
-
-      <Badge variant="outline" className="mb-4 md:mb-6 text-primary border-primary/20">
-        <Sparkles className="mr-2 h-4 w-4" />
-        2026 — Agentic AI, refined
-      </Badge>
-
-      <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold text-foreground mb-4 md:mb-6">
-        Eight Frontier Models,
-        <span className="text-primary"> One Conductor</span>
-      </h1>
-
-      <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 md:mb-8 leading-relaxed px-4 md:px-0">
-        A quiet orchestrator for <strong>GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek-R2, Mistral, Perplexity</strong> and now <strong>Qwen</strong>.
-        Compare answers side by side, run live market research, or let eight minds debate a single question — together.
-      </p>
     </div>
   );
 };
