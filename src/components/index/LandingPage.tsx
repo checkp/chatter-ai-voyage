@@ -36,7 +36,7 @@ const LandingPage: React.FC = () => {
       </header>
 
       {/* Desktop top nav — quiet, text-only */}
-      <nav className="hidden md:flex items-center justify-end gap-6 px-8 pt-6 text-sm">
+      <nav className="hidden md:flex items-center justify-end gap-6 px-8 pt-4 text-sm h-12">
         <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">
           Features
         </Link>
@@ -51,26 +51,30 @@ const LandingPage: React.FC = () => {
         </Link>
       </nav>
 
-      <div className="container mx-auto px-4 py-8 md:py-12">
-        {/* Desktop: demo chat left, logo right */}
-        <div className="hidden md:flex items-stretch gap-8 mb-8">
-          <div className="flex-1 min-w-0">
-            <DemoChat />
+      {/* FIRST FOLD — guaranteed to fit on a normal-height screen.
+          Desktop: hero (with Start) on the left, logo on the right.
+          Mobile: hero stacks naturally and includes its own mobile logo. */}
+      <section className="container mx-auto px-4 md:min-h-[calc(100svh-3.5rem)] md:flex md:items-center py-4 md:py-0">
+        <div className="w-full grid md:grid-cols-2 md:gap-10 items-center">
+          <div className="min-w-0">
+            <LandingHero />
           </div>
-          <div className="flex-1 min-w-0 flex items-center justify-center relative">
+          <div className="hidden md:flex items-center justify-center relative min-w-0">
             <img
               src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png"
               alt="RoboHeard Logo"
-              className="h-full w-auto max-w-full max-h-[600px] object-contain cursor-pointer hover-scale hover:brightness-110 transition-all duration-300"
+              className="w-auto max-w-full max-h-[min(70svh,560px)] object-contain cursor-pointer hover-scale hover:brightness-110 transition-all duration-300"
               onClick={() => navigate('/auth')}
             />
             <SheepBubbles />
           </div>
         </div>
+      </section>
 
+      <div className="container mx-auto px-4 py-8 md:py-12 space-y-8 md:space-y-12">
+        {/* Demo chat — moved below the fold so the Start button is always visible first */}
+        <DemoChat />
 
-        {/* Hero text — always centered, full width */}
-        <LandingHero />
         <ConductorShowcase />
         <UseCases />
         <FeaturesGrid />
