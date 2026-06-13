@@ -171,11 +171,11 @@
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-TMXE4NJCKP"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      // GA4 — manual page_view so SPA route changes can fire their own
-      gtag('config', 'G-TMXE4NJCKP', { send_page_view: false });
-      gtag('config', 'AW-17261200649');
+      window.gtag = window.gtag || function(){ window.dataLayer.push(arguments); };
+      window.gtag('js', new Date());
+      // Initial page_view fires automatically; SPA route changes fire via Analytics.tsx
+      window.gtag('config', 'G-TMXE4NJCKP', { send_page_view: true });
+      window.gtag('config', 'AW-17261200649');
     </script>
 
     <!-- Preconnect for performance -->
