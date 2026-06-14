@@ -62,14 +62,6 @@ const SideBySideLayout: React.FC<SideBySideLayoutProps> = ({
                   <span className="font-medium text-white text-xs truncate leading-tight">{platform.name}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onTogglePlatform(platform.id)}
-                    className="h-5 w-5 p-0 text-white hover:bg-white/20"
-                  >
-                    {platform.enabled ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                  </Button>
                   {activeAIStatuses[platform.id] && (
                     <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4 animate-pulse leading-none">
                       ●
