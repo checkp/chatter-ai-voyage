@@ -97,7 +97,6 @@ const DraggableAIStatusBar: React.FC<DraggableAIStatusBarProps> = ({
   return (
     <>
       <div className="flex items-center gap-4">
-        // <span className="text-sm font-medium text-muted-foreground">AI Agents:</span>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={sortedPlatforms.map((p) => p.id)} strategy={horizontalListSortingStrategy}>
             <div className="flex items-center gap-3 flex-wrap">
