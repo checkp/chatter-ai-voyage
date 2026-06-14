@@ -198,6 +198,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
               onAgentClick={(platform) => {
                 console.log('Agent clicked:', platform.name);
               }}
+              onToggleEnabled={togglePlatform}
               currentChat={currentChatWithMessages}
               onSendMessage={handleSingleAgentMessage}
             />
