@@ -215,11 +215,12 @@ const SettingsOverlay: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         >
           <X className="h-4 w-4" />
         </Button>
-        <ScrollArea className="max-h-[85vh]">
+        <div className="max-h-[85vh] overflow-y-auto">
           <div className="p-4">
             <SettingsPanel />
           </div>
-        </ScrollArea>
+        </div>
+
       </div>
     </div>
   );
