@@ -43,7 +43,7 @@ const SideBySideLayout: React.FC<SideBySideLayoutProps> = ({
 
   return (
     <div className="h-full overflow-x-auto">
-      <div className="flex gap-4 h-full p-4" style={{ minWidth: `${visiblePlatforms.length * 340}px` }}>
+      <div className="flex gap-1.5 h-full p-1.5" style={{ minWidth: `${visiblePlatforms.length * 320}px` }}>
         {visiblePlatforms.map((platform) => {
           let agentMessages = safeMessages;
           
@@ -54,35 +54,35 @@ const SideBySideLayout: React.FC<SideBySideLayoutProps> = ({
           }
 
           return (
-            <div key={platform.id} className="flex flex-col h-full border rounded-lg bg-background w-80 flex-shrink-0">
-              {/* Agent Header */}
-              <div className={`p-3 border-b ${platform.color} flex items-center justify-between flex-shrink-0`}>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{platform.icon}</span>
-                  <span className="font-medium text-white">{platform.name}</span>
+            <div key={platform.id} className="flex flex-col h-full border rounded-md bg-background w-80 flex-shrink-0 overflow-hidden">
+              {/* Agent Header - slim */}
+              <div className={`px-2 py-1 border-b ${platform.color} flex items-center justify-between flex-shrink-0 gap-2`}>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-xs leading-none">{platform.icon}</span>
+                  <span className="font-medium text-white text-xs truncate leading-tight">{platform.name}</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => onTogglePlatform(platform.id)}
-                    className="h-6 w-6 p-0 text-white hover:bg-white/20"
+                    className="h-5 w-5 p-0 text-white hover:bg-white/20"
                   >
-                    {platform.enabled ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                    {platform.enabled ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
                   </Button>
                   {activeAIStatuses[platform.id] && (
-                    <Badge variant="secondary" className="text-xs animate-pulse">
-                      Responding...
+                    <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4 animate-pulse leading-none">
+                      ●
                     </Badge>
                   )}
-                  <Badge variant="outline" className="text-xs text-white border-white/20">
+                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 text-white border-white/30 leading-none">
                     {agentMessages.filter(m => m.platform === platform.id).length}
                   </Badge>
                 </div>
               </div>
 
               {/* Agent Messages - independent vertical scroll */}
-              <div className="flex-1 overflow-y-auto min-h-0 p-4">
+              <div className="flex-1 overflow-y-auto min-h-0 p-2">
                 <ChatMessages
                   messages={agentMessages}
                   isLoadingMessages={false}
