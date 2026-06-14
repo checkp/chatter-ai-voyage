@@ -60,7 +60,9 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             <div className="space-y-0">
               {chats?.filter(chat => !chat.title.startsWith('Conductor: ')).map((chat, idx, arr) => {
                 const seed = chat.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-                const targetWidth = 90; // px, consistent line length
+                const baseWidth = 180; // px, twice the previous length
+                const tailExtra = (seed * 13) % 40; // 0-39px random tail per chat
+                const targetWidth = baseWidth + tailExtra;
                 const dotW = 2, dashW = 10, gap = 4;
                 const marks: ('dot' | 'dash')[] = [];
                 let used = 0;
