@@ -13,9 +13,10 @@ interface SortableAgentProps {
   platform: AIPlatform;
   status: string;
   onAgentClick: (platform: AIPlatform) => void;
+  onToggleEnabled?: (platformId: string) => void;
 }
 
-const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onAgentClick }) => {
+const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onAgentClick, onToggleEnabled }) => {
   const {
     attributes,
     listeners,
@@ -34,11 +35,17 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onAgent
   const Icon = getPlatformIcon(platform.id);
   const isEnabled = platform.enabled && platform.hasApiKey;
 
-  const handleClick = (e: React.MouseEvent) => {
-    // Prevent click during drag
+  const handleBadgeClick = (e: React.MouseEvent) => {
     if (!isDragging && isEnabled) {
       onAgentClick(platform);
     }
+  };
+
+  const handleIconToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isDragging) return;
+    if (!platform.hasApiKey) return; // can't toggle without an API key
+    onToggleEnabled?.(platform.id);
   };
 
   return (
@@ -54,16 +61,25 @@ const SortableAgent: React.FC<SortableAgentProps> = ({ platform, status, onAgent
       >
         <GripVertical className="w-3 h-3 text-foreground/80 group-hover:text-foreground transition-colors" />
       </div>
-      
-      <div className="flex items-center gap-2" onClick={handleClick}>
+
+      <div className="flex items-center gap-2">
         <div className="flex items-center gap-1">
-          <Icon className={`w-4 h-4 ${isEnabled ? 'text-muted-foreground' : 'text-gray-400'}`} />
-          <div 
+          <button
+            type="button"
+            onClick={handleIconToggle}
+            title={`${platform.name}: click to ${platform.enabled ? 'disable' : 'enable'}`}
+            disabled={!platform.hasApiKey}
+            className={`p-0.5 rounded hover:bg-muted/60 transition-colors ${!platform.hasApiKey ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+          >
+            <Icon className={`w-4 h-4 ${isEnabled ? 'text-muted-foreground' : 'text-gray-400'}`} />
+          </button>
+          <div
             className={`w-2 h-2 rounded-full ${getStatusColor(status, isEnabled)} ${getStatusAnimation(status, isEnabled)}`}
           />
         </div>
         <Badge
           variant="outline"
+          onClick={handleBadgeClick}
           title={`${platform.name}: ${isEnabled ? status : 'disabled'}`}
           className={`text-xs cursor-pointer hover:opacity-80 transition-opacity ${
             !isEnabled ? 'bg-gray-100 text-gray-400 border-gray-300' :
