@@ -2,7 +2,7 @@ import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Grid3X3, Eye, EyeOff } from 'lucide-react';
+import { Grid3X3 } from 'lucide-react';
 import ChatMessages from '@/components/ChatMessages';
 import type { Message, AIPlatform } from '@/types/chat';
 
