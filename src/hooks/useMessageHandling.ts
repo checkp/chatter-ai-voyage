@@ -39,12 +39,13 @@ export const useMessageHandling = (
   }, [activeAIStatuses]);
 
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ chatId, userMessage }: { chatId: string; userMessage: string }) => {
+    mutationFn: async ({ chatId, userMessage, attachments }: { chatId: string; userMessage: string; attachments?: Attachment[] }) => {
       if (!user) throw new Error('User not authenticated');
 
       console.log('=== SEND MESSAGE MUTATION START ===');
       console.log('Chat ID:', chatId);
       console.log('User message:', userMessage);
+      console.log('Attachments:', attachments?.length || 0);
       console.log('Chat mode:', chatMode);
 
       // Get current messages
@@ -58,7 +59,8 @@ export const useMessageHandling = (
         sender: 'user',
         created_at: new Date().toISOString(),
         conversation_id: chatId,
-        timestamp: new Date()
+        timestamp: new Date(),
+        attachments: attachments && attachments.length > 0 ? attachments : [],
       };
 
       // Add user message to local state immediately
@@ -74,7 +76,8 @@ export const useMessageHandling = (
           conversation_id: chatId,
           content: userMessageObj.content,
           sender: userMessageObj.sender,
-          created_at: userMessageObj.created_at
+          created_at: userMessageObj.created_at,
+          attachments: (userMessageObj.attachments || []) as any,
         });
 
       if (userMsgError) {
