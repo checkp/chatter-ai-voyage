@@ -111,6 +111,7 @@ const DraggableAIStatusBar: React.FC<DraggableAIStatusBarProps> = ({
                     platform={platform}
                     status={status}
                     onAgentClick={handlePlatformClick}
+                    onToggleEnabled={onToggleEnabled}
                   />
                 );
               })}
