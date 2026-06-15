@@ -25,8 +25,25 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = 'gpt-4o-mini' } = await req.json();
+    const { messages, model = 'gpt-4o-mini', attachments } = await req.json();
     const user_id = user.id;
+
+    // If the client sent image attachments and the model supports vision,
+    // splice them into the LAST user message as OpenAI multimodal content blocks.
+    const visionModels = /^(gpt-4o|gpt-4o-mini|gpt-4-turbo|gpt-5)/;
+    if (Array.isArray(attachments) && attachments.length > 0 && visionModels.test(model)) {
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].role === 'user') {
+          const textPart = { type: 'text', text: messages[i].content };
+          const imageParts = attachments
+            .filter((a: any) => typeof a?.dataUrl === 'string' && a.dataUrl.startsWith('data:image/'))
+            .slice(0, 4)
+            .map((a: any) => ({ type: 'image_url', image_url: { url: a.dataUrl } }));
+          messages[i] = { role: 'user', content: [textPart, ...imageParts] };
+          break;
+        }
+      }
+    }
     
     // Check token balance - create if doesn't exist
     let { data: tokenData, error: tokenError } = await supabaseClient

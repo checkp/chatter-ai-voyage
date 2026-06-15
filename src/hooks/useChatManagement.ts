@@ -94,7 +94,8 @@ export const useChatManagement = (user: any) => {
         platform: msg.platform,
         created_at: msg.created_at,
         conversation_id: msg.conversation_id,
-        timestamp: new Date(msg.created_at)
+        timestamp: new Date(msg.created_at),
+        attachments: Array.isArray((msg as any).attachments) ? (msg as any).attachments : [],
       }));
     } catch (error: any) {
       console.error('Failed to fetch messages:', error);

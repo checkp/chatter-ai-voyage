@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
-import type { AIPlatform, Message, ChatMode } from '@/types/chat';
+import type { AIPlatform, Message, ChatMode, Attachment } from '@/types/chat';
 import { generateChatId } from '@/utils/chatUtils';
 import { useTokens } from '@/hooks/useTokens';
 import { useActivityLog } from '@/contexts/ActivityLogContext';
@@ -39,12 +39,13 @@ export const useMessageHandling = (
   }, [activeAIStatuses]);
 
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ chatId, userMessage }: { chatId: string; userMessage: string }) => {
+    mutationFn: async ({ chatId, userMessage, attachments }: { chatId: string; userMessage: string; attachments?: Attachment[] }) => {
       if (!user) throw new Error('User not authenticated');
 
       console.log('=== SEND MESSAGE MUTATION START ===');
       console.log('Chat ID:', chatId);
       console.log('User message:', userMessage);
+      console.log('Attachments:', attachments?.length || 0);
       console.log('Chat mode:', chatMode);
 
       // Get current messages
@@ -58,7 +59,8 @@ export const useMessageHandling = (
         sender: 'user',
         created_at: new Date().toISOString(),
         conversation_id: chatId,
-        timestamp: new Date()
+        timestamp: new Date(),
+        attachments: attachments && attachments.length > 0 ? attachments : [],
       };
 
       // Add user message to local state immediately
@@ -74,7 +76,8 @@ export const useMessageHandling = (
           conversation_id: chatId,
           content: userMessageObj.content,
           sender: userMessageObj.sender,
-          created_at: userMessageObj.created_at
+          created_at: userMessageObj.created_at,
+          attachments: (userMessageObj.attachments || []) as any,
         });
 
       if (userMsgError) {
@@ -268,17 +271,11 @@ export const useMessageHandling = (
     },
   });
 
-  const handleSend = useCallback(async (chatId: string | null) => {
-    if (!input.trim() || !chatId || sendMessageMutation.isPending) return;
+  const handleSend = useCallback(async (chatId: string | null, attachments?: Attachment[]) => {
+    if ((!input.trim() && (!attachments || attachments.length === 0)) || !chatId || sendMessageMutation.isPending) return;
 
-    const trimmed = input.trim();
-
-    // Note: image-generation intent is now handled in ChatInput by opening
-    // the multi-model picker (which fans out to all selected image models).
-
-
-    console.log('handleSend called with chatId:', chatId, 'input length:', input.length);
-    sendMessageMutation.mutate({ chatId, userMessage: input.trim() });
+    console.log('handleSend called with chatId:', chatId, 'input length:', input.length, 'attachments:', attachments?.length || 0);
+    sendMessageMutation.mutate({ chatId, userMessage: input.trim(), attachments });
   }, [input, sendMessageMutation, queryClient, addEntry]);
 
   const handleStop = useCallback(() => {
