@@ -107,8 +107,9 @@ export const useConductorHooks = ({
         ...msg,
         sender: msg.sender as 'user' | 'ai',
         platform: msg.platform || undefined,
-        timestamp: new Date(msg.created_at)
-      })) || [];
+        timestamp: new Date(msg.created_at),
+        attachments: (Array.isArray((msg as any).attachments) ? (msg as any).attachments : []) as any,
+      })) as any[] || [];
     },
     enabled: !!conductorConversationId && activeChatMode === 'conductor'
   });
