@@ -31,7 +31,7 @@ interface MainContentProps {
   activeChatId: string | null;
   input: string;
   setInput: (input: string) => void;
-  handleSend: (activeChatId: string | null) => void;
+  handleSend: (activeChatId: string | null, attachments?: import('@/types/chat').Attachment[]) => void;
   handleStop: () => void;
   sendMessageMutation: any;
   canStop: boolean;
