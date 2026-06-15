@@ -271,17 +271,11 @@ export const useMessageHandling = (
     },
   });
 
-  const handleSend = useCallback(async (chatId: string | null) => {
-    if (!input.trim() || !chatId || sendMessageMutation.isPending) return;
+  const handleSend = useCallback(async (chatId: string | null, attachments?: Attachment[]) => {
+    if ((!input.trim() && (!attachments || attachments.length === 0)) || !chatId || sendMessageMutation.isPending) return;
 
-    const trimmed = input.trim();
-
-    // Note: image-generation intent is now handled in ChatInput by opening
-    // the multi-model picker (which fans out to all selected image models).
-
-
-    console.log('handleSend called with chatId:', chatId, 'input length:', input.length);
-    sendMessageMutation.mutate({ chatId, userMessage: input.trim() });
+    console.log('handleSend called with chatId:', chatId, 'input length:', input.length, 'attachments:', attachments?.length || 0);
+    sendMessageMutation.mutate({ chatId, userMessage: input.trim(), attachments });
   }, [input, sendMessageMutation, queryClient, addEntry]);
 
   const handleStop = useCallback(() => {
