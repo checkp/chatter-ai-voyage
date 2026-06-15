@@ -403,25 +403,37 @@ ${languageLock}`;
 
     const selectedModel = resolvePlatformModel(platform.id, platform.selectedModel);
 
-    console.log(`Calling ${platform.name} API in ${chatMode} mode with ${conversationHistory.length} messages and model: ${selectedModel}`);
-    
+    // Extract attachments from the latest user message — pass them through to
+    // the provider edge function only if the selected model can actually
+    // consume them. For text-only models we silently drop, matching the
+    // "skip unsupported attachments" plan.
+    const lastUserMsg = [...messages].reverse().find(m => m.sender === 'user');
+    const rawAttachments = lastUserMsg?.attachments && lastUserMsg.attachments.length > 0
+      ? lastUserMsg.attachments
+      : undefined;
+    const attachments = rawAttachments && modelSupports(selectedModel, 'vision')
+      ? rawAttachments
+      : undefined;
+
+    console.log(`Calling ${platform.name} API in ${chatMode} mode with ${conversationHistory.length} messages and model: ${selectedModel}${attachments ? ` (+${attachments.length} attachments)` : ''}`);
+
     switch (platform.id) {
       case 'anthropic':
-        return await callClaudeAPI(conversationHistory, selectedModel);
+        return await callClaudeAPI(conversationHistory, selectedModel, attachments);
       case 'openai':
-        return await callOpenAI(conversationHistory, user, selectedModel);
+        return await callOpenAI(conversationHistory, user, selectedModel, attachments);
       case 'deepseek':
-        return await callDeepSeek(conversationHistory, user, selectedModel);
+        return await callDeepSeek(conversationHistory, user, selectedModel, attachments);
       case 'grok':
-        return await callGrokAPI(conversationHistory, user, selectedModel);
+        return await callGrokAPI(conversationHistory, user, selectedModel, attachments);
       case 'google':
-        return await callGeminiAPI(conversationHistory, user, selectedModel);
+        return await callGeminiAPI(conversationHistory, user, selectedModel, attachments);
       case 'mistral':
-        return await callMistralAPI(conversationHistory, user, selectedModel);
+        return await callMistralAPI(conversationHistory, user, selectedModel, attachments);
       case 'perplexity':
-        return await callPerplexityAPI(conversationHistory, user, selectedModel);
+        return await callPerplexityAPI(conversationHistory, user, selectedModel, attachments);
       case 'qwen':
-        return await callQwenAPI(conversationHistory, user, selectedModel);
+        return await callQwenAPI(conversationHistory, user, selectedModel, attachments);
       default:
         throw new Error(`Unsupported platform: ${platform.id}`);
     }
