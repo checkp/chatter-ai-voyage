@@ -407,9 +407,9 @@ ${languageLock}`;
     // the provider edge function only if the selected model can actually
     // consume them. For text-only models we silently drop, matching the
     // "skip unsupported attachments" plan.
-    const lastUserMsg = [...messages].reverse().find(m => m.sender === 'user');
-    const rawAttachments = lastUserMsg?.attachments && lastUserMsg.attachments.length > 0
-      ? lastUserMsg.attachments
+    const lastUserMsgObj = [...messages].reverse().find(m => m.sender === 'user');
+    const rawAttachments = lastUserMsgObj?.attachments && lastUserMsgObj.attachments.length > 0
+      ? lastUserMsgObj.attachments
       : undefined;
     const attachments = rawAttachments && modelSupports(selectedModel, 'vision')
       ? rawAttachments
