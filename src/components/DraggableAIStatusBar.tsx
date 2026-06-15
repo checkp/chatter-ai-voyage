@@ -23,6 +23,7 @@ interface DraggableAIStatusBarProps {
   activeAIStatuses: Record<string, "thinking" | "responding" | "completed" | "error">;
   onReorder: (reorderedPlatforms: AIPlatform[]) => void;
   onAgentClick?: (platform: AIPlatform) => void;
+  onToggleEnabled?: (platformId: string) => void;
   currentChat?: Chat | null;
   onSendMessage?: (message: string, platformId: string) => void;
 }
@@ -32,6 +33,7 @@ const DraggableAIStatusBar: React.FC<DraggableAIStatusBarProps> = ({
   activeAIStatuses,
   onReorder,
   onAgentClick,
+  onToggleEnabled,
   currentChat,
   onSendMessage,
 }) => {
