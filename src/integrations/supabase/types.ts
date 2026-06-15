@@ -199,6 +199,7 @@ export type Database = {
       }
       messages: {
         Row: {
+          attachments: Json
           content: string
           conversation_id: string
           created_at: string
@@ -207,6 +208,7 @@ export type Database = {
           sender: string
         }
         Insert: {
+          attachments?: Json
           content: string
           conversation_id: string
           created_at?: string
@@ -215,6 +217,7 @@ export type Database = {
           sender: string
         }
         Update: {
+          attachments?: Json
           content?: string
           conversation_id?: string
           created_at?: string
