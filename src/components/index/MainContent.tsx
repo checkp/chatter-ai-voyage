@@ -174,7 +174,7 @@ const MainContent: React.FC<MainContentProps> = ({
         <ChatInput
           input={input}
           setInput={setInput}
-          handleSend={() => handleSend(activeChatId)}
+          handleSend={(attachments) => handleSend(activeChatId, attachments)}
           handleStop={handleStop}
           isLoadingResponse={isLoadingResponse || isGeneratingImages}
           isPending={sendMessageMutation.isPending || isGeneratingImages}
