@@ -115,6 +115,22 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                   {message.content}
                 </div>
               )}
+              {message.attachments && message.attachments.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {message.attachments.map(att => (
+                    <a
+                      key={att.id}
+                      href={att.dataUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      title={att.name}
+                      className="block h-20 w-20 rounded border border-border overflow-hidden bg-background/40"
+                    >
+                      <img src={att.dataUrl} alt={att.name} className="h-full w-full object-cover" />
+                    </a>
+                  ))}
+                </div>
+              )}
               {message.sender === 'ai' && message.platform && (
                 <div
                   className={funActive ? 'mt-2 text-xs font-medium opacity-80' : `mt-2 text-xs font-medium ${

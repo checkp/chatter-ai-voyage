@@ -31,7 +31,7 @@ interface MainContentProps {
   activeChatId: string | null;
   input: string;
   setInput: (input: string) => void;
-  handleSend: (activeChatId: string | null) => void;
+  handleSend: (activeChatId: string | null, attachments?: import('@/types/chat').Attachment[]) => void;
   handleStop: () => void;
   sendMessageMutation: any;
   canStop: boolean;
@@ -174,7 +174,7 @@ const MainContent: React.FC<MainContentProps> = ({
         <ChatInput
           input={input}
           setInput={setInput}
-          handleSend={() => handleSend(activeChatId)}
+          handleSend={(attachments) => handleSend(activeChatId, attachments)}
           handleStop={handleStop}
           isLoadingResponse={isLoadingResponse || isGeneratingImages}
           isPending={sendMessageMutation.isPending || isGeneratingImages}

@@ -156,6 +156,38 @@ export const getModelConfig = (platformId: string, modelId: string): ModelConfig
   return AI_MODELS[platformId]?.find(m => m.id === modelId);
 };
 
+/**
+ * Capability lookup keyed off the static META map (so it works even before the
+ * DB-backed model list has loaded). Returns true when the given model declares
+ * the requested capability (e.g. "vision", "audio", "pdf").
+ *
+ * Falls back to a per-platform heuristic for unknown ids — keeps things sane
+ * if the DB adds a new model before META is updated.
+ */
+export const modelSupports = (modelId: string | undefined, capability: string): boolean => {
+  if (!modelId) return false;
+  const meta = META[modelId];
+  if (meta?.capabilities?.includes(capability)) return true;
+  if (capability === 'vision') {
+    // Best-effort heuristic for ids we don't yet have META for.
+    const id = modelId.toLowerCase();
+    if (/(vision|vl|gpt-4o|gpt-5|claude-(3|opus|sonnet|haiku)-(?!2)|gemini|pixtral|grok-4|grok-2-vision)/.test(id)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+/** Convenience: which providers can accept image attachments at all (any model). */
+export const PLATFORM_VISION_DEFAULT_MODEL: Record<string, string> = {
+  openai: 'gpt-4o',
+  anthropic: 'claude-sonnet-4-20250514',
+  google: 'gemini-2.5-flash',
+  grok: 'grok-2-vision-1212',
+  mistral: 'pixtral-12b-2409',
+  qwen: 'qwen-vl-max',
+};
+
 export const getDefaultModel = (platformId: string): string => {
   const models = AI_MODELS[platformId];
   const preferred = PREFERRED_DEFAULTS[platformId];
