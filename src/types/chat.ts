@@ -1,5 +1,17 @@
 export type ChatMode = 'discussion' | 'isolated' | 'side-by-side' | 'conductor';
 
+export interface Attachment {
+  id: string;
+  name: string;
+  mimeType: string;
+  size: number;
+  /** Inline base64 data URL (data:image/png;base64,...). Only path used in v1. */
+  dataUrl: string;
+  /** Optional natural width/height for image attachments (used for thumbnail layout). */
+  width?: number;
+  height?: number;
+}
+
 export interface Message {
   id: string;
   content: string;
@@ -11,6 +23,7 @@ export interface Message {
   status?: 'sending' | 'sent' | 'seen';
   seenBy?: string[];
   roundNumber?: number;
+  attachments?: Attachment[];
 }
 
 export interface Chat {
@@ -38,4 +51,3 @@ export interface AIPlatform {
   displayOrder?: number;
   customInstructions?: string;
 }
-
