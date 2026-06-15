@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform, Message, ChatMode } from '@/types/chat';
 import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI, callGeminiAPI, callMistralAPI, callPerplexityAPI, callQwenAPI } from '@/services/aiApiService';
-import { getDefaultModel, getModelConfig } from '@/config/aiModels';
+import { getDefaultModel, getModelConfig, modelSupports } from '@/config/aiModels';
 
 const resolvePlatformModel = (platformId: string, model?: string | null) => {
   if (!model) {
