@@ -1,73 +1,71 @@
-## Fun Mode
 
-A toggle that lets the chat window restyle itself based on what's being discussed. Each new assistant round nudges the look — colors, bubble shapes, accents, font pairing — so the same conversation gradually drifts into its own visual identity. Text always stays readable.
+## How file uploads to agents work
 
-### How it works for the user
-- New **Fun mode** toggle in the chat header (sparkle/paint icon). Off by default.
-- When on, after each assistant reply the chat surface re-themes itself: page background tint, user bubble, AI bubble, accent line, heading font, corner radius, subtle shadow.
-- Each update is a small evolution of the previous theme, not a hard reset, so it "drifts" rather than flickers.
-- Turning it off snaps back to the standard look instantly. State is per-chat and remembered.
+Every provider we use (OpenAI, Anthropic, Google, xAI/Grok, DeepSeek, Mistral, Perplexity, Qwen) takes files inline in the chat request — there is no separate "upload" step for our use case. The file is base64-encoded (or a public URL) and added as a typed content block inside the user message. Each provider has its own block shape:
 
-### Readability guarantees
-- Foreground/background pairs are passed through a WCAG contrast check (≥ 4.5:1 for body, ≥ 3:1 for large text). If the AI picks a low-contrast pair, we auto-snap the foreground to near-black or near-white — whichever wins.
-- Font is restricted to a curated whitelist of legible Google fonts (e.g. Inter, Fraunces, Space Grotesk, DM Serif, JetBrains Mono, Caveat). The AI picks from the list; it can't invent fonts.
-- Saturation/lightness clamped so backgrounds never become neon or pitch-black, and bubbles always sit visibly on the page background.
+- **OpenAI** (`gpt-4o`, `gpt-5`, `gpt-image`): `{type:"image_url", image_url:{url}}` for images, `{type:"input_audio",...}` for audio, `{type:"file", file:{filename, file_data}}` for PDFs.
+- **Anthropic** (Claude 3.5+/4): `{type:"image", source:{type:"base64", media_type, data}}` and `{type:"document", source:{...}}` for PDFs.
+- **Google Gemini** (1.5/2.0/2.5): `inline_data:{mime_type, data}` parts — supports images, audio, video, PDFs.
+- **xAI Grok** (`grok-2-vision`, `grok-4`): OpenAI-compatible `image_url` blocks (images only).
+- **Mistral** (`pixtral-*`, `mistral-large` with vision): OpenAI-compatible `image_url`.
+- **DeepSeek**: text-only today — no file support.
+- **Perplexity Sonar**: text-only in API (image input not exposed).
+- **Qwen** (`qwen-vl-*`): `image_url` blocks; base `qwen-max/plus/turbo` are text-only.
 
-### Where it applies
-- Standard chat (`ChatMessages.tsx`).
-- Side-by-side and Conductor panes read the same theme so all chat surfaces in the active conversation stay in sync.
-- Image panels, headers, sidebar, settings — untouched.
+### Can we get capabilities from an API?
 
-### Cost / safety
-- One generation per completed assistant round, debounced; skipped if the round produced no new assistant text.
-- Hard cap (e.g. 40 theme updates per chat) to keep token use bounded.
-- Falls back silently to the previous theme if the call fails or returns invalid JSON.
+Partially. There is no single cross-provider "capabilities" endpoint:
+- **OpenAI** `/v1/models` returns IDs only, no modalities.
+- **Anthropic** `/v1/models` returns IDs only.
+- **Google** `/v1beta/models` returns `supportedGenerationMethods` and `inputTokenLimit` but no explicit modality list.
+- **xAI/Mistral/DeepSeek/Qwen/Perplexity** `/v1/models` are OpenAI-style ID lists.
 
----
+In practice everyone (LangChain, OpenRouter, Vercel AI SDK) maintains a hand-curated capability map. We already do this — `src/config/aiModels.ts` has a `capabilities: ['text','vision',...]` array per model. That is the source of truth we should use and extend (e.g. add `'audio'`, `'pdf'`, `'video'`).
 
-### Technical details
+A complementary option: OpenRouter's `https://openrouter.ai/api/v1/models` endpoint returns `architecture.input_modalities: ["text","image","file",...]` for hundreds of models across providers. We could pull it nightly in `sync-model-pricing` to refresh our local map automatically.
 
-**New edge function** `supabase/functions/generate-fun-theme/`
-- `verify_jwt = true`, uses `LOVABLE_API_KEY` with `google/gemini-2.5-flash`.
-- Input: last ~6 messages (trimmed), previous theme JSON, evolution seed.
-- Prompt instructs the model to return strict JSON only, evolving the prior theme by ~10–25% (hue shift, one font swap allowed every N rounds, radius/shadow nudge), and pick from a fixed font whitelist.
-- Server-side `zod` validation; reject anything off-list; return 400 on parse failure.
-- Tokens: lightweight call, not metered against user balance for v1 (noted in changelog).
+## Proposed implementation
 
-**Theme shape**
-```ts
-type FunTheme = {
-  vibe: string;              // short label, e.g. "midnight library"
-  bg: string;                // page tint, hsl
-  userBubbleBg: string;
-  userBubbleFg: string;
-  aiBubbleBg: string;
-  aiBubbleFg: string;
-  accent: string;            // border-l / links
-  headingFont: FontKey;      // from whitelist
-  bodyFont: FontKey;         // from whitelist
-  radius: number;            // 6–24px
-  shadow: 'none'|'soft'|'lifted';
-};
-```
+### 1. Capability source of truth
+- Extend `ModelConfig.capabilities` vocabulary: `text | vision | audio | pdf | video`.
+- Update META entries in `src/config/aiModels.ts` with accurate modality flags per current docs.
+- Add helper `modelSupports(modelId, 'vision' | 'pdf' | 'audio')` exported from `aiModels.ts`.
+- (Optional, follow-up) Extend `sync-model-pricing` edge function to also fetch OpenRouter's `/models` and write `input_modalities` into a new `model_pricing.input_modalities text[]` column so the META map stays current automatically.
 
-**New client modules**
-- `src/lib/funTheme.ts` — font whitelist, contrast helpers (`ensureReadable(fg, bg)`), HSL clamps, theme→CSS-vars mapper.
-- `src/contexts/FunThemeContext.tsx` — provider keyed by `chatId`, exposes `{ enabled, toggle, theme, regenerate }`. Persists `enabled` + last theme per chat in `localStorage` (`fun-mode:<chatId>`).
-- `src/hooks/useFunModeTrigger.ts` — watches messages; when a new assistant message arrives and fun mode is on, calls `generate-fun-theme` (debounced, cap-checked), runs `ensureReadable`, updates context.
+### 2. UI: attach button in `ChatInput`
+- Add a paperclip button next to Sparkles. Opens a hidden `<input type="file" multiple>`.
+- Accepted MIME types derived from the currently-enabled agents' combined capabilities (union of supported types). If no enabled agent supports a type, disable the button with a tooltip explaining why.
+- Show selected files as small chips above the textarea with a remove (×). Enforce: max 10 files, 20 MB each (match Lovable's own limits).
+- Files are read as base64 in the browser (small) or uploaded to a private Supabase Storage bucket `chat-attachments` and referenced by signed URL (>2 MB). New bucket + owner-scoped RLS migration required.
 
-**UI changes**
-- `ChatHeader.tsx` (or `header/ChatModeControls.tsx`): add toggle button with active state + tooltip showing current `vibe`.
-- `ChatMessages.tsx`: wrap output in a `<div data-fun={enabled}>` that consumes CSS vars (`--fun-bg`, `--fun-user-bg`, `--fun-user-fg`, `--fun-ai-bg`, `--fun-ai-fg`, `--fun-accent`, `--fun-radius`, `--fun-font-heading`, `--fun-font-body`). Existing platform-tinted classes stay as the off-state default.
-- Same wrapper applied in `SideBySideLayout.tsx` and `conductor/AgentPane.tsx` so all chat surfaces inherit the theme.
-- Fonts loaded once via a `<link>` in `index.html` (whitelist only).
+### 3. Message shape
+- Extend `types/chat.ts` `Message` with optional `attachments: Array<{id, name, mimeType, size, storagePath?, dataUrl?}>`.
+- Persist `attachments` JSONB on `messages` table (migration).
+- Render attachment chips in `ChatMessages` / `MarkdownMessage` (image thumbnails, file icon + name for others).
 
-**Fallback behavior**
-- No theme yet, or fun mode off → existing styling, no change.
-- Edge function error → keep previous theme, log to console, no toast spam.
+### 4. Edge function fan-out
+- Each `<provider>-chat` edge function gets a small `buildContentBlocks(text, attachments, model)` helper that:
+  - Skips the call entirely for an agent if any attachment type is unsupported by that model — surfaces an "X skipped: model doesn't support PDF" status in the UI instead of erroring.
+  - Otherwise translates our normalized attachments into provider-native blocks (image_url for OpenAI/Grok/Mistral/Qwen-vl; image/document source for Anthropic; inline_data for Gemini).
+- Files referenced by storage path are fetched server-side, base64-encoded, and embedded — never expose signed URLs to third-party providers.
 
-### Out of scope (v1)
-- Animating between themes (cross-fade can come later).
-- Per-message stylistic flourishes.
-- Syncing theme to DB across devices — local only for v1.
-- Free/Discussion mode-specific tuning beyond the shared theme.
+### 5. Conductor + Free / Side-by-side modes
+- Attachments propagate exactly like message text. Conductor router strips attachments before its planning call (text-only) but forwards them to executor agents.
+
+### 6. Token cost
+- Add per-modality surcharge using each provider's documented image/audio token formula (e.g. OpenAI 85 + 170·tiles, Anthropic ~1.6k tokens/image). Display the estimate in the chip row, similar to the existing image-gen estimate.
+
+## Technical notes
+
+- Storage: new private bucket `chat-attachments`, signed-URL pattern reused from existing image storage (see `mem://technical/storage-security`).
+- Security: validate MIME + size server-side in edge functions; reject anything > 20 MB; derive `user_id` from JWT, not body.
+- Backwards compatibility: `attachments` defaults to `[]`; all existing flows unaffected.
+- Out of scope for v1: video (only Gemini supports it), audio output, OCR fallback for unsupported providers.
+
+## Deliverables checklist
+1. Migration: `messages.attachments jsonb default '[]'`, new `chat-attachments` storage bucket + RLS, optional `model_pricing.input_modalities`.
+2. `aiModels.ts` capability refresh + `modelSupports` helper.
+3. `ChatInput.tsx` attach button, chip preview, validation.
+4. `ChatMessages` / message renderer chip + thumbnail rendering.
+5. Per-provider edge function `buildContentBlocks` helpers + graceful "model doesn't support this attachment" skip status.
+6. (Follow-up) `sync-model-pricing` pulls OpenRouter modalities nightly.
