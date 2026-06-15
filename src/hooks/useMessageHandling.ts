@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
-import type { AIPlatform, Message, ChatMode } from '@/types/chat';
+import type { AIPlatform, Message, ChatMode, Attachment } from '@/types/chat';
 import { generateChatId } from '@/utils/chatUtils';
 import { useTokens } from '@/hooks/useTokens';
 import { useActivityLog } from '@/contexts/ActivityLogContext';
