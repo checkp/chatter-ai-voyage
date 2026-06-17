@@ -1,12 +1,55 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles } from 'lucide-react';
 
 const LandingHero: React.FC = () => {
+  const driftRef = useRef<HTMLDivElement>(null);
+
   const handleGetStarted = () => {
     window.location.href = '/auth';
   };
+
+  useEffect(() => {
+    const el = driftRef.current;
+    if (!el) return;
+
+    const MAX_DRIFT = 40; // px — gentle pull radius
+    const EASE = 0.04;    // lerp factor — lower = slower drift
+    let mouseX = 0;
+    let mouseY = 0;
+    let currentX = 0;
+    let currentY = 0;
+    let rafId = 0;
+
+    const handleMove = (e: MouseEvent) => {
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = e.clientX - cx;
+      const dy = e.clientY - cy;
+      const dist = Math.hypot(dx, dy) || 1;
+      // Normalize to MAX_DRIFT, dampened by distance so far-away mouse pulls less
+      const pull = Math.min(1, 400 / dist);
+      mouseX = (dx / dist) * MAX_DRIFT * pull;
+      mouseY = (dy / dist) * MAX_DRIFT * pull;
+    };
+
+    const tick = () => {
+      currentX += (mouseX - currentX) * EASE;
+      currentY += (mouseY - currentY) * EASE;
+      el.style.transform = `translate(${currentX.toFixed(2)}px, ${currentY.toFixed(2)}px)`;
+      rafId = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    rafId = requestAnimationFrame(tick);
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
+
 
   return (
     <div className="text-center md:text-left max-w-4xl mx-auto md:mx-0">
@@ -44,51 +87,53 @@ const LandingHero: React.FC = () => {
       {/* Cloud-shaped Start button — dynamically sized to the viewport so it
           never gets pushed off-screen on short displays. */}
       <div className="flex justify-center md:justify-start">
-        <button
-          onClick={handleGetStarted}
-          aria-label="Launch RoboHeard"
-          className="group focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/40 rounded-full hover:scale-105 transition-transform duration-300"
-          style={{
-            filter: 'drop-shadow(0 14px 22px rgba(180, 150, 50, 0.35)) drop-shadow(0 4px 8px rgba(120, 100, 30, 0.2))',
-            animation: 'cloudFloat 5s ease-in-out infinite',
-            width: 'clamp(150px, 22vh, 240px)',
-          }}
-        >
-          <svg
-            viewBox="0 0 280 160"
-            className="w-full h-auto"
-            aria-hidden
+        <div ref={driftRef} style={{ willChange: 'transform', transition: 'transform 0.05s linear' }}>
+          <button
+            onClick={handleGetStarted}
+            aria-label="Launch RoboHeard"
+            className="group focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/40 rounded-full hover:scale-105 transition-transform duration-300"
+            style={{
+              filter: 'drop-shadow(0 14px 22px rgba(180, 150, 50, 0.35)) drop-shadow(0 4px 8px rgba(120, 100, 30, 0.2))',
+              animation: 'cloudFloat 5s ease-in-out infinite',
+              width: 'clamp(150px, 22vh, 240px)',
+            }}
           >
-            <defs>
-              <radialGradient id="cloudWarm" cx="50%" cy="38%" r="75%">
-                <stop offset="0%" stopColor="#fffbe0" />
-                <stop offset="55%" stopColor="#ffe89a" />
-                <stop offset="100%" stopColor="#e8b94a" />
-              </radialGradient>
-            </defs>
-            <path
-              d="M60,120 Q20,120 20,85 Q20,55 55,55 Q60,25 100,30 Q120,5 155,20 Q190,5 215,35 Q255,30 255,70 Q280,80 270,110 Q265,135 235,135 L75,135 Q60,135 60,120 Z"
-              fill="url(#cloudWarm)"
-              stroke="#fff5c2"
-              strokeWidth="2"
-            />
-            <text
-              x="140"
-              y="100"
-              textAnchor="middle"
-              className="select-none"
-              style={{
-                fontFamily: '"Fredoka", "Nunito", system-ui, sans-serif',
-                fontWeight: 700,
-                fontSize: '52px',
-                fill: '#6b4a12',
-                letterSpacing: '1px',
-              }}
+            <svg
+              viewBox="0 0 280 160"
+              className="w-full h-auto"
+              aria-hidden
             >
-              Start
-            </text>
-          </svg>
-        </button>
+              <defs>
+                <radialGradient id="cloudWarm" cx="50%" cy="38%" r="75%">
+                  <stop offset="0%" stopColor="#fffbe0" />
+                  <stop offset="55%" stopColor="#ffe89a" />
+                  <stop offset="100%" stopColor="#e8b94a" />
+                </radialGradient>
+              </defs>
+              <path
+                d="M60,120 Q20,120 20,85 Q20,55 55,55 Q60,25 100,30 Q120,5 155,20 Q190,5 215,35 Q255,30 255,70 Q280,80 270,110 Q265,135 235,135 L75,135 Q60,135 60,120 Z"
+                fill="url(#cloudWarm)"
+                stroke="#fff5c2"
+                strokeWidth="2"
+              />
+              <text
+                x="140"
+                y="100"
+                textAnchor="middle"
+                className="select-none"
+                style={{
+                  fontFamily: '"Fredoka", "Nunito", system-ui, sans-serif',
+                  fontWeight: 700,
+                  fontSize: '52px',
+                  fill: '#6b4a12',
+                  letterSpacing: '1px',
+                }}
+              >
+                Start
+              </text>
+            </svg>
+          </button>
+        </div>
         <style>{`
           @keyframes cloudFloat {
             0%, 100% { transform: translate(0, 0) rotate(-0.5deg); }
@@ -98,6 +143,7 @@ const LandingHero: React.FC = () => {
           }
         `}</style>
       </div>
+
     </div>
   );
 };
