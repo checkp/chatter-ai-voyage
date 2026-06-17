@@ -19,11 +19,13 @@ const LandingHero: React.FC = () => {
     const height = rect.height;
 
     // Start at the cloud's natural layout position, then detach to fixed
-    // so it follows the cursor across the entire page (including after scrolling).
+    // so it can drift across the entire page (including after scrolling).
     let currentX = rect.left + width / 2;
     let currentY = rect.top + height / 2;
-    let targetX = currentX;
-    let targetY = currentY;
+    let mouseX = currentX;
+    let mouseY = currentY;
+    let lagX = currentX;
+    let lagY = currentY;
     let rafId = 0;
 
     el.style.position = 'fixed';
@@ -33,19 +35,32 @@ const LandingHero: React.FC = () => {
     el.style.transform = `translate(${currentX - width / 2}px, ${currentY - height / 2}px)`;
 
     const handleMove = (e: MouseEvent) => {
-      targetX = e.clientX;
-      targetY = e.clientY;
+      mouseX = e.clientX;
+      mouseY = e.clientY;
     };
 
     const tick = () => {
+      const t = performance.now() / 1000;
+
+      // Laggy target trails the mouse so the cloud takes a moment to get going.
+      lagX += (mouseX - lagX) * 0.03;
+      lagY += (mouseY - lagY) * 0.03;
+
+      // Gentle, drifting dance around the laggy target.
+      const danceX = Math.sin(t * 0.6) * 14 + Math.sin(t * 1.25) * 7;
+      const danceY = Math.cos(t * 0.5) * 14 + Math.cos(t * 1.15) * 7;
+
+      const targetX = lagX + danceX;
+      const targetY = lagY + danceY;
+
       const dx = targetX - currentX;
       const dy = targetY - currentY;
       const distance = Math.hypot(dx, dy) || 1;
 
-      // Ease slows as the cloud nears the cursor: 0.015 up to 0.08.
-      const minEase = 0.015;
-      const maxEase = 0.08;
-      const slowDistance = 250;
+      // Slow drift: eases from 0.005 up to 0.025, so it lingers and moves slowly.
+      const minEase = 0.005;
+      const maxEase = 0.025;
+      const slowDistance = 300;
       const ease = minEase + (maxEase - minEase) * Math.min(1, distance / slowDistance);
 
       currentX += dx * ease;
