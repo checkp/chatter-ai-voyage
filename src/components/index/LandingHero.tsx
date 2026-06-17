@@ -14,36 +14,50 @@ const LandingHero: React.FC = () => {
     const el = driftRef.current;
     if (!el) return;
 
-    const MAX_DRIFT = 40; // px — gentle pull radius
-    const EASE = 0.04;    // lerp factor — lower = slower drift
-    let mouseX = 0;
-    let mouseY = 0;
-    let currentX = 0;
-    let currentY = 0;
+    const rect = el.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+
+    // Start at the cloud's natural layout position, then detach to fixed
+    // so it follows the cursor across the entire page (including after scrolling).
+    let currentX = rect.left + width / 2;
+    let currentY = rect.top + height / 2;
+    let targetX = currentX;
+    let targetY = currentY;
     let rafId = 0;
 
+    el.style.position = 'fixed';
+    el.style.left = '0px';
+    el.style.top = '0px';
+    el.style.zIndex = '50';
+    el.style.transform = `translate(${currentX - width / 2}px, ${currentY - height / 2}px)`;
+
     const handleMove = (e: MouseEvent) => {
-      const rect = el.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const dx = e.clientX - cx;
-      const dy = e.clientY - cy;
-      const dist = Math.hypot(dx, dy) || 1;
-      // Normalize to MAX_DRIFT, dampened by distance so far-away mouse pulls less
-      const pull = Math.min(1, 400 / dist);
-      mouseX = (dx / dist) * MAX_DRIFT * pull;
-      mouseY = (dy / dist) * MAX_DRIFT * pull;
+      targetX = e.clientX;
+      targetY = e.clientY;
     };
 
     const tick = () => {
-      currentX += (mouseX - currentX) * EASE;
-      currentY += (mouseY - currentY) * EASE;
-      el.style.transform = `translate(${currentX.toFixed(2)}px, ${currentY.toFixed(2)}px)`;
+      const dx = targetX - currentX;
+      const dy = targetY - currentY;
+      const distance = Math.hypot(dx, dy) || 1;
+
+      // Ease slows as the cloud nears the cursor: 0.015 up to 0.08.
+      const minEase = 0.015;
+      const maxEase = 0.08;
+      const slowDistance = 250;
+      const ease = minEase + (maxEase - minEase) * Math.min(1, distance / slowDistance);
+
+      currentX += dx * ease;
+      currentY += dy * ease;
+
+      el.style.transform = `translate(${currentX - width / 2}px, ${currentY - height / 2}px)`;
       rafId = requestAnimationFrame(tick);
     };
 
     window.addEventListener('mousemove', handleMove);
     rafId = requestAnimationFrame(tick);
+
     return () => {
       window.removeEventListener('mousemove', handleMove);
       cancelAnimationFrame(rafId);
@@ -87,7 +101,7 @@ const LandingHero: React.FC = () => {
       {/* Cloud-shaped Start button — dynamically sized to the viewport so it
           never gets pushed off-screen on short displays. */}
       <div className="flex justify-center md:justify-start">
-        <div ref={driftRef} style={{ willChange: 'transform', transition: 'transform 0.05s linear' }}>
+        <div ref={driftRef} style={{ willChange: 'transform' }}>
           <button
             onClick={handleGetStarted}
             aria-label="Launch RoboHeard"
