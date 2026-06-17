@@ -1,12 +1,55 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles } from 'lucide-react';
 
 const LandingHero: React.FC = () => {
+  const driftRef = useRef<HTMLDivElement>(null);
+
   const handleGetStarted = () => {
     window.location.href = '/auth';
   };
+
+  useEffect(() => {
+    const el = driftRef.current;
+    if (!el) return;
+
+    const MAX_DRIFT = 40; // px — gentle pull radius
+    const EASE = 0.04;    // lerp factor — lower = slower drift
+    let mouseX = 0;
+    let mouseY = 0;
+    let currentX = 0;
+    let currentY = 0;
+    let rafId = 0;
+
+    const handleMove = (e: MouseEvent) => {
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = e.clientX - cx;
+      const dy = e.clientY - cy;
+      const dist = Math.hypot(dx, dy) || 1;
+      // Normalize to MAX_DRIFT, dampened by distance so far-away mouse pulls less
+      const pull = Math.min(1, 400 / dist);
+      mouseX = (dx / dist) * MAX_DRIFT * pull;
+      mouseY = (dy / dist) * MAX_DRIFT * pull;
+    };
+
+    const tick = () => {
+      currentX += (mouseX - currentX) * EASE;
+      currentY += (mouseY - currentY) * EASE;
+      el.style.transform = `translate(${currentX.toFixed(2)}px, ${currentY.toFixed(2)}px)`;
+      rafId = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    rafId = requestAnimationFrame(tick);
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
+
 
   return (
     <div className="text-center md:text-left max-w-4xl mx-auto md:mx-0">
