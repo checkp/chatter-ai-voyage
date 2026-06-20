@@ -35,11 +35,20 @@ serve(async (req) => {
       for (let i = messages.length - 1; i >= 0; i--) {
         if (messages[i].role === 'user') {
           const textPart = { type: 'text', text: messages[i].content };
-          const imageParts = attachments
-            .filter((a: any) => typeof a?.dataUrl === 'string' && a.dataUrl.startsWith('data:image/'))
-            .slice(0, 4)
-            .map((a: any) => ({ type: 'image_url', image_url: { url: a.dataUrl } }));
-          messages[i] = { role: 'user', content: [textPart, ...imageParts] };
+          const mediaParts = attachments
+            .slice(0, 6)
+            .map((a: any) => {
+              if (typeof a?.dataUrl !== 'string') return null;
+              if (a.dataUrl.startsWith('data:image/')) {
+                return { type: 'image_url', image_url: { url: a.dataUrl } };
+              }
+              if (a.dataUrl.startsWith('data:application/pdf')) {
+                return { type: 'file', file: { filename: a.name || 'document.pdf', file_data: a.dataUrl } };
+              }
+              return null;
+            })
+            .filter(Boolean);
+          messages[i] = { role: 'user', content: [textPart, ...mediaParts] };
           break;
         }
       }
