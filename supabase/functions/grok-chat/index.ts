@@ -25,8 +25,24 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = 'grok-3' } = await req.json();
+    const { messages, model = 'grok-3', attachments } = await req.json();
     const user_id = user.id;
+
+    // Splice image attachments into the last user message for vision-capable Grok models
+    if (Array.isArray(attachments) && attachments.length > 0 && /vision|grok-4|grok-2-vision/i.test(model)) {
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].role === 'user') {
+          const textPart = { type: 'text', text: messages[i].content };
+          const imageParts = attachments
+            .filter((a: any) => typeof a?.dataUrl === 'string' && a.dataUrl.startsWith('data:image/'))
+            .slice(0, 4)
+            .map((a: any) => ({ type: 'image_url', image_url: { url: a.dataUrl } }));
+          messages[i] = { role: 'user', content: [textPart, ...imageParts] };
+          break;
+        }
+      }
+    }
+    
     
     // Check token balance - create if doesn't exist
     let { data: tokenData, error: tokenError } = await supabaseClient

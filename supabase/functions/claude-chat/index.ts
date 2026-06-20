@@ -46,9 +46,29 @@ serve(async (req) => {
 
     console.log('User authenticated successfully:', user.id)
 
-    const { messages, model = 'claude-sonnet-4-20250514' } = await req.json()
+    const { messages, model = 'claude-sonnet-4-20250514', attachments } = await req.json()
     const user_id = user.id;
     console.log('Received messages:', messages?.length || 0, 'messages')
+
+    // Splice image attachments into the last user message (Claude vision format)
+    if (Array.isArray(attachments) && attachments.length > 0 && /claude-(3|opus|sonnet|haiku|4)/i.test(model)) {
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].role === 'user') {
+          const textPart = { type: 'text', text: messages[i].content };
+          const imageParts = attachments
+            .filter((a: any) => typeof a?.dataUrl === 'string' && a.dataUrl.startsWith('data:image/'))
+            .slice(0, 4)
+            .map((a: any) => {
+              const match = /^data:(image\/[a-zA-Z+.-]+);base64,(.+)$/.exec(a.dataUrl);
+              if (!match) return null;
+              return { type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } };
+            })
+            .filter(Boolean);
+          messages[i] = { role: 'user', content: [textPart, ...imageParts] };
+          break;
+        }
+      }
+    }
 
     // Check token balance - create if doesn't exist
     let { data: tokenData, error: tokenError } = await supabaseClient

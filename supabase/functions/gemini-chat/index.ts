@@ -39,7 +39,7 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = "gemini-2.5-flash" } = await req.json();
+    const { messages, model = "gemini-2.5-flash", attachments } = await req.json();
     const user_id = user.id;
     const resolvedModel = LEGACY_MODEL_MAP[model] ?? model;
 
@@ -108,6 +108,25 @@ serve(async (req) => {
       role: msg.role === "assistant" ? "model" : "user",
       parts: [{ text: msg.content }],
     }));
+
+    // Append image attachments as inline_data parts to the last user message
+    if (Array.isArray(attachments) && attachments.length > 0) {
+      for (let i = geminiMessages.length - 1; i >= 0; i--) {
+        if (geminiMessages[i].role === "user") {
+          const imageParts = attachments
+            .filter((a: any) => typeof a?.dataUrl === 'string' && a.dataUrl.startsWith('data:image/'))
+            .slice(0, 4)
+            .map((a: any) => {
+              const match = /^data:(image\/[a-zA-Z+.-]+);base64,(.+)$/.exec(a.dataUrl);
+              if (!match) return null;
+              return { inline_data: { mime_type: match[1], data: match[2] } };
+            })
+            .filter(Boolean);
+          geminiMessages[i].parts.push(...imageParts);
+          break;
+        }
+      }
+    }
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/${resolvedModel}:generateContent?key=${geminiApiKey}`, {
       method: "POST",
