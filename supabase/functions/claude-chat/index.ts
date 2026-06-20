@@ -55,16 +55,22 @@ serve(async (req) => {
       for (let i = messages.length - 1; i >= 0; i--) {
         if (messages[i].role === 'user') {
           const textPart = { type: 'text', text: messages[i].content };
-          const imageParts = attachments
-            .filter((a: any) => typeof a?.dataUrl === 'string' && a.dataUrl.startsWith('data:image/'))
-            .slice(0, 4)
+          const mediaParts = attachments
+            .slice(0, 6)
             .map((a: any) => {
-              const match = /^data:(image\/[a-zA-Z+.-]+);base64,(.+)$/.exec(a.dataUrl);
-              if (!match) return null;
-              return { type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } };
+              if (typeof a?.dataUrl !== 'string') return null;
+              const imgMatch = /^data:(image\/[a-zA-Z+.-]+);base64,(.+)$/.exec(a.dataUrl);
+              if (imgMatch) {
+                return { type: 'image', source: { type: 'base64', media_type: imgMatch[1], data: imgMatch[2] } };
+              }
+              const pdfMatch = /^data:(application\/pdf);base64,(.+)$/.exec(a.dataUrl);
+              if (pdfMatch) {
+                return { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdfMatch[2] } };
+              }
+              return null;
             })
             .filter(Boolean);
-          messages[i] = { role: 'user', content: [textPart, ...imageParts] };
+          messages[i] = { role: 'user', content: [textPart, ...mediaParts] };
           break;
         }
       }
