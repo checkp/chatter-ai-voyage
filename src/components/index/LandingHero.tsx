@@ -26,7 +26,9 @@ const LandingHero: React.FC = () => {
     let lagY = currentY;
 
     // Scroll "wind" — kicks the cloud off the page, then decays slowly.
-    let windY = 0;
+    // Scroll "wind" — kicks the cloud off the page, then decays slowly.
+    let windTarget = 0; // raw gust accumulator
+    let windY = 0;      // smoothed value actually applied
     let lastScrollY = window.scrollY;
     let rafId = 0;
 
