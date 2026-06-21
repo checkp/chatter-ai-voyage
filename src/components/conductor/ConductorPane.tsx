@@ -3,10 +3,10 @@ import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Brain, Send, HelpCircle, Copy } from 'lucide-react';
+import { Brain, HelpCircle, Copy } from 'lucide-react';
 import ChatMessages from '@/components/ChatMessages';
+import ChatInput from '@/components/ChatInput';
 import { useToast } from '@/hooks/use-toast';
 import { useAutoScroll } from '@/hooks/useAutoScroll';
 import type { Message, AIPlatform } from '@/types/chat';
@@ -162,26 +162,15 @@ Provide a structured analysis comparing their different perspectives.`;
         </div>
       </ScrollArea>
 
-      <div className="p-4 border-t border-border bg-background/50">
-        <div className="flex gap-2">
-          <Textarea
-            value={conductorInput}
-            onChange={(e) => setConductorInput(e.target.value)}
-            onKeyDown={handleConductorKeyPress}
-            placeholder="Chat with the conductor privately. The conductor will decide if your question needs multi-agent coordination."
-            className="flex-1 min-h-[44px] max-h-32 resize-none"
-            disabled={isLoadingResponse}
-          />
-          <Button
-            onClick={handleConductorSend}
-            disabled={!conductorInput.trim() || isLoadingResponse}
-            size="sm"
-            className="self-end h-11"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      <ChatInput
+        input={conductorInput}
+        setInput={setConductorInput}
+        handleSend={handleConductorSend}
+        isLoadingResponse={isLoadingResponse}
+        isPending={false}
+        placeholder="Chat with the conductor privately. The conductor will decide if your question needs multi-agent coordination."
+        enableAttachments={false}
+      />
     </div>
   );
 };
