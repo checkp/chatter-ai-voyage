@@ -75,23 +75,23 @@ Provide a structured analysis comparing their different perspectives.`;
   };
 
   return (
-    <div className="w-1/2 border-r border-border flex flex-col">
-      <div className="p-4 border-b border-border bg-gradient-to-r from-primary/10 to-primary/5">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Brain className="h-6 w-6 text-primary" />
+    <div className="flex-1 min-w-0 border-r border-border flex flex-col">
+      <div className="p-2.5 border-b border-border bg-gradient-to-r from-primary/10 to-primary/5">
+        <div className="flex items-center justify-between mb-2 gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="p-1.5 rounded-md bg-primary/10 shrink-0">
+              <Brain className="h-4 w-4 text-primary" />
             </div>
-            <div>
-              <h3 className="font-semibold text-lg text-primary">AI Conductor</h3>
-              <p className="text-sm text-muted-foreground">Orchestrating multi-agent discussions</p>
+            <div className="min-w-0">
+              <h3 className="font-semibold text-sm text-primary leading-tight truncate">AI Conductor</h3>
+              <p className="text-[11px] text-muted-foreground leading-tight truncate">Orchestrating multi-agent discussions</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 shrink-0">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-96 p-4" align="end">
@@ -124,7 +124,7 @@ Provide a structured analysis comparing their different perspectives.`;
                 </div>
               </PopoverContent>
             </Popover>
-            <Badge variant="secondary" className="text-xs font-medium px-3 py-1">
+            <Badge variant="secondary" className="text-[10px] font-medium px-2 py-0.5">
               Active
             </Badge>
           </div>
