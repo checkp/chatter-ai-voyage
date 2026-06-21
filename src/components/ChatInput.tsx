@@ -286,6 +286,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
         </div>
       )}
 
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <CapabilityToggles value={capabilities} onChange={setCapabilities} disabled={isDisabled} />
+      </div>
+
       <div className="flex items-center gap-2">
         <Textarea
           value={input}
