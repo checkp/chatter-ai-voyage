@@ -3,6 +3,11 @@ import { generateChatId } from '@/utils/chatUtils';
 import type { AIPlatform, Message } from '@/types/chat';
 import { resolveConductorPrompt } from '@/config/conductorPrompt';
 import {
+  parseConductorCapabilities,
+  setConductorCapabilityOverrides,
+  clearConductorCapabilityOverrides,
+} from '@/lib/capabilities';
+import {
   saveConductorUserMessage,
   saveConductorAIMessage,
   saveMainChatUserMessage,
