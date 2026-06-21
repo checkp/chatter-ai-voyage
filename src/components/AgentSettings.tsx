@@ -292,6 +292,37 @@ const AgentSettings = () => {
                   disabled={!enabledPlatforms[platform.id]}
                 />
               </div>
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">
+                  Default advanced capabilities (always on for this agent)
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  {ALL_CAPABILITY_KEYS.map((key) => {
+                    const Icon = CAP_ICONS[key];
+                    const supported = isCapabilitySupported(platform.id, key);
+                    const active = !!capabilityDefaults[platform.id]?.[key];
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        disabled={!enabledPlatforms[platform.id] || !supported}
+                        onClick={() => setCapability(platform.id, key, !active)}
+                        className={[
+                          'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors',
+                          active
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-background hover:bg-accent text-muted-foreground border-border',
+                          (!enabledPlatforms[platform.id] || !supported) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+                        ].join(' ')}
+                        title={supported ? CAPABILITY_META[key].tooltip : `Not supported on ${platform.name}`}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                        <span className="font-medium">{CAPABILITY_META[key].label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </CardContent>
           </Card>
         ))}
