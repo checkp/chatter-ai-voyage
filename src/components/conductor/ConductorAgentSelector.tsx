@@ -116,9 +116,8 @@ const ConductorAgentSelector: React.FC<ConductorAgentSelectorProps> = ({
               </SelectItem>
             );
           })}
-        </SelectContent>
-      </Select>
-    </div>
+      </SelectContent>
+    </Select>
   );
 };
 
