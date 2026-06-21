@@ -31,7 +31,18 @@ const ConductorLayout: React.FC<ConductorLayoutProps> = ({
 }) => {
   const [conductorInput, setConductorInput] = useState('');
   const [agentInput, setAgentInput] = useState('');
-  
+  const [agentCollapsed, setAgentCollapsed] = useState<boolean>(() => {
+    try { return localStorage.getItem('conductor:agentCollapsed') === '1'; } catch { return false; }
+  });
+
+  const toggleAgentCollapsed = () => {
+    setAgentCollapsed((v) => {
+      const next = !v;
+      try { localStorage.setItem('conductor:agentCollapsed', next ? '1' : '0'); } catch { /* ignore */ }
+      return next;
+    });
+  };
+
   // Conductor onboarding
   const { hasSeenConductorOnboarding, completeConductorOnboarding } = useConductorOnboarding(user);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -69,6 +80,8 @@ const ConductorLayout: React.FC<ConductorLayoutProps> = ({
           onAgentSend={onAgentSend}
           agentInput={agentInput}
           setAgentInput={setAgentInput}
+          collapsed={agentCollapsed}
+          onToggleCollapsed={toggleAgentCollapsed}
         />
       </div>
 
