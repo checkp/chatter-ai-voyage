@@ -55,6 +55,21 @@ export const FunThemeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (activeChatId) saveState(activeChatId, state);
   }, [activeChatId, state]);
 
+  // Start/stop the site-wide color drift when fun mode flips.
+  useEffect(() => {
+    if (state.enabled) {
+      startDrift();
+      // Re-apply any accumulated drift for the current message count so the
+      // palette doesn't snap back to 0% when remounting an existing fun chat.
+      for (let i = 0; i < state.count; i++) stepDrift();
+    } else {
+      stopDrift();
+    }
+    return () => { stopDrift(); };
+    // Only react to enabled flips, not count — count is handled in generate().
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.enabled, activeChatId]);
+
   const toggle = useCallback(() => {
     setState((s) => ({ ...s, enabled: !s.enabled }));
   }, []);
