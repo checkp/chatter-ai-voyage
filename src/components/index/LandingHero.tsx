@@ -26,7 +26,8 @@ const LandingHero: React.FC = () => {
     let lagY = currentY;
 
     // Scroll "wind" — kicks the cloud off the page, then decays slowly.
-    let windY = 0;
+    let windTarget = 0; // raw gust accumulator
+    let windY = 0;      // smoothed value actually applied
     let lastScrollY = window.scrollY;
     let rafId = 0;
 
@@ -45,9 +46,10 @@ const LandingHero: React.FC = () => {
       const sy = window.scrollY;
       const delta = sy - lastScrollY;
       lastScrollY = sy;
-      // Each scroll tick adds a gust pushing the cloud the same way the page moved.
-      windY += delta * 2.2;
-      windY = Math.max(-4000, Math.min(4000, windY));
+      // Gust blows OPPOSITE the scroll direction (feels right on Mac natural scroll):
+      // scroll down → cloud lifts up; scroll up → cloud sinks down.
+      windTarget -= delta * 1.6;
+      windTarget = Math.max(-3000, Math.min(3000, windTarget));
     };
 
     const tick = () => {
@@ -60,8 +62,11 @@ const LandingHero: React.FC = () => {
       const danceX = Math.sin(t * 0.6) * 14 + Math.sin(t * 1.25) * 7;
       const danceY = Math.cos(t * 0.5) * 14 + Math.cos(t * 1.15) * 7;
 
+      // Smoothly ramp wind toward its target so individual scroll ticks don't jitter.
+      windY += (windTarget - windY) * 0.12;
+
       const targetX = lagX + danceX;
-      const targetY = lagY + danceY + windY; // wind shoves it away
+      const targetY = lagY + danceY + windY;
 
       const dx = targetX - currentX;
       const dy = targetY - currentY;
@@ -76,8 +81,9 @@ const LandingHero: React.FC = () => {
       currentY += dy * ease;
 
       // Wind dies down gradually so the cloud lazily drifts back to the cursor.
-      windY *= 0.97;
-      if (Math.abs(windY) < 0.1) windY = 0;
+      windTarget *= 0.985;
+      if (Math.abs(windTarget) < 0.1) windTarget = 0;
+
 
       el.style.transform = `translate(${currentX - width / 2}px, ${currentY - height / 2}px)`;
       rafId = requestAnimationFrame(tick);
