@@ -7,11 +7,21 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Settings, Sparkles, Wand2 } from 'lucide-react';
+import { Settings, Sparkles, Wand2, Brain, Globe, Telescope, Terminal } from 'lucide-react';
 import ModelSelector from './ModelSelector';
 import { getDefaultModel, getModelConfig, useAIModels } from '@/config/aiModels';
 import { DEFAULT_CONDUCTOR_PROMPT } from '@/config/conductorPrompt';
 import { DEFAULT_GLOBAL_SYSTEM_PROMPT, DEFAULT_AGENT_INSTRUCTIONS } from '@/config/defaultPrompts';
+import { useAuth } from '@/hooks/useAuth';
+import { useCapabilityDefaults } from '@/hooks/useCapabilityDefaults';
+import { ALL_CAPABILITY_KEYS, CAPABILITY_META, isCapabilitySupported, type CapabilityKey } from '@/lib/capabilities';
+
+const CAP_ICONS: Record<CapabilityKey, React.ComponentType<{ className?: string }>> = {
+  think: Brain,
+  search: Globe,
+  deep_research: Telescope,
+  code_exec: Terminal,
+};
 
 
 interface AgentSetting {
@@ -39,6 +49,8 @@ const PLATFORMS = [
 
 const AgentSettings = () => {
   useAIModels();
+  const { user } = useAuth();
+  const { defaults: capabilityDefaults, setCapability } = useCapabilityDefaults(user);
   const [selectedModels, setSelectedModels] = useState<Record<string, string>>({});
   const [enabledPlatforms, setEnabledPlatforms] = useState<Record<string, boolean>>({});
   const [customInstructions, setCustomInstructions] = useState<Record<string, string>>({});
@@ -279,6 +291,37 @@ const AgentSettings = () => {
                   rows={3}
                   disabled={!enabledPlatforms[platform.id]}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">
+                  Default advanced capabilities (always on for this agent)
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  {ALL_CAPABILITY_KEYS.map((key) => {
+                    const Icon = CAP_ICONS[key];
+                    const supported = isCapabilitySupported(platform.id, key);
+                    const active = !!capabilityDefaults[platform.id]?.[key];
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        disabled={!enabledPlatforms[platform.id] || !supported}
+                        onClick={() => setCapability(platform.id, key, !active)}
+                        className={[
+                          'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors',
+                          active
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-background hover:bg-accent text-muted-foreground border-border',
+                          (!enabledPlatforms[platform.id] || !supported) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+                        ].join(' ')}
+                        title={supported ? CAPABILITY_META[key].tooltip : `Not supported on ${platform.name}`}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                        <span className="font-medium">{CAPABILITY_META[key].label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </CardContent>
           </Card>

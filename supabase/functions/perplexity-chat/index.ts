@@ -25,7 +25,17 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages: rawMessages, model = 'sonar-pro' } = await req.json();
+    let { messages: rawMessages, model = 'sonar-pro', capabilities = {} } = await req.json();
+
+    // Capability-driven model swap: deep_research → sonar-deep-research,
+    // think → sonar-reasoning-pro. Search is always-on for Perplexity.
+    if (capabilities.deep_research) {
+      console.log('[perplexity] switching to sonar-deep-research');
+      model = 'sonar-deep-research';
+    } else if (capabilities.think) {
+      console.log('[perplexity] switching to sonar-reasoning-pro');
+      model = 'sonar-reasoning-pro';
+    }
     
     // Perplexity requires strict alternation: user/assistant messages must alternate
     // Filter and fix message ordering

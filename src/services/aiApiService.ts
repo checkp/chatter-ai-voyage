@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { Attachment } from '@/types/chat';
+import type { Capabilities } from '@/lib/capabilities';
 
 const getValidSession = async () => {
   const { data: { session }, error } = await supabase.auth.getSession();
@@ -52,10 +53,12 @@ const buildBody = (
   model: string,
   userId: string | undefined,
   attachments?: Attachment[],
+  capabilities?: Capabilities,
 ) => {
   const body: Record<string, unknown> = { messages, model };
   if (userId) body.user_id = userId;
   if (attachments && attachments.length > 0) body.attachments = attachments;
+  if (capabilities && Object.values(capabilities).some(Boolean)) body.capabilities = capabilities;
   return body;
 };
 
@@ -64,11 +67,12 @@ export const callOpenAI = async (
   user: SupabaseUser,
   model: string = 'gpt-4o-mini',
   attachments?: Attachment[],
+  capabilities?: Capabilities,
 ): Promise<string> => {
   return withRetry(async () => {
     const session = await getValidSession();
     const response = await supabase.functions.invoke('openai-chat', {
-      body: buildBody(conversationHistory, model, user.id, attachments),
+      body: buildBody(conversationHistory, model, user.id, attachments, capabilities),
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (response.error) throw new Error(response.error.message || 'OpenAI API call failed');
@@ -82,12 +86,12 @@ export const callDeepSeek = async (
   user: SupabaseUser,
   model: string = 'deepseek-chat',
   _attachments?: Attachment[],
+  capabilities?: Capabilities,
 ): Promise<string> => {
-  // DeepSeek chat models are text-only; attachments are silently dropped.
   return withRetry(async () => {
     const session = await getValidSession();
     const response = await supabase.functions.invoke('deepseek-chat', {
-      body: buildBody(conversationHistory, model, user.id),
+      body: buildBody(conversationHistory, model, user.id, undefined, capabilities),
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (response.error) throw new Error(response.error.message || 'DeepSeek API call failed');
@@ -101,11 +105,12 @@ export const callGrokAPI = async (
   user: SupabaseUser,
   model: string = 'grok-3',
   attachments?: Attachment[],
+  capabilities?: Capabilities,
 ): Promise<string> => {
   return withRetry(async () => {
     const session = await getValidSession();
     const response = await supabase.functions.invoke('grok-chat', {
-      body: buildBody(conversationHistory, model, user.id, attachments),
+      body: buildBody(conversationHistory, model, user.id, attachments, capabilities),
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (response.error) throw new Error(response.error.message || 'Grok API call failed');
@@ -118,11 +123,12 @@ export const callClaudeAPI = async (
   conversationHistory: History,
   model: string = 'claude-3-5-haiku-20241022',
   attachments?: Attachment[],
+  capabilities?: Capabilities,
 ): Promise<string> => {
   return withRetry(async () => {
     const session = await getValidSession();
     const response = await supabase.functions.invoke('claude-chat', {
-      body: buildBody(conversationHistory, model, undefined, attachments),
+      body: buildBody(conversationHistory, model, undefined, attachments, capabilities),
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (response.error) throw new Error(response.error.message || 'Claude API call failed');
@@ -136,11 +142,12 @@ export const callGeminiAPI = async (
   user: SupabaseUser,
   model: string = 'gemini-2.5-flash',
   attachments?: Attachment[],
+  capabilities?: Capabilities,
 ): Promise<string> => {
   return withRetry(async () => {
     const session = await getValidSession();
     const response = await supabase.functions.invoke('gemini-chat', {
-      body: buildBody(conversationHistory, model, user.id, attachments),
+      body: buildBody(conversationHistory, model, user.id, attachments, capabilities),
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (response.error) throw new Error(response.error.message || 'Gemini API call failed');
@@ -154,6 +161,7 @@ export const callMistralAPI = async (
   user: SupabaseUser,
   model: string = 'mistral-large-latest',
   attachments?: Attachment[],
+  _capabilities?: Capabilities,
 ): Promise<string> => {
   return withRetry(async () => {
     const session = await getValidSession();
@@ -172,12 +180,12 @@ export const callPerplexityAPI = async (
   user: SupabaseUser,
   model: string = 'sonar-pro',
   _attachments?: Attachment[],
+  capabilities?: Capabilities,
 ): Promise<string> => {
-  // Perplexity Sonar does not accept image input via API; attachments dropped.
   return withRetry(async () => {
     const session = await getValidSession();
     const response = await supabase.functions.invoke('perplexity-chat', {
-      body: buildBody(conversationHistory, model, user.id),
+      body: buildBody(conversationHistory, model, user.id, undefined, capabilities),
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (response.error) throw new Error(response.error.message || 'Perplexity API call failed');
@@ -191,8 +199,8 @@ export const callQwenAPI = async (
   user: SupabaseUser,
   model: string = 'qwen-plus',
   _attachments?: Attachment[],
+  _capabilities?: Capabilities,
 ): Promise<string> => {
-  // Only qwen-vl-* models accept images; non-vl variants ignore attachments.
   return withRetry(async () => {
     const session = await getValidSession();
     const response = await supabase.functions.invoke('qwen-chat', {
