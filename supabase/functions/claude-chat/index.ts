@@ -46,7 +46,7 @@ serve(async (req) => {
 
     console.log('User authenticated successfully:', user.id)
 
-    let { messages, model = 'claude-sonnet-4-20250514', attachments } = await req.json()
+    let { messages, model = 'claude-sonnet-4-20250514', attachments, capabilities = {} } = await req.json()
     const user_id = user.id;
 
     // Normalize legacy / invalid Claude model ids to current Anthropic ids
@@ -153,6 +153,29 @@ serve(async (req) => {
 
     console.log('Using Anthropic API key:', claudeApiKey.substring(0, 10) + '...')
 
+    // Build request body — apply advanced capabilities when supported.
+    const reqBody: Record<string, unknown> = {
+      model,
+      max_tokens: 4096,
+      messages,
+    };
+    if (capabilities.think && /sonnet|opus|haiku-4/i.test(model)) {
+      reqBody.thinking = { type: 'enabled', budget_tokens: 8000 };
+      // Anthropic requires max_tokens > thinking budget
+      reqBody.max_tokens = 12000;
+      console.log('[claude] enabling extended thinking');
+    }
+    const tools: any[] = [];
+    if (capabilities.search || capabilities.deep_research) {
+      tools.push({ type: 'web_search_20250305', name: 'web_search' });
+      console.log('[claude] enabling web_search tool');
+    }
+    if (capabilities.code_exec) {
+      tools.push({ type: 'code_execution_20250522', name: 'code_execution' });
+      console.log('[claude] enabling code_execution tool');
+    }
+    if (tools.length > 0) reqBody.tools = tools;
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -160,11 +183,7 @@ serve(async (req) => {
         'x-api-key': claudeApiKey,
         'anthropic-version': '2023-06-01'
       },
-      body: JSON.stringify({
-        model: model,
-        max_tokens: 4096,
-        messages: messages
-      })
+      body: JSON.stringify(reqBody)
     })
 
     console.log('Claude API response status:', response.status)
