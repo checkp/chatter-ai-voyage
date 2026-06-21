@@ -66,11 +66,15 @@ export const FunThemeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const session = (await supabase.auth.getSession()).data.session;
       if (!session?.access_token) return;
       const recent = messages.slice(-6).map((m) => ({ sender: m.sender, content: m.content }));
+      // On the first drift, seed from the app's current theme so we start at the
+      // user's existing palette and only gradually wander away from it.
+      const previousTheme = state.theme ?? readBaseTheme();
       const { data, error } = await supabase.functions.invoke("generate-fun-theme", {
         body: {
           recentMessages: recent,
-          previousTheme: state.theme,
+          previousTheme,
           round: state.count,
+          seededFromBase: state.theme === null,
         },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
