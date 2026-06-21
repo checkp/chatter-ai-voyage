@@ -39,7 +39,7 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = "gemini-2.5-flash", attachments } = await req.json();
+    const { messages, model = "gemini-2.5-flash", attachments, capabilities = {} } = await req.json();
     const user_id = user.id;
     const resolvedModel = LEGACY_MODEL_MAP[model] ?? model;
 
@@ -132,18 +132,35 @@ serve(async (req) => {
       }
     }
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/${resolvedModel}:generateContent?key=${geminiApiKey}`, {
+    const generationConfig: Record<string, unknown> = {
+      maxOutputTokens: 8192,
+      temperature: 0.7,
+    };
+    if (capabilities.think && /2\.5/.test(resolvedModel)) {
+      generationConfig.thinkingConfig = { thinkingBudget: 8000 };
+      console.log('[gemini] enabling thinking');
+    }
+    const geminiTools: any[] = [];
+    if (capabilities.search || capabilities.deep_research) {
+      geminiTools.push({ google_search: {} });
+      console.log('[gemini] enabling google_search');
+    }
+    if (capabilities.code_exec) {
+      geminiTools.push({ code_execution: {} });
+      console.log('[gemini] enabling code_execution');
+    }
+    const apiBody: Record<string, unknown> = {
+      contents: geminiMessages,
+      generationConfig,
+    };
+    if (geminiTools.length > 0) apiBody.tools = geminiTools;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${resolvedModel}:generateContent?key=${geminiApiKey}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        contents: geminiMessages,
-        generationConfig: {
-          maxOutputTokens: 8192,
-          temperature: 0.7,
-        },
-      }),
+      body: JSON.stringify(apiBody),
     });
 
     if (!response.ok) {
