@@ -14,49 +14,81 @@ const LandingHero: React.FC = () => {
     const el = driftRef.current;
     if (!el) return;
 
-    // Lagged scroll: the cloud trails the page's scroll position, as if the
-    // wind from scrolling is carrying it away and then it slowly catches up.
-    let targetScroll = window.scrollY;
-    let laggedScroll = window.scrollY;
+    const rect = el.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+
+    let currentX = rect.left + width / 2;
+    let currentY = rect.top + height / 2;
+    let mouseX = currentX;
+    let mouseY = currentY;
+    let lagX = currentX;
+    let lagY = currentY;
+
+    // Scroll "wind" — kicks the cloud off the page, then decays slowly.
+    let windY = 0;
+    let lastScrollY = window.scrollY;
     let rafId = 0;
 
+    el.style.position = 'fixed';
+    el.style.left = '0px';
+    el.style.top = '0px';
+    el.style.zIndex = '50';
+    el.style.transform = `translate(${currentX - width / 2}px, ${currentY - height / 2}px)`;
+
+    const handleMove = (e: MouseEvent) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    };
+
     const handleScroll = () => {
-      targetScroll = window.scrollY;
+      const sy = window.scrollY;
+      const delta = sy - lastScrollY;
+      lastScrollY = sy;
+      // Each scroll tick adds a gust pushing the cloud the same way the page moved.
+      windY += delta * 2.2;
+      windY = Math.max(-4000, Math.min(4000, windY));
     };
 
     const tick = () => {
       const t = performance.now() / 1000;
 
-      // Heavy lag — the bigger the scroll gust, the slower it catches up.
-      const delta = targetScroll - laggedScroll;
-      const absDelta = Math.abs(delta);
-      // Ease shrinks as delta grows → big scrolls leave the cloud far behind.
-      const ease = 0.02 / (1 + absDelta / 400);
-      laggedScroll += delta * ease;
+      // Original laggy mouse-follow drift.
+      lagX += (mouseX - lagX) * 0.03;
+      lagY += (mouseY - lagY) * 0.03;
 
-      // Vertical offset: when you scroll down, cloud appears to drift UP-and-back.
-      const scrollOffsetY = targetScroll - laggedScroll;
+      const danceX = Math.sin(t * 0.6) * 14 + Math.sin(t * 1.25) * 7;
+      const danceY = Math.cos(t * 0.5) * 14 + Math.cos(t * 1.15) * 7;
 
-      // Horizontal sway, driven harder when the "wind" is strong.
-      const windStrength = Math.min(1, absDelta / 300);
-      const swayX =
-        Math.sin(t * 0.5) * 10 +
-        Math.sin(t * 1.3) * 5 +
-        Math.sin(t * 2.1) * 18 * windStrength;
-      const swayY =
-        Math.cos(t * 0.45) * 8 +
-        Math.cos(t * 1.1) * 4;
+      const targetX = lagX + danceX;
+      const targetY = lagY + danceY + windY; // wind shoves it away
 
-      const rot = Math.sin(t * 0.7) * 1.5 + (delta > 0 ? -1 : 1) * windStrength * 3;
+      const dx = targetX - currentX;
+      const dy = targetY - currentY;
+      const distance = Math.hypot(dx, dy) || 1;
 
-      el.style.transform = `translate(${swayX}px, ${scrollOffsetY + swayY}px) rotate(${rot}deg)`;
+      const minEase = 0.005;
+      const maxEase = 0.025;
+      const slowDistance = 300;
+      const ease = minEase + (maxEase - minEase) * Math.min(1, distance / slowDistance);
+
+      currentX += dx * ease;
+      currentY += dy * ease;
+
+      // Wind dies down gradually so the cloud lazily drifts back to the cursor.
+      windY *= 0.97;
+      if (Math.abs(windY) < 0.1) windY = 0;
+
+      el.style.transform = `translate(${currentX - width / 2}px, ${currentY - height / 2}px)`;
       rafId = requestAnimationFrame(tick);
     };
 
+    window.addEventListener('mousemove', handleMove);
     window.addEventListener('scroll', handleScroll, { passive: true });
     rafId = requestAnimationFrame(tick);
 
     return () => {
+      window.removeEventListener('mousemove', handleMove);
       window.removeEventListener('scroll', handleScroll);
       cancelAnimationFrame(rafId);
     };
