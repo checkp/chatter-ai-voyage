@@ -104,13 +104,26 @@ export const FunThemeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     void generate(messages);
   }, [state.enabled, activeChatId, generate]);
 
+  // Blend the generated theme toward the app's current base palette so the
+  // visible result starts close to defaults and only drifts as the conversation
+  // grows. Weight ramps over ~5 rounds.
+  const visibleTheme = useMemo<FunTheme | null>(() => {
+    if (!state.theme) return null;
+    const base = readBaseTheme();
+    const schedule = [0.15, 0.3, 0.5, 0.7, 0.85, 1];
+    const idx = Math.min(state.count - 1, schedule.length - 1);
+    const w = idx < 0 ? 0 : schedule[idx];
+    if (w >= 1) return state.theme;
+    return blendThemes(base, state.theme, w);
+  }, [state.theme, state.count]);
+
   const value = useMemo<Ctx>(() => ({
     enabled: state.enabled,
-    theme: state.theme,
+    theme: visibleTheme,
     toggle,
     notifyMessages,
     setActiveChat,
-  }), [state.enabled, state.theme, toggle, notifyMessages, setActiveChat]);
+  }), [state.enabled, visibleTheme, toggle, notifyMessages, setActiveChat]);
 
   return <FunThemeContext.Provider value={value}>{children}</FunThemeContext.Provider>;
 };
