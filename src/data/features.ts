@@ -55,6 +55,18 @@ export const featureCategories: FeatureCategory[] = [
     ]
   },
   {
+    id: "capabilities",
+    name: "Advanced AI Capabilities",
+    blurb: "Per-message superpowers — toggle in the composer or let the Conductor assign them per agent.",
+    features: [
+      { title: "Think (Extended Reasoning)", description: "Higher reasoning budgets across OpenAI, Claude, Gemini, Grok, DeepSeek-Reasoner, and Sonar Reasoning Pro.", tag: "new" },
+      { title: "Search (Live Web)", description: "Provider-native web grounding — OpenAI web_search, Claude web_search, Gemini google_search, Grok search, always-on Perplexity.", tag: "new" },
+      { title: "Deep Research", description: "Auto-swap to flagship research tiers: gpt-5, opus-4, gemini-2.5-pro, grok-4-heavy, sonar-deep-research, qwen-max.", tag: "new" },
+      { title: "Code Execution", description: "Sandboxed code tools on OpenAI (code_interpreter), Claude (code_execution_20250522), and Gemini (code_execution).", tag: "new" },
+      { title: "Conductor-Assigned", description: "Conductor can emit per-agent capability hints — the right tools fire on the right specialist automatically." }
+    ]
+  },
+  {
     id: "research",
     name: "Market & Web Research",
     blurb: "Grounded answers with citations — not confident guesses.",

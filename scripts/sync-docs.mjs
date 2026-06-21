@@ -51,15 +51,54 @@ function renderFeaturesMd() {
     .join("\n\n");
 }
 
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+const TYPE_BADGE = { feature: "✨ Feature", improvement: "🔧 Improvement", bugfix: "🐛 Fix", fix: "🐛 Fix" };
+
 function renderChangelogMd() {
-  return changelog
-    .slice(0, 10)
-    .map(
-      (e) =>
-        `### v${e.version} — ${e.title}  \n_${e.date}_\n\n${e.description}\n\n` +
-        e.changes.map((c) => `- _${c.type}_ — ${c.description}`).join("\n"),
-    )
-    .join("\n\n");
+  // Group by YYYY-MM, keep changelog order (newest first).
+  const groups = [];
+  const byMonth = new Map();
+  for (const e of changelog) {
+    const key = e.date.slice(0, 7);
+    if (!byMonth.has(key)) {
+      const arr = [];
+      byMonth.set(key, arr);
+      groups.push({ key, entries: arr });
+    }
+    byMonth.get(key).push(e);
+  }
+
+  const formatDate = (iso) => {
+    const [y, m, d] = iso.split("-").map(Number);
+    return `${MONTH_NAMES[m - 1]} ${d}, ${y}`;
+  };
+
+  const monthTitle = (key) => {
+    const [y, m] = key.split("-").map(Number);
+    return `${MONTH_NAMES[m - 1]} ${y}`;
+  };
+
+  return groups
+    .map((g) => {
+      const entries = g.entries
+        .map((e) => {
+          const top = TYPE_BADGE[e.type] ?? "✨ Feature";
+          const bullets = e.changes
+            .map((c) => `  - ${TYPE_BADGE[c.type] ?? "•"} ${c.description}`)
+            .join("\n");
+          return (
+            `<details${g === groups[0] && e === g.entries[0] ? " open" : ""}>\n` +
+            `<summary><strong>v${e.version}</strong> · ${e.title} <sub>${formatDate(e.date)} · ${top}</sub></summary>\n\n` +
+            `> ${e.description}\n\n${bullets}\n\n</details>`
+          );
+        })
+        .join("\n\n");
+      return `### ${monthTitle(g.key)}\n\n${entries}`;
+    })
+    .join("\n\n---\n\n");
 }
 
 function replaceBlock(text, name, body) {
