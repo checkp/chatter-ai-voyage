@@ -442,6 +442,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_capability_defaults: {
+        Row: {
+          code_exec: boolean
+          created_at: string
+          deep_research: boolean
+          id: string
+          platform: string
+          search: boolean
+          think: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          code_exec?: boolean
+          created_at?: string
+          deep_research?: boolean
+          id?: string
+          platform: string
+          search?: boolean
+          think?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          code_exec?: boolean
+          created_at?: string
+          deep_research?: boolean
+          id?: string
+          platform?: string
+          search?: boolean
+          think?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_memory: {
         Row: {
           content: string
