@@ -135,6 +135,7 @@ const MainContent: React.FC<MainContentProps> = ({
                 onConductorAgentChange={onConductorAgentChange || (() => {})}
                 onConductorSend={handleConductorSend}
                 onAgentSend={handleAgentSend}
+                onGenerateImages={activeChatId ? handleGenerateImages : undefined}
                 user={user}
               />
             ) : activeChatMode === 'side-by-side' ? (

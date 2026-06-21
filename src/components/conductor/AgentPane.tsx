@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Users, MessageSquare, ChevronRight, ChevronLeft } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Users, ChevronRight, ChevronLeft } from 'lucide-react';
 import ChatMessages from '@/components/ChatMessages';
+import ChatInput from '@/components/ChatInput';
 import { useAutoScroll } from '@/hooks/useAutoScroll';
 import type { Message, AIPlatform } from '@/types/chat';
 
@@ -18,6 +18,7 @@ interface AgentPaneProps {
   setAgentInput: (input: string) => void;
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
+  onGenerateImages?: (prompt: string, models: string[]) => void;
 }
 
 const AgentPane: React.FC<AgentPaneProps> = ({
@@ -29,6 +30,7 @@ const AgentPane: React.FC<AgentPaneProps> = ({
   setAgentInput,
   collapsed = false,
   onToggleCollapsed,
+  onGenerateImages,
 }) => {
   const messagesEndRef = useAutoScroll([mainMessages.length]);
 
@@ -131,27 +133,15 @@ const AgentPane: React.FC<AgentPaneProps> = ({
         </div>
       </ScrollArea>
 
-      <div className="p-4 border-t border-border bg-background/50">
-        <div className="flex gap-2">
-          <Textarea
-            value={agentInput}
-            onChange={(e) => setAgentInput(e.target.value)}
-            onKeyDown={handleAgentKeyPress}
-            placeholder="Send a direct message to the AI agents..."
-            className="flex-1 min-h-[44px] max-h-32 resize-none"
-            disabled={isLoadingResponse}
-          />
-          <Button
-            onClick={handleAgentSend}
-            disabled={!agentInput.trim() || isLoadingResponse}
-            size="sm"
-            className="self-end h-11"
-            variant="outline"
-          >
-            <MessageSquare className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      <ChatInput
+        input={agentInput}
+        setInput={setAgentInput}
+        handleSend={handleAgentSend}
+        isLoadingResponse={isLoadingResponse}
+        isPending={false}
+        placeholder="Send a direct message to the AI agents..."
+        onGenerateImages={onGenerateImages}
+      />
     </div>
   );
 };

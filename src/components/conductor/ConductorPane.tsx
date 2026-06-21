@@ -21,6 +21,7 @@ interface ConductorPaneProps {
   onConductorSend?: (message: string) => void;
   conductorInput: string;
   setConductorInput: (input: string) => void;
+  onGenerateImages?: (prompt: string, models: string[]) => void;
 }
 
 const ConductorPane: React.FC<ConductorPaneProps> = ({
@@ -31,7 +32,8 @@ const ConductorPane: React.FC<ConductorPaneProps> = ({
   onConductorAgentChange,
   onConductorSend,
   conductorInput,
-  setConductorInput
+  setConductorInput,
+  onGenerateImages,
 }) => {
   const { toast } = useToast();
   const messagesEndRef = useAutoScroll([conductorMessages.length]);
@@ -169,7 +171,7 @@ Provide a structured analysis comparing their different perspectives.`;
         isLoadingResponse={isLoadingResponse}
         isPending={false}
         placeholder="Chat with the conductor privately. The conductor will decide if your question needs multi-agent coordination."
-        enableAttachments={false}
+        onGenerateImages={onGenerateImages}
       />
     </div>
   );
