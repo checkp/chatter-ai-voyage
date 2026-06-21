@@ -111,6 +111,42 @@ export function sanitizeTheme(t: FunTheme): FunTheme {
   return { ...t, bg, userBubbleBg, aiBubbleBg, userBubbleFg, aiBubbleFg, accent };
 }
 
+/** Interpolate two HSL color strings by weight in [0,1] (0 = a, 1 = b). */
+function lerpHsl(a: string, b: string, w: number): string {
+  const A = parseHsl(a), B = parseHsl(b);
+  if (!A || !B) return w < 0.5 ? a : b;
+  // Hue is circular: take the shortest arc.
+  let dh = B.h - A.h;
+  if (dh > 180) dh -= 360;
+  if (dh < -180) dh += 360;
+  const h = (A.h + dh * w + 360) % 360;
+  const s = A.s + (B.s - A.s) * w;
+  const l = A.l + (B.l - A.l) * w;
+  return fmtHsl(h, s, l);
+}
+
+/**
+ * Blend a generated theme toward a base theme so the visible result starts at
+ * `base` and gradually drifts toward `target` as `weight` grows from 0 → 1.
+ * Fonts/radius/shadow snap from base to target once weight crosses 0.5.
+ */
+export function blendThemes(base: FunTheme, target: FunTheme, weight: number): FunTheme {
+  const w = Math.max(0, Math.min(1, weight));
+  return {
+    vibe: target.vibe,
+    bg: lerpHsl(base.bg, target.bg, w),
+    userBubbleBg: lerpHsl(base.userBubbleBg, target.userBubbleBg, w),
+    userBubbleFg: lerpHsl(base.userBubbleFg, target.userBubbleFg, w),
+    aiBubbleBg: lerpHsl(base.aiBubbleBg, target.aiBubbleBg, w),
+    aiBubbleFg: lerpHsl(base.aiBubbleFg, target.aiBubbleFg, w),
+    accent: lerpHsl(base.accent, target.accent, w),
+    headingFont: w >= 0.5 ? target.headingFont : base.headingFont,
+    bodyFont: w >= 0.5 ? target.bodyFont : base.bodyFont,
+    radius: Math.round(base.radius + (target.radius - base.radius) * w),
+    shadow: w >= 0.5 ? target.shadow : base.shadow,
+  };
+}
+
 export const SHADOW_MAP = {
   none: "none",
   soft: "0 1px 2px hsl(0 0% 0% / 0.08), 0 2px 6px hsl(0 0% 0% / 0.06)",
