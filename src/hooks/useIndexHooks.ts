@@ -10,12 +10,16 @@ import { useUIState } from '@/hooks/useUIState';
 import { useFreeMode } from '@/hooks/useFreeMode';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useCapabilityDefaults } from '@/hooks/useCapabilityDefaults';
 
 export const useIndexHooks = () => {
   const { user, loading, handleSignOut } = useAuth();
   const { theme } = useTheme();
   const isMobile = useIsMobile();
-  
+
+  // Warm the per-agent capability defaults registry as soon as we have a user.
+  useCapabilityDefaults(user);
+
   const { platforms, togglePlatform, callAIAPI, reloadSettings, updateAgentOrder } = usePlatforms(user);
   const { 
     messagesEndRef, 
