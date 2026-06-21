@@ -171,7 +171,7 @@ Provide a structured analysis comparing their different perspectives.`;
         isLoadingResponse={isLoadingResponse}
         isPending={false}
         placeholder="Chat with the conductor privately. The conductor will decide if your question needs multi-agent coordination."
-        enableAttachments={false}
+        onGenerateImages={onGenerateImages}
       />
     </div>
   );
