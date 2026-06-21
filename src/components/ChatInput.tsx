@@ -9,8 +9,10 @@ import {
   FileText, FileAudio, FileVideo, File as FileIcon, Image as ImageIcon,
 } from 'lucide-react';
 import ImageModelPicker from '@/components/chat/ImageModelPicker';
+import CapabilityToggles from '@/components/chat/CapabilityToggles';
 import { isImageGenerationIntent } from '@/utils/intentDetection';
 import { IMAGE_MODEL_OPTIONS, PROMPT_COLLAB_COST } from '@/config/imageModels';
+import { setPendingCapabilities, type Capabilities } from '@/lib/capabilities';
 import type { Attachment } from '@/types/chat';
 import { toast } from 'sonner';
 
@@ -109,11 +111,16 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const [capabilities, setCapabilities] = useState<Capabilities>({});
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const isDisabled = isLoadingResponse || isPending;
   const looksLikeImage = isImageGenerationIntent(input);
 
   const onSendClick = () => {
+    // Push per-message capability overrides into the shared registry; one-shot
+    // by default so they don't leak into the next message.
+    setPendingCapabilities(capabilities);
+
     // Inline text-file contents so every provider sees them.
     const textInlines = attachments
       .filter(a => (a as any).textContent)
@@ -124,11 +131,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
     if (looksLikeImage && onGenerateImages) {
       onGenerateImages(finalText, DEFAULT_IMAGE_MODELS);
       setAttachments([]);
+      setCapabilities({});
       return;
     }
     if (textInlines) setInput(finalText);
     handleSend(attachments.length > 0 ? attachments : undefined);
     setAttachments([]);
+    setCapabilities({});
   };
 
   const ingestFiles = useCallback(async (fileList: File[]) => {
