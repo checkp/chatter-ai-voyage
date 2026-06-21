@@ -417,23 +417,31 @@ ${languageLock}`;
 
     console.log(`Calling ${platform.name} API in ${chatMode} mode with ${conversationHistory.length} messages and model: ${selectedModel}${attachments ? ` (+${attachments.length} attachments)` : ''}`);
 
+    // Resolve advanced capabilities (think/search/deep_research/code_exec)
+    // from per-message overrides + per-agent defaults + conductor overrides.
+    const { resolveCapabilitiesForPlatform } = await import('@/lib/capabilities');
+    const capabilities = resolveCapabilitiesForPlatform(platform.id);
+    if (Object.values(capabilities).some(Boolean)) {
+      console.log(`[${platform.name}] capabilities:`, capabilities);
+    }
+
     switch (platform.id) {
       case 'anthropic':
-        return await callClaudeAPI(conversationHistory, selectedModel, attachments);
+        return await callClaudeAPI(conversationHistory, selectedModel, attachments, capabilities);
       case 'openai':
-        return await callOpenAI(conversationHistory, user, selectedModel, attachments);
+        return await callOpenAI(conversationHistory, user, selectedModel, attachments, capabilities);
       case 'deepseek':
-        return await callDeepSeek(conversationHistory, user, selectedModel, attachments);
+        return await callDeepSeek(conversationHistory, user, selectedModel, attachments, capabilities);
       case 'grok':
-        return await callGrokAPI(conversationHistory, user, selectedModel, attachments);
+        return await callGrokAPI(conversationHistory, user, selectedModel, attachments, capabilities);
       case 'google':
-        return await callGeminiAPI(conversationHistory, user, selectedModel, attachments);
+        return await callGeminiAPI(conversationHistory, user, selectedModel, attachments, capabilities);
       case 'mistral':
-        return await callMistralAPI(conversationHistory, user, selectedModel, attachments);
+        return await callMistralAPI(conversationHistory, user, selectedModel, attachments, capabilities);
       case 'perplexity':
-        return await callPerplexityAPI(conversationHistory, user, selectedModel, attachments);
+        return await callPerplexityAPI(conversationHistory, user, selectedModel, attachments, capabilities);
       case 'qwen':
-        return await callQwenAPI(conversationHistory, user, selectedModel, attachments);
+        return await callQwenAPI(conversationHistory, user, selectedModel, attachments, capabilities);
       default:
         throw new Error(`Unsupported platform: ${platform.id}`);
     }
