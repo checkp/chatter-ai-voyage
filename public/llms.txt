@@ -13,3 +13,18 @@ RoboHeard lets you chat with eight frontier AI models at once, orchestrate them 
 - [Help](/help): Getting started guide, mode explanations, and starter prompts.
 - [Purchase](/purchase): Token packages for accessing the AI models.
 - [Images](/images): Multi-provider image generation interface.
+
+## Latest release
+
+- v2.8.0 (2026-06-10) — Fun Mode: Chats That Restyle Themselves: Toggle Fun mode and the chat window evolves its look after each reply — backgrounds, bubbles, accents, and fonts gradually drift to match the conversation's vibe. Readability is always guarded.
+
+## Feature categories
+
+- Eight Frontier Models: Every flagship LLM, in one calm workspace — pick one, compare a few, or run all eight in parallel.
+- Four Chat Modes: Match the interaction pattern to your task — collaboration, comparison, or solo focus.
+- Agentic Orchestration: Beyond chat — the Conductor turns eight models into one coordinated system.
+- Market & Web Research: Grounded answers with citations — not confident guesses.
+- Multi-Model Image Studio: One brief, several visual minds. Render once, pick the result that fits.
+- Workspace & Controls: Small details that make multi-agent work feel calm instead of chaotic.
+- Account & Billing: Transparent pricing, flexible access, no surprises.
+- Security & Reliability: Production posture: strict RLS, encrypted secrets, retried calls.
