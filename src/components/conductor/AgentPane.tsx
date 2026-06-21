@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Users, MessageSquare, ChevronRight, ChevronLeft } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Users, ChevronRight, ChevronLeft } from 'lucide-react';
 import ChatMessages from '@/components/ChatMessages';
+import ChatInput from '@/components/ChatInput';
 import { useAutoScroll } from '@/hooks/useAutoScroll';
 import type { Message, AIPlatform } from '@/types/chat';
 
