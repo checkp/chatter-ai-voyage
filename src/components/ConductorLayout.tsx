@@ -73,6 +73,7 @@ const ConductorLayout: React.FC<ConductorLayoutProps> = ({
           onConductorSend={onConductorSend}
           conductorInput={conductorInput}
           setConductorInput={setConductorInput}
+          onGenerateImages={onGenerateImages}
         />
 
         <AgentPane
@@ -84,6 +85,7 @@ const ConductorLayout: React.FC<ConductorLayoutProps> = ({
           setAgentInput={setAgentInput}
           collapsed={agentCollapsed}
           onToggleCollapsed={toggleAgentCollapsed}
+          onGenerateImages={onGenerateImages}
         />
       </div>
 
