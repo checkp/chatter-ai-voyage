@@ -163,9 +163,31 @@ export const processConductorMessageFlow = async (params: ProcessConductorParams
     userMessage: userMessage.substring(0, 50) + '...'
   });
 
-  // Step 1: Save user message to conductor conversation
-  const userMsgObj = await saveConductorUserMessage(userMessage, conductorConversationId, chatId);
+  // Step 1: Save user message to BOTH the conductor conversation and the main
+  // chat. Mirroring to the main chat is what makes the user's question show
+  // up in the agent pane — without it the right-hand pane stays empty and it
+  // looks like "nobody responds".
+  const [userMsgObj] = await Promise.all([
+    saveConductorUserMessage(userMessage, conductorConversationId, chatId),
+    saveMainChatUserMessage(userMessage, chatId).catch((err) => {
+      console.error('Failed to mirror user message to main chat:', err);
+      return null;
+    }),
+  ]);
   const updatedConductorMessages = [...conductorMessages, userMsgObj];
+  // Reflect the just-saved user message in the in-memory history we hand to
+  // the agents below — otherwise they don't see what the user actually asked.
+  const updatedMainMessages: Message[] = [
+    ...mainMessages,
+    {
+      id: generateChatId(),
+      content: userMessage,
+      sender: 'user',
+      created_at: new Date().toISOString(),
+      conversation_id: chatId,
+      timestamp: new Date(),
+    },
+  ];
 
   // Step 2: Get conductor platform and decision response
   const conductorPlatform = platforms.find(p => p.id === conductorAgent);
@@ -181,13 +203,20 @@ export const processConductorMessageFlow = async (params: ProcessConductorParams
     callAIAPI
   );
 
-  // Step 3: Check if conductor decided coordination is needed
-  const coordinationNeeded = conductorMsgObj.content.includes('[COORDINATION_NEEDED: YES]');
+  // Step 3: Check the coordination marker. We default to YES — if the model
+  // forgets the marker we still fan out to the agents so the user always sees
+  // responses. Only an explicit NO skips coordination.
+  const markerMatch = conductorMsgObj.content.match(/\[COORDINATION_NEEDED:\s*(YES|NO)\s*\]/i);
+  const coordinationNeeded = !markerMatch || markerMatch[1].toUpperCase() === 'YES';
   let agentResponses: Message[] = [];
-  
+
   if (coordinationNeeded) {
-    console.log('Conductor decided coordination is needed, triggering agents...');
-    
+    console.log(
+      markerMatch
+        ? 'Conductor decided coordination is needed, triggering agents...'
+        : 'No coordination marker found — defaulting to coordinate with agents.'
+    );
+
     // Phase 2: Create agent coordination prompt
     const coordinationPrompt = createAgentCoordinationPrompt(
       userMessage,
@@ -196,12 +225,14 @@ export const processConductorMessageFlow = async (params: ProcessConductorParams
       conductorSystemPrompt
     );
 
-    
     const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
+    if (enabledPlatforms.length === 0) {
+      console.warn('No enabled agents available for coordination.');
+    }
     agentResponses = await processAgentResponsesWithConductorPrompt(
       coordinationPrompt,
       chatId,
-      mainMessages,
+      updatedMainMessages,
       enabledPlatforms,
       callAIAPI
     );
