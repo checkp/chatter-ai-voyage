@@ -25,7 +25,7 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = 'grok-3', attachments } = await req.json();
+    const { messages, model = 'grok-3', attachments, capabilities = {} } = await req.json();
     const user_id = user.id;
 
     // Splice image attachments into the last user message for vision-capable Grok models
@@ -103,17 +103,27 @@ serve(async (req) => {
       throw new Error("Grok API key not configured");
     }
 
+    const reqBody: Record<string, unknown> = {
+      model,
+      messages,
+      max_completion_tokens: 1000,
+    };
+    if (capabilities.think && /grok-4|reasoning/i.test(model)) {
+      reqBody.reasoning_effort = 'high';
+      console.log('[grok] enabling reasoning_effort=high');
+    }
+    if (capabilities.search || capabilities.deep_research) {
+      reqBody.search_parameters = { mode: 'on' };
+      console.log('[grok] enabling live search');
+    }
+
     const response = await fetch('https://api.x.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${grokApiKey}`
       },
-      body: JSON.stringify({
-        model: model,
-        messages: messages,
-        max_completion_tokens: 1000
-      })
+      body: JSON.stringify(reqBody)
     });
 
     if (!response.ok) {
