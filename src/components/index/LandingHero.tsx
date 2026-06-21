@@ -80,10 +80,16 @@ const LandingHero: React.FC = () => {
       currentX += dx * ease;
       currentY += dy * ease;
 
+      // Keep the cloud on the visible page — no escaping over the top/sides.
+      const halfW = width / 2;
+      const halfH = height / 2;
+      const pad = 8;
+      currentX = Math.max(halfW + pad, Math.min(window.innerWidth - halfW - pad, currentX));
+      currentY = Math.max(halfH + pad, Math.min(window.innerHeight - halfH - pad, currentY));
+
       // Wind dies down gradually so the cloud lazily drifts back to the cursor.
       windTarget *= 0.985;
       if (Math.abs(windTarget) < 0.1) windTarget = 0;
-
 
       el.style.transform = `translate(${currentX - width / 2}px, ${currentY - height / 2}px)`;
       rafId = requestAnimationFrame(tick);
