@@ -51,7 +51,7 @@ serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
     if (!user) throw new Error("Not authenticated");
 
-    const { recentMessages, previousTheme, round } = await req.json();
+    const { recentMessages, previousTheme, round, seededFromBase } = await req.json();
     if (!Array.isArray(recentMessages)) throw new Error("recentMessages required");
 
     const key = Deno.env.get("LOVABLE_API_KEY");
@@ -64,18 +64,32 @@ serve(async (req) => {
         content: String(m.content || "").slice(0, 600),
       }));
 
+    // Drift intensity: very subtle when starting from the app's baseline theme,
+    // ramping up as the conversation grows so the look gradually wanders.
+    const r = typeof round === "number" ? round : 0;
+    let driftRule: string;
+    if (seededFromBase || r === 0) {
+      driftRule = "TINY drift: shift hues at most 6deg, lightness/saturation at most 3%. Keep the same fonts, radius, and shadow as previousTheme. The result must still feel like the same theme — just a whisper of evolution.";
+    } else if (r <= 2) {
+      driftRule = "Small drift: shift hues at most 12deg, lightness/saturation at most 6%. Reuse previous fonts. Radius may change by at most 2.";
+    } else if (r <= 5) {
+      driftRule = "Moderate drift: shift hues 10–25deg, nudge lightness/saturation up to 10%. Fonts usually unchanged.";
+    } else {
+      driftRule = "Expressive drift: shift hues 15–40deg, nudge lightness/saturation freely within readability rules. Fonts may change occasionally.";
+    }
+
     const sys = `You are a UI art director. Given a short conversation excerpt, return ONLY a JSON object describing a chat theme that subtly EVOLVES from the previous theme to better match the conversation's tone.
 
 Rules:
 - Output strict JSON, no prose, no markdown fences.
-- Evolve: shift hues by 10–40deg, nudge lightness/saturation slightly. Do NOT reset.
+- ${driftRule}
+- Never reset to an unrelated palette — always evolve from previousTheme.
 - All colors must be valid CSS \`hsl(H S% L%)\` strings (space-separated, no commas, no alpha).
-- Keep page bg lightness in 8–22% (dark) OR 92–98% (light); pick one regime and stay consistent with previousTheme.
+- Keep page bg lightness in 8–22% (dark) OR 88–98% (light); stay in the same regime as previousTheme.
 - Bubble backgrounds must contrast meaningfully from page bg (different lightness).
 - READABILITY IS CRITICAL: each bubble's foreground text MUST have ≥4.5:1 WCAG contrast against its bubble bg. If bubble bg lightness is ≥50%, foreground lightness MUST be ≤25%. If bubble bg lightness is ≤50%, foreground lightness MUST be ≥80%.
 - Accent color MUST be visibly distinct from page bg (≥3:1 contrast).
 - Fonts MUST be from this list exactly: ${FONTS.join(", ")}.
-- Change fonts at most every 4 rounds; otherwise reuse previous fonts.
 - radius: integer 4–28. shadow: one of ${SHADOWS.join("|")}.
 - vibe: a 2–4 word evocative label (e.g. "midnight library", "citrus picnic").
 
@@ -83,7 +97,8 @@ Schema:
 {"vibe":string,"bg":hsl,"userBubbleBg":hsl,"userBubbleFg":hsl,"aiBubbleBg":hsl,"aiBubbleFg":hsl,"accent":hsl,"headingFont":string,"bodyFont":string,"radius":number,"shadow":"none"|"soft"|"lifted"}`;
 
     const userMsg = JSON.stringify({
-      round: round ?? 0,
+      round: r,
+      seededFromBase: !!seededFromBase,
       previousTheme: previousTheme ?? null,
       conversation: trimmed,
     });
