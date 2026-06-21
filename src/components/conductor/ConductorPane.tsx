@@ -21,6 +21,7 @@ interface ConductorPaneProps {
   onConductorSend?: (message: string) => void;
   conductorInput: string;
   setConductorInput: (input: string) => void;
+  onGenerateImages?: (prompt: string, models: string[]) => void;
 }
 
 const ConductorPane: React.FC<ConductorPaneProps> = ({
@@ -31,7 +32,8 @@ const ConductorPane: React.FC<ConductorPaneProps> = ({
   onConductorAgentChange,
   onConductorSend,
   conductorInput,
-  setConductorInput
+  setConductorInput,
+  onGenerateImages,
 }) => {
   const { toast } = useToast();
   const messagesEndRef = useAutoScroll([conductorMessages.length]);
