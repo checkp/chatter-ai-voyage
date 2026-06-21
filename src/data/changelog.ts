@@ -12,6 +12,21 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.9.0",
+    date: "2026-06-21",
+    title: "Advanced AI Capabilities: Think, Search, Deep Research & Code",
+    description: "Per-message capability toggles unlock provider-native superpowers — extended reasoning, live web search, deep research, and code execution — across all 7 chat providers. Conductor can assign them per agent automatically.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "🧠 Think — extended reasoning via OpenAI reasoning_effort, Claude thinking budget, Gemini thinkingConfig, Grok reasoning_effort, DeepSeek-Reasoner, Sonar Reasoning Pro" },
+      { type: "feature", description: "🌐 Search — live web grounding via OpenAI web_search, Claude web_search_20250305, Gemini google_search, Grok search_parameters, always-on Perplexity" },
+      { type: "feature", description: "🔭 Deep Research — model-swap to flagship research tiers (gpt-5, opus-4, gemini-2.5-pro, grok-4-heavy, sonar-deep-research, qwen-max)" },
+      { type: "feature", description: "💻 Code Execution — sandboxed code tools on OpenAI (code_interpreter), Claude (code_execution_20250522), and Gemini (code_execution)" },
+      { type: "feature", description: "🎼 Conductor-assigned capabilities — Conductor can emit [CAPABILITIES: agent=think,search] per delegated agent" },
+      { type: "improvement", description: "⚙️ Per-agent capability defaults persisted in user_capability_defaults (RLS-scoped) and overridable per message in the composer" }
+    ]
+  },
+  {
     version: "2.8.0",
     date: "2026-06-10",
     title: "Fun Mode: Chats That Restyle Themselves",
