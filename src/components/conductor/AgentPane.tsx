@@ -18,6 +18,7 @@ interface AgentPaneProps {
   setAgentInput: (input: string) => void;
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
+  onGenerateImages?: (prompt: string, models: string[]) => void;
 }
 
 const AgentPane: React.FC<AgentPaneProps> = ({
@@ -29,6 +30,7 @@ const AgentPane: React.FC<AgentPaneProps> = ({
   setAgentInput,
   collapsed = false,
   onToggleCollapsed,
+  onGenerateImages,
 }) => {
   const messagesEndRef = useAutoScroll([mainMessages.length]);
 
