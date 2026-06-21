@@ -80,12 +80,12 @@ const LandingHero: React.FC = () => {
       currentX += dx * ease;
       currentY += dy * ease;
 
-      // Keep the cloud on the visible page — no escaping over the top/sides.
+      // Soft viewport leash — the cloud may peek off-screen but can't fly away.
       const halfW = width / 2;
       const halfH = height / 2;
-      const pad = 8;
-      currentX = Math.max(halfW + pad, Math.min(window.innerWidth - halfW - pad, currentX));
-      currentY = Math.max(halfH + pad, Math.min(window.innerHeight - halfH - pad, currentY));
+      const overshoot = 40; // how far it's allowed to poke past an edge
+      currentX = Math.max(halfW - overshoot, Math.min(window.innerWidth - halfW + overshoot, currentX));
+      currentY = Math.max(halfH - overshoot, Math.min(window.innerHeight - halfH + overshoot, currentY));
 
       // Wind dies down gradually so the cloud lazily drifts back to the cursor.
       windTarget *= 0.985;
