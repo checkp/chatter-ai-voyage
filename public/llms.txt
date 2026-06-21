@@ -16,13 +16,14 @@ RoboHeard lets you chat with eight frontier AI models at once, orchestrate them 
 
 ## Latest release
 
-- v2.8.0 (2026-06-10) — Fun Mode: Chats That Restyle Themselves: Toggle Fun mode and the chat window evolves its look after each reply — backgrounds, bubbles, accents, and fonts gradually drift to match the conversation's vibe. Readability is always guarded.
+- v2.9.0 (2026-06-21) — Advanced AI Capabilities: Think, Search, Deep Research & Code: Per-message capability toggles unlock provider-native superpowers — extended reasoning, live web search, deep research, and code execution — across all 7 chat providers. Conductor can assign them per agent automatically.
 
 ## Feature categories
 
 - Eight Frontier Models: Every flagship LLM, in one calm workspace — pick one, compare a few, or run all eight in parallel.
 - Four Chat Modes: Match the interaction pattern to your task — collaboration, comparison, or solo focus.
 - Agentic Orchestration: Beyond chat — the Conductor turns eight models into one coordinated system.
+- Advanced AI Capabilities: Per-message superpowers — toggle in the composer or let the Conductor assign them per agent.
 - Market & Web Research: Grounded answers with citations — not confident guesses.
 - Multi-Model Image Studio: One brief, several visual minds. Render once, pick the result that fits.
 - Workspace & Controls: Small details that make multi-agent work feel calm instead of chaotic.
