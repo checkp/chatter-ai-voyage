@@ -83,7 +83,7 @@ const LandingHero: React.FC = () => {
       // Soft viewport leash — the cloud may peek off-screen but can't fly away.
       const halfW = width / 2;
       const halfH = height / 2;
-      const overshoot = 40; // how far it's allowed to poke past an edge
+      const overshoot = 400; // how far it's allowed to poke past an edge
       currentX = Math.max(halfW - overshoot, Math.min(window.innerWidth - halfW + overshoot, currentX));
       currentY = Math.max(halfH - overshoot, Math.min(window.innerHeight - halfH + overshoot, currentY));
 
