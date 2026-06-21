@@ -245,10 +245,18 @@ serve(async (req) => {
         }
       });
     
+    // With thinking or tool-use enabled the content array contains multiple
+    // blocks (thinking, tool_use, text). Concatenate text-type blocks; surface
+    // tool_result text where available.
+    const textBlocks = (data.content || [])
+      .filter((b: any) => b?.type === 'text' && typeof b.text === 'string')
+      .map((b: any) => b.text);
+    const finalText = textBlocks.length > 0 ? textBlocks.join('\n\n') : (data.content?.[0]?.text ?? '');
+
     return new Response(
-      JSON.stringify({ content: data.content[0].text }), 
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      JSON.stringify({ content: finalText }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     )
 
