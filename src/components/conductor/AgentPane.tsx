@@ -4,7 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Users, MessageSquare } from 'lucide-react';
+import { Users, MessageSquare, ChevronRight, ChevronLeft } from 'lucide-react';
 import ChatMessages from '@/components/ChatMessages';
 import { useAutoScroll } from '@/hooks/useAutoScroll';
 import type { Message, AIPlatform } from '@/types/chat';
@@ -16,6 +16,8 @@ interface AgentPaneProps {
   onAgentSend?: (message: string) => void;
   agentInput: string;
   setAgentInput: (input: string) => void;
+  collapsed?: boolean;
+  onToggleCollapsed?: () => void;
 }
 
 const AgentPane: React.FC<AgentPaneProps> = ({
@@ -24,7 +26,9 @@ const AgentPane: React.FC<AgentPaneProps> = ({
   isLoadingResponse,
   onAgentSend,
   agentInput,
-  setAgentInput
+  setAgentInput,
+  collapsed = false,
+  onToggleCollapsed,
 }) => {
   const messagesEndRef = useAutoScroll([mainMessages.length]);
 
@@ -42,22 +46,62 @@ const AgentPane: React.FC<AgentPaneProps> = ({
     }
   };
 
+  if (collapsed) {
+    return (
+      <div className="w-10 border-l border-border bg-gradient-to-b from-secondary/10 to-secondary/5 flex flex-col items-center py-2 gap-2 shrink-0">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          onClick={onToggleCollapsed}
+          aria-label="Expand agent discussion panel"
+          title="Expand agent discussion"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <div className="p-1.5 rounded-md bg-secondary/20">
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </div>
+        <div
+          className="text-[10px] font-medium text-muted-foreground tracking-wide select-none"
+          style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+        >
+          Agents · {platforms.filter(p => p.enabled).length}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-1/2 flex flex-col">
-      <div className="p-4 border-b border-border bg-gradient-to-r from-secondary/10 to-secondary/5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-secondary/20">
-              <Users className="h-6 w-6 text-muted-foreground" />
+    <div className="w-1/2 flex flex-col min-w-0">
+      <div className="p-2.5 border-b border-border bg-gradient-to-r from-secondary/10 to-secondary/5">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="p-1.5 rounded-md bg-secondary/20 shrink-0">
+              <Users className="h-4 w-4 text-muted-foreground" />
             </div>
-            <div>
-              <h3 className="font-semibold text-lg text-foreground">AI Agents Discussion</h3>
-              <p className="text-sm text-muted-foreground">Coordinated multi-agent responses</p>
+            <div className="min-w-0">
+              <h3 className="font-semibold text-sm text-foreground leading-tight truncate">AI Agents Discussion</h3>
+              <p className="text-[11px] text-muted-foreground leading-tight truncate">Coordinated multi-agent responses</p>
             </div>
           </div>
-          <Badge variant="outline" className="text-xs font-medium px-3 py-1">
-            {platforms.filter(p => p.enabled).length} agents active
-          </Badge>
+          <div className="flex items-center gap-1 shrink-0">
+            <Badge variant="outline" className="text-[10px] font-medium px-2 py-0.5">
+              {platforms.filter(p => p.enabled).length} agents
+            </Badge>
+            {onToggleCollapsed && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={onToggleCollapsed}
+                aria-label="Collapse agent discussion panel"
+                title="Collapse to the right"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -113,3 +157,4 @@ const AgentPane: React.FC<AgentPaneProps> = ({
 };
 
 export default AgentPane;
+

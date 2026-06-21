@@ -83,12 +83,8 @@ const ConductorAgentSelector: React.FC<ConductorAgentSelectorProps> = ({
   const SelectedIcon = selectedOption?.icon || Brain;
 
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-foreground block">
-        Conductor Agent
-      </label>
-      <Select value={conductorAgent} onValueChange={onConductorAgentChange}>
-        <SelectTrigger className="w-full h-12 bg-background/80 backdrop-blur-sm border-border/50 hover:border-border transition-colors">
+    <Select value={conductorAgent} onValueChange={onConductorAgentChange}>
+      <SelectTrigger className="w-full h-10 bg-background/80 backdrop-blur-sm border-border/50 hover:border-border transition-colors">
           <SelectValue>
             <div className="flex items-center gap-3">
               <div className={`p-1.5 rounded-md ${selectedOption?.bgColor || 'bg-gray-50'}`}>
@@ -120,9 +116,8 @@ const ConductorAgentSelector: React.FC<ConductorAgentSelectorProps> = ({
               </SelectItem>
             );
           })}
-        </SelectContent>
-      </Select>
-    </div>
+      </SelectContent>
+    </Select>
   );
 };
 
