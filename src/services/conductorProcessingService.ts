@@ -222,36 +222,54 @@ export const processConductorMessageFlow = async (params: ProcessConductorParams
         : 'No coordination marker found — defaulting to coordinate with agents.'
     );
 
-    // Phase 2: Create agent coordination prompt
-    const coordinationPrompt = createAgentCoordinationPrompt(
-      userMessage,
-      conductorMsgObj.content,
-      platforms,
-      conductorSystemPrompt
-    );
-
-    const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
-    if (enabledPlatforms.length === 0) {
-      console.warn('No enabled agents available for coordination.');
+    // Parse per-agent advanced capabilities the conductor wants to activate
+    // and stage them on the shared registry so each agent's callAIAPI picks
+    // them up. Cleared in `finally` so they don't leak past this turn.
+    const nameToPlatformId: Record<string, string> = {};
+    platforms.forEach(p => {
+      nameToPlatformId[p.name.toLowerCase()] = p.id;
+      nameToPlatformId[p.id.toLowerCase()] = p.id;
+    });
+    const capsByPlatform = parseConductorCapabilities(conductorMsgObj.content, nameToPlatformId);
+    if (Object.keys(capsByPlatform).length > 0) {
+      console.log('[conductor] capabilities by platform:', capsByPlatform);
     }
-    agentResponses = await processAgentResponsesWithConductorPrompt(
-      coordinationPrompt,
-      chatId,
-      updatedMainMessages,
-      enabledPlatforms,
-      callAIAPI
-    );
+    setConductorCapabilityOverrides(capsByPlatform);
 
-    // Step 4: Generate conductor summary if we have agent responses
-    if (agentResponses.length > 0) {
-      const summaryPrompt = createSummaryPrompt(agentResponses, platforms, conductorSystemPrompt);
-      await getConductorResponse(
-        conductorPlatform,
-        [...updatedConductorMessages, conductorMsgObj],
-        summaryPrompt,
-        conductorConversationId,
+    try {
+      // Phase 2: Create agent coordination prompt
+      const coordinationPrompt = createAgentCoordinationPrompt(
+        userMessage,
+        conductorMsgObj.content,
+        platforms,
+        conductorSystemPrompt
+      );
+
+      const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
+      if (enabledPlatforms.length === 0) {
+        console.warn('No enabled agents available for coordination.');
+      }
+      agentResponses = await processAgentResponsesWithConductorPrompt(
+        coordinationPrompt,
+        chatId,
+        updatedMainMessages,
+        enabledPlatforms,
         callAIAPI
       );
+
+      // Step 4: Generate conductor summary if we have agent responses
+      if (agentResponses.length > 0) {
+        const summaryPrompt = createSummaryPrompt(agentResponses, platforms, conductorSystemPrompt);
+        await getConductorResponse(
+          conductorPlatform,
+          [...updatedConductorMessages, conductorMsgObj],
+          summaryPrompt,
+          conductorConversationId,
+          callAIAPI
+        );
+      }
+    } finally {
+      clearConductorCapabilityOverrides();
     }
   } else {
     console.log('Conductor handled the request directly, no agent coordination needed');
