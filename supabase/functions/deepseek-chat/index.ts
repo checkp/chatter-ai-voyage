@@ -25,8 +25,14 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = 'deepseek-chat' } = await req.json();
+    let { messages, model = 'deepseek-chat', capabilities = {} } = await req.json();
     const user_id = user.id;
+
+    // Honor "think" / "deep_research" by switching to the reasoner variant.
+    if ((capabilities.think || capabilities.deep_research) && model === 'deepseek-chat') {
+      console.log('[deepseek] switching to deepseek-reasoner for advanced reasoning');
+      model = 'deepseek-reasoner';
+    }
     
     // Check token balance - create if doesn't exist
     let { data: tokenData, error: tokenError } = await supabaseClient
