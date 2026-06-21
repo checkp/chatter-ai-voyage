@@ -15,6 +15,7 @@ interface ConductorLayoutProps {
   onConductorAgentChange: (agent: string) => void;
   onConductorSend?: (message: string) => void;
   onAgentSend?: (message: string) => void;
+  onGenerateImages?: (prompt: string, models: string[]) => void;
   user?: any;
 }
 
@@ -27,6 +28,7 @@ const ConductorLayout: React.FC<ConductorLayoutProps> = ({
   onConductorAgentChange,
   onConductorSend,
   onAgentSend,
+  onGenerateImages,
   user
 }) => {
   const [conductorInput, setConductorInput] = useState('');
