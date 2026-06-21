@@ -141,6 +141,43 @@ export function themeToCssVars(t: FunTheme): React.CSSProperties {
 
 export const FUN_THEME_CAP = 40;
 
+/** Read current app theme tokens to use as the starting baseline before drift. */
+export function readBaseTheme(): FunTheme {
+  const fallback: FunTheme = {
+    vibe: "baseline",
+    bg: "hsl(0 0% 100%)",
+    userBubbleBg: "hsl(222 47% 11%)",
+    userBubbleFg: "hsl(0 0% 100%)",
+    aiBubbleBg: "hsl(210 40% 96%)",
+    aiBubbleFg: "hsl(222 47% 11%)",
+    accent: "hsl(221 83% 53%)",
+    headingFont: "Inter",
+    bodyFont: "Inter",
+    radius: 12,
+    shadow: "soft",
+  };
+  if (typeof window === "undefined") return fallback;
+  try {
+    const cs = getComputedStyle(document.documentElement);
+    const wrap = (raw: string, fb: string) => {
+      const v = (raw || "").trim();
+      if (!v) return fb;
+      return v.startsWith("hsl(") ? v : `hsl(${v})`;
+    };
+    return {
+      ...fallback,
+      bg: wrap(cs.getPropertyValue("--background"), fallback.bg),
+      userBubbleBg: wrap(cs.getPropertyValue("--primary"), fallback.userBubbleBg),
+      userBubbleFg: wrap(cs.getPropertyValue("--primary-foreground"), fallback.userBubbleFg),
+      aiBubbleBg: wrap(cs.getPropertyValue("--card") || cs.getPropertyValue("--muted"), fallback.aiBubbleBg),
+      aiBubbleFg: wrap(cs.getPropertyValue("--foreground"), fallback.aiBubbleFg),
+      accent: wrap(cs.getPropertyValue("--accent") || cs.getPropertyValue("--primary"), fallback.accent),
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 // ---- Per-bubble variation -----------------------------------------------
 
 const VARIANTS = 8;
