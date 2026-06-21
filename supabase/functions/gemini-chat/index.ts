@@ -171,7 +171,11 @@ serve(async (req) => {
 
 
     const data_response = await response.json();
-    const content = data_response.candidates?.[0]?.content?.parts?.[0]?.text;
+    // With tools (search/code_execution) parts may include executableCode /
+    // codeExecutionResult / groundingMetadata. Concatenate all text parts.
+    const parts = data_response.candidates?.[0]?.content?.parts ?? [];
+    const textParts = parts.filter((p: any) => typeof p?.text === 'string').map((p: any) => p.text);
+    const content = textParts.join('\n\n');
 
     if (!content) {
       throw new Error("Gemini API returned empty response");
