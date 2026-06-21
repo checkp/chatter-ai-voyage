@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { Attachment } from '@/types/chat';
+import type { Capabilities } from '@/lib/capabilities';
 
 const getValidSession = async () => {
   const { data: { session }, error } = await supabase.auth.getSession();
@@ -52,10 +53,12 @@ const buildBody = (
   model: string,
   userId: string | undefined,
   attachments?: Attachment[],
+  capabilities?: Capabilities,
 ) => {
   const body: Record<string, unknown> = { messages, model };
   if (userId) body.user_id = userId;
   if (attachments && attachments.length > 0) body.attachments = attachments;
+  if (capabilities && Object.values(capabilities).some(Boolean)) body.capabilities = capabilities;
   return body;
 };
 
