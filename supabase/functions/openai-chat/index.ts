@@ -25,7 +25,7 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = 'gpt-4o-mini', attachments } = await req.json();
+    const { messages, model = 'gpt-4o-mini', attachments, capabilities = {} } = await req.json();
     const user_id = user.id;
 
     // If the client sent image attachments and the model supports vision,
@@ -113,17 +113,35 @@ serve(async (req) => {
       throw new Error("OpenAI API key not configured");
     }
 
+    // Build request body — apply advanced capabilities when supported.
+    const reqBody: Record<string, unknown> = {
+      model,
+      messages,
+      max_completion_tokens: 4096,
+    };
+    const reasoningModels = /^(gpt-5|o1|o3|o4)/i;
+    if (capabilities.think && reasoningModels.test(model)) {
+      reqBody.reasoning_effort = 'high';
+      console.log('[openai] enabling reasoning_effort=high');
+    }
+    const tools: any[] = [];
+    if (capabilities.search || capabilities.deep_research) {
+      tools.push({ type: 'web_search' });
+      console.log('[openai] enabling web_search tool');
+    }
+    if (capabilities.code_exec) {
+      tools.push({ type: 'code_interpreter' });
+      console.log('[openai] enabling code_interpreter tool');
+    }
+    if (tools.length > 0) reqBody.tools = tools;
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${openaiApiKey}`
       },
-      body: JSON.stringify({
-        model: model,
-        messages: messages,
-        max_completion_tokens: 4096
-      })
+      body: JSON.stringify(reqBody)
     });
 
     if (!response.ok) {
