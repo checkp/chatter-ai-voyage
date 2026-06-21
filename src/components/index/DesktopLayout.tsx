@@ -188,22 +188,21 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           onStartTour={tour.startTour}
         />
 
-        {/* Add the Draggable AI Status Bar - hide in conductor mode */}
-        {activeChatMode !== 'conductor' && (
-          <div className="bg-secondary/50 border-b border-border px-4 py-2">
-            <DraggableAIStatusBar
-              platforms={platforms}
-              activeAIStatuses={transformedStatuses}
-              onReorder={updateAgentOrder}
-              onAgentClick={(platform) => {
-                console.log('Agent clicked:', platform.name);
-              }}
-              onToggleEnabled={togglePlatform}
-              currentChat={currentChatWithMessages}
-              onSendMessage={handleSingleAgentMessage}
-            />
-          </div>
-        )}
+        {/* Draggable AI Status Bar — visible in all modes including conductor */}
+        <div className="bg-secondary/50 border-b border-border px-4 py-2">
+          <DraggableAIStatusBar
+            platforms={platforms}
+            activeAIStatuses={transformedStatuses}
+            onReorder={updateAgentOrder}
+            onAgentClick={(platform) => {
+              console.log('Agent clicked:', platform.name);
+            }}
+            onToggleEnabled={togglePlatform}
+            currentChat={currentChatWithMessages}
+            onSendMessage={handleSingleAgentMessage}
+          />
+        </div>
+
 
         {activeTab === 'chat' && <PreReleaseBanner />}
 
