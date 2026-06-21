@@ -46,9 +46,23 @@ serve(async (req) => {
 
     console.log('User authenticated successfully:', user.id)
 
-    const { messages, model = 'claude-sonnet-4-20250514', attachments } = await req.json()
+    let { messages, model = 'claude-sonnet-4-20250514', attachments } = await req.json()
     const user_id = user.id;
-    console.log('Received messages:', messages?.length || 0, 'messages')
+
+    // Normalize legacy / invalid Claude model ids to current Anthropic ids
+    const modelAliases: Record<string, string> = {
+      'claude-haiku-4-20250514': 'claude-haiku-4-5',
+      'claude-haiku-4': 'claude-haiku-4-5',
+      'claude-3-5-haiku-20241022': 'claude-haiku-4-5',
+      'claude-3-5-sonnet-20241022': 'claude-sonnet-4-20250514',
+      'claude-3-opus-20240229': 'claude-opus-4-20250514',
+    };
+    if (modelAliases[model]) {
+      console.log(`Remapping model ${model} -> ${modelAliases[model]}`);
+      model = modelAliases[model];
+    }
+
+    console.log('Received messages:', messages?.length || 0, 'messages, model:', model)
 
     // Splice image attachments into the last user message (Claude vision format)
     if (Array.isArray(attachments) && attachments.length > 0 && /claude-(3|opus|sonnet|haiku|4)/i.test(model)) {
