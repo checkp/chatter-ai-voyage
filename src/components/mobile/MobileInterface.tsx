@@ -56,6 +56,34 @@ const MobileInterface = () => {
 
   const messagesEndRef = useAutoScroll([messages?.length, isLoadingResponse]);
 
+  const queryClient = useQueryClient();
+  const { generate: generateMultiImages } = useMultiImageGeneration();
+
+  const handleGenerateImages = async (prompt: string, models: string[]) => {
+    if (!activeChatId || !prompt.trim() || models.length === 0) return;
+    const now = new Date().toISOString();
+    await supabase.from('messages').insert([
+      { conversation_id: activeChatId, content: prompt, sender: 'user', created_at: now },
+    ]);
+    queryClient.invalidateQueries({ queryKey: ['messages', activeChatId] });
+
+    const result = await generateMultiImages(prompt, models);
+    if (!result) return;
+
+    await supabase.from('messages').insert([
+      {
+        conversation_id: activeChatId,
+        content: JSON.stringify(result),
+        sender: 'ai',
+        platform: IMAGE_PANEL_PLATFORM,
+        created_at: new Date().toISOString(),
+      },
+    ]);
+    queryClient.invalidateQueries({ queryKey: ['messages', activeChatId] });
+    queryClient.invalidateQueries({ queryKey: ['tokens'] });
+    queryClient.invalidateQueries({ queryKey: ['generated-images'] });
+  };
+
   // Auto-hide header on scroll down, show on scroll up
   const handleScroll = useCallback(() => {
     const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
