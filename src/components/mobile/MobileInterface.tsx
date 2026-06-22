@@ -171,6 +171,7 @@ const MobileInterface = () => {
                 isFreeMode={false}
                 isFreeModeRunning={false}
                 onSendAndStartConversation={() => {}}
+                onGenerateImages={activeChatId ? handleGenerateImages : undefined}
               />
             </div>
           </>
