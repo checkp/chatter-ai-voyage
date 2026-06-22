@@ -5,11 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Plus } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { usePlatforms } from '@/hooks/usePlatforms';
 import { useChatManagement } from '@/hooks/useChatManagement';
 import { useMessageHandling } from '@/hooks/useMessageHandling';
 import { useAutoScroll } from '@/hooks/useAutoScroll';
+import { useMultiImageGeneration } from '@/hooks/useMultiImageGeneration';
+import { IMAGE_PANEL_PLATFORM } from '@/config/imageModels';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInput from '@/components/ChatInput';
 import MobileChatSidebar from './MobileChatSidebar';
@@ -51,6 +55,34 @@ const MobileInterface = () => {
   } = useMessageHandling(user, platforms, callAIAPI, activeChatMode);
 
   const messagesEndRef = useAutoScroll([messages?.length, isLoadingResponse]);
+
+  const queryClient = useQueryClient();
+  const { generate: generateMultiImages } = useMultiImageGeneration();
+
+  const handleGenerateImages = async (prompt: string, models: string[]) => {
+    if (!activeChatId || !prompt.trim() || models.length === 0) return;
+    const now = new Date().toISOString();
+    await supabase.from('messages').insert([
+      { conversation_id: activeChatId, content: prompt, sender: 'user', created_at: now },
+    ]);
+    queryClient.invalidateQueries({ queryKey: ['messages', activeChatId] });
+
+    const result = await generateMultiImages(prompt, models);
+    if (!result) return;
+
+    await supabase.from('messages').insert([
+      {
+        conversation_id: activeChatId,
+        content: JSON.stringify(result),
+        sender: 'ai',
+        platform: IMAGE_PANEL_PLATFORM,
+        created_at: new Date().toISOString(),
+      },
+    ]);
+    queryClient.invalidateQueries({ queryKey: ['messages', activeChatId] });
+    queryClient.invalidateQueries({ queryKey: ['tokens'] });
+    queryClient.invalidateQueries({ queryKey: ['generated-images'] });
+  };
 
   // Auto-hide header on scroll down, show on scroll up
   const handleScroll = useCallback(() => {
@@ -139,6 +171,7 @@ const MobileInterface = () => {
                 isFreeMode={false}
                 isFreeModeRunning={false}
                 onSendAndStartConversation={() => {}}
+                onGenerateImages={activeChatId ? handleGenerateImages : undefined}
               />
             </div>
           </>
