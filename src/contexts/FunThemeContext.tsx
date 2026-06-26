@@ -83,7 +83,6 @@ export const FunThemeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const theme = (data as any)?.theme as FunTheme | undefined;
       if (!theme) return;
       const safe = sanitizeTheme(theme);
-      stepDrift();
       setState((s) => ({ ...s, theme: safe, count: s.count + 1 }));
     } catch (e) {
       console.warn("fun theme failed", e);
