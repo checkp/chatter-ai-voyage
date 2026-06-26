@@ -1,7 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeTheme, readBaseTheme, blendThemes, FUN_THEME_CAP, type FunTheme } from "@/lib/funTheme";
-import { startDrift, stepDrift, stopDrift } from "@/lib/funDrift";
 import type { Message } from "@/types/chat";
 
 type ChatState = { enabled: boolean; theme: FunTheme | null; count: number };
@@ -54,21 +53,7 @@ export const FunThemeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     if (activeChatId) saveState(activeChatId, state);
   }, [activeChatId, state]);
-
-  // Start/stop the site-wide color drift when fun mode flips.
-  useEffect(() => {
-    if (state.enabled) {
-      startDrift();
-      // Re-apply any accumulated drift for the current message count so the
-      // palette doesn't snap back to 0% when remounting an existing fun chat.
-      for (let i = 0; i < state.count; i++) stepDrift();
-    } else {
-      stopDrift();
-    }
-    return () => { stopDrift(); };
-    // Only react to enabled flips, not count — count is handled in generate().
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.enabled, activeChatId]);
+  // Site-wide color drift was removed — fun mode only restyles chat bubbles.
 
   const toggle = useCallback(() => {
     setState((s) => ({ ...s, enabled: !s.enabled }));
@@ -98,7 +83,6 @@ export const FunThemeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const theme = (data as any)?.theme as FunTheme | undefined;
       if (!theme) return;
       const safe = sanitizeTheme(theme);
-      stepDrift();
       setState((s) => ({ ...s, theme: safe, count: s.count + 1 }));
     } catch (e) {
       console.warn("fun theme failed", e);
@@ -121,16 +105,14 @@ export const FunThemeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     void generate(messages);
   }, [state.enabled, activeChatId, generate]);
 
-  // Blend the generated theme toward the app's current base palette so the
-  // visible result starts close to defaults and only drifts as the conversation
-  // grows. Weight ramps over ~5 rounds.
+  // Blend the generated theme gently toward the app's base palette so chat
+  // bubbles stay in sync with the rest of the site. Caps at a subtle ~35%.
   const visibleTheme = useMemo<FunTheme | null>(() => {
     if (!state.theme) return null;
     const base = readBaseTheme();
-    const schedule = [0.15, 0.3, 0.5, 0.7, 0.85, 1];
+    const schedule = [0.08, 0.15, 0.22, 0.28, 0.32, 0.35];
     const idx = Math.min(state.count - 1, schedule.length - 1);
     const w = idx < 0 ? 0 : schedule[idx];
-    if (w >= 1) return state.theme;
     return blendThemes(base, state.theme, w);
   }, [state.theme, state.count]);
 
