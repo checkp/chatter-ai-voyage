@@ -105,16 +105,14 @@ export const FunThemeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     void generate(messages);
   }, [state.enabled, activeChatId, generate]);
 
-  // Blend the generated theme toward the app's current base palette so the
-  // visible result starts close to defaults and only drifts as the conversation
-  // grows. Weight ramps over ~5 rounds.
+  // Blend the generated theme gently toward the app's base palette so chat
+  // bubbles stay in sync with the rest of the site. Caps at a subtle ~35%.
   const visibleTheme = useMemo<FunTheme | null>(() => {
     if (!state.theme) return null;
     const base = readBaseTheme();
-    const schedule = [0.15, 0.3, 0.5, 0.7, 0.85, 1];
+    const schedule = [0.08, 0.15, 0.22, 0.28, 0.32, 0.35];
     const idx = Math.min(state.count - 1, schedule.length - 1);
     const w = idx < 0 ? 0 : schedule[idx];
-    if (w >= 1) return state.theme;
     return blendThemes(base, state.theme, w);
   }, [state.theme, state.count]);
 
