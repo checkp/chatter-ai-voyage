@@ -34,7 +34,10 @@ const ConductorLayout: React.FC<ConductorLayoutProps> = ({
   const [conductorInput, setConductorInput] = useState('');
   const [agentInput, setAgentInput] = useState('');
   const [agentCollapsed, setAgentCollapsed] = useState<boolean>(() => {
-    try { return localStorage.getItem('conductor:agentCollapsed') === '1'; } catch { return false; }
+    try {
+      const v = localStorage.getItem('conductor:agentCollapsed');
+      return v === null ? true : v === '1';
+    } catch { return true; }
   });
 
   const toggleAgentCollapsed = () => {
