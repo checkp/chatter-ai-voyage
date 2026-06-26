@@ -1,7 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeTheme, readBaseTheme, blendThemes, FUN_THEME_CAP, type FunTheme } from "@/lib/funTheme";
-import { startDrift, stepDrift, stopDrift } from "@/lib/funDrift";
 import type { Message } from "@/types/chat";
 
 type ChatState = { enabled: boolean; theme: FunTheme | null; count: number };
