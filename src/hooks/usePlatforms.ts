@@ -248,7 +248,10 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       };
 
       if (model) {
-        updateData.model = resolvePlatformModel(platformId, model);
+        // Local model ids ("direct::<base>::<model>", "lmstudio::<model>") are
+        // dynamic and not in the AI_MODELS catalog — resolvePlatformModel would
+        // "correct" them to '' and silently wipe the selection. Store raw.
+        updateData.model = platformId === 'local' ? model : resolvePlatformModel(platformId, model);
       }
 
       if (displayOrder !== undefined) {
@@ -328,6 +331,13 @@ export const usePlatforms = (user: SupabaseUser | null) => {
 
     const newEnabled = !platform.enabled;
     console.log('Setting enabled to:', newEnabled);
+
+    // The Local agent is unusable without a model — route users to the "+" menu
+    // instead of enabling a dead agent.
+    if (platform.id === 'local' && newEnabled && !platform.selectedModel) {
+      toast.info('Pick a local model first — use the "+" button in the agent bar');
+      return;
+    }
     
     setPlatforms(prev => prev.map(p => 
       p.id === platformId ? { ...p, enabled: newEnabled } : p
@@ -511,6 +521,9 @@ ${languageLock}`;
       case 'qwen':
         return await callQwenAPI(conversationHistory, user, selectedModel, attachments, advancedCaps);
       case 'local':
+        if (!selectedModel) {
+          throw new Error('No local model selected — pick one from the "+" menu in the agent bar');
+        }
         return await callLocalAPI(conversationHistory, user, selectedModel, attachments, advancedCaps);
       default:
         throw new Error(`Unsupported platform: ${platform.id}`);
