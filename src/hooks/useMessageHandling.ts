@@ -96,8 +96,11 @@ export const useMessageHandling = (
       // using an AI-generated laconic title rather than the raw first message.
 
 
-      // Get enabled platforms
-      const enabledPlatforms = platforms.filter(p => p.enabled && p.hasApiKey);
+      // Get enabled platforms (a Local agent without a model can't answer —
+      // skip it rather than dispatching a guaranteed failure)
+      const enabledPlatforms = platforms.filter(p =>
+        p.enabled && p.hasApiKey && !(p.id === 'local' && !p.selectedModel)
+      );
       console.log('Enabled platforms:', enabledPlatforms.map(p => p.name));
 
       if (enabledPlatforms.length === 0) {
