@@ -17,6 +17,7 @@ import {
 import type { AIPlatform, Chat } from "@/types/chat";
 import BotHistoryDialog from "./BotHistoryDialog";
 import SortableAgent from "./ai-status/SortableAgent";
+import AddLocalAgentButton from "./ai-status/AddLocalAgentButton";
 
 interface DraggableAIStatusBarProps {
   platforms: AIPlatform[];
@@ -26,6 +27,7 @@ interface DraggableAIStatusBarProps {
   onToggleEnabled?: (platformId: string) => void;
   currentChat?: Chat | null;
   onSendMessage?: (message: string, platformId: string) => void;
+  onSelectLocalModel?: (model: string | null) => void;
 }
 
 const DraggableAIStatusBar: React.FC<DraggableAIStatusBarProps> = ({
@@ -36,6 +38,7 @@ const DraggableAIStatusBar: React.FC<DraggableAIStatusBarProps> = ({
   onToggleEnabled,
   currentChat,
   onSendMessage,
+  onSelectLocalModel,
 }) => {
   const [selectedPlatform, setSelectedPlatform] = useState<AIPlatform | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -47,10 +50,13 @@ const DraggableAIStatusBar: React.FC<DraggableAIStatusBarProps> = ({
     }),
   );
 
-  // Show all platforms with API keys, sorted by display order
+  // Show all platforms with API keys, sorted by display order. The Local agent
+  // stays hidden until a model has been picked via the "+" menu.
   const sortedPlatforms = platforms
-    .filter((p) => p.hasApiKey)
+    .filter((p) => p.hasApiKey && !(p.id === "local" && !p.selectedModel))
     .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+
+  const localPlatform = platforms.find((p) => p.id === "local");
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -118,6 +124,9 @@ const DraggableAIStatusBar: React.FC<DraggableAIStatusBarProps> = ({
             </div>
           </SortableContext>
         </DndContext>
+        {onSelectLocalModel && (
+          <AddLocalAgentButton localPlatform={localPlatform} onSelect={onSelectLocalModel} />
+        )}
       </div>
 
       {selectedPlatform && (

@@ -21,9 +21,9 @@ This regenerates the auto-blocks below **and** `public/llms.txt` **and** bumps `
 ## Features
 
 <!-- AUTO:FEATURES:START -->
-### Eight Frontier Models
+### Eight Frontier Models — Plus Yours
 
-Every flagship LLM, in one calm workspace — pick one, compare a few, or run all eight in parallel.
+Every flagship LLM, in one calm workspace — pick one, compare a few, run all eight in parallel, or bring your own local model.
 
 - **OpenAI GPT-5** — Latest reasoning model from OpenAI, including GPT-5 and GPT-4o variants.
 - **Anthropic Claude 4** — Claude Opus 4 and Sonnet 4 — long-form analysis, careful writing, structured thinking.
@@ -33,6 +33,7 @@ Every flagship LLM, in one calm workspace — pick one, compare a few, or run al
 - **Mistral Large** — Mistral Large, Medium, Small and Codestral for multilingual and coding work.
 - **Perplexity Sonar** — Sonar Pro and Sonar Reasoning Pro with live web search and source citations.
 - **Alibaba Qwen** — Qwen Max, Plus, Turbo and Qwen3-Max via DashScope — strong multilingual reasoning.
+- **Local Models** — Add any model running in LM Studio or Ollama as a Local agent — private, offline-capable, and a flat 1 token per message.
 
 ### Four Chat Modes
 
@@ -118,9 +119,26 @@ Production posture: strict RLS, encrypted secrets, retried calls.
 ## Changelog
 
 <!-- AUTO:CHANGELOG:START -->
-### June 2026
+### July 2026
 
 <details open>
+<summary><strong>v2.10.0</strong> · Local Models & Self-Hosting <sub>July 4, 2026 · ✨ Feature</sub></summary>
+
+> Run models on your own machine: a new Local agent connects to LM Studio or Ollama through a '+' menu in the agent bar — pick any local model, chat for a flat 1 token, keep everything on your hardware. Plus a full self-hosting path: containerized frontend and a reproducible self-hosted Supabase setup.
+
+  - ✨ Feature 💻 Local agent — '+' button in the agent bar opens a menu of local providers (LM Studio, Ollama) and their installed models; pick one to add a Local agent
+  - ✨ Feature 🔌 local-chat edge function — OpenAI-compatible proxy to local providers with server-side model discovery (no CORS hassles) and flat 1-token billing
+  - ✨ Feature 🐳 Self-hosting support — production Dockerfile (nginx static serve) and env-configurable Supabase endpoint for self-hosted deployments
+  - 🔧 Improvement 🖥️ Activity console returns as a compact icon (bottom-left, collapsed by default), repositioned clear of the version badge
+  - 🐛 Fix 🔧 Disabled agents could still fire after a page refresh — agent settings now load session-gated with retries instead of silently falling back to all-enabled
+
+</details>
+
+---
+
+### June 2026
+
+<details>
 <summary><strong>v2.9.0</strong> · Advanced AI Capabilities: Think, Search, Deep Research & Code <sub>June 21, 2026 · ✨ Feature</sub></summary>
 
 > Per-message capability toggles unlock provider-native superpowers — extended reasoning, live web search, deep research, and code execution — across all 7 chat providers. Conductor can assign them per agent automatically.
