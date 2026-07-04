@@ -20,7 +20,8 @@ const formatTime = (d: Date) =>
 const FloatingActivityConsole: React.FC = () => {
   const { entries, clearEntries } = useActivityLog();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
+  // Start as the small icon only; the console bar opens on click.
+  const [isVisible, setIsVisible] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,7 +34,7 @@ const FloatingActivityConsole: React.FC = () => {
     return (
       <button
         onClick={() => setIsVisible(true)}
-        className="fixed bottom-4 left-4 z-40 h-8 w-8 rounded-full bg-background/50 border border-border/30 backdrop-blur-md flex items-center justify-center hover:bg-accent/30 transition-colors"
+        className="fixed bottom-12 left-4 z-40 h-8 w-8 rounded-full bg-background/50 border border-border/30 backdrop-blur-md flex items-center justify-center hover:bg-accent/30 transition-colors"
         title="Show activity console"
       >
         <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
@@ -44,7 +45,7 @@ const FloatingActivityConsole: React.FC = () => {
   const latestEntry = entries[0];
 
   return (
-    <div className="fixed bottom-4 left-4 z-40 w-60 rounded-lg border border-border/30 bg-background/60 backdrop-blur-md shadow-md overflow-hidden transition-all duration-200">
+    <div className="fixed bottom-12 left-4 z-40 w-60 rounded-lg border border-border/30 bg-background/60 backdrop-blur-md shadow-md overflow-hidden transition-all duration-200">
       {/* Header bar */}
       <div
         className="flex items-center justify-between px-3 py-1.5 cursor-pointer hover:bg-accent/30 transition-colors select-none"

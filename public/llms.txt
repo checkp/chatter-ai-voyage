@@ -16,11 +16,11 @@ RoboHeard lets you chat with eight frontier AI models at once, orchestrate them 
 
 ## Latest release
 
-- v2.9.0 (2026-06-21) — Advanced AI Capabilities: Think, Search, Deep Research & Code: Per-message capability toggles unlock provider-native superpowers — extended reasoning, live web search, deep research, and code execution — across all 7 chat providers. Conductor can assign them per agent automatically.
+- v2.10.0 (2026-07-04) — Local Models & Self-Hosting: Run models on your own machine: a new Local agent connects to LM Studio or Ollama through a '+' menu in the agent bar — pick any local model, chat for a flat 1 token, keep everything on your hardware. Plus a full self-hosting path: containerized frontend and a reproducible self-hosted Supabase setup.
 
 ## Feature categories
 
-- Eight Frontier Models: Every flagship LLM, in one calm workspace — pick one, compare a few, or run all eight in parallel.
+- Eight Frontier Models — Plus Yours: Every flagship LLM, in one calm workspace — pick one, compare a few, run all eight in parallel, or bring your own local model.
 - Four Chat Modes: Match the interaction pattern to your task — collaboration, comparison, or solo focus.
 - Agentic Orchestration: Beyond chat — the Conductor turns eight models into one coordinated system.
 - Advanced AI Capabilities: Per-message superpowers — toggle in the composer or let the Conductor assign them per agent.

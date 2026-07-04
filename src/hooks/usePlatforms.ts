@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform, Message, ChatMode } from '@/types/chat';
-import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI, callGeminiAPI, callMistralAPI, callPerplexityAPI, callQwenAPI } from '@/services/aiApiService';
+import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI, callGeminiAPI, callMistralAPI, callPerplexityAPI, callQwenAPI, callLocalAPI } from '@/services/aiApiService';
 import { getDefaultModel, getModelConfig, modelSupports } from '@/config/aiModels';
 
 const resolvePlatformModel = (platformId: string, model?: string | null) => {
@@ -96,12 +96,26 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       selectedModel: getDefaultModel('qwen'),
       displayOrder: 8
     },
+    {
+      // Local models served by LM Studio / Ollama on this machine (via the
+      // local-chat edge function). Hidden from the agent bar until a model is
+      // picked through the "+" menu; selectedModel = "<provider>::<model-id>".
+      id: 'local',
+      name: 'Local',
+      enabled: false,
+      color: 'bg-zinc-600 border-zinc-600 text-white',
+      icon: '💻',
+      hasApiKey: true,
+      selectedModel: '',
+      displayOrder: 9
+    },
   ]);
 
   const loadingRef = useRef(false);
   const lastUserIdRef = useRef<string | null>(null);
   const globalSystemPromptRef = useRef<string>('');
-
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryCountRef = useRef(0);
 
   const loadAgentSettings = useCallback(async () => {
     if (!user) {
@@ -119,10 +133,32 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       return;
     }
 
+    // Transient failures must NOT be cached as "loaded": that leaves the default
+    // all-enabled platforms in memory and disabled agents keep firing until a
+    // full reload. Only a successful, session-backed load marks the user done.
+    const scheduleRetry = () => {
+      if (retryCountRef.current >= 5) {
+        console.error('Giving up on agent settings after 5 attempts — defaults remain active');
+        return;
+      }
+      retryCountRef.current += 1;
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = setTimeout(() => { loadAgentSettings(); }, 1200);
+    };
+
     loadingRef.current = true;
-    lastUserIdRef.current = user.id;
 
     try {
+      // Under RLS an unauthenticated request returns ZERO rows, which would be
+      // indistinguishable from "user never saved settings". Make sure the auth
+      // session is actually attached before trusting the query result.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log('Auth session not ready — retrying agent settings load');
+        scheduleRetry();
+        return;
+      }
+
       const [{ data: settings, error }, { data: profile }] = await Promise.all([
         supabase
           .from('user_agent_settings')
@@ -138,12 +174,17 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       globalSystemPromptRef.current = (profile as any)?.custom_system_prompt || '';
 
       if (error) {
-        console.error('Error loading agent settings:', error);
+        console.error('Error loading agent settings, will retry:', error);
+        scheduleRetry();
         return;
       }
 
       if (!settings || settings.length === 0) {
+        // Session verified + query succeeded → genuinely a new user with no
+        // saved settings; defaults (all enabled) are correct. Mark as loaded.
         console.log('No agent settings found for user, keeping defaults (all enabled)');
+        lastUserIdRef.current = user.id;
+        retryCountRef.current = 0;
         return;
       }
 
@@ -162,16 +203,26 @@ export const usePlatforms = (user: SupabaseUser | null) => {
 
         return {
           ...platform,
-          enabled: settingsMap.has(platform.id) ? Boolean(savedSetting?.enabled) : true,
-          selectedModel: resolvePlatformModel(platform.id, savedSetting?.model),
+          // Cloud agents default to enabled when no row exists; the local agent
+          // stays hidden/disabled until explicitly configured via the "+" menu.
+          enabled: settingsMap.has(platform.id) ? Boolean(savedSetting?.enabled) : platform.id !== 'local',
+          // Local model ids are dynamic ("provider::model") — not in aiModels
+          // config, so bypass resolvePlatformModel for them.
+          selectedModel: platform.id === 'local'
+            ? (savedSetting?.model ?? platform.selectedModel)
+            : resolvePlatformModel(platform.id, savedSetting?.model),
           displayOrder: savedSetting?.displayOrder ?? platform.displayOrder,
           customInstructions: savedSetting?.customInstructions ?? '',
           hasApiKey: true,
         };
       }));
 
+      lastUserIdRef.current = user.id;
+      retryCountRef.current = 0;
+
     } catch (error: any) {
-      console.error('Failed to load agent settings:', error);
+      console.error('Failed to load agent settings, will retry:', error);
+      scheduleRetry();
     } finally {
       loadingRef.current = false;
     }
@@ -219,6 +270,23 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       toast.error('Failed to save agent setting');
     }
   }, [user]);
+
+  // Configure the "Local" agent with a model picked from the "+" menu
+  // (model = "<provider>::<model-id>"); null removes the agent.
+  // NOTE: must be declared after saveAgentSetting (dependency array evaluates
+  // at hook execution — referencing it earlier is a TDZ crash).
+  const selectLocalModel = useCallback(async (model: string | null) => {
+    const local = platforms.find(p => p.id === 'local');
+    if (!local) return;
+
+    const enabled = !!model;
+    const selectedModel = model ?? '';
+
+    setPlatforms(prev => prev.map(p =>
+      p.id === 'local' ? { ...p, enabled, selectedModel } : p
+    ));
+    await saveAgentSetting('local', enabled, selectedModel, local.displayOrder);
+  }, [platforms, saveAgentSetting]);
 
   const updateAgentOrder = useCallback(async (reorderedPlatforms: AIPlatform[]) => {
     console.log('Updating agent order:', reorderedPlatforms.map(p => p.name));
@@ -442,6 +510,8 @@ ${languageLock}`;
         return await callPerplexityAPI(conversationHistory, user, selectedModel, attachments, advancedCaps);
       case 'qwen':
         return await callQwenAPI(conversationHistory, user, selectedModel, attachments, advancedCaps);
+      case 'local':
+        return await callLocalAPI(conversationHistory, user, selectedModel, attachments, advancedCaps);
       default:
         throw new Error(`Unsupported platform: ${platform.id}`);
     }
@@ -449,6 +519,9 @@ ${languageLock}`;
 
   useEffect(() => {
     loadAgentSettings();
+    return () => {
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+    };
   }, [loadAgentSettings]);
 
   return {
@@ -457,6 +530,7 @@ ${languageLock}`;
     togglePlatform,
     callAIAPI,
     reloadSettings,
-    updateAgentOrder
+    updateAgentOrder,
+    selectLocalModel
   };
 };

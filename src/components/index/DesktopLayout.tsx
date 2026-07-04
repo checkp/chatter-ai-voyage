@@ -63,6 +63,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   handleChatModeChange,
   handleIsolatedModeToggle,
   togglePlatform,
+  selectLocalModel,
   transformedStatuses,
   currentChatWithMessages,
   scrollAreaRef,
@@ -200,6 +201,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
             onToggleEnabled={togglePlatform}
             currentChat={currentChatWithMessages}
             onSendMessage={handleSingleAgentMessage}
+            onSelectLocalModel={selectLocalModel}
           />
         </div>
 
