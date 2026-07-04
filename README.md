@@ -122,6 +122,19 @@ Production posture: strict RLS, encrypted secrets, retried calls.
 ### July 2026
 
 <details open>
+<summary><strong>v2.11.0</strong> · Browser-Direct Local Models <sub>July 4, 2026 · ✨ Feature</sub></summary>
+
+> Your browser now talks to local model servers directly — no round-trip through our backend, which could never reach your machine anyway. Works on roboheard.ai and self-hosted alike: LM Studio and Ollama are auto-discovered, any OpenAI-compatible endpoint can be added, and local chats stay 100% on your hardware, free.
+
+  - ✨ Feature 🔗 Browser-direct chat — the page calls your local server straight from the '+' menu selection; conversations never leave your machine and cost 0 tokens
+  - ✨ Feature 📡 Client-side discovery — LM Studio (localhost:1234) and Ollama (localhost:11434) probed from the browser, with clear guidance when CORS is off (lms server start --cors / OLLAMA_ORIGINS)
+  - ✨ Feature 🌐 Add custom endpoint — point the Local agent at any OpenAI-compatible server (vLLM, llama.cpp, a LAN box) from the same menu; saved per-browser
+  - 🔧 Improvement 🏷️ Provider badges — the menu distinguishes 'direct' (browser) from 'via server' (self-hosted proxy), deduplicating servers reachable both ways
+  - 🐛 Fix 🧊 Stale deploys fixed — index.html is now served no-store with immutable hashed assets, so new releases load without a hard refresh
+
+</details>
+
+<details>
 <summary><strong>v2.10.0</strong> · Local Models & Self-Hosting <sub>July 4, 2026 · ✨ Feature</sub></summary>
 
 > Run models on your own machine: a new Local agent connects to LM Studio or Ollama through a '+' menu in the agent bar — pick any local model, chat for a flat 1 token, keep everything on your hardware. Plus a full self-hosting path: containerized frontend and a reproducible self-hosted Supabase setup.
