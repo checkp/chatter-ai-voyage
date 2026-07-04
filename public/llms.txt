@@ -16,7 +16,7 @@ RoboHeard lets you chat with eight frontier AI models at once, orchestrate them 
 
 ## Latest release
 
-- v2.10.0 (2026-07-04) — Local Models & Self-Hosting: Run models on your own machine: a new Local agent connects to LM Studio or Ollama through a '+' menu in the agent bar — pick any local model, chat for a flat 1 token, keep everything on your hardware. Plus a full self-hosting path: containerized frontend and a reproducible self-hosted Supabase setup.
+- v2.11.0 (2026-07-04) — Browser-Direct Local Models: Your browser now talks to local model servers directly — no round-trip through our backend, which could never reach your machine anyway. Works on roboheard.ai and self-hosted alike: LM Studio and Ollama are auto-discovered, any OpenAI-compatible endpoint can be added, and local chats stay 100% on your hardware, free.
 
 ## Feature categories
 
