@@ -212,3 +212,41 @@ export const callQwenAPI = async (
     return response.data.content;
   }).catch(e => { throw friendlyError(e, 'Qwen'); });
 };
+
+// ── Local models (LM Studio / Ollama via the local-chat edge function) ────────
+
+export interface LocalProvider {
+  id: string;      // 'lmstudio' | 'ollama'
+  name: string;    // display name
+  models: string[];
+}
+
+export const fetchLocalModels = async (): Promise<LocalProvider[]> => {
+  const session = await getValidSession();
+  const response = await supabase.functions.invoke('local-chat', {
+    body: { action: 'models' },
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
+  if (response.error) throw new Error(response.error.message || 'Failed to list local models');
+  return response.data?.providers ?? [];
+};
+
+export const callLocalAPI = async (
+  conversationHistory: History,
+  user: SupabaseUser,
+  // "<provider>::<model-id>", as stored in the local platform's selectedModel
+  model: string = '',
+  _attachments?: Attachment[],
+  _capabilities?: Capabilities,
+): Promise<string> => {
+  return withRetry(async () => {
+    const session = await getValidSession();
+    const response = await supabase.functions.invoke('local-chat', {
+      body: buildBody(conversationHistory, model, user.id),
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    if (response.error) throw new Error(response.error.message || 'Local model call failed');
+    if (!response.data?.content) throw new Error('Local model returned empty response');
+    return response.data.content;
+  }).catch(e => { throw friendlyError(e, 'Local'); });
+};

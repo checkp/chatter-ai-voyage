@@ -20,7 +20,7 @@ export const useIndexHooks = () => {
   // Warm the per-agent capability defaults registry as soon as we have a user.
   useCapabilityDefaults(user);
 
-  const { platforms, togglePlatform, callAIAPI, reloadSettings, updateAgentOrder } = usePlatforms(user);
+  const { platforms, togglePlatform, callAIAPI, reloadSettings, updateAgentOrder, selectLocalModel } = usePlatforms(user);
   const { 
     messagesEndRef, 
     scrollAreaRef, 
@@ -94,6 +94,7 @@ export const useIndexHooks = () => {
     isMobile,
     platforms,
     togglePlatform,
+    selectLocalModel,
     callAIAPI,
     reloadSettings,
     updateAgentOrder,

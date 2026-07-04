@@ -32,6 +32,7 @@ export interface DesktopInterfaceProps {
   handleChatModeChange: (mode: ChatMode) => void;
   handleIsolatedModeToggle: (isolated: boolean) => void;
   togglePlatform: (platformId: string) => void;
+  selectLocalModel: (model: string | null) => void;
   transformedStatuses: Record<string, 'thinking' | 'responding' | 'completed' | 'error'>;
   currentChatWithMessages: any;
   scrollAreaRef: React.RefObject<any>;

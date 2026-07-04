@@ -18,8 +18,8 @@ export interface FeatureCategory {
 export const featureCategories: FeatureCategory[] = [
   {
     id: "models",
-    name: "Eight Frontier Models",
-    blurb: "Every flagship LLM, in one calm workspace — pick one, compare a few, or run all eight in parallel.",
+    name: "Eight Frontier Models — Plus Yours",
+    blurb: "Every flagship LLM, in one calm workspace — pick one, compare a few, run all eight in parallel, or bring your own local model.",
     features: [
       { title: "OpenAI GPT-5", description: "Latest reasoning model from OpenAI, including GPT-5 and GPT-4o variants." },
       { title: "Anthropic Claude 4", description: "Claude Opus 4 and Sonnet 4 — long-form analysis, careful writing, structured thinking." },
@@ -28,7 +28,8 @@ export const featureCategories: FeatureCategory[] = [
       { title: "DeepSeek R2", description: "Open-source reasoning depth at a fraction of the cost." },
       { title: "Mistral Large", description: "Mistral Large, Medium, Small and Codestral for multilingual and coding work." },
       { title: "Perplexity Sonar", description: "Sonar Pro and Sonar Reasoning Pro with live web search and source citations." },
-      { title: "Alibaba Qwen", description: "Qwen Max, Plus, Turbo and Qwen3-Max via DashScope — strong multilingual reasoning." }
+      { title: "Alibaba Qwen", description: "Qwen Max, Plus, Turbo and Qwen3-Max via DashScope — strong multilingual reasoning." },
+      { title: "Local Models", description: "Add any model running in LM Studio or Ollama as a Local agent — private, offline-capable, and a flat 1 token per message.", tag: "New" }
     ]
   },
   {
