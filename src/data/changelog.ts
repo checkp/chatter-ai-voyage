@@ -12,6 +12,20 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.11.0",
+    date: "2026-07-04",
+    title: "Browser-Direct Local Models",
+    description: "Your browser now talks to local model servers directly — no round-trip through our backend, which could never reach your machine anyway. Works on roboheard.ai and self-hosted alike: LM Studio and Ollama are auto-discovered, any OpenAI-compatible endpoint can be added, and local chats stay 100% on your hardware, free.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "🔗 Browser-direct chat — the page calls your local server straight from the '+' menu selection; conversations never leave your machine and cost 0 tokens" },
+      { type: "feature", description: "📡 Client-side discovery — LM Studio (localhost:1234) and Ollama (localhost:11434) probed from the browser, with clear guidance when CORS is off (lms server start --cors / OLLAMA_ORIGINS)" },
+      { type: "feature", description: "🌐 Add custom endpoint — point the Local agent at any OpenAI-compatible server (vLLM, llama.cpp, a LAN box) from the same menu; saved per-browser" },
+      { type: "improvement", description: "🏷️ Provider badges — the menu distinguishes 'direct' (browser) from 'via server' (self-hosted proxy), deduplicating servers reachable both ways" },
+      { type: "bugfix", description: "🧊 Stale deploys fixed — index.html is now served no-store with immutable hashed assets, so new releases load without a hard refresh" }
+    ]
+  },
+  {
     version: "2.10.0",
     date: "2026-07-04",
     title: "Local Models & Self-Hosting",

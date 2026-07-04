@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { Attachment } from '@/types/chat';
 import type { Capabilities } from '@/lib/capabilities';
+import { chatDirect, parseDirectSelection } from '@/services/localProviderService';
 
 const getValidSession = async () => {
   const { data: { session }, error } = await supabase.auth.getSession();
@@ -234,11 +235,21 @@ export const fetchLocalModels = async (): Promise<LocalProvider[]> => {
 export const callLocalAPI = async (
   conversationHistory: History,
   user: SupabaseUser,
-  // "<provider>::<model-id>", as stored in the local platform's selectedModel
+  // "direct::<base>::<model>" (browser → local server, works on any deployment)
+  // or "<provider>::<model-id>" (server-side proxy via local-chat — self-host only)
   model: string = '',
   _attachments?: Attachment[],
   _capabilities?: Capabilities,
 ): Promise<string> => {
+  // Browser-direct path: the page talks straight to the local server. A remote
+  // Supabase can't reach the user's machine, so this must NOT go through an
+  // edge function. Local inference is free — no token deduction.
+  const direct = parseDirectSelection(model);
+  if (direct) {
+    return withRetry(() => chatDirect(direct.base, direct.modelId, conversationHistory))
+      .catch(e => { throw friendlyError(e, 'Local'); });
+  }
+
   return withRetry(async () => {
     const session = await getValidSession();
     const response = await supabase.functions.invoke('local-chat', {
