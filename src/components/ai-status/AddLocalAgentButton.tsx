@@ -96,7 +96,7 @@ const AddLocalAgentButton: React.FC<AddLocalAgentButtonProps> = ({ localPlatform
                         onClick={() => pick(provider.id, model)}
                         className="w-full flex items-center justify-between px-3 py-1.5 text-left text-sm hover:bg-accent/40 transition-colors"
                       >
-                        <span className="truncate">{model}</span>
+                        <span className="truncate" title={model}>{prettifyModelName(model)}</span>
                         {selected && <Check className="h-4 w-4 text-primary shrink-0 ml-2" />}
                       </button>
                     );
