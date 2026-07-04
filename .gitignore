@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local self-host DB artifacts (kept out of the repo)
+supabase/schema.sql
+supabase/post-restore.sql

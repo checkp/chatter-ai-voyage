@@ -12,6 +12,20 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.10.0",
+    date: "2026-07-04",
+    title: "Local Models & Self-Hosting",
+    description: "Run models on your own machine: a new Local agent connects to LM Studio or Ollama through a '+' menu in the agent bar — pick any local model, chat for a flat 1 token, keep everything on your hardware. Plus a full self-hosting path: containerized frontend and a reproducible self-hosted Supabase setup.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "💻 Local agent — '+' button in the agent bar opens a menu of local providers (LM Studio, Ollama) and their installed models; pick one to add a Local agent" },
+      { type: "feature", description: "🔌 local-chat edge function — OpenAI-compatible proxy to local providers with server-side model discovery (no CORS hassles) and flat 1-token billing" },
+      { type: "feature", description: "🐳 Self-hosting support — production Dockerfile (nginx static serve) and env-configurable Supabase endpoint for self-hosted deployments" },
+      { type: "improvement", description: "🖥️ Activity console returns as a compact icon (bottom-left, collapsed by default), repositioned clear of the version badge" },
+      { type: "bugfix", description: "🔧 Disabled agents could still fire after a page refresh — agent settings now load session-gated with retries instead of silently falling back to all-enabled" }
+    ]
+  },
+  {
     version: "2.9.0",
     date: "2026-06-21",
     title: "Advanced AI Capabilities: Think, Search, Deep Research & Code",

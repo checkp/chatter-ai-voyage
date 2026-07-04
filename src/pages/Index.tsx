@@ -6,6 +6,7 @@ import { createIndexHandlers } from '@/utils/indexHandlers';
 import LandingPage from '@/components/index/LandingPage';
 import WelcomeHandlers from '@/components/index/WelcomeHandlers';
 import IndexLayout from '@/components/index/IndexLayout';
+import FloatingActivityConsole from '@/components/FloatingActivityConsole';
 import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
@@ -180,6 +181,7 @@ const Index = () => {
     handleChatModeChange: handlers.handleChatModeChange,
     handleIsolatedModeToggle: handlers.handleIsolatedModeToggle,
     togglePlatform: hooks.togglePlatform,
+    selectLocalModel: hooks.selectLocalModel,
     transformedStatuses,
     currentChatWithMessages,
     scrollAreaRef: hooks.scrollAreaRef,
@@ -195,7 +197,12 @@ const Index = () => {
     callAIAPI: hooks.callAIAPI
   };
 
-  return <IndexLayout desktopProps={desktopProps} />;
+  return (
+    <>
+      <IndexLayout desktopProps={desktopProps} />
+      <FloatingActivityConsole />
+    </>
+  );
 };
 
 export default Index;
