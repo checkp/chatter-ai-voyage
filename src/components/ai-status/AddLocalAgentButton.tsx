@@ -4,6 +4,7 @@ import { Plus, Check, Monitor, Loader2, Trash2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { fetchLocalModels, type LocalProvider } from '@/services/aiApiService';
+import { prettifyModelName } from '@/lib/prettifyModelName';
 import type { AIPlatform } from '@/types/chat';
 
 interface AddLocalAgentButtonProps {
