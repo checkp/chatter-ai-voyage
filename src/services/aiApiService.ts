@@ -213,40 +213,73 @@ export const callQwenAPI = async (
   }).catch(e => { throw friendlyError(e, 'Qwen'); });
 };
 
-// ── Local models (LM Studio / Ollama via the local-chat edge function) ────────
+// ── Local models (LM Studio / Ollama) ────────────────────────────────────────
+// Called **directly from the browser** — the hosted edge function can't reach
+// the user's `localhost`. LM Studio and Ollama both send permissive CORS.
 
 export interface LocalProvider {
   id: string;      // 'lmstudio' | 'ollama'
   name: string;    // display name
+  baseUrl: string; // OpenAI-compatible base, e.g. http://localhost:1234/v1
   models: string[];
 }
 
+const LOCAL_PROVIDERS: Array<{ id: string; name: string; baseUrl: string }> = [
+  { id: 'lmstudio', name: 'LM Studio', baseUrl: 'http://localhost:1234/v1' },
+  { id: 'ollama',   name: 'Ollama',    baseUrl: 'http://localhost:11434/v1' },
+];
+
+const probeProvider = async (
+  p: { id: string; name: string; baseUrl: string },
+): Promise<LocalProvider | null> => {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 3000);
+    const r = await fetch(`${p.baseUrl}/models`, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!r.ok) return null;
+    const j = await r.json();
+    const models: string[] = (j.data ?? j.models ?? [])
+      .map((m: any) => m.id ?? m.name ?? m.model)
+      .filter((id: unknown): id is string => typeof id === 'string' && !/embed/i.test(id));
+    return models.length ? { ...p, models } : null;
+  } catch {
+    return null;
+  }
+};
+
 export const fetchLocalModels = async (): Promise<LocalProvider[]> => {
-  const session = await getValidSession();
-  const response = await supabase.functions.invoke('local-chat', {
-    body: { action: 'models' },
-    headers: { Authorization: `Bearer ${session.access_token}` },
-  });
-  if (response.error) throw new Error(response.error.message || 'Failed to list local models');
-  return response.data?.providers ?? [];
+  const results = await Promise.all(LOCAL_PROVIDERS.map(probeProvider));
+  return results.filter((p): p is LocalProvider => p !== null);
 };
 
 export const callLocalAPI = async (
   conversationHistory: History,
-  user: SupabaseUser,
+  _user: SupabaseUser,
   // "<provider>::<model-id>", as stored in the local platform's selectedModel
   model: string = '',
   _attachments?: Attachment[],
   _capabilities?: Capabilities,
 ): Promise<string> => {
+  const sep = model.indexOf('::');
+  const providerId = sep > 0 ? model.slice(0, sep) : 'lmstudio';
+  const modelId = sep > 0 ? model.slice(sep + 2) : model;
+  const provider = LOCAL_PROVIDERS.find(p => p.id === providerId);
+  if (!provider) throw new Error(`Unknown local provider: ${providerId}`);
+
   return withRetry(async () => {
-    const session = await getValidSession();
-    const response = await supabase.functions.invoke('local-chat', {
-      body: buildBody(conversationHistory, model, user.id),
-      headers: { Authorization: `Bearer ${session.access_token}` },
+    const res = await fetch(`${provider.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: modelId, messages: conversationHistory, max_tokens: 4096 }),
     });
-    if (response.error) throw new Error(response.error.message || 'Local model call failed');
-    if (!response.data?.content) throw new Error('Local model returned empty response');
-    return response.data.content;
-  }).catch(e => { throw friendlyError(e, 'Local'); });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`${provider.name} error ${res.status}: ${text || res.statusText}`);
+    }
+    const j = await res.json();
+    const content = j.choices?.[0]?.message?.content;
+    if (!content) throw new Error(`${provider.name} returned an empty response`);
+    return content;
+  }).catch(e => { throw friendlyError(e, provider.name); });
 };
