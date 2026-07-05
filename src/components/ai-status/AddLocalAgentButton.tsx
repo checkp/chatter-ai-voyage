@@ -58,7 +58,7 @@ const AddLocalAgentButton: React.FC<AddLocalAgentButtonProps> = ({ localPlatform
 
   // Classify a browser-side fetch failure into the most likely cause so we can
   // show the user a concrete fix instead of a generic "network error".
-  const classifyFailure = (err: unknown): TestResult['hint'] => {
+  const classifyFailure = (err: unknown): 'cors' | 'https' | 'offline' | 'other' => {
     const msg = err instanceof Error ? err.message : String(err);
     // Browsers hide the real reason for CORS/mixed-content failures behind a
     // generic TypeError. Use the page protocol as the tie-breaker.
