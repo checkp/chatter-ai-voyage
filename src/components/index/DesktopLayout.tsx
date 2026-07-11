@@ -93,25 +93,8 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   const [showChangelog, setShowChangelog] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // Auto-launch tour for users who haven't completed it
-  useEffect(() => {
-    if (!tour.hasCompletedTour && !tour.isActive) {
-      const timer = setTimeout(() => tour.startTour(), 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [tour.hasCompletedTour, tour.isActive]);
-
-  // Auto-show changelog when version changes
-  useEffect(() => {
-    const lastSeen = localStorage.getItem(CHANGELOG_STORAGE_KEY);
-    const latestVersion = changelog[0]?.version;
-    if (latestVersion && lastSeen !== latestVersion) {
-      // Don't show changelog if tour is about to start (first-time users)
-      if (tour.hasCompletedTour) {
-        setShowChangelog(true);
-      }
-    }
-  }, [tour.hasCompletedTour]);
+  // Auto-launched tour and changelog pop-ups removed for a clean flow.
+  // Users can still open them manually from the header.
 
   const handleChangelogClose = (open: boolean) => {
     setShowChangelog(open);
