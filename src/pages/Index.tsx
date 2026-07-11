@@ -137,18 +137,7 @@ const Index = () => {
     return <LandingPage />;
   }
 
-  // Show welcome screen for new users
-  if (hooks.hasCompletedOnboarding === false) {
-    return (
-      <WelcomeHandlers
-        completeOnboarding={hooks.completeOnboarding}
-        skipOnboarding={hooks.skipOnboarding}
-        chats={hooks.chats}
-        handleCreateChat={handlers.handleCreateChat}
-        setActiveChatId={hooks.setActiveChatId}
-      />
-    );
-  }
+  // Onboarding pop-ups removed — go straight to the interface.
 
   // Prepare desktop interface props
   const desktopProps = {
