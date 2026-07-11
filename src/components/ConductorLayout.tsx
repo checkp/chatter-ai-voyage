@@ -48,21 +48,9 @@ const ConductorLayout: React.FC<ConductorLayoutProps> = ({
     });
   };
 
-  // Conductor onboarding
-  const { hasSeenConductorOnboarding, completeConductorOnboarding } = useConductorOnboarding(user);
+  // Conductor onboarding pop-up removed for clean flow.
   const [showOnboarding, setShowOnboarding] = useState(false);
-
-  // Show onboarding if user hasn't seen it yet
-  useEffect(() => {
-    if (hasSeenConductorOnboarding === false && user) {
-      setShowOnboarding(true);
-    }
-  }, [hasSeenConductorOnboarding, user]);
-
-  const handleOnboardingComplete = () => {
-    completeConductorOnboarding();
-    setShowOnboarding(false);
-  };
+  const handleOnboardingComplete = () => setShowOnboarding(false);
 
   return (
     <>
