@@ -17,6 +17,7 @@ import Help from "./pages/Help";
 import Features from "./pages/Features";
 import WhatsNew from "./pages/WhatsNew";
 import Terms from "./pages/Terms";
+import McpSetup from "./pages/McpSetup";
 import Analytics from "./components/Analytics";
 import { loadAIModelsFromDB } from "@/config/aiModels";
 
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/features" element={<Features />} />
             <Route path="/whats-new" element={<WhatsNew />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/mcp" element={<McpSetup />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
