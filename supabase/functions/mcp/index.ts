@@ -1,0 +1,495 @@
+// MCP Streamable HTTP server for RoboHeard.
+//
+// Exposes RoboHeard's conductor, individual model access, and web search to
+// coding agents (Claude Code, Cursor, Codex, etc.) via the Model Context
+// Protocol. Auth is a Supabase session JWT sent as `Authorization: Bearer`;
+// tool handlers forward that same JWT to the existing chat edge functions so
+// RLS, per-user token billing, and chat history all behave exactly like the
+// browser UI.
+
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, mcp-session-id, mcp-protocol-version",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS, DELETE",
+  "Access-Control-Expose-Headers": "mcp-session-id",
+};
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+const PROTOCOL_VERSION = "2025-06-18";
+
+// ─── MCP tool catalog ───────────────────────────────────────────────────────
+const PLATFORM_IDS = ["openai", "anthropic", "google", "grok", "deepseek", "perplexity", "mistral", "qwen"] as const;
+type PlatformId = typeof PLATFORM_IDS[number];
+
+const PLATFORM_TO_FN: Record<PlatformId, string> = {
+  openai: "openai-chat",
+  anthropic: "claude-chat",
+  google: "gemini-chat",
+  grok: "grok-chat",
+  deepseek: "deepseek-chat",
+  perplexity: "perplexity-chat",
+  mistral: "mistral-chat",
+  qwen: "qwen-chat",
+};
+
+const DEFAULT_MODELS: Record<PlatformId, string> = {
+  openai: "gpt-4o-mini",
+  anthropic: "claude-3-5-sonnet-20241022",
+  google: "gemini-2.0-flash",
+  grok: "grok-2-1212",
+  deepseek: "deepseek-chat",
+  perplexity: "sonar-pro",
+  mistral: "mistral-small-latest",
+  qwen: "qwen-plus",
+};
+
+const TOOLS = [
+  {
+    name: "list_models",
+    description: "List RoboHeard's available AI platforms and which advanced capabilities (think, search, deep_research, code_exec) each supports. Call first to discover what to route to.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "ask_model",
+    description: "Send a prompt to a single AI model through RoboHeard. Consumes the user's tokens. Use this for a quick single-model answer. Persists to a new or existing chat.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        platform: { type: "string", enum: PLATFORM_IDS as unknown as string[], description: "Which AI provider to use." },
+        prompt: { type: "string", description: "The user prompt." },
+        model: { type: "string", description: "Optional model id (defaults to the platform's fast model)." },
+        capabilities: {
+          type: "object",
+          description: "Optional advanced capabilities to enable for supported models.",
+          properties: {
+            think: { type: "boolean" },
+            search: { type: "boolean" },
+            deep_research: { type: "boolean" },
+            code_exec: { type: "boolean" },
+          },
+          additionalProperties: false,
+        },
+        conversation_id: { type: "string", description: "Optional existing RoboHeard conversation UUID to continue." },
+      },
+      required: ["platform", "prompt"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "web_search",
+    description: "Live web search with citations via Perplexity Sonar. Best for time-sensitive facts, docs lookups, and library changelogs. Does NOT save to chat history by default.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Search query." },
+        recency: { type: "string", enum: ["day", "week", "month", "year"], description: "Optional time filter." },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "ask_conductor",
+    description: "Run RoboHeard's Conductor: a chosen model routes the prompt across multiple frontier AIs, then synthesizes a single answer. Best for hard questions where diverse perspectives help. Persists to chat history.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        prompt: { type: "string", description: "The user prompt to route." },
+        conductor_platform: { type: "string", enum: PLATFORM_IDS as unknown as string[], description: "Which model plays conductor. Defaults to openai." },
+        include_platforms: {
+          type: "array",
+          items: { type: "string", enum: PLATFORM_IDS as unknown as string[] },
+          description: "Restrict fan-out to these platforms. Defaults to all enabled agents on the user's account.",
+        },
+        conversation_id: { type: "string", description: "Optional existing conversation UUID to continue." },
+      },
+      required: ["prompt"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "iterate",
+    description: "Run the Conductor N times in a critique-and-improve loop, ending with a final synthesized answer. Use for hard problems where a single pass isn't enough. Slower and consumes more tokens.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        prompt: { type: "string" },
+        iterations: { type: "number", description: "Number of rounds, 2-5. Defaults to 3." },
+        conductor_platform: { type: "string", enum: PLATFORM_IDS as unknown as string[] },
+        include_platforms: { type: "array", items: { type: "string", enum: PLATFORM_IDS as unknown as string[] } },
+      },
+      required: ["prompt"],
+      additionalProperties: false,
+    },
+  },
+];
+
+// ─── Auth ───────────────────────────────────────────────────────────────────
+interface AuthCtx {
+  userId: string;
+  jwt: string;
+  supabase: ReturnType<typeof createClient>;
+}
+
+async function authenticate(req: Request): Promise<AuthCtx | null> {
+  const header = req.headers.get("Authorization") ?? req.headers.get("authorization");
+  if (!header?.toLowerCase().startsWith("bearer ")) return null;
+  const jwt = header.slice(7).trim();
+  if (!jwt) return null;
+  const admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
+  const { data, error } = await admin.auth.getUser(jwt);
+  if (error || !data.user?.id) return null;
+  return { userId: data.user.id, jwt, supabase: admin };
+}
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+async function callChatFn(fnName: string, body: Record<string, unknown>, jwt: string): Promise<Record<string, unknown>> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/${fnName}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${jwt}`,
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  let json: Record<string, unknown> = {};
+  try { json = text ? JSON.parse(text) : {}; } catch { /* pass */ }
+  if (!res.ok) {
+    const msg = (json.error as string) || text || `${fnName} failed with ${res.status}`;
+    throw new Error(msg);
+  }
+  return json;
+}
+
+async function ensureConversation(
+  ctx: AuthCtx,
+  opts: { conversationId?: string; title: string; chatMode: string; conductorPlatform?: string },
+): Promise<string> {
+  if (opts.conversationId) return opts.conversationId;
+  const { data, error } = await ctx.supabase
+    .from("conversations")
+    .insert({
+      user_id: ctx.userId,
+      title: opts.title,
+      chat_mode: opts.chatMode,
+      conductor_platform: opts.conductorPlatform ?? null,
+    })
+    .select("id")
+    .single();
+  if (error || !data) throw new Error(`Failed to create conversation: ${error?.message}`);
+  return data.id as string;
+}
+
+async function saveMessage(
+  ctx: AuthCtx,
+  conversationId: string,
+  sender: "user" | "ai",
+  content: string,
+  platform?: string,
+): Promise<void> {
+  const { error } = await ctx.supabase.from("messages").insert({
+    conversation_id: conversationId,
+    sender,
+    content,
+    platform: platform ?? null,
+  });
+  if (error) console.error("saveMessage error:", error.message);
+}
+
+async function loadHistory(ctx: AuthCtx, conversationId: string): Promise<Array<{ role: "user" | "assistant"; content: string }>> {
+  const { data } = await ctx.supabase
+    .from("messages")
+    .select("sender, content")
+    .eq("conversation_id", conversationId)
+    .order("created_at", { ascending: true });
+  return (data ?? []).map((m: { sender: string; content: string }) => ({
+    role: m.sender === "user" ? "user" as const : "assistant" as const,
+    content: m.content,
+  }));
+}
+
+// ─── Tool handlers ──────────────────────────────────────────────────────────
+async function toolListModels(ctx: AuthCtx) {
+  const { data } = await ctx.supabase
+    .from("model_pricing")
+    .select("platform, model_id, cost_tier")
+    .order("platform");
+  const byPlatform: Record<string, string[]> = {};
+  for (const row of (data ?? []) as Array<{ platform: string; model_id: string }>) {
+    (byPlatform[row.platform] ??= []).push(row.model_id);
+  }
+  const capMatrix: Record<string, Record<string, boolean>> = {
+    openai:     { think: true,  search: true,  deep_research: true,  code_exec: true  },
+    anthropic:  { think: true,  search: true,  deep_research: true,  code_exec: true  },
+    google:     { think: true,  search: true,  deep_research: true,  code_exec: true  },
+    grok:       { think: true,  search: true,  deep_research: true,  code_exec: false },
+    deepseek:   { think: true,  search: false, deep_research: true,  code_exec: false },
+    perplexity: { think: true,  search: true,  deep_research: true,  code_exec: false },
+    mistral:    { think: false, search: false, deep_research: false, code_exec: false },
+    qwen:       { think: false, search: false, deep_research: false, code_exec: false },
+  };
+  return {
+    platforms: PLATFORM_IDS.map((id) => ({
+      id,
+      default_model: DEFAULT_MODELS[id],
+      models: byPlatform[id] ?? [DEFAULT_MODELS[id]],
+      capabilities: capMatrix[id],
+    })),
+  };
+}
+
+async function toolAskModel(ctx: AuthCtx, args: Record<string, unknown>) {
+  const platform = args.platform as PlatformId;
+  const prompt = String(args.prompt ?? "");
+  if (!PLATFORM_IDS.includes(platform)) throw new Error(`Unknown platform: ${platform}`);
+  if (!prompt) throw new Error("prompt is required");
+  const model = (args.model as string | undefined) ?? DEFAULT_MODELS[platform];
+  const capabilities = (args.capabilities as Record<string, boolean> | undefined) ?? {};
+
+  const conversationId = await ensureConversation(ctx, {
+    conversationId: args.conversation_id as string | undefined,
+    title: prompt.slice(0, 60),
+    chatMode: "free",
+  });
+
+  const history = await loadHistory(ctx, conversationId);
+  await saveMessage(ctx, conversationId, "user", prompt);
+
+  const messages = [...history, { role: "user" as const, content: prompt }];
+  const result = await callChatFn(PLATFORM_TO_FN[platform], { messages, model, capabilities }, ctx.jwt);
+  const content = (result.content as string) ?? "";
+  await saveMessage(ctx, conversationId, "ai", content, platform);
+  return { platform, model, conversation_id: conversationId, content };
+}
+
+async function toolWebSearch(_ctx: AuthCtx, args: Record<string, unknown>) {
+  const query = String(args.query ?? "");
+  if (!query) throw new Error("query is required");
+  const recency = args.recency as string | undefined;
+  const capabilities = { search: true } as Record<string, boolean>;
+  const framed = recency ? `${query}\n\n(Focus on results from the past ${recency}.)` : query;
+  const result = await callChatFn(
+    "perplexity-chat",
+    { messages: [{ role: "user", content: framed }], model: "sonar-pro", capabilities },
+    (_ctx as AuthCtx).jwt,
+  );
+  return { answer: result.content ?? "", citations: result.citations ?? [] };
+}
+
+async function runConductorRound(
+  ctx: AuthCtx,
+  opts: { conversationId: string; prompt: string; conductorPlatform: PlatformId; includePlatforms: PlatformId[] },
+) {
+  const { conversationId, prompt, conductorPlatform, includePlatforms } = opts;
+  // 1. Conductor decision
+  const decisionPrompt = `You are the Conductor coordinating multiple AI agents.
+User message: "${prompt}"
+Available agents: ${includePlatforms.join(", ")}
+Provide a brief coordination plan, then respond. Add [COORDINATION_NEEDED: YES] to trigger multi-agent fan-out, or [COORDINATION_NEEDED: NO] to answer solo.`;
+  const decisionRes = await callChatFn(PLATFORM_TO_FN[conductorPlatform], {
+    messages: [{ role: "user", content: decisionPrompt }],
+    model: DEFAULT_MODELS[conductorPlatform],
+  }, ctx.jwt);
+  const decision = String(decisionRes.content ?? "");
+  await saveMessage(ctx, conversationId, "ai", decision, conductorPlatform);
+
+  const needsFanout = !/\[COORDINATION_NEEDED:\s*NO\s*\]/i.test(decision);
+  if (!needsFanout) return { decision, agent_responses: [], synthesis: decision };
+
+  // 2. Fan-out
+  const coordinationPrompt = `The Conductor asked for your perspective on: "${prompt}"
+
+Conductor's plan: ${decision}
+
+Provide your specialized angle.`;
+  const agentCalls = await Promise.allSettled(
+    includePlatforms.map(async (p) => {
+      const res = await callChatFn(PLATFORM_TO_FN[p], {
+        messages: [{ role: "user", content: coordinationPrompt }],
+        model: DEFAULT_MODELS[p],
+      }, ctx.jwt);
+      return { platform: p, content: String(res.content ?? "") };
+    }),
+  );
+  const agentResponses = agentCalls
+    .filter((r): r is PromiseFulfilledResult<{ platform: PlatformId; content: string }> => r.status === "fulfilled")
+    .map((r) => r.value);
+  for (const ar of agentResponses) {
+    await saveMessage(ctx, conversationId, "ai", ar.content, ar.platform);
+  }
+
+  // 3. Synthesis
+  if (agentResponses.length === 0) return { decision, agent_responses: [], synthesis: decision };
+  const synthesisPrompt = `Synthesize these agent responses into one coherent answer for the user.
+
+Original question: "${prompt}"
+
+${agentResponses.map((a) => `[${a.platform}]:\n${a.content}`).join("\n\n")}
+
+Provide the best synthesized answer.`;
+  const synthRes = await callChatFn(PLATFORM_TO_FN[conductorPlatform], {
+    messages: [{ role: "user", content: synthesisPrompt }],
+    model: DEFAULT_MODELS[conductorPlatform],
+  }, ctx.jwt);
+  const synthesis = String(synthRes.content ?? "");
+  await saveMessage(ctx, conversationId, "ai", synthesis, conductorPlatform);
+  return { decision, agent_responses: agentResponses, synthesis };
+}
+
+async function toolAskConductor(ctx: AuthCtx, args: Record<string, unknown>) {
+  const prompt = String(args.prompt ?? "");
+  if (!prompt) throw new Error("prompt is required");
+  const conductorPlatform = ((args.conductor_platform as PlatformId) ?? "openai");
+  if (!PLATFORM_IDS.includes(conductorPlatform)) throw new Error(`Unknown conductor_platform: ${conductorPlatform}`);
+  const includeRaw = (args.include_platforms as PlatformId[] | undefined);
+  const includePlatforms = (includeRaw && includeRaw.length > 0
+    ? includeRaw
+    : PLATFORM_IDS.filter((p) => p !== conductorPlatform).slice(0, 4)
+  ) as PlatformId[];
+
+  const conversationId = await ensureConversation(ctx, {
+    conversationId: args.conversation_id as string | undefined,
+    title: `MCP: ${prompt.slice(0, 50)}`,
+    chatMode: "conductor",
+    conductorPlatform,
+  });
+  await saveMessage(ctx, conversationId, "user", prompt);
+
+  const round = await runConductorRound(ctx, { conversationId, prompt, conductorPlatform, includePlatforms });
+  return { conversation_id: conversationId, ...round };
+}
+
+async function toolIterate(ctx: AuthCtx, args: Record<string, unknown>) {
+  const prompt = String(args.prompt ?? "");
+  if (!prompt) throw new Error("prompt is required");
+  const iterations = Math.min(5, Math.max(2, Number(args.iterations ?? 3)));
+  const conductorPlatform = ((args.conductor_platform as PlatformId) ?? "openai");
+  const includeRaw = (args.include_platforms as PlatformId[] | undefined);
+  const includePlatforms = (includeRaw && includeRaw.length > 0
+    ? includeRaw
+    : PLATFORM_IDS.filter((p) => p !== conductorPlatform).slice(0, 4)
+  ) as PlatformId[];
+
+  const conversationId = await ensureConversation(ctx, {
+    title: `MCP iterate: ${prompt.slice(0, 40)}`,
+    chatMode: "conductor",
+    conductorPlatform,
+  });
+  await saveMessage(ctx, conversationId, "user", prompt);
+
+  const rounds: Array<{ iteration: number; synthesis: string }> = [];
+  let currentPrompt = prompt;
+  for (let i = 1; i <= iterations; i++) {
+    const isFinal = i === iterations;
+    const framedPrompt = i === 1
+      ? currentPrompt
+      : `Iteration ${i} of ${iterations}${isFinal ? " (FINAL)" : ""}. Prior synthesis:\n\n${currentPrompt}\n\nCritique it, resolve gaps, and produce ${isFinal ? "the final answer" : "an improved answer"} to the original question: "${prompt}"`;
+    const round = await runConductorRound(ctx, {
+      conversationId,
+      prompt: framedPrompt,
+      conductorPlatform,
+      includePlatforms,
+    });
+    rounds.push({ iteration: i, synthesis: round.synthesis });
+    currentPrompt = round.synthesis;
+  }
+  return { conversation_id: conversationId, iterations: rounds, final: rounds[rounds.length - 1].synthesis };
+}
+
+// ─── MCP dispatch ───────────────────────────────────────────────────────────
+type JsonRpcRequest = { jsonrpc: "2.0"; id?: string | number | null; method: string; params?: Record<string, unknown> };
+
+async function handleRpc(rpc: JsonRpcRequest, ctx: AuthCtx | null): Promise<Record<string, unknown> | null> {
+  const { id, method, params } = rpc;
+  const respond = (result: unknown) => ({ jsonrpc: "2.0", id: id ?? null, result });
+  const err = (code: number, message: string) => ({ jsonrpc: "2.0", id: id ?? null, error: { code, message } });
+
+  if (method === "initialize") {
+    return respond({
+      protocolVersion: PROTOCOL_VERSION,
+      capabilities: { tools: {} },
+      serverInfo: { name: "roboheard-mcp", version: "0.1.0" },
+      instructions: "RoboHeard MCP — call list_models first, then ask_model / ask_conductor / iterate / web_search. All calls consume the user's RoboHeard tokens.",
+    });
+  }
+  if (method === "notifications/initialized" || method === "notifications/cancelled") return null;
+  if (method === "ping") return respond({});
+  if (method === "tools/list") return respond({ tools: TOOLS });
+
+  if (method === "tools/call") {
+    if (!ctx) return err(-32001, "Unauthorized: missing or invalid Bearer token");
+    const name = params?.name as string;
+    const args = (params?.arguments as Record<string, unknown>) ?? {};
+    try {
+      let out: unknown;
+      switch (name) {
+        case "list_models":    out = await toolListModels(ctx); break;
+        case "ask_model":      out = await toolAskModel(ctx, args); break;
+        case "web_search":     out = await toolWebSearch(ctx, args); break;
+        case "ask_conductor":  out = await toolAskConductor(ctx, args); break;
+        case "iterate":        out = await toolIterate(ctx, args); break;
+        default: return err(-32601, `Unknown tool: ${name}`);
+      }
+      return respond({
+        content: [{ type: "text", text: JSON.stringify(out, null, 2) }],
+        structuredContent: out,
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return respond({ content: [{ type: "text", text: `Error: ${msg}` }], isError: true });
+    }
+  }
+
+  return err(-32601, `Unknown method: ${method}`);
+}
+
+// ─── HTTP ───────────────────────────────────────────────────────────────────
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  if (req.method === "GET") {
+    // Discovery ping
+    return new Response(JSON.stringify({
+      name: "roboheard-mcp",
+      version: "0.1.0",
+      protocolVersion: PROTOCOL_VERSION,
+      transport: "streamable-http",
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+
+  if (req.method !== "POST") {
+    return new Response("Method not allowed", { status: 405, headers: corsHeaders });
+  }
+
+  let body: JsonRpcRequest | JsonRpcRequest[];
+  try {
+    body = await req.json();
+  } catch {
+    return new Response(JSON.stringify({ jsonrpc: "2.0", error: { code: -32700, message: "Parse error" }, id: null }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const ctx = await authenticate(req);
+  const requests = Array.isArray(body) ? body : [body];
+  const responses: Array<Record<string, unknown>> = [];
+  for (const rpc of requests) {
+    const resp = await handleRpc(rpc, ctx);
+    if (resp) responses.push(resp);
+  }
+
+  // If every incoming request was a notification, return 202 with no body.
+  if (responses.length === 0) return new Response(null, { status: 202, headers: corsHeaders });
+
+  const payload = Array.isArray(body) ? responses : responses[0];
+  return new Response(JSON.stringify(payload), {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+});
