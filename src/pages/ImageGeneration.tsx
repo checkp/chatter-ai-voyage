@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '@/components/Logo';
+import PageSeo from '@/components/PageSeo';
+
 
 const ImageGenerationPage = () => {
   const { user, loading } = useAuth();
