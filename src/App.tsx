@@ -51,6 +51,7 @@ const App = () => (
             <Route path="/terms" element={<Terms />} />
             <Route path="/mcp" element={<McpSetup />} />
             <Route path="/tools" element={<Tools />} />
+            <Route path="/api" element={<ApiAccess />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
