@@ -54,7 +54,7 @@ const Terms: React.FC = () => {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/lovable-uploads/8f377fa8-bfb6-4d05-b000-3d477e975e49.png" alt="RoboHeard" className="h-7 w-7" />
+            <img src="/lovable-uploads/8f377fa8-bfb6-4d05-b000-3d477e975e49.png" alt="RoboHeard AI model orchestrator logo" className="h-7 w-7" />
             <span className="font-semibold">RoboHeard</span>
           </Link>
           <Link to="/auth"><Button size="sm">Open app</Button></Link>

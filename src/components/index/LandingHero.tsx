@@ -112,7 +112,7 @@ const LandingHero: React.FC = () => {
       {/* Logo only on mobile — sits above everything */}
       <img
         src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png"
-        alt="RoboHeard Logo"
+        alt="RoboHeard — the frontier AI conductor interface"
         className="md:hidden w-full max-w-[140px] h-auto object-contain mx-auto mb-3 cursor-pointer hover:opacity-80 transition-opacity"
         onClick={() => window.location.href = '/auth'}
       />

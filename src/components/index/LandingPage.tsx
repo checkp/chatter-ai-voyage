@@ -25,7 +25,7 @@ const LandingPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <img
             src="/lovable-uploads/8f377fa8-bfb6-4d05-b000-3d477e975e49.png"
-            alt="RoboHeard"
+            alt="RoboHeard AI model orchestrator logo"
             className="h-7 w-7"
           />
           <span className="font-bold text-lg">RoboHeard</span>
@@ -62,7 +62,7 @@ const LandingPage: React.FC = () => {
           <div className="hidden md:flex items-center justify-center relative min-w-0">
             <img
               src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png"
-              alt="RoboHeard Logo"
+              alt="RoboHeard AI model orchestrator logo"
               className="w-auto max-w-full max-h-[min(70svh,560px)] object-contain cursor-pointer hover-scale hover:brightness-110 transition-all duration-300"
               onClick={() => navigate('/auth')}
             />

@@ -16,7 +16,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'md', className = '' }) => {
   return (
     <img 
       src="/lovable-uploads/8f377fa8-bfb6-4d05-b000-3d477e975e49.png" 
-      alt="RoboHeard Logo" 
+      alt="RoboHeard AI model orchestrator logo" 
       className={`object-contain ${sizeClasses[size]} ${className}`}
     />
   );
