@@ -170,6 +170,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           onStopConductor={onStopConductor}
           onRequestConductorDirection={onRequestConductorDirection}
           onStartTour={tour.startTour}
+          onSelectChat={setActiveChatId}
         />
 
         {/* Draggable AI Status Bar — visible in all modes including conductor */}
