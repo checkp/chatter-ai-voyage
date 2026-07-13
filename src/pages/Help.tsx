@@ -182,7 +182,9 @@ const Help: React.FC = () => {
         <ContactUsButton />
       </main>
     </div>
+    </>
   );
 };
+
 
 export default Help;
