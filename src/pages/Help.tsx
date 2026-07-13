@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,25 @@ import { Copy, HelpCircle, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import ContactUsButton from '@/components/ContactUsButton';
+import PageSeo from '@/components/PageSeo';
+
+const FAQ_ITEMS = [
+  { q: 'What is Chat Mode?', a: 'Send a single prompt to one or multiple agents. Great for Q&A, drafting, coding, or quick ideation.' },
+  { q: 'What is Conductor Mode?', a: 'An orchestrator AI analyzes progress, proposes next steps, and assigns the right frontier model to each step.' },
+  { q: 'What is Free Mode?', a: 'Fire off multiple agent messages automatically for rapid exploration. Configure the message limit and stop anytime.' },
+  { q: 'Which AI models does RoboHeard support?', a: 'GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek-R2, Mistral Large, Perplexity Sonar, and Qwen.' },
+];
+
+const HELP_JSONLD = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQ_ITEMS.map(({ q, a }) => ({
+    '@type': 'Question',
+    name: q,
+    acceptedAnswer: { '@type': 'Answer', text: a },
+  })),
+};
+
 
 const prompts = {
   conversation: [
@@ -22,30 +41,6 @@ const prompts = {
   ],
 };
 
-function setSEO() {
-  document.title = 'Help & Getting Started | RoboHeard';
-
-  const ensureMeta = (name: string, content: string) => {
-    let tag = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
-    if (!tag) {
-      tag = document.createElement('meta');
-      tag.setAttribute('name', name);
-      document.head.appendChild(tag);
-    }
-    tag.setAttribute('content', content);
-  };
-
-  ensureMeta('description', 'Get started with RoboHeard — learn Conductor Mode, agentic orchestration across GPT-5, Claude 4, Gemini 2.5, Grok-4 & DeepSeek-R2, and grab ready-to-use prompts.');
-
-  let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-  if (!canonical) {
-    canonical = document.createElement('link');
-    canonical.rel = 'canonical';
-    document.head.appendChild(canonical);
-  }
-  canonical.href = `${window.location.origin}/help`;
-}
-
 const copyText = async (text: string) => {
   try {
     await navigator.clipboard.writeText(text);
@@ -56,11 +51,15 @@ const copyText = async (text: string) => {
 };
 
 const Help: React.FC = () => {
-  useEffect(() => {
-    setSEO();
-  }, []);
-
   return (
+    <>
+      <PageSeo
+        title="Help & Getting Started — RoboHeard"
+        description="Learn Conductor Mode, agentic orchestration across GPT-5, Claude 4, Gemini 2.5, Grok-4 & DeepSeek-R2, and grab ready-to-use starter prompts."
+        path="/help"
+        jsonLd={HELP_JSONLD}
+      />
+
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/50 to-background">
       <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -183,7 +182,9 @@ const Help: React.FC = () => {
         <ContactUsButton />
       </main>
     </div>
+    </>
   );
 };
+
 
 export default Help;

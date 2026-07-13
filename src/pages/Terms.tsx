@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ScrollText } from 'lucide-react';
+import PageSeo from '@/components/PageSeo';
 
-const SITE_URL = 'https://roboheard.ai';
 const LAST_UPDATED = 'June 9, 2026';
 
 const Section: React.FC<{ id: string; title: string; children: React.ReactNode }> = ({ id, title, children }) => (
@@ -14,19 +14,7 @@ const Section: React.FC<{ id: string; title: string; children: React.ReactNode }
 );
 
 const Terms: React.FC = () => {
-  useEffect(() => {
-    document.title = 'Terms & Conditions — RoboHeard';
-    const setMeta = (name: string, content: string) => {
-      let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
-      if (!el) { el = document.createElement('meta'); el.setAttribute('name', name); document.head.appendChild(el); }
-      el.setAttribute('content', content);
-    };
-    setMeta('description', 'The official (and lightly quirky) RoboHeard Terms & Conditions — what you agree to when chatting with eight frontier AI models.');
 
-    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (!canonical) { canonical = document.createElement('link'); canonical.setAttribute('rel', 'canonical'); document.head.appendChild(canonical); }
-    canonical.setAttribute('href', `${SITE_URL}/terms`);
-  }, []);
 
   const toc = [
     ['the-deal', '1. The Deal'],
@@ -51,10 +39,16 @@ const Terms: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
+      <PageSeo
+        title="Terms & Conditions — RoboHeard"
+        description="The official RoboHeard Terms & Conditions — what you agree to when chatting with eight frontier AI models."
+        path="/terms"
+      />
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
+
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/lovable-uploads/8f377fa8-bfb6-4d05-b000-3d477e975e49.png" alt="RoboHeard" className="h-7 w-7" />
+            <img src="/lovable-uploads/8f377fa8-bfb6-4d05-b000-3d477e975e49.png" alt="RoboHeard AI model orchestrator logo" className="h-7 w-7" />
             <span className="font-semibold">RoboHeard</span>
           </Link>
           <Link to="/auth"><Button size="sm">Open app</Button></Link>

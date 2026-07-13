@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Logo from '@/components/Logo';
+import PageSeo from '@/components/PageSeo';
+
 
 const ImageGenerationPage = () => {
   const { user, loading } = useAuth();
@@ -33,8 +35,14 @@ const ImageGenerationPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageSeo
+        title="AI Image Generation — DALL·E, Gemini & Grok"
+        description="Generate images across DALL·E, Gemini Imagen and Grok inside RoboHeard. One prompt, three frontier image models, side-by-side output."
+        path="/images"
+      />
       {/* Header */}
       <header className="border-b border-border bg-gradient-to-r from-primary/10 via-accent/10 to-secondary/10 p-4">
+
         <div className="flex items-center gap-4 max-w-6xl mx-auto">
           <Button 
             variant="ghost" 

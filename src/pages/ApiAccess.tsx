@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Copy, Key, Plus, Trash2, Loader2 } from "lucide-react";
+import PageSeo from "@/components/PageSeo";
+
 
 const API_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/api`;
 
@@ -111,7 +113,13 @@ export default function ApiAccess() {
 
   return (
     <div className="min-h-screen bg-background text-foreground p-6">
+      <PageSeo
+        title="API Access — RoboHeard REST API & Keys"
+        description="Call RoboHeard from any script or backend. Personal API keys, chat, conductor, and web-search endpoints across eight frontier models."
+        path="/api"
+      />
       <div className="max-w-3xl mx-auto space-y-6">
+
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" asChild>
             <Link to="/tools"><ArrowLeft className="h-4 w-4 mr-1" />Back</Link>

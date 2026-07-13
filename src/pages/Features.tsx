@@ -1,76 +1,44 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Sparkles, Newspaper } from 'lucide-react';
 import { featureCategories, totalFeatureCount } from '@/data/features';
+import PageSeo from '@/components/PageSeo';
 
-const SITE_URL = 'https://roboheard.ai';
+const FEATURES_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'RoboHeard Features',
+  itemListElement: featureCategories.flatMap((cat, ci) =>
+    cat.features.map((f, fi) => ({
+      '@type': 'ListItem',
+      position: ci * 100 + fi + 1,
+      name: f.title,
+      description: f.description,
+    }))
+  ),
+};
 
 const Features: React.FC = () => {
-  useEffect(() => {
-    document.title = `Features — ${totalFeatureCount}+ tools across 8 frontier models | RoboHeard`;
-
-    const setMeta = (name: string, content: string) => {
-      let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
-      if (!el) {
-        el = document.createElement('meta');
-        el.setAttribute('name', name);
-        document.head.appendChild(el);
-      }
-      el.setAttribute('content', content);
-    };
-    setMeta(
-      'description',
-      `Every RoboHeard feature: 8 frontier AI models, 4 chat modes, Conductor orchestration, multi-model image studio, live market research, and more.`
-    );
-
-    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (!canonical) {
-      canonical = document.createElement('link');
-      canonical.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonical);
-    }
-    canonical.setAttribute('href', `${SITE_URL}/features`);
-
-    // JSON-LD: ItemList of features
-    const ld = {
-      '@context': 'https://schema.org',
-      '@type': 'ItemList',
-      name: 'RoboHeard Features',
-      itemListElement: featureCategories.flatMap((cat, ci) =>
-        cat.features.map((f, fi) => ({
-          '@type': 'ListItem',
-          position: ci * 100 + fi + 1,
-          name: f.title,
-          description: f.description,
-        }))
-      ),
-    };
-    let script = document.getElementById('features-jsonld') as HTMLScriptElement | null;
-    if (!script) {
-      script = document.createElement('script');
-      script.id = 'features-jsonld';
-      script.type = 'application/ld+json';
-      document.head.appendChild(script);
-    }
-    script.text = JSON.stringify(ld);
-
-    return () => {
-      script?.remove();
-    };
-  }, []);
-
   return (
+    <>
+      <PageSeo
+        title={`Features — ${totalFeatureCount}+ tools across 8 frontier models`}
+        description="Every RoboHeard feature: 8 frontier AI models, 4 chat modes, Conductor orchestration, multi-model image studio, live search."
+        path="/features"
+        jsonLd={FEATURES_LD}
+      />
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
+
       {/* Top bar */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <img
               src="/lovable-uploads/8f377fa8-bfb6-4d05-b000-3d477e975e49.png"
-              alt="RoboHeard"
+              alt="RoboHeard AI model orchestrator logo"
               className="h-7 w-7"
             />
             <span className="font-semibold">RoboHeard</span>
@@ -184,7 +152,9 @@ const Features: React.FC = () => {
         </section>
       </main>
     </div>
+    </>
   );
 };
+
 
 export default Features;

@@ -5,6 +5,8 @@ import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import TokenPurchase from '@/components/TokenPurchase';
+import PageSeo from '@/components/PageSeo';
+
 
 const Purchase = () => {
   const navigate = useNavigate();
@@ -46,8 +48,14 @@ const Purchase = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageSeo
+        title="Buy RoboHeard Tokens — Multi-Model AI Credits"
+        description="Top up RoboHeard tokens for GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek, Mistral, Perplexity and Qwen. Pay once, spend across every model."
+        path="/purchase"
+      />
       <header className="border-b bg-secondary border-border p-4">
         <div className="flex items-center gap-4">
+
           <Button
             variant="outline"
             size="icon"
