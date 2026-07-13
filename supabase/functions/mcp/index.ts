@@ -673,13 +673,35 @@ async function handleRpc(rpc: JsonRpcRequest, ctx: AuthCtx | null): Promise<Reco
   }
   if (method === "notifications/initialized" || method === "notifications/cancelled") return null;
   if (method === "ping") return respond({});
-  if (method === "tools/list") return respond({ tools: TOOLS });
+  if (method === "tools/list") {
+    if (!ctx) return respond({ tools: TOOLS });
+    const settings = await loadMcpSettings(ctx);
+    return respond({ tools: TOOLS.filter((t) => settings.enabledTools.has(t.name)) });
+  }
 
   if (method === "tools/call") {
     if (!ctx) return err(-32001, "Unauthorized: missing or invalid Bearer token");
     const name = params?.name as string;
-    const args = (params?.arguments as Record<string, unknown>) ?? {};
+    const args = { ...((params?.arguments as Record<string, unknown>) ?? {}) };
     try {
+      const settings = await loadMcpSettings(ctx);
+      if (!settings.enabledTools.has(name)) {
+        return respond({ content: [{ type: "text", text: `Tool "${name}" is disabled in your MCP settings. Enable it at /mcp in RoboHeard.` }], isError: true });
+      }
+      // Enforce platform allow-list on args.
+      if (typeof args.platform === "string" && !settings.enabledPlatforms.has(args.platform as PlatformId)) {
+        return respond({ content: [{ type: "text", text: `Platform "${args.platform}" is disabled in your MCP settings.` }], isError: true });
+      }
+      if (Array.isArray(args.include_platforms)) {
+        args.include_platforms = (args.include_platforms as string[]).filter((p) => settings.enabledPlatforms.has(p as PlatformId));
+      }
+      // Apply defaults.
+      if ((name === "conductor_ask" || name === "conductor_route" || name === "conductor_compare" || name === "conductor_debate" || name === "ask_conductor" || name === "iterate") && !args.conductor_platform) {
+        args.conductor_platform = settings.defaultConductorPlatform;
+      }
+      if (name === "web_search" && !args.model) {
+        args.model = settings.defaultWebSearchModel;
+      }
       let out: unknown;
       switch (name) {
         case "list_models":        out = await toolListModels(ctx); break;
