@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ScrollText } from 'lucide-react';
+import PageSeo from '@/components/PageSeo';
 
-const SITE_URL = 'https://roboheard.ai';
 const LAST_UPDATED = 'June 9, 2026';
 
 const Section: React.FC<{ id: string; title: string; children: React.ReactNode }> = ({ id, title, children }) => (
@@ -14,19 +14,7 @@ const Section: React.FC<{ id: string; title: string; children: React.ReactNode }
 );
 
 const Terms: React.FC = () => {
-  useEffect(() => {
-    document.title = 'Terms & Conditions — RoboHeard';
-    const setMeta = (name: string, content: string) => {
-      let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
-      if (!el) { el = document.createElement('meta'); el.setAttribute('name', name); document.head.appendChild(el); }
-      el.setAttribute('content', content);
-    };
-    setMeta('description', 'The official (and lightly quirky) RoboHeard Terms & Conditions — what you agree to when chatting with eight frontier AI models.');
 
-    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (!canonical) { canonical = document.createElement('link'); canonical.setAttribute('rel', 'canonical'); document.head.appendChild(canonical); }
-    canonical.setAttribute('href', `${SITE_URL}/terms`);
-  }, []);
 
   const toc = [
     ['the-deal', '1. The Deal'],
