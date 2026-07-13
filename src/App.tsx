@@ -49,6 +49,8 @@ const App = () => (
             <Route path="/whats-new" element={<WhatsNew />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/mcp" element={<McpSetup />} />
+            <Route path="/tools" element={<Tools />} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
