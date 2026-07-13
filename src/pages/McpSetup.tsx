@@ -11,6 +11,8 @@ import { Copy, ArrowLeft, Plus, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import McpSettingsCard from "@/components/McpSettingsCard";
 import McpTestCard from "@/components/McpTestCard";
+import PageSeo from "@/components/PageSeo";
+
 
 const MCP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mcp`;
 
