@@ -115,12 +115,9 @@ serve(async (req) => {
   const auth = await authenticate(req);
   if (auth instanceof Response) return auth;
 
-  let jwt: string;
-  try {
-    jwt = await mintSessionToken(auth);
-  } catch (e) {
-    return jsonResponse({ error: e instanceof Error ? e.message : String(e) }, 500);
-  }
+  // MCP now accepts the raw rh_ token directly and mints an internal session.
+  // We just need to know the caller was validated; pass a token MCP will re-validate.
+  const jwt = (req.headers.get("x-api-key") ?? req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "").trim();
 
   try {
     if (req.method === "GET" && path === "/v1/tools") {
