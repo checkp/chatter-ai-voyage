@@ -97,19 +97,29 @@ const TOOLS = [
   },
   {
     name: "web_search",
-    title: "Live web search",
-    description: "Live web search with citations via Perplexity Sonar. Best for time-sensitive facts, docs lookups, and library changelogs.",
+    title: "Live web search with citations",
+    description:
+      "Live web search grounded in real-time results with numbered source citations, powered by Perplexity Sonar. Returns { answer, citations: [{index, url, title}], model, query }. Use for time-sensitive facts, library changelogs, docs lookups, and anything the model's training data may not cover. Always cite the returned sources in your final answer.",
     inputSchema: {
       type: "object",
       properties: {
         query: { type: "string", description: "Search query." },
-        recency: { type: "string", enum: ["day", "week", "month", "year"], description: "Optional time filter." },
+        recency: { type: "string", enum: ["day", "week", "month", "year"], description: "Only include results from the last N (day/week/month/year)." },
+        mode: { type: "string", enum: ["web", "academic", "sec"], description: "Search corpus. Defaults to web." },
+        domains: {
+          type: "array",
+          items: { type: "string" },
+          description: "Optional allow-list of domains (e.g. ['docs.python.org','github.com']). Prefix with '-' to exclude.",
+        },
+        max_results: { type: "number", description: "Approximate max sources to consider, 1-20. Defaults to 8." },
+        model: { type: "string", enum: ["sonar", "sonar-pro", "sonar-reasoning", "sonar-reasoning-pro"], description: "Perplexity model. Defaults to sonar-pro." },
       },
       required: ["query"],
       additionalProperties: false,
     },
     annotations: { readOnlyHint: true, openWorldHint: true },
   },
+
 
   // ─── Conductor family ────────────────────────────────────────────────────
   {
