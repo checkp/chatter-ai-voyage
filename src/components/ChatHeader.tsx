@@ -189,6 +189,12 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           />
         </div>
       </header>
+      <MediaGalleryDialog
+        open={galleryOpen}
+        onOpenChange={setGalleryOpen}
+        user={user}
+        onOpenChat={onSelectChat}
+      />
     </TooltipProvider>
   );
 };
