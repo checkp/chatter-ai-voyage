@@ -1,0 +1,4 @@
+
+ALTER TABLE public.roboheard_api_keys
+  ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS scope TEXT NOT NULL DEFAULT 'api';
