@@ -66,9 +66,13 @@ const LandingPage: React.FC = () => {
             <img
               src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png"
               alt="RoboHeard AI model orchestrator logo"
+              width={560}
+              height={560}
+              fetchPriority="high"
               className="w-auto max-w-full max-h-[min(70svh,560px)] object-contain cursor-pointer hover-scale hover:brightness-110 transition-all duration-300"
               onClick={() => navigate('/auth')}
             />
+
             <SheepBubbles />
           </div>
         </div>
