@@ -5,6 +5,8 @@ import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import TokenPurchase from '@/components/TokenPurchase';
+import PageSeo from '@/components/PageSeo';
+
 
 const Purchase = () => {
   const navigate = useNavigate();
