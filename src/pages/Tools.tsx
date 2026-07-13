@@ -32,7 +32,13 @@ const tools: Array<{ title: string; description: string; icon: typeof Server; to
 const Tools: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
+      <PageSeo
+        title="Developer Tools — MCP Server & API for RoboHeard"
+        description="Connect Claude Code, Cursor, and Codex via MCP or call RoboHeard from any backend. One endpoint, eight frontier AI models."
+        path="/tools"
+      />
       <header className="border-b border-border">
+
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
           <Button asChild variant="ghost" size="sm">
             <Link to="/">
