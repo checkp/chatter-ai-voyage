@@ -133,7 +133,13 @@ export default function McpSetup() {
 
   return (
     <div className="min-h-screen bg-background text-foreground p-6">
+      <PageSeo
+        title="MCP Setup — Connect Claude Code, Cursor & Codex"
+        description="Expose RoboHeard's Conductor, per-model chat, and Perplexity web search as MCP tools inside any coding agent. One-line install."
+        path="/mcp"
+      />
       <div className="max-w-3xl mx-auto space-y-6">
+
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" asChild>
             <Link to="/tools"><ArrowLeft className="h-4 w-4 mr-1" />Back</Link>
