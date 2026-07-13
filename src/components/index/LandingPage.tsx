@@ -71,7 +71,7 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      <div className="container mx-auto px-4 py-8 md:py-12 space-y-8 md:space-y-12">
+      <main className="container mx-auto px-4 py-8 md:py-12 space-y-8 md:space-y-12">
         {/* Demo chat — moved below the fold so the Start button is always visible first */}
         <DemoChat />
 
@@ -80,9 +80,10 @@ const LandingPage: React.FC = () => {
         <FeaturesGrid />
         <AITestimonials />
         <CTASection />
-      </div>
+      </main>
       <LandingFooter />
     </div>
+
   );
 };
 
