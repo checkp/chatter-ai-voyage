@@ -569,8 +569,9 @@ async function handleRpc(rpc: JsonRpcRequest, ctx: AuthCtx | null): Promise<Reco
     return respond({
       protocolVersion: PROTOCOL_VERSION,
       capabilities: { tools: {} },
-      serverInfo: { name: "roboheard-mcp", version: "0.1.0" },
-      instructions: "RoboHeard MCP — call list_models first, then ask_model / ask_conductor / iterate / web_search. All calls consume the user's RoboHeard tokens.",
+      serverInfo: { name: "roboheard-mcp", version: "0.2.0" },
+      instructions:
+        "RoboHeard MCP — multi-model orchestration. Discovery: call list_models first. Single-model: ask_model. Web facts: web_search. Orchestrated (multi-model) reasoning: prefer the conductor_* family — conductor_route (plan only), conductor_compare (raw perspectives), conductor_ask (routed + synthesized answer), conductor_debate (multi-round critique loop). All calls consume the user's RoboHeard tokens.",
     });
   }
   if (method === "notifications/initialized" || method === "notifications/cancelled") return null;
