@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Copy, Key, Plus, Trash2, Loader2 } from "lucide-react";
+import PageSeo from "@/components/PageSeo";
+
 
 const API_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/api`;
 
