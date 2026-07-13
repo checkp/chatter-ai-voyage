@@ -102,45 +102,54 @@ export const useMediaGallery = (user: SupabaseUser | null) => {
 
       });
 
-      // Legacy generated_images (refresh signed URLs)
-      const genItems = await Promise.all(
-        (gen || []).map(async (g: any) => {
-          const { data: signed } = await supabase.storage
-            .from('generated-images')
-            .createSignedUrl(g.file_name, 3600);
-          return { g, url: signed?.signedUrl || g.image_url };
-        }),
-      );
-      genItems.forEach(({ g, url }) => {
-        // Try to attach to a chat via message linkage; otherwise bucket into a synthetic group
-        const chatId = g.conversation_id || '__standalone__';
-        if (chatId === '__standalone__' && !groups.has('__standalone__')) {
-          groups.set('__standalone__', {
-            chatId: '__standalone__',
+      // Legacy generated_images
+      (gen || []).forEach((g: any) => {
+        const chatId = '__standalone__';
+        if (!groups.has(chatId)) {
+          groups.set(chatId, {
+            chatId,
             title: 'Standalone generations',
             updatedAt: g.created_at,
             items: [],
           });
-        } else if (chatId !== '__standalone__') {
-          ensure(chatId);
         }
-        const group = groups.get(chatId);
-        if (!group) return;
-        // dedupe with panel entries by URL suffix
-        if (group.items.some((it) => it.url === url)) return;
+        const group = groups.get(chatId)!;
+        if (group.items.some((it) => (it as any)._fileName === g.file_name)) return;
         group.items.push({
           id: `gen-${g.id}`,
           kind: 'generated',
-          url,
+          url: '',
           prompt: g.prompt,
           name: g.file_name,
           model: g.model_used,
           createdAt: g.created_at,
           chatId,
+          ...({ _fileName: g.file_name } as any),
         });
       });
 
+      // Refresh signed URLs for all generated items that have a bucket path
+      const extractPath = (u?: string) => {
+        if (!u) return null;
+        const m = u.match(/\/generated-images\/(.+?)(\?|$)/);
+        return m ? decodeURIComponent(m[1]) : null;
+      };
+      const allItems: MediaItem[] = [];
+      groups.forEach((g) => allItems.push(...g.items));
+      await Promise.all(
+        allItems.map(async (it) => {
+          if (it.kind !== 'generated') return;
+          const path = (it as any)._fileName || extractPath(it.url);
+          if (!path) return;
+          const { data: signed } = await supabase.storage
+            .from('generated-images')
+            .createSignedUrl(path, 3600);
+          if (signed?.signedUrl) it.url = signed.signedUrl;
+        }),
+      );
+
       return Array.from(groups.values())
+        .map((g) => ({ ...g, items: g.items.filter((it) => !!it.url) }))
         .filter((g) => g.items.length > 0)
         .map((g) => ({
           ...g,
@@ -150,3 +159,4 @@ export const useMediaGallery = (user: SupabaseUser | null) => {
     },
   });
 };
+
