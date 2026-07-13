@@ -167,6 +167,22 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             </TooltipContent>
           </Tooltip>
 
+          {/* Developer Tools */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button asChild variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="Developer Tools">
+                <Link to="/tools">
+                  <Wrench className="h-4 w-4" />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Developer Tools</p>
+            </TooltipContent>
+          </Tooltip>
+
+
+
 
           {/* Help */}
           <Tooltip>
