@@ -315,6 +315,43 @@ async function loadHistory(ctx: AuthCtx, conversationId: string): Promise<Array<
   }));
 }
 
+// ─── User MCP settings ──────────────────────────────────────────────────────
+interface McpSettings {
+  enabledTools: Set<string>;
+  enabledPlatforms: Set<PlatformId>;
+  defaultConductorPlatform: PlatformId;
+  defaultWebSearchModel: string;
+}
+
+const ALL_TOOL_NAMES = TOOLS.map((t) => t.name);
+const DEFAULT_SETTINGS: McpSettings = {
+  enabledTools: new Set(ALL_TOOL_NAMES),
+  enabledPlatforms: new Set(PLATFORM_IDS),
+  defaultConductorPlatform: "openai",
+  defaultWebSearchModel: "sonar-pro",
+};
+
+async function loadMcpSettings(ctx: AuthCtx): Promise<McpSettings> {
+  const { data } = await ctx.supabase
+    .from("user_mcp_settings")
+    .select("enabled_tools, enabled_platforms, default_conductor_platform, default_web_search_model")
+    .eq("user_id", ctx.userId)
+    .maybeSingle();
+  if (!data) return DEFAULT_SETTINGS;
+  const row = data as {
+    enabled_tools: string[];
+    enabled_platforms: string[];
+    default_conductor_platform: string;
+    default_web_search_model: string;
+  };
+  return {
+    enabledTools: new Set(row.enabled_tools ?? ALL_TOOL_NAMES),
+    enabledPlatforms: new Set((row.enabled_platforms ?? PLATFORM_IDS) as PlatformId[]),
+    defaultConductorPlatform: (row.default_conductor_platform as PlatformId) ?? "openai",
+    defaultWebSearchModel: row.default_web_search_model ?? "sonar-pro",
+  };
+}
+
 // ─── Tool handlers ──────────────────────────────────────────────────────────
 async function toolListModels(ctx: AuthCtx) {
   const { data } = await ctx.supabase
