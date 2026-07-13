@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import FreeModeControls from '@/components/FreeModeControls';
 import ConductorControls from '@/components/ConductorControls';
@@ -7,8 +7,9 @@ import ChatTitleSection from '@/components/header/ChatTitleSection';
 import ChatModeControls from '@/components/header/ChatModeControls';
 import TabNavigation from '@/components/header/TabNavigation';
 import UserControls from '@/components/header/UserControls';
+import MediaGalleryDialog from '@/components/MediaGalleryDialog';
 import { Button } from '@/components/ui/button';
-import { HelpCircle, Navigation } from 'lucide-react';
+import { HelpCircle, Navigation, Images } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useFunTheme } from '@/contexts/FunThemeContext';
 import type { Chat, ChatMode, AIPlatform } from '@/types/chat';
