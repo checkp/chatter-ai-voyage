@@ -120,6 +120,8 @@ export default function McpSetup() {
   const claudeConfig = JSON.stringify({
     mcpServers: { roboheard: { type: "http", url: MCP_URL, headers: { Authorization: `Bearer ${displayToken}` } } },
   }, null, 2);
+  const claudeCli = `claude mcp add --transport http roboheard ${MCP_URL} \\\n  --header "Authorization: Bearer ${displayToken}"`;
+
 
   const expiryLabel = (t: McpToken) => {
     if (!t.expires_at) return "Never expires";
@@ -196,12 +198,19 @@ export default function McpSetup() {
 
         <Card className="p-5 space-y-3">
           <h2 className="font-medium">3. Add to Claude Code</h2>
-          <p className="text-xs text-muted-foreground">Add to <code>~/.claude/mcp_config.json</code> or run <code>claude mcp add</code>:</p>
+          <p className="text-xs text-muted-foreground">One-liner (recommended):</p>
+          <pre className="bg-muted p-3 rounded text-xs overflow-x-auto whitespace-pre">{claudeCli}</pre>
+          <Button variant="outline" size="sm" onClick={() => copy(claudeCli, "Claude CLI command")}>
+            <Copy className="h-3 w-3 mr-1" />Copy command
+          </Button>
+          <p className="text-xs text-muted-foreground pt-2">Or add manually to <code>~/.claude/mcp_config.json</code>:</p>
           <pre className="bg-muted p-3 rounded text-xs overflow-x-auto whitespace-pre">{claudeConfig}</pre>
           <Button variant="outline" size="sm" onClick={() => copy(claudeConfig, "Claude config")}>
-            <Copy className="h-3 w-3 mr-1" />Copy
+            <Copy className="h-3 w-3 mr-1" />Copy config
           </Button>
+          <p className="text-xs text-muted-foreground pt-1">⚠️ Use an <code>rh_*</code> token from above — Supabase session JWTs expire after ~60 minutes.</p>
         </Card>
+
 
         <Card className="p-5 space-y-2">
           <h2 className="font-medium">Available tools</h2>
