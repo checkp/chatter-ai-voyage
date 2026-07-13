@@ -80,16 +80,18 @@ export const useMediaGallery = (user: SupabaseUser | null) => {
           try {
             const data: ImagePanelData = JSON.parse(m.content);
             data.images?.forEach((img, i) => {
-              if (img.success && img.url) {
+              if (img.success && (img.url || img.fileName)) {
                 ensure(m.conversation_id).items.push({
                   id: `${m.id}-img-${i}`,
                   kind: 'generated',
-                  url: img.url,
+                  url: img.url || '',
                   prompt: data.userPrompt || data.masterPrompt,
                   name: img.label,
                   model: img.model,
                   createdAt: m.created_at,
                   chatId: m.conversation_id,
+                  // stash filename for re-signing below
+                  ...(img.fileName ? { _fileName: img.fileName } as any : {}),
                 });
               }
             });
@@ -97,6 +99,7 @@ export const useMediaGallery = (user: SupabaseUser | null) => {
             /* ignore */
           }
         }
+
       });
 
       // Legacy generated_images (refresh signed URLs)
