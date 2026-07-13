@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,25 @@ import { Copy, HelpCircle, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import ContactUsButton from '@/components/ContactUsButton';
+import PageSeo from '@/components/PageSeo';
+
+const FAQ_ITEMS = [
+  { q: 'What is Chat Mode?', a: 'Send a single prompt to one or multiple agents. Great for Q&A, drafting, coding, or quick ideation.' },
+  { q: 'What is Conductor Mode?', a: 'An orchestrator AI analyzes progress, proposes next steps, and assigns the right frontier model to each step.' },
+  { q: 'What is Free Mode?', a: 'Fire off multiple agent messages automatically for rapid exploration. Configure the message limit and stop anytime.' },
+  { q: 'Which AI models does RoboHeard support?', a: 'GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek-R2, Mistral Large, Perplexity Sonar, and Qwen.' },
+];
+
+const HELP_JSONLD = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQ_ITEMS.map(({ q, a }) => ({
+    '@type': 'Question',
+    name: q,
+    acceptedAnswer: { '@type': 'Answer', text: a },
+  })),
+};
+
 
 const prompts = {
   conversation: [
