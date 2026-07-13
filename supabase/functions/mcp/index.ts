@@ -48,15 +48,29 @@ const DEFAULT_MODELS: Record<PlatformId, string> = {
   qwen: "qwen-plus",
 };
 
+const conductorPlatformProp = {
+  type: "string",
+  enum: PLATFORM_IDS as unknown as string[],
+  description: "Which frontier model plays Conductor (routes + synthesizes). Defaults to openai.",
+};
+const includePlatformsProp = {
+  type: "array",
+  items: { type: "string", enum: PLATFORM_IDS as unknown as string[] },
+  description: "Restrict the panel of agents. Defaults to a curated set of 4 frontier models.",
+};
+
 const TOOLS = [
   {
     name: "list_models",
-    description: "List RoboHeard's available AI platforms and which advanced capabilities (think, search, deep_research, code_exec) each supports. Call first to discover what to route to.",
+    title: "List available models",
+    description: "List RoboHeard's AI platforms and which advanced capabilities (think, search, deep_research, code_exec) each supports. Call first to discover what to route to.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    annotations: { readOnlyHint: true, openWorldHint: false },
   },
   {
     name: "ask_model",
-    description: "Send a prompt to a single AI model through RoboHeard. Consumes the user's tokens. Use this for a quick single-model answer. Persists to a new or existing chat.",
+    title: "Ask a single AI model",
+    description: "Send a prompt to ONE AI model through RoboHeard. Fastest and cheapest. Use when you already know which model is best. Persists to chat history.",
     inputSchema: {
       type: "object",
       properties: {
@@ -79,10 +93,12 @@ const TOOLS = [
       required: ["platform", "prompt"],
       additionalProperties: false,
     },
+    annotations: { readOnlyHint: false, openWorldHint: true },
   },
   {
     name: "web_search",
-    description: "Live web search with citations via Perplexity Sonar. Best for time-sensitive facts, docs lookups, and library changelogs. Does NOT save to chat history by default.",
+    title: "Live web search",
+    description: "Live web search with citations via Perplexity Sonar. Best for time-sensitive facts, docs lookups, and library changelogs.",
     inputSchema: {
       type: "object",
       properties: {
@@ -92,21 +108,94 @@ const TOOLS = [
       required: ["query"],
       additionalProperties: false,
     },
+    annotations: { readOnlyHint: true, openWorldHint: true },
   },
+
+  // ─── Conductor family ────────────────────────────────────────────────────
   {
-    name: "ask_conductor",
-    description: "Run RoboHeard's Conductor: a chosen model routes the prompt across multiple frontier AIs, then synthesizes a single answer. Best for hard questions where diverse perspectives help. Persists to chat history.",
+    name: "conductor_ask",
+    title: "Conductor — orchestrated multi-model answer",
+    description:
+      "Run RoboHeard's Conductor: one model routes the prompt across a panel of frontier AIs, collects their perspectives, and synthesizes a single best answer. Pick this over ask_model when the question is ambiguous, high-stakes, benefits from diverse viewpoints, or spans multiple domains. Persists to chat history.",
     inputSchema: {
       type: "object",
       properties: {
-        prompt: { type: "string", description: "The user prompt to route." },
-        conductor_platform: { type: "string", enum: PLATFORM_IDS as unknown as string[], description: "Which model plays conductor. Defaults to openai." },
-        include_platforms: {
-          type: "array",
-          items: { type: "string", enum: PLATFORM_IDS as unknown as string[] },
-          description: "Restrict fan-out to these platforms. Defaults to all enabled agents on the user's account.",
-        },
+        prompt: { type: "string", description: "The user prompt to route across the panel." },
+        conductor_platform: conductorPlatformProp,
+        include_platforms: includePlatformsProp,
         conversation_id: { type: "string", description: "Optional existing conversation UUID to continue." },
+      },
+      required: ["prompt"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: false, openWorldHint: true },
+  },
+  {
+    name: "conductor_route",
+    title: "Conductor — routing plan only",
+    description:
+      "Ask the Conductor which agents SHOULD answer a prompt and why, without actually fanning out. Cheap. Use to preview a plan before committing tokens with conductor_ask or conductor_debate.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        prompt: { type: "string" },
+        conductor_platform: conductorPlatformProp,
+        include_platforms: includePlatformsProp,
+      },
+      required: ["prompt"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true, openWorldHint: false },
+  },
+  {
+    name: "conductor_compare",
+    title: "Conductor — raw multi-model perspectives",
+    description:
+      "Fan the prompt out to the panel and return each agent's raw answer side-by-side, WITHOUT a synthesis step. Use when you want to compare model outputs yourself, benchmark, or feed multiple perspectives back into your own agent. Cheaper than conductor_ask.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        prompt: { type: "string" },
+        include_platforms: includePlatformsProp,
+        conversation_id: { type: "string" },
+      },
+      required: ["prompt"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: false, openWorldHint: true },
+  },
+  {
+    name: "conductor_debate",
+    title: "Conductor — multi-round critique loop",
+    description:
+      "Run the Conductor N times in a critique-and-improve loop, ending with a final synthesized answer. Use for hard reasoning problems, code review, architecture decisions, or research where one pass isn't enough. Slower and consumes more tokens.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        prompt: { type: "string" },
+        iterations: { type: "number", description: "Number of rounds, 2-5. Defaults to 3." },
+        conductor_platform: conductorPlatformProp,
+        include_platforms: includePlatformsProp,
+        conversation_id: { type: "string" },
+      },
+      required: ["prompt"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: false, openWorldHint: true },
+  },
+
+  // ─── Deprecated aliases (kept for backward compatibility) ────────────────
+  {
+    name: "ask_conductor",
+    title: "Conductor (deprecated alias)",
+    description: "Deprecated alias for conductor_ask. Prefer conductor_ask.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        prompt: { type: "string" },
+        conductor_platform: conductorPlatformProp,
+        include_platforms: includePlatformsProp,
+        conversation_id: { type: "string" },
       },
       required: ["prompt"],
       additionalProperties: false,
@@ -114,20 +203,22 @@ const TOOLS = [
   },
   {
     name: "iterate",
-    description: "Run the Conductor N times in a critique-and-improve loop, ending with a final synthesized answer. Use for hard problems where a single pass isn't enough. Slower and consumes more tokens.",
+    title: "Iterate (deprecated alias)",
+    description: "Deprecated alias for conductor_debate. Prefer conductor_debate.",
     inputSchema: {
       type: "object",
       properties: {
         prompt: { type: "string" },
-        iterations: { type: "number", description: "Number of rounds, 2-5. Defaults to 3." },
-        conductor_platform: { type: "string", enum: PLATFORM_IDS as unknown as string[] },
-        include_platforms: { type: "array", items: { type: "string", enum: PLATFORM_IDS as unknown as string[] } },
+        iterations: { type: "number" },
+        conductor_platform: conductorPlatformProp,
+        include_platforms: includePlatformsProp,
       },
       required: ["prompt"],
       additionalProperties: false,
     },
   },
 ];
+
 
 // ─── Auth ───────────────────────────────────────────────────────────────────
 interface AuthCtx {
@@ -365,6 +456,70 @@ async function toolAskConductor(ctx: AuthCtx, args: Record<string, unknown>) {
   return { conversation_id: conversationId, ...round };
 }
 
+function resolvePanel(conductorPlatform: PlatformId, includeRaw?: PlatformId[]): PlatformId[] {
+  return (includeRaw && includeRaw.length > 0
+    ? includeRaw
+    : PLATFORM_IDS.filter((p) => p !== conductorPlatform).slice(0, 4)) as PlatformId[];
+}
+
+async function toolConductorRoute(ctx: AuthCtx, args: Record<string, unknown>) {
+  const prompt = String(args.prompt ?? "");
+  if (!prompt) throw new Error("prompt is required");
+  const conductorPlatform = ((args.conductor_platform as PlatformId) ?? "openai");
+  if (!PLATFORM_IDS.includes(conductorPlatform)) throw new Error(`Unknown conductor_platform: ${conductorPlatform}`);
+  const includePlatforms = resolvePanel(conductorPlatform, args.include_platforms as PlatformId[] | undefined);
+
+  const planPrompt = `You are the RoboHeard Conductor. Do NOT answer the user's question.
+Instead, return a JSON routing plan with fields:
+  { "strategy": "solo"|"fanout"|"debate", "agents": string[], "reasoning": string }
+where "agents" is a subset of: ${includePlatforms.join(", ")}.
+User prompt: "${prompt}"
+Reply with ONLY the JSON object.`;
+  const res = await callChatFn(PLATFORM_TO_FN[conductorPlatform], {
+    messages: [{ role: "user", content: planPrompt }],
+    model: DEFAULT_MODELS[conductorPlatform],
+  }, ctx.jwt);
+  const raw = String(res.content ?? "");
+  let plan: unknown = raw;
+  const match = raw.match(/\{[\s\S]*\}/);
+  if (match) { try { plan = JSON.parse(match[0]); } catch { /* keep raw */ } }
+  return { conductor_platform: conductorPlatform, panel: includePlatforms, plan };
+}
+
+async function toolConductorCompare(ctx: AuthCtx, args: Record<string, unknown>) {
+  const prompt = String(args.prompt ?? "");
+  if (!prompt) throw new Error("prompt is required");
+  const includePlatforms = resolvePanel("openai", args.include_platforms as PlatformId[] | undefined);
+
+  const conversationId = await ensureConversation(ctx, {
+    conversationId: args.conversation_id as string | undefined,
+    title: `MCP compare: ${prompt.slice(0, 40)}`,
+    chatMode: "side-by-side",
+  });
+  await saveMessage(ctx, conversationId, "user", prompt);
+
+  const calls = await Promise.allSettled(
+    includePlatforms.map(async (p) => {
+      const res = await callChatFn(PLATFORM_TO_FN[p], {
+        messages: [{ role: "user", content: prompt }],
+        model: DEFAULT_MODELS[p],
+      }, ctx.jwt);
+      return { platform: p, model: DEFAULT_MODELS[p], content: String(res.content ?? "") };
+    }),
+  );
+  const perspectives = calls.map((r, i) =>
+    r.status === "fulfilled"
+      ? r.value
+      : { platform: includePlatforms[i], model: DEFAULT_MODELS[includePlatforms[i]], content: "", error: r.reason?.message ?? String(r.reason) },
+  );
+  for (const p of perspectives) {
+    if (p.content) await saveMessage(ctx, conversationId, "ai", p.content, p.platform);
+  }
+  return { conversation_id: conversationId, perspectives };
+}
+
+
+
 async function toolIterate(ctx: AuthCtx, args: Record<string, unknown>) {
   const prompt = String(args.prompt ?? "");
   if (!prompt) throw new Error("prompt is required");
@@ -414,8 +569,9 @@ async function handleRpc(rpc: JsonRpcRequest, ctx: AuthCtx | null): Promise<Reco
     return respond({
       protocolVersion: PROTOCOL_VERSION,
       capabilities: { tools: {} },
-      serverInfo: { name: "roboheard-mcp", version: "0.1.0" },
-      instructions: "RoboHeard MCP — call list_models first, then ask_model / ask_conductor / iterate / web_search. All calls consume the user's RoboHeard tokens.",
+      serverInfo: { name: "roboheard-mcp", version: "0.2.0" },
+      instructions:
+        "RoboHeard MCP — multi-model orchestration. Discovery: call list_models first. Single-model: ask_model. Web facts: web_search. Orchestrated (multi-model) reasoning: prefer the conductor_* family — conductor_route (plan only), conductor_compare (raw perspectives), conductor_ask (routed + synthesized answer), conductor_debate (multi-round critique loop). All calls consume the user's RoboHeard tokens.",
     });
   }
   if (method === "notifications/initialized" || method === "notifications/cancelled") return null;
@@ -429,11 +585,15 @@ async function handleRpc(rpc: JsonRpcRequest, ctx: AuthCtx | null): Promise<Reco
     try {
       let out: unknown;
       switch (name) {
-        case "list_models":    out = await toolListModels(ctx); break;
-        case "ask_model":      out = await toolAskModel(ctx, args); break;
-        case "web_search":     out = await toolWebSearch(ctx, args); break;
-        case "ask_conductor":  out = await toolAskConductor(ctx, args); break;
-        case "iterate":        out = await toolIterate(ctx, args); break;
+        case "list_models":        out = await toolListModels(ctx); break;
+        case "ask_model":          out = await toolAskModel(ctx, args); break;
+        case "web_search":         out = await toolWebSearch(ctx, args); break;
+        case "conductor_ask":
+        case "ask_conductor":      out = await toolAskConductor(ctx, args); break;
+        case "conductor_debate":
+        case "iterate":            out = await toolIterate(ctx, args); break;
+        case "conductor_route":    out = await toolConductorRoute(ctx, args); break;
+        case "conductor_compare":  out = await toolConductorCompare(ctx, args); break;
         default: return err(-32601, `Unknown tool: ${name}`);
       }
       return respond({
