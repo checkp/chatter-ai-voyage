@@ -19,6 +19,7 @@ import WhatsNew from "./pages/WhatsNew";
 import Terms from "./pages/Terms";
 import McpSetup from "./pages/McpSetup";
 import Tools from "./pages/Tools";
+import ApiAccess from "./pages/ApiAccess";
 
 import Analytics from "./components/Analytics";
 import { loadAIModelsFromDB } from "@/config/aiModels";
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/terms" element={<Terms />} />
             <Route path="/mcp" element={<McpSetup />} />
             <Route path="/tools" element={<Tools />} />
+            <Route path="/api" element={<ApiAccess />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

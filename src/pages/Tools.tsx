@@ -5,24 +5,25 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
-const tools = [
+type ToolStatus = 'available' | 'soon';
+const tools: Array<{ title: string; description: string; icon: typeof Server; to: string; status: ToolStatus; cta: string }> = [
   {
     title: 'MCP Server',
     description:
       'Connect your coding agents (Cursor, Claude Code, Windsurf) to RoboHeard. Access conductor, multi-model chat, and web search as MCP tools.',
     icon: Server,
     to: '/mcp',
-    status: 'available' as const,
+    status: 'available',
     cta: 'Open MCP Setup',
   },
   {
     title: 'API Access',
     description:
-      'Programmatic REST API for calling models, orchestrating the conductor, and managing conversations from your own apps.',
+      'Programmatic REST API for calling models, orchestrating the conductor, and running web search from your own scripts and apps.',
     icon: Key,
-    to: '#',
-    status: 'soon' as const,
-    cta: 'Coming soon',
+    to: '/api',
+    status: 'available',
+    cta: 'Open API Access',
   },
 ];
 
