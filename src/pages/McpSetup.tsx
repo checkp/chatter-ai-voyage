@@ -151,6 +151,8 @@ export default function McpSetup() {
         </Card>
 
         <McpSettingsCard />
+
+        <McpTestCard />
       </div>
     </div>
   );
