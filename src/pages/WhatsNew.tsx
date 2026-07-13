@@ -201,7 +201,9 @@ const WhatsNew: React.FC = () => {
         v{changelog[0]?.version}
       </span>
     </div>
+    </>
   );
 };
+
 
 export default WhatsNew;
