@@ -155,6 +155,19 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             </Tooltip>
           )}
 
+          {/* Media Gallery */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="Media Gallery" onClick={() => setGalleryOpen(true)}>
+                <Images className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Media Gallery</p>
+            </TooltipContent>
+          </Tooltip>
+
+
           {/* Help */}
           <Tooltip>
             <TooltipTrigger asChild>
