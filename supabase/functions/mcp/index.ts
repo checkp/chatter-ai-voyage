@@ -97,19 +97,29 @@ const TOOLS = [
   },
   {
     name: "web_search",
-    title: "Live web search",
-    description: "Live web search with citations via Perplexity Sonar. Best for time-sensitive facts, docs lookups, and library changelogs.",
+    title: "Live web search with citations",
+    description:
+      "Live web search grounded in real-time results with numbered source citations, powered by Perplexity Sonar. Returns { answer, citations: [{index, url, title}], model, query }. Use for time-sensitive facts, library changelogs, docs lookups, and anything the model's training data may not cover. Always cite the returned sources in your final answer.",
     inputSchema: {
       type: "object",
       properties: {
         query: { type: "string", description: "Search query." },
-        recency: { type: "string", enum: ["day", "week", "month", "year"], description: "Optional time filter." },
+        recency: { type: "string", enum: ["day", "week", "month", "year"], description: "Only include results from the last N (day/week/month/year)." },
+        mode: { type: "string", enum: ["web", "academic", "sec"], description: "Search corpus. Defaults to web." },
+        domains: {
+          type: "array",
+          items: { type: "string" },
+          description: "Optional allow-list of domains (e.g. ['docs.python.org','github.com']). Prefix with '-' to exclude.",
+        },
+        max_results: { type: "number", description: "Approximate max sources to consider, 1-20. Defaults to 8." },
+        model: { type: "string", enum: ["sonar", "sonar-pro", "sonar-reasoning", "sonar-reasoning-pro"], description: "Perplexity model. Defaults to sonar-pro." },
       },
       required: ["query"],
       additionalProperties: false,
     },
     annotations: { readOnlyHint: true, openWorldHint: true },
   },
+
 
   // ─── Conductor family ────────────────────────────────────────────────────
   {
@@ -359,19 +369,69 @@ async function toolAskModel(ctx: AuthCtx, args: Record<string, unknown>) {
   return { platform, model, conversation_id: conversationId, content };
 }
 
+const PERPLEXITY_KEY = Deno.env.get("PERPLEXITY_API_KEY");
+
 async function toolWebSearch(_ctx: AuthCtx, args: Record<string, unknown>) {
-  const query = String(args.query ?? "");
+  const query = String(args.query ?? "").trim();
   if (!query) throw new Error("query is required");
+  if (!PERPLEXITY_KEY) throw new Error("Web search unavailable: PERPLEXITY_API_KEY is not configured on the server.");
+
+  const model = (args.model as string | undefined) ?? "sonar-pro";
   const recency = args.recency as string | undefined;
-  const capabilities = { search: true } as Record<string, boolean>;
-  const framed = recency ? `${query}\n\n(Focus on results from the past ${recency}.)` : query;
-  const result = await callChatFn(
-    "perplexity-chat",
-    { messages: [{ role: "user", content: framed }], model: "sonar-pro", capabilities },
-    (_ctx as AuthCtx).jwt,
-  );
-  return { answer: result.content ?? "", citations: result.citations ?? [] };
+  const mode = (args.mode as string | undefined) ?? "web";
+  const domains = Array.isArray(args.domains) ? (args.domains as string[]).slice(0, 20) : undefined;
+  const maxResults = Math.min(20, Math.max(1, Number(args.max_results ?? 8)));
+
+  const body: Record<string, unknown> = {
+    model,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are a research assistant. Answer the user's query concisely using ONLY the retrieved web sources. Use inline numeric citations like [1], [2] tied to the citations array. Prefer authoritative and recent sources. If sources conflict, say so.",
+      },
+      { role: "user", content: query },
+    ],
+    return_related_questions: false,
+    max_tokens: 1500,
+  };
+  if (recency) (body as any).search_recency_filter = recency;
+  if (mode && mode !== "web") (body as any).search_mode = mode;
+  if (domains && domains.length > 0) (body as any).search_domain_filter = domains;
+  if (maxResults) (body as any).web_search_options = { search_context_size: maxResults >= 12 ? "high" : maxResults >= 6 ? "medium" : "low" };
+
+  const res = await fetch("https://api.perplexity.ai/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${PERPLEXITY_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Perplexity ${res.status}: ${errText.slice(0, 400)}`);
+  }
+  const data = await res.json();
+  const answer = String(data?.choices?.[0]?.message?.content ?? "");
+  const rawCitations: Array<string | { url?: string; title?: string }> = data?.citations ?? data?.search_results ?? [];
+  const citations = rawCitations.map((c, i) => {
+    const url = typeof c === "string" ? c : (c?.url ?? "");
+    const title = typeof c === "string" ? undefined : c?.title;
+    return { index: i + 1, url, ...(title ? { title } : {}) };
+  }).filter((c) => c.url);
+
+  return {
+    query,
+    model,
+    answer,
+    citations,
+    usage: data?.usage ?? undefined,
+    search_mode: mode,
+    recency: recency ?? null,
+  };
 }
+
 
 async function runConductorRound(
   ctx: AuthCtx,
