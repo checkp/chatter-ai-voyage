@@ -152,7 +152,9 @@ const Features: React.FC = () => {
         </section>
       </main>
     </div>
+    </>
   );
 };
+
 
 export default Features;
