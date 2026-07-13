@@ -584,11 +584,15 @@ async function handleRpc(rpc: JsonRpcRequest, ctx: AuthCtx | null): Promise<Reco
     try {
       let out: unknown;
       switch (name) {
-        case "list_models":    out = await toolListModels(ctx); break;
-        case "ask_model":      out = await toolAskModel(ctx, args); break;
-        case "web_search":     out = await toolWebSearch(ctx, args); break;
-        case "ask_conductor":  out = await toolAskConductor(ctx, args); break;
-        case "iterate":        out = await toolIterate(ctx, args); break;
+        case "list_models":        out = await toolListModels(ctx); break;
+        case "ask_model":          out = await toolAskModel(ctx, args); break;
+        case "web_search":         out = await toolWebSearch(ctx, args); break;
+        case "conductor_ask":
+        case "ask_conductor":      out = await toolAskConductor(ctx, args); break;
+        case "conductor_debate":
+        case "iterate":            out = await toolIterate(ctx, args); break;
+        case "conductor_route":    out = await toolConductorRoute(ctx, args); break;
+        case "conductor_compare":  out = await toolConductorCompare(ctx, args); break;
         default: return err(-32601, `Unknown tool: ${name}`);
       }
       return respond({
