@@ -49,6 +49,7 @@ interface ChatHeaderProps {
   onStopConductor?: () => void;
   onRequestConductorDirection?: () => void;
   onStartTour?: () => void;
+  onSelectChat?: (chatId: string) => void;
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
