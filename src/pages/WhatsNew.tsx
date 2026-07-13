@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, Sparkles, Wrench, Bug, ListChecks } from 'lucide-react';
 import { changelog } from '@/data/changelog';
+import PageSeo from '@/components/PageSeo';
 
 const SITE_URL = 'https://roboheard.ai';
 
@@ -26,63 +27,53 @@ const typeMeta: Record<
 };
 
 const WhatsNew: React.FC = () => {
-  useEffect(() => {
-    const latest = changelog[0];
-    document.title = `What's New — ${latest?.title ?? 'RoboHeard updates'} | RoboHeard`;
+  const latest = changelog[0];
+  const title = `What's New — ${latest?.title ?? 'RoboHeard updates'}`;
+  const description = `Every RoboHeard release in one place — new agents, image models, chat modes, and improvements. Latest: ${latest?.title ?? ''}.`;
 
-    const setMeta = (name: string, content: string) => {
-      let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
-      if (!el) {
-        el = document.createElement('meta');
-        el.setAttribute('name', name);
-        document.head.appendChild(el);
-      }
-      el.setAttribute('content', content);
-    };
-    setMeta(
-      'description',
-      `Every RoboHeard release in one place — new agents, image models, chat modes, and improvements. Latest: ${
-        latest?.title ?? ''
-      }.`
-    );
+  const articleLd = latest && {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: `${latest.version} — ${latest.title}`,
+    datePublished: latest.date,
+    dateModified: latest.date,
+    description: latest.description,
+    author: { '@type': 'Organization', name: 'RoboHeard' },
+    publisher: {
+      '@type': 'Organization',
+      name: 'RoboHeard',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://roboheard.ai/lovable-uploads/8f377fa8-bfb6-4d05-b000-3d477e975e49.png',
+      },
+    },
+    mainEntityOfPage: `${SITE_URL}/whats-new`,
+  };
+  const listLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: "RoboHeard What's New",
+    itemListElement: changelog.map((c, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'Article',
+        headline: `${c.version} — ${c.title}`,
+        datePublished: c.date,
+        description: c.description,
+      },
+    })),
+  };
 
-    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (!canonical) {
-      canonical = document.createElement('link');
-      canonical.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonical);
-    }
-    canonical.setAttribute('href', `${SITE_URL}/whats-new`);
+  return (
+    <>
+      <PageSeo
+        title={title}
+        description={description.slice(0, 155)}
+        path="/whats-new"
+        jsonLd={articleLd ? [articleLd, listLd] : listLd}
+      />
 
-    // JSON-LD: list of release notes
-    const ld = {
-      '@context': 'https://schema.org',
-      '@type': 'ItemList',
-      name: "RoboHeard What's New",
-      itemListElement: changelog.map((c, i) => ({
-        '@type': 'ListItem',
-        position: i + 1,
-        item: {
-          '@type': 'TechArticle',
-          headline: `${c.version} — ${c.title}`,
-          datePublished: c.date,
-          description: c.description,
-        },
-      })),
-    };
-    let script = document.getElementById('whatsnew-jsonld') as HTMLScriptElement | null;
-    if (!script) {
-      script = document.createElement('script');
-      script.id = 'whatsnew-jsonld';
-      script.type = 'application/ld+json';
-      document.head.appendChild(script);
-    }
-    script.text = JSON.stringify(ld);
-
-    return () => {
-      script?.remove();
-    };
-  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
