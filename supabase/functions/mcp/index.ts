@@ -456,6 +456,70 @@ async function toolAskConductor(ctx: AuthCtx, args: Record<string, unknown>) {
   return { conversation_id: conversationId, ...round };
 }
 
+function resolvePanel(conductorPlatform: PlatformId, includeRaw?: PlatformId[]): PlatformId[] {
+  return (includeRaw && includeRaw.length > 0
+    ? includeRaw
+    : PLATFORM_IDS.filter((p) => p !== conductorPlatform).slice(0, 4)) as PlatformId[];
+}
+
+async function toolConductorRoute(ctx: AuthCtx, args: Record<string, unknown>) {
+  const prompt = String(args.prompt ?? "");
+  if (!prompt) throw new Error("prompt is required");
+  const conductorPlatform = ((args.conductor_platform as PlatformId) ?? "openai");
+  if (!PLATFORM_IDS.includes(conductorPlatform)) throw new Error(`Unknown conductor_platform: ${conductorPlatform}`);
+  const includePlatforms = resolvePanel(conductorPlatform, args.include_platforms as PlatformId[] | undefined);
+
+  const planPrompt = `You are the RoboHeard Conductor. Do NOT answer the user's question.
+Instead, return a JSON routing plan with fields:
+  { "strategy": "solo"|"fanout"|"debate", "agents": string[], "reasoning": string }
+where "agents" is a subset of: ${includePlatforms.join(", ")}.
+User prompt: "${prompt}"
+Reply with ONLY the JSON object.`;
+  const res = await callChatFn(PLATFORM_TO_FN[conductorPlatform], {
+    messages: [{ role: "user", content: planPrompt }],
+    model: DEFAULT_MODELS[conductorPlatform],
+  }, ctx.jwt);
+  const raw = String(res.content ?? "");
+  let plan: unknown = raw;
+  const match = raw.match(/\{[\s\S]*\}/);
+  if (match) { try { plan = JSON.parse(match[0]); } catch { /* keep raw */ } }
+  return { conductor_platform: conductorPlatform, panel: includePlatforms, plan };
+}
+
+async function toolConductorCompare(ctx: AuthCtx, args: Record<string, unknown>) {
+  const prompt = String(args.prompt ?? "");
+  if (!prompt) throw new Error("prompt is required");
+  const includePlatforms = resolvePanel("openai", args.include_platforms as PlatformId[] | undefined);
+
+  const conversationId = await ensureConversation(ctx, {
+    conversationId: args.conversation_id as string | undefined,
+    title: `MCP compare: ${prompt.slice(0, 40)}`,
+    chatMode: "side-by-side",
+  });
+  await saveMessage(ctx, conversationId, "user", prompt);
+
+  const calls = await Promise.allSettled(
+    includePlatforms.map(async (p) => {
+      const res = await callChatFn(PLATFORM_TO_FN[p], {
+        messages: [{ role: "user", content: prompt }],
+        model: DEFAULT_MODELS[p],
+      }, ctx.jwt);
+      return { platform: p, model: DEFAULT_MODELS[p], content: String(res.content ?? "") };
+    }),
+  );
+  const perspectives = calls.map((r, i) =>
+    r.status === "fulfilled"
+      ? r.value
+      : { platform: includePlatforms[i], model: DEFAULT_MODELS[includePlatforms[i]], content: "", error: r.reason?.message ?? String(r.reason) },
+  );
+  for (const p of perspectives) {
+    if (p.content) await saveMessage(ctx, conversationId, "ai", p.content, p.platform);
+  }
+  return { conversation_id: conversationId, perspectives };
+}
+
+
+
 async function toolIterate(ctx: AuthCtx, args: Record<string, unknown>) {
   const prompt = String(args.prompt ?? "");
   if (!prompt) throw new Error("prompt is required");
