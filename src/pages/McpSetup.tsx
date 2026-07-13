@@ -120,6 +120,8 @@ export default function McpSetup() {
   const claudeConfig = JSON.stringify({
     mcpServers: { roboheard: { type: "http", url: MCP_URL, headers: { Authorization: `Bearer ${displayToken}` } } },
   }, null, 2);
+  const claudeCli = `claude mcp add --transport http roboheard ${MCP_URL} \\\n  --header "Authorization: Bearer ${displayToken}"`;
+
 
   const expiryLabel = (t: McpToken) => {
     if (!t.expires_at) return "Never expires";
