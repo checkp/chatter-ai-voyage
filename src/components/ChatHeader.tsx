@@ -79,10 +79,12 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   onStartConductor,
   onStopConductor,
   onRequestConductorDirection,
-  onStartTour
+  onStartTour,
+  onSelectChat
 }) => {
   const activeChat = chats?.find(chat => chat.id === activeChatId);
   const { setActiveChat } = useFunTheme();
+  const [galleryOpen, setGalleryOpen] = useState(false);
   useEffect(() => { setActiveChat(activeChatId); }, [activeChatId, setActiveChat]);
 
 
