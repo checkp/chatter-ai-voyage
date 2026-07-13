@@ -48,15 +48,29 @@ const DEFAULT_MODELS: Record<PlatformId, string> = {
   qwen: "qwen-plus",
 };
 
+const conductorPlatformProp = {
+  type: "string",
+  enum: PLATFORM_IDS as unknown as string[],
+  description: "Which frontier model plays Conductor (routes + synthesizes). Defaults to openai.",
+};
+const includePlatformsProp = {
+  type: "array",
+  items: { type: "string", enum: PLATFORM_IDS as unknown as string[] },
+  description: "Restrict the panel of agents. Defaults to a curated set of 4 frontier models.",
+};
+
 const TOOLS = [
   {
     name: "list_models",
-    description: "List RoboHeard's available AI platforms and which advanced capabilities (think, search, deep_research, code_exec) each supports. Call first to discover what to route to.",
+    title: "List available models",
+    description: "List RoboHeard's AI platforms and which advanced capabilities (think, search, deep_research, code_exec) each supports. Call first to discover what to route to.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    annotations: { readOnlyHint: true, openWorldHint: false },
   },
   {
     name: "ask_model",
-    description: "Send a prompt to a single AI model through RoboHeard. Consumes the user's tokens. Use this for a quick single-model answer. Persists to a new or existing chat.",
+    title: "Ask a single AI model",
+    description: "Send a prompt to ONE AI model through RoboHeard. Fastest and cheapest. Use when you already know which model is best. Persists to chat history.",
     inputSchema: {
       type: "object",
       properties: {
@@ -79,10 +93,12 @@ const TOOLS = [
       required: ["platform", "prompt"],
       additionalProperties: false,
     },
+    annotations: { readOnlyHint: false, openWorldHint: true },
   },
   {
     name: "web_search",
-    description: "Live web search with citations via Perplexity Sonar. Best for time-sensitive facts, docs lookups, and library changelogs. Does NOT save to chat history by default.",
+    title: "Live web search",
+    description: "Live web search with citations via Perplexity Sonar. Best for time-sensitive facts, docs lookups, and library changelogs.",
     inputSchema: {
       type: "object",
       properties: {
@@ -92,21 +108,94 @@ const TOOLS = [
       required: ["query"],
       additionalProperties: false,
     },
+    annotations: { readOnlyHint: true, openWorldHint: true },
   },
+
+  // ─── Conductor family ────────────────────────────────────────────────────
   {
-    name: "ask_conductor",
-    description: "Run RoboHeard's Conductor: a chosen model routes the prompt across multiple frontier AIs, then synthesizes a single answer. Best for hard questions where diverse perspectives help. Persists to chat history.",
+    name: "conductor_ask",
+    title: "Conductor — orchestrated multi-model answer",
+    description:
+      "Run RoboHeard's Conductor: one model routes the prompt across a panel of frontier AIs, collects their perspectives, and synthesizes a single best answer. Pick this over ask_model when the question is ambiguous, high-stakes, benefits from diverse viewpoints, or spans multiple domains. Persists to chat history.",
     inputSchema: {
       type: "object",
       properties: {
-        prompt: { type: "string", description: "The user prompt to route." },
-        conductor_platform: { type: "string", enum: PLATFORM_IDS as unknown as string[], description: "Which model plays conductor. Defaults to openai." },
-        include_platforms: {
-          type: "array",
-          items: { type: "string", enum: PLATFORM_IDS as unknown as string[] },
-          description: "Restrict fan-out to these platforms. Defaults to all enabled agents on the user's account.",
-        },
+        prompt: { type: "string", description: "The user prompt to route across the panel." },
+        conductor_platform: conductorPlatformProp,
+        include_platforms: includePlatformsProp,
         conversation_id: { type: "string", description: "Optional existing conversation UUID to continue." },
+      },
+      required: ["prompt"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: false, openWorldHint: true },
+  },
+  {
+    name: "conductor_route",
+    title: "Conductor — routing plan only",
+    description:
+      "Ask the Conductor which agents SHOULD answer a prompt and why, without actually fanning out. Cheap. Use to preview a plan before committing tokens with conductor_ask or conductor_debate.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        prompt: { type: "string" },
+        conductor_platform: conductorPlatformProp,
+        include_platforms: includePlatformsProp,
+      },
+      required: ["prompt"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true, openWorldHint: false },
+  },
+  {
+    name: "conductor_compare",
+    title: "Conductor — raw multi-model perspectives",
+    description:
+      "Fan the prompt out to the panel and return each agent's raw answer side-by-side, WITHOUT a synthesis step. Use when you want to compare model outputs yourself, benchmark, or feed multiple perspectives back into your own agent. Cheaper than conductor_ask.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        prompt: { type: "string" },
+        include_platforms: includePlatformsProp,
+        conversation_id: { type: "string" },
+      },
+      required: ["prompt"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: false, openWorldHint: true },
+  },
+  {
+    name: "conductor_debate",
+    title: "Conductor — multi-round critique loop",
+    description:
+      "Run the Conductor N times in a critique-and-improve loop, ending with a final synthesized answer. Use for hard reasoning problems, code review, architecture decisions, or research where one pass isn't enough. Slower and consumes more tokens.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        prompt: { type: "string" },
+        iterations: { type: "number", description: "Number of rounds, 2-5. Defaults to 3." },
+        conductor_platform: conductorPlatformProp,
+        include_platforms: includePlatformsProp,
+        conversation_id: { type: "string" },
+      },
+      required: ["prompt"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: false, openWorldHint: true },
+  },
+
+  // ─── Deprecated aliases (kept for backward compatibility) ────────────────
+  {
+    name: "ask_conductor",
+    title: "Conductor (deprecated alias)",
+    description: "Deprecated alias for conductor_ask. Prefer conductor_ask.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        prompt: { type: "string" },
+        conductor_platform: conductorPlatformProp,
+        include_platforms: includePlatformsProp,
+        conversation_id: { type: "string" },
       },
       required: ["prompt"],
       additionalProperties: false,
@@ -114,20 +203,22 @@ const TOOLS = [
   },
   {
     name: "iterate",
-    description: "Run the Conductor N times in a critique-and-improve loop, ending with a final synthesized answer. Use for hard problems where a single pass isn't enough. Slower and consumes more tokens.",
+    title: "Iterate (deprecated alias)",
+    description: "Deprecated alias for conductor_debate. Prefer conductor_debate.",
     inputSchema: {
       type: "object",
       properties: {
         prompt: { type: "string" },
-        iterations: { type: "number", description: "Number of rounds, 2-5. Defaults to 3." },
-        conductor_platform: { type: "string", enum: PLATFORM_IDS as unknown as string[] },
-        include_platforms: { type: "array", items: { type: "string", enum: PLATFORM_IDS as unknown as string[] } },
+        iterations: { type: "number" },
+        conductor_platform: conductorPlatformProp,
+        include_platforms: includePlatformsProp,
       },
       required: ["prompt"],
       additionalProperties: false,
     },
   },
 ];
+
 
 // ─── Auth ───────────────────────────────────────────────────────────────────
 interface AuthCtx {
