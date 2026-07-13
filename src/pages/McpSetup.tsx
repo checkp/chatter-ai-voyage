@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Copy, ArrowLeft, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import McpSettingsCard from "@/components/McpSettingsCard";
+import McpTestCard from "@/components/McpTestCard";
 
 const MCP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mcp`;
 
@@ -150,6 +151,8 @@ export default function McpSetup() {
         </Card>
 
         <McpSettingsCard />
+
+        <McpTestCard />
       </div>
     </div>
   );
