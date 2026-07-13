@@ -142,13 +142,14 @@ export default function McpSetup() {
             <li><code className="text-foreground">list_models</code> — discover platforms &amp; capabilities</li>
             <li><code className="text-foreground">ask_model</code> — one-shot query to a specific model</li>
             <li><code className="text-foreground">web_search</code> — Perplexity live search with citations</li>
-            <li><code className="text-foreground">ask_conductor</code> — multi-model orchestration + synthesis</li>
-            <li><code className="text-foreground">iterate</code> — N-round conductor loop for hard problems</li>
+            <li><code className="text-foreground">conductor_ask</code> / <code className="text-foreground">conductor_route</code> / <code className="text-foreground">conductor_compare</code> / <code className="text-foreground">conductor_debate</code> — multi-model orchestration</li>
           </ul>
           <p className="text-xs text-muted-foreground pt-2">
-            Chats created by <code>ask_model</code>, <code>ask_conductor</code>, and <code>iterate</code> appear in your RoboHeard sidebar.
+            Chats created by these tools appear in your RoboHeard sidebar.
           </p>
         </Card>
+
+        <McpSettingsCard />
       </div>
     </div>
   );
