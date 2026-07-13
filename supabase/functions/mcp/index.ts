@@ -237,15 +237,37 @@ interface AuthCtx {
   supabase: ReturnType<typeof createClient>;
 }
 
+async function sha256Hex(input: string): Promise<string> {
+  const bytes = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 async function authenticate(req: Request): Promise<AuthCtx | null> {
   const header = req.headers.get("Authorization") ?? req.headers.get("authorization");
   if (!header?.toLowerCase().startsWith("bearer ")) return null;
-  const jwt = header.slice(7).trim();
-  if (!jwt) return null;
+  const token = header.slice(7).trim();
+  if (!token) return null;
   const admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
-  const { data, error } = await admin.auth.getUser(jwt);
+
+  // Long-lived RoboHeard MCP/API token (rh_...): lookup by hash.
+  if (token.startsWith("rh_")) {
+    const hash = await sha256Hex(token);
+    const { data } = await admin
+      .from("roboheard_api_keys")
+      .select("id, user_id, revoked_at, expires_at")
+      .eq("key_hash", hash)
+      .maybeSingle();
+    if (!data || data.revoked_at) return null;
+    if (data.expires_at && new Date(data.expires_at as string).getTime() < Date.now()) return null;
+    admin.from("roboheard_api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", data.id).then(() => {});
+    return { userId: data.user_id as string, jwt: token, supabase: admin };
+  }
+
+  // Fallback: standard Supabase session JWT (browser).
+  const { data, error } = await admin.auth.getUser(token);
   if (error || !data.user?.id) return null;
-  return { userId: data.user.id, jwt, supabase: admin };
+  return { userId: data.user.id, jwt: token, supabase: admin };
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
