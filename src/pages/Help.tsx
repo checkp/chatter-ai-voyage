@@ -41,30 +41,6 @@ const prompts = {
   ],
 };
 
-function setSEO() {
-  document.title = 'Help & Getting Started | RoboHeard';
-
-  const ensureMeta = (name: string, content: string) => {
-    let tag = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
-    if (!tag) {
-      tag = document.createElement('meta');
-      tag.setAttribute('name', name);
-      document.head.appendChild(tag);
-    }
-    tag.setAttribute('content', content);
-  };
-
-  ensureMeta('description', 'Get started with RoboHeard — learn Conductor Mode, agentic orchestration across GPT-5, Claude 4, Gemini 2.5, Grok-4 & DeepSeek-R2, and grab ready-to-use prompts.');
-
-  let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-  if (!canonical) {
-    canonical = document.createElement('link');
-    canonical.rel = 'canonical';
-    document.head.appendChild(canonical);
-  }
-  canonical.href = `${window.location.origin}/help`;
-}
-
 const copyText = async (text: string) => {
   try {
     await navigator.clipboard.writeText(text);
@@ -75,11 +51,15 @@ const copyText = async (text: string) => {
 };
 
 const Help: React.FC = () => {
-  useEffect(() => {
-    setSEO();
-  }, []);
-
   return (
+    <>
+      <PageSeo
+        title="Help & Getting Started — RoboHeard"
+        description="Learn Conductor Mode, agentic orchestration across GPT-5, Claude 4, Gemini 2.5, Grok-4 & DeepSeek-R2, and grab ready-to-use starter prompts."
+        path="/help"
+        jsonLd={HELP_JSONLD}
+      />
+
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/50 to-background">
       <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
