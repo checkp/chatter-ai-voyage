@@ -26,8 +26,11 @@ const LandingPage: React.FC = () => {
           <img
             src="/lovable-uploads/8f377fa8-bfb6-4d05-b000-3d477e975e49.png"
             alt="RoboHeard AI model orchestrator logo"
+            width={28}
+            height={28}
             className="h-7 w-7"
           />
+
           <span className="font-bold text-lg">RoboHeard</span>
         </div>
         <Button size="sm" onClick={() => navigate('/auth')}>
