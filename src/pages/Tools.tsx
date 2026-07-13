@@ -4,6 +4,8 @@ import { ArrowLeft, Server, Key, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import PageSeo from '@/components/PageSeo';
+
 
 type ToolStatus = 'available' | 'soon';
 const tools: Array<{ title: string; description: string; icon: typeof Server; to: string; status: ToolStatus; cta: string }> = [
