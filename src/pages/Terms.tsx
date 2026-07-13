@@ -39,7 +39,13 @@ const Terms: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
+      <PageSeo
+        title="Terms & Conditions — RoboHeard"
+        description="The official RoboHeard Terms & Conditions — what you agree to when chatting with eight frontier AI models."
+        path="/terms"
+      />
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
+
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <img src="/lovable-uploads/8f377fa8-bfb6-4d05-b000-3d477e975e49.png" alt="RoboHeard AI model orchestrator logo" className="h-7 w-7" />
