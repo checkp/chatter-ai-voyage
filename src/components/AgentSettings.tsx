@@ -45,6 +45,7 @@ const PLATFORMS = [
   { id: 'mistral', name: 'Mistral AI', icon: '🌀', placeholder: 'e.g. Always reply in French.' },
   { id: 'perplexity', name: 'Perplexity AI', icon: '🔮', placeholder: 'e.g. Cite at most 2 sources. Skip the Sources section unless I ask.' },
   { id: 'qwen', name: 'Qwen (Alibaba)', icon: '🐉', placeholder: 'e.g. Always reply in Mandarin when the user writes Chinese.' },
+  { id: 'nvidia', name: 'NVIDIA NIM', icon: '🟢', placeholder: 'e.g. Prefer Nemotron reasoning models for hard math.' },
 ];
 
 const AgentSettings = () => {

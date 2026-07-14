@@ -1,5 +1,5 @@
 
-import { Bot, Brain, Search, Zap, Gem, Wind, Globe, Sparkles } from 'lucide-react';
+import { Bot, Brain, Search, Zap, Gem, Wind, Globe, Sparkles, Cpu } from 'lucide-react';
 
 export const getPlatformIcon = (platformId: string) => {
   switch (platformId) {
@@ -19,6 +19,8 @@ export const getPlatformIcon = (platformId: string) => {
       return Globe;
     case 'qwen':
       return Sparkles;
+    case 'nvidia':
+      return Cpu;
     default:
       return Bot;
   }

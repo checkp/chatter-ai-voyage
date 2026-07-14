@@ -42,6 +42,7 @@
     --agent-mistral: 25 70% 65%; /* Warm orange */
     --agent-perplexity: 180 45% 60%; /* Teal */
     --agent-qwen: 340 55% 70%; /* Soft rose — Qwen */
+    --agent-nvidia: 100 65% 55%; /* NVIDIA green */
 
     /* Cyber theme colors (for dark mode) */
     --cyber-bg: 222 25% 7%;
@@ -286,6 +287,10 @@
 .bg-agent-qwen { background-color: rgb(var(--agent-qwen)); }
 .border-agent-qwen { border-color: rgb(var(--agent-qwen)); }
 .text-agent-qwen { color: rgb(var(--agent-qwen)); }
+
+.bg-agent-nvidia { background-color: rgb(var(--agent-nvidia)); }
+.border-agent-nvidia { border-color: rgb(var(--agent-nvidia)); }
+.text-agent-nvidia { color: rgb(var(--agent-nvidia)); }
 
 /* Modern agent styling */
 .modern-glow-hover:hover {

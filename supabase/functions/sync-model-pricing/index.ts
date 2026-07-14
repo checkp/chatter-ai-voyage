@@ -13,7 +13,7 @@ const corsHeaders = {
 // Pricing map: api_cost_per_1k_tokens is an effective blended price (avg input/output) in USD
 // tokens_per_message is our internal app token estimate per single message for pre-checks
 const PRICING_MAP: Array<{
-  platform: 'openai' | 'anthropic' | 'google' | 'deepseek' | 'grok' | 'mistral' | 'perplexity' | 'qwen';
+  platform: 'openai' | 'anthropic' | 'google' | 'deepseek' | 'grok' | 'mistral' | 'perplexity' | 'qwen' | 'nvidia';
   model_id: string;
   cost_tier: 'low' | 'medium' | 'high';
   api_cost_per_1k_tokens: number; // USD (blended avg of input/output)
@@ -64,6 +64,38 @@ const PRICING_MAP: Array<{
   { platform: 'qwen', model_id: 'qwen-plus',  cost_tier: 'medium', api_cost_per_1k_tokens: 0.002,  tokens_per_message: 8 },
   { platform: 'qwen', model_id: 'qwen-turbo', cost_tier: 'low',    api_cost_per_1k_tokens: 0.0006, tokens_per_message: 5 },
   { platform: 'qwen', model_id: 'qwen3-max',  cost_tier: 'high',   api_cost_per_1k_tokens: 0.012,  tokens_per_message: 18 },
+
+  // NVIDIA-hosted NIMs (integrate.api.nvidia.com) — OpenAI-compatible.
+  { platform: 'nvidia', model_id: 'nvidia/nemotron-3-ultra-550b-a55b',              cost_tier: 'high',   api_cost_per_1k_tokens: 0.020,  tokens_per_message: 26 },
+  { platform: 'nvidia', model_id: 'nvidia/nemotron-3-super-120b-a12b',              cost_tier: 'high',   api_cost_per_1k_tokens: 0.008,  tokens_per_message: 16 },
+  { platform: 'nvidia', model_id: 'nvidia/nemotron-nano-3-30b-a3b',                 cost_tier: 'low',    api_cost_per_1k_tokens: 0.0005, tokens_per_message: 5 },
+  { platform: 'nvidia', model_id: 'nvidia/llama-3.1-nemotron-ultra-253b-v1',        cost_tier: 'high',   api_cost_per_1k_tokens: 0.010,  tokens_per_message: 20 },
+  { platform: 'nvidia', model_id: 'nvidia/llama-3.3-nemotron-super-49b-v1.5',       cost_tier: 'medium', api_cost_per_1k_tokens: 0.003,  tokens_per_message: 10 },
+  { platform: 'nvidia', model_id: 'deepseek-ai/deepseek-v4-pro',                    cost_tier: 'high',   api_cost_per_1k_tokens: 0.008,  tokens_per_message: 18 },
+  { platform: 'nvidia', model_id: 'deepseek-ai/deepseek-v4-flash',                  cost_tier: 'low',    api_cost_per_1k_tokens: 0.0008, tokens_per_message: 6 },
+  { platform: 'nvidia', model_id: 'mistralai/mistral-large-3-675b-instruct-2512',   cost_tier: 'high',   api_cost_per_1k_tokens: 0.012,  tokens_per_message: 24 },
+  { platform: 'nvidia', model_id: 'mistralai/mistral-nemotron',                     cost_tier: 'medium', api_cost_per_1k_tokens: 0.004,  tokens_per_message: 12 },
+  { platform: 'nvidia', model_id: 'mistralai/mistral-medium-3.5-128b',              cost_tier: 'medium', api_cost_per_1k_tokens: 0.003,  tokens_per_message: 10 },
+  { platform: 'nvidia', model_id: 'qwen/qwen3.5-397b-a17b',                         cost_tier: 'high',   api_cost_per_1k_tokens: 0.010,  tokens_per_message: 20 },
+  { platform: 'nvidia', model_id: 'qwen/qwen3.5-122b-a10b',                         cost_tier: 'medium', api_cost_per_1k_tokens: 0.004,  tokens_per_message: 12 },
+  { platform: 'nvidia', model_id: 'qwen/qwen3-next-80b-a3b-instruct',               cost_tier: 'medium', api_cost_per_1k_tokens: 0.002,  tokens_per_message: 8 },
+  { platform: 'nvidia', model_id: 'moonshotai/kimi-k2.6',                           cost_tier: 'high',   api_cost_per_1k_tokens: 0.008,  tokens_per_message: 18 },
+  { platform: 'nvidia', model_id: 'z-ai/glm-5.2',                                   cost_tier: 'high',   api_cost_per_1k_tokens: 0.007,  tokens_per_message: 16 },
+  { platform: 'nvidia', model_id: 'minimaxai/minimax-m3',                           cost_tier: 'medium', api_cost_per_1k_tokens: 0.004,  tokens_per_message: 12 },
+  { platform: 'nvidia', model_id: 'openai/gpt-oss-120b',                            cost_tier: 'medium', api_cost_per_1k_tokens: 0.003,  tokens_per_message: 12 },
+  { platform: 'nvidia', model_id: 'openai/gpt-oss-20b',                             cost_tier: 'low',    api_cost_per_1k_tokens: 0.0008, tokens_per_message: 5 },
+  { platform: 'nvidia', model_id: 'meta/llama-4-maverick-17b-128e-instruct',        cost_tier: 'medium', api_cost_per_1k_tokens: 0.003,  tokens_per_message: 10 },
+  { platform: 'nvidia', model_id: 'meta/llama-3.3-70b-instruct',                    cost_tier: 'medium', api_cost_per_1k_tokens: 0.002,  tokens_per_message: 8 },
+  { platform: 'nvidia', model_id: 'nvidia/nemotron-nano-12b-v2-vl',                 cost_tier: 'low',    api_cost_per_1k_tokens: 0.0008, tokens_per_message: 6 },
+  { platform: 'nvidia', model_id: 'nvidia/cosmos-reason2-8b',                       cost_tier: 'low',    api_cost_per_1k_tokens: 0.0006, tokens_per_message: 5 },
+  { platform: 'nvidia', model_id: 'nvidia/llama-3.1-nemotron-nano-vl-8b-v1',        cost_tier: 'low',    api_cost_per_1k_tokens: 0.0006, tokens_per_message: 5 },
+  { platform: 'nvidia', model_id: 'meta/llama-3.2-90b-vision-instruct',             cost_tier: 'high',   api_cost_per_1k_tokens: 0.006,  tokens_per_message: 14 },
+  { platform: 'nvidia', model_id: 'meta/llama-3.2-11b-vision-instruct',             cost_tier: 'low',    api_cost_per_1k_tokens: 0.0008, tokens_per_message: 6 },
+  { platform: 'nvidia', model_id: 'microsoft/phi-4-multimodal-instruct',            cost_tier: 'low',    api_cost_per_1k_tokens: 0.0007, tokens_per_message: 5 },
+  { platform: 'nvidia', model_id: 'mistralai/codestral-22b-instruct-v0.1',          cost_tier: 'low',    api_cost_per_1k_tokens: 0.0009, tokens_per_message: 6 },
+  { platform: 'nvidia', model_id: 'writer/palmyra-med-70b-32k',                     cost_tier: 'medium', api_cost_per_1k_tokens: 0.005,  tokens_per_message: 12 },
+  { platform: 'nvidia', model_id: 'writer/palmyra-fin-70b-32k',                     cost_tier: 'medium', api_cost_per_1k_tokens: 0.005,  tokens_per_message: 12 },
+  { platform: 'nvidia', model_id: 'writer/palmyra-creative-122b',                   cost_tier: 'medium', api_cost_per_1k_tokens: 0.006,  tokens_per_message: 14 },
 ];
 
 serve(async (req) => {

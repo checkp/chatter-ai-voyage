@@ -76,6 +76,14 @@ const ConductorAgentSelector: React.FC<ConductorAgentSelectorProps> = ({
       icon: Cpu,
       color: 'text-rose-600',
       bgColor: 'bg-rose-50'
+    },
+    {
+      id: 'nvidia',
+      name: 'NVIDIA',
+      description: 'Nemotron-driven reasoning across 30+ open models',
+      icon: Cpu,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50'
     }
   ];
 

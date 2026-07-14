@@ -69,10 +69,42 @@ const META: Record<string, Meta> = {
   'qwen-plus':  { name: 'Qwen Plus',  description: 'Balanced Qwen for everyday tasks',     maxTokens: 131072, capabilities: ['text','reasoning','multilingual'],          speed: 'medium' },
   'qwen-turbo': { name: 'Qwen Turbo', description: 'Fast & cost-effective Qwen',           maxTokens: 1000000,capabilities: ['text','multilingual'],                      speed: 'fast' },
   'qwen3-max':  { name: 'Qwen3 Max',  description: 'Latest flagship Qwen3 generation',     maxTokens: 32000,  capabilities: ['text','reasoning','coding','multilingual'], speed: 'slow' },
+
+  // NVIDIA-hosted NIMs (integrate.api.nvidia.com)
+  'nvidia/nemotron-3-ultra-550b-a55b':          { name: 'Nemotron 3 Ultra 550B',    description: 'NVIDIA flagship MoE reasoning model',                   maxTokens: 131072, capabilities: ['text','reasoning','coding','analysis'],           speed: 'slow' },
+  'nvidia/nemotron-3-super-120b-a12b':          { name: 'Nemotron 3 Super 120B',    description: 'Mid-tier Nemotron MoE, strong reasoning',               maxTokens: 131072, capabilities: ['text','reasoning','coding'],                       speed: 'medium' },
+  'nvidia/nemotron-nano-3-30b-a3b':             { name: 'Nemotron Nano 3 30B',      description: 'Compact fast Nemotron MoE',                             maxTokens: 131072, capabilities: ['text','reasoning'],                                speed: 'fast' },
+  'nvidia/llama-3.1-nemotron-ultra-253b-v1':    { name: 'Llama 3.1 Nemotron Ultra 253B', description: 'Llama-based NVIDIA reasoning tune',                maxTokens: 128000, capabilities: ['text','reasoning','coding','analysis'],           speed: 'slow' },
+  'nvidia/llama-3.3-nemotron-super-49b-v1.5':   { name: 'Llama 3.3 Nemotron Super 49B', description: 'Compact strong reasoner',                            maxTokens: 128000, capabilities: ['text','reasoning'],                                speed: 'medium' },
+  'deepseek-ai/deepseek-v4-pro':                { name: 'DeepSeek V4 Pro',          description: 'DeepSeek V4 flagship (via NVIDIA)',                     maxTokens: 128000, capabilities: ['text','reasoning','coding'],                       speed: 'medium' },
+  'deepseek-ai/deepseek-v4-flash':              { name: 'DeepSeek V4 Flash',        description: 'Fast DeepSeek V4 (via NVIDIA)',                         maxTokens: 128000, capabilities: ['text','reasoning'],                                speed: 'fast' },
+  'mistralai/mistral-large-3-675b-instruct-2512': { name: 'Mistral Large 3 (675B)',  description: 'Mistral flagship 2512 (via NVIDIA)',                    maxTokens: 128000, capabilities: ['text','reasoning','coding','multilingual'],       speed: 'slow' },
+  'mistralai/mistral-nemotron':                 { name: 'Mistral Nemotron',         description: 'NVIDIA-tuned Mistral',                                  maxTokens: 128000, capabilities: ['text','reasoning','coding'],                       speed: 'medium' },
+  'mistralai/mistral-medium-3.5-128b':          { name: 'Mistral Medium 3.5 (128B)', description: 'Mistral Medium 3.5 (via NVIDIA)',                       maxTokens: 128000, capabilities: ['text','reasoning','coding'],                       speed: 'medium' },
+  'qwen/qwen3.5-397b-a17b':                     { name: 'Qwen 3.5 (397B)',          description: 'Qwen 3.5 flagship MoE (via NVIDIA)',                     maxTokens: 128000, capabilities: ['text','reasoning','coding','multilingual'],       speed: 'slow' },
+  'qwen/qwen3.5-122b-a10b':                     { name: 'Qwen 3.5 (122B)',          description: 'Qwen 3.5 mid MoE (via NVIDIA)',                          maxTokens: 128000, capabilities: ['text','reasoning','multilingual'],                speed: 'medium' },
+  'qwen/qwen3-next-80b-a3b-instruct':           { name: 'Qwen3 Next 80B',           description: 'Qwen3 Next generation (via NVIDIA)',                     maxTokens: 128000, capabilities: ['text','reasoning','multilingual'],                speed: 'medium' },
+  'moonshotai/kimi-k2.6':                       { name: 'Kimi K2.6',                description: 'Moonshot Kimi K2.6 (via NVIDIA)',                        maxTokens: 200000, capabilities: ['text','reasoning','coding'],                       speed: 'medium' },
+  'z-ai/glm-5.2':                               { name: 'GLM-5.2',                  description: 'Zhipu GLM-5.2 agentic (via NVIDIA)',                      maxTokens: 128000, capabilities: ['text','reasoning','coding'],                       speed: 'medium' },
+  'minimaxai/minimax-m3':                       { name: 'MiniMax M3',               description: 'MiniMax multimodal MoE, 1M context',                    maxTokens: 1000000, capabilities: ['text','vision','reasoning','coding'],             speed: 'medium' },
+  'openai/gpt-oss-120b':                        { name: 'GPT-OSS 120B',             description: 'Open GPT weights (via NVIDIA)',                          maxTokens: 128000, capabilities: ['text','reasoning','coding'],                       speed: 'medium' },
+  'openai/gpt-oss-20b':                         { name: 'GPT-OSS 20B',              description: 'Small open GPT (via NVIDIA)',                            maxTokens: 128000, capabilities: ['text','reasoning'],                                speed: 'fast' },
+  'meta/llama-4-maverick-17b-128e-instruct':    { name: 'Llama 4 Maverick 17B×128e', description: 'Llama 4 MoE (via NVIDIA)',                              maxTokens: 128000, capabilities: ['text','reasoning','coding'],                       speed: 'medium' },
+  'meta/llama-3.3-70b-instruct':                { name: 'Llama 3.3 70B',            description: 'Llama 3.3 flagship (via NVIDIA)',                        maxTokens: 128000, capabilities: ['text','reasoning','coding'],                       speed: 'medium' },
+  'nvidia/nemotron-nano-12b-v2-vl':             { name: 'Nemotron Nano VL 12B',     description: 'Compact NVIDIA vision-language',                         maxTokens: 128000, capabilities: ['text','vision','reasoning'],                       speed: 'fast' },
+  'nvidia/cosmos-reason2-8b':                   { name: 'Cosmos Reason 2 (8B)',     description: 'NVIDIA vision reasoning',                                maxTokens: 32000,  capabilities: ['text','vision','reasoning'],                       speed: 'fast' },
+  'nvidia/llama-3.1-nemotron-nano-vl-8b-v1':    { name: 'Llama Nemotron Nano VL 8B', description: 'Small vision-language NVIDIA model',                     maxTokens: 128000, capabilities: ['text','vision','reasoning'],                       speed: 'fast' },
+  'meta/llama-3.2-90b-vision-instruct':         { name: 'Llama 3.2 Vision 90B',     description: 'Large Llama vision (via NVIDIA)',                        maxTokens: 128000, capabilities: ['text','vision','reasoning'],                       speed: 'slow' },
+  'meta/llama-3.2-11b-vision-instruct':         { name: 'Llama 3.2 Vision 11B',     description: 'Small Llama vision (via NVIDIA)',                        maxTokens: 128000, capabilities: ['text','vision','reasoning'],                       speed: 'fast' },
+  'microsoft/phi-4-multimodal-instruct':        { name: 'Phi-4 Multimodal',         description: 'Microsoft compact multimodal',                           maxTokens: 128000, capabilities: ['text','vision','reasoning'],                       speed: 'fast' },
+  'mistralai/codestral-22b-instruct-v0.1':      { name: 'Codestral 22B',            description: 'Mistral coding model (via NVIDIA)',                       maxTokens: 32000,  capabilities: ['coding','debugging','analysis'],                  speed: 'fast' },
+  'writer/palmyra-med-70b-32k':                 { name: 'Palmyra Med 70B',          description: 'Medical-domain LLM (via NVIDIA)',                        maxTokens: 32000,  capabilities: ['text','reasoning','medical'],                     speed: 'medium' },
+  'writer/palmyra-fin-70b-32k':                 { name: 'Palmyra Fin 70B',          description: 'Finance-domain LLM (via NVIDIA)',                        maxTokens: 32000,  capabilities: ['text','reasoning','finance'],                     speed: 'medium' },
+  'writer/palmyra-creative-122b':               { name: 'Palmyra Creative 122B',    description: 'Creative writing LLM (via NVIDIA)',                      maxTokens: 32000,  capabilities: ['text','creative','reasoning'],                    speed: 'medium' },
 };
 
 // Chat-capable platforms only — image-only models like dall-e are ignored.
-const CHAT_PLATFORMS = new Set(['openai','anthropic','deepseek','grok','google','mistral','perplexity','qwen']);
+const CHAT_PLATFORMS = new Set(['openai','anthropic','deepseek','grok','google','mistral','perplexity','qwen','nvidia']);
 
 // Excluded model ids (image / non-chat) even if present in pricing table.
 const EXCLUDED_MODELS = new Set(['dall-e-2','dall-e-3','gpt-image-1']);
@@ -87,11 +119,12 @@ const PREFERRED_DEFAULTS: Record<string, string> = {
   mistral:    'mistral-large-latest',
   perplexity: 'sonar-pro',
   qwen:       'qwen-plus',
+  nvidia:     'nvidia/nemotron-nano-3-30b-a3b',
 };
 
 // Mutable cache populated from DB.
 export const AI_MODELS: Record<string, ModelConfig[]> = {
-  openai: [], anthropic: [], deepseek: [], grok: [], google: [], mistral: [], perplexity: [], qwen: [],
+  openai: [], anthropic: [], deepseek: [], grok: [], google: [], mistral: [], perplexity: [], qwen: [], nvidia: [],
 };
 
 let loadPromise: Promise<void> | null = null;
@@ -134,7 +167,7 @@ export const loadAIModelsFromDB = async (): Promise<void> => {
       }
 
       const next: Record<string, ModelConfig[]> = {
-        openai: [], anthropic: [], deepseek: [], grok: [], google: [], mistral: [], perplexity: [], qwen: [],
+        openai: [], anthropic: [], deepseek: [], grok: [], google: [], mistral: [], perplexity: [], qwen: [], nvidia: [],
       };
       for (const row of data) {
         if (!CHAT_PLATFORMS.has(row.platform)) continue;
@@ -186,6 +219,7 @@ export const PLATFORM_VISION_DEFAULT_MODEL: Record<string, string> = {
   grok: 'grok-2-vision-1212',
   mistral: 'pixtral-12b-2409',
   qwen: 'qwen-vl-max',
+  nvidia: 'nvidia/nemotron-nano-12b-v2-vl',
 };
 
 export const getDefaultModel = (platformId: string): string => {

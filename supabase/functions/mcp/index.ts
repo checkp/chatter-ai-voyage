@@ -23,7 +23,7 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const PROTOCOL_VERSION = "2025-06-18";
 
 // ─── MCP tool catalog ───────────────────────────────────────────────────────
-const PLATFORM_IDS = ["openai", "anthropic", "google", "grok", "deepseek", "perplexity", "mistral", "qwen"] as const;
+const PLATFORM_IDS = ["openai", "anthropic", "google", "grok", "deepseek", "perplexity", "mistral", "qwen", "nvidia"] as const;
 type PlatformId = typeof PLATFORM_IDS[number];
 
 const PLATFORM_TO_FN: Record<PlatformId, string> = {
@@ -35,6 +35,7 @@ const PLATFORM_TO_FN: Record<PlatformId, string> = {
   perplexity: "perplexity-chat",
   mistral: "mistral-chat",
   qwen: "qwen-chat",
+  nvidia: "nvidia-chat",
 };
 
 const DEFAULT_MODELS: Record<PlatformId, string> = {
@@ -46,6 +47,7 @@ const DEFAULT_MODELS: Record<PlatformId, string> = {
   perplexity: "sonar-pro",
   mistral: "mistral-small-latest",
   qwen: "qwen-plus",
+  nvidia: "nvidia/nemotron-nano-3-30b-a3b",
 };
 
 const conductorPlatformProp = {
