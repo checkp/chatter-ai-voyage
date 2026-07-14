@@ -213,6 +213,25 @@ export const callQwenAPI = async (
   }).catch(e => { throw friendlyError(e, 'Qwen'); });
 };
 
+export const callNvidiaAPI = async (
+  conversationHistory: History,
+  user: SupabaseUser,
+  model: string,
+  attachments?: Attachment[],
+  _capabilities?: Capabilities,
+): Promise<string> => {
+  return withRetry(async () => {
+    const session = await getValidSession();
+    const response = await supabase.functions.invoke('nvidia-chat', {
+      body: buildBody(conversationHistory, model, user.id, attachments),
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    if (response.error) throw new Error(response.error.message || 'NVIDIA API call failed');
+    if (!response.data?.content) throw new Error('NVIDIA API returned empty response');
+    return response.data.content;
+  }).catch(e => { throw friendlyError(e, 'NVIDIA'); });
+};
+
 // ── Local models (LM Studio / Ollama) ────────────────────────────────────────
 // Called **directly from the browser** — the hosted edge function can't reach
 // the user's `localhost`. LM Studio and Ollama both send permissive CORS.

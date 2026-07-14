@@ -17,7 +17,7 @@ const ALL_TOOLS: { id: string; label: string; desc: string }[] = [
   { id: "conductor_debate", label: "conductor_debate", desc: "Multi-round critique loop" },
 ];
 
-const ALL_PLATFORMS = ["openai", "anthropic", "google", "grok", "deepseek", "perplexity", "mistral", "qwen"] as const;
+const ALL_PLATFORMS = ["openai", "anthropic", "google", "grok", "deepseek", "perplexity", "mistral", "qwen", "nvidia"] as const;
 const WEB_MODELS = ["sonar", "sonar-pro", "sonar-reasoning", "sonar-reasoning-pro"];
 
 type Settings = {

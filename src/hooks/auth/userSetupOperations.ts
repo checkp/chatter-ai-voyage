@@ -24,7 +24,8 @@ export const ensureDefaultAgentSettings = async (userId: string) => {
       { platform: 'grok', model: 'grok-3', enabled: true },
       { platform: 'mistral', model: 'mistral-large-latest', enabled: true },
       { platform: 'perplexity', model: 'sonar-pro', enabled: true },
-      { platform: 'qwen', model: 'qwen-plus', enabled: true }
+      { platform: 'qwen', model: 'qwen-plus', enabled: true },
+      { platform: 'nvidia', model: 'nvidia/nemotron-nano-3-30b-a3b', enabled: false }
     ];
     
     const settingsToInsert = [];

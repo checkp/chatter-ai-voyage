@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform, Message, ChatMode } from '@/types/chat';
-import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI, callGeminiAPI, callMistralAPI, callPerplexityAPI, callQwenAPI, callLocalAPI } from '@/services/aiApiService';
+import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI, callGeminiAPI, callMistralAPI, callPerplexityAPI, callQwenAPI, callNvidiaAPI, callLocalAPI } from '@/services/aiApiService';
 import { getDefaultModel, getModelConfig, modelSupports } from '@/config/aiModels';
 
 const resolvePlatformModel = (platformId: string, model?: string | null) => {
@@ -97,6 +97,16 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       displayOrder: 8
     },
     {
+      id: 'nvidia',
+      name: 'NVIDIA',
+      enabled: false,
+      color: 'bg-agent-nvidia border-agent-nvidia text-cyber-bg',
+      icon: '🟢',
+      hasApiKey: true,
+      selectedModel: getDefaultModel('nvidia'),
+      displayOrder: 9
+    },
+    {
       // Local models served by LM Studio / Ollama on this machine (via the
       // local-chat edge function). Hidden from the agent bar until a model is
       // picked through the "+" menu; selectedModel = "<provider>::<model-id>".
@@ -107,7 +117,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       icon: '💻',
       hasApiKey: true,
       selectedModel: '',
-      displayOrder: 9
+      displayOrder: 10
     },
   ]);
 
@@ -520,6 +530,8 @@ ${languageLock}`;
         return await callPerplexityAPI(conversationHistory, user, selectedModel, attachments, advancedCaps);
       case 'qwen':
         return await callQwenAPI(conversationHistory, user, selectedModel, attachments, advancedCaps);
+      case 'nvidia':
+        return await callNvidiaAPI(conversationHistory, user, selectedModel, attachments, advancedCaps);
       case 'local':
         if (!selectedModel) {
           throw new Error('No local model selected — pick one from the "+" menu in the agent bar');
