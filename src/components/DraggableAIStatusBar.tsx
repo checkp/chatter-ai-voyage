@@ -18,6 +18,7 @@ import type { AIPlatform, Chat } from "@/types/chat";
 import BotHistoryDialog from "./BotHistoryDialog";
 import SortableAgent from "./ai-status/SortableAgent";
 import AddLocalAgentButton from "./ai-status/AddLocalAgentButton";
+import { isLocalAgentSupported } from "@/lib/localAgentSupport";
 
 interface DraggableAIStatusBarProps {
   platforms: AIPlatform[];
