@@ -47,7 +47,7 @@ const DEFAULT_MODELS: Record<PlatformId, string> = {
   perplexity: "sonar-pro",
   mistral: "mistral-small-latest",
   qwen: "qwen-plus",
-  nvidia: "nvidia/nemotron-nano-3-30b-a3b",
+  nvidia: "nvidia/nemotron-3-nano-30b-a3b",
 };
 
 const conductorPlatformProp = {

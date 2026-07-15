@@ -68,7 +68,7 @@ const PRICING_MAP: Array<{
   // NVIDIA-hosted NIMs (integrate.api.nvidia.com) — OpenAI-compatible.
   { platform: 'nvidia', model_id: 'nvidia/nemotron-3-ultra-550b-a55b',              cost_tier: 'high',   api_cost_per_1k_tokens: 0.020,  tokens_per_message: 26 },
   { platform: 'nvidia', model_id: 'nvidia/nemotron-3-super-120b-a12b',              cost_tier: 'high',   api_cost_per_1k_tokens: 0.008,  tokens_per_message: 16 },
-  { platform: 'nvidia', model_id: 'nvidia/nemotron-nano-3-30b-a3b',                 cost_tier: 'low',    api_cost_per_1k_tokens: 0.0005, tokens_per_message: 5 },
+  { platform: 'nvidia', model_id: 'nvidia/nemotron-3-nano-30b-a3b',                 cost_tier: 'low',    api_cost_per_1k_tokens: 0.0005, tokens_per_message: 5 },
   { platform: 'nvidia', model_id: 'nvidia/llama-3.1-nemotron-ultra-253b-v1',        cost_tier: 'high',   api_cost_per_1k_tokens: 0.010,  tokens_per_message: 20 },
   { platform: 'nvidia', model_id: 'nvidia/llama-3.3-nemotron-super-49b-v1.5',       cost_tier: 'medium', api_cost_per_1k_tokens: 0.003,  tokens_per_message: 10 },
   { platform: 'nvidia', model_id: 'deepseek-ai/deepseek-v4-pro',                    cost_tier: 'high',   api_cost_per_1k_tokens: 0.008,  tokens_per_message: 18 },
@@ -91,7 +91,7 @@ const PRICING_MAP: Array<{
   { platform: 'nvidia', model_id: 'nvidia/llama-3.1-nemotron-nano-vl-8b-v1',        cost_tier: 'low',    api_cost_per_1k_tokens: 0.0006, tokens_per_message: 5 },
   { platform: 'nvidia', model_id: 'meta/llama-3.2-90b-vision-instruct',             cost_tier: 'high',   api_cost_per_1k_tokens: 0.006,  tokens_per_message: 14 },
   { platform: 'nvidia', model_id: 'meta/llama-3.2-11b-vision-instruct',             cost_tier: 'low',    api_cost_per_1k_tokens: 0.0008, tokens_per_message: 6 },
-  { platform: 'nvidia', model_id: 'microsoft/phi-4-multimodal-instruct',            cost_tier: 'low',    api_cost_per_1k_tokens: 0.0007, tokens_per_message: 5 },
+  { platform: 'nvidia', model_id: 'microsoft/phi-3-vision-128k-instruct',            cost_tier: 'low',    api_cost_per_1k_tokens: 0.0007, tokens_per_message: 5 },
   { platform: 'nvidia', model_id: 'mistralai/codestral-22b-instruct-v0.1',          cost_tier: 'low',    api_cost_per_1k_tokens: 0.0009, tokens_per_message: 6 },
   { platform: 'nvidia', model_id: 'writer/palmyra-med-70b-32k',                     cost_tier: 'medium', api_cost_per_1k_tokens: 0.005,  tokens_per_message: 12 },
   { platform: 'nvidia', model_id: 'writer/palmyra-fin-70b-32k',                     cost_tier: 'medium', api_cost_per_1k_tokens: 0.005,  tokens_per_message: 12 },

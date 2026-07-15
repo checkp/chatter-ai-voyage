@@ -18,7 +18,7 @@ const VISION_MODELS = new Set([
   "nvidia/llama-3.1-nemotron-nano-vl-8b-v1",
   "meta/llama-3.2-90b-vision-instruct",
   "meta/llama-3.2-11b-vision-instruct",
-  "microsoft/phi-4-multimodal-instruct",
+  "microsoft/phi-3-vision-128k-instruct",
   "minimaxai/minimax-m3",
 ]);
 

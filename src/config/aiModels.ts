@@ -73,7 +73,7 @@ const META: Record<string, Meta> = {
   // NVIDIA-hosted NIMs (integrate.api.nvidia.com)
   'nvidia/nemotron-3-ultra-550b-a55b':          { name: 'Nemotron 3 Ultra 550B',    description: 'NVIDIA flagship MoE reasoning model',                   maxTokens: 131072, capabilities: ['text','reasoning','coding','analysis'],           speed: 'slow' },
   'nvidia/nemotron-3-super-120b-a12b':          { name: 'Nemotron 3 Super 120B',    description: 'Mid-tier Nemotron MoE, strong reasoning',               maxTokens: 131072, capabilities: ['text','reasoning','coding'],                       speed: 'medium' },
-  'nvidia/nemotron-nano-3-30b-a3b':             { name: 'Nemotron Nano 3 30B',      description: 'Compact fast Nemotron MoE',                             maxTokens: 131072, capabilities: ['text','reasoning'],                                speed: 'fast' },
+  'nvidia/nemotron-3-nano-30b-a3b':             { name: 'Nemotron Nano 3 30B',      description: 'Compact fast Nemotron MoE',                             maxTokens: 131072, capabilities: ['text','reasoning'],                                speed: 'fast' },
   'nvidia/llama-3.1-nemotron-ultra-253b-v1':    { name: 'Llama 3.1 Nemotron Ultra 253B', description: 'Llama-based NVIDIA reasoning tune',                maxTokens: 128000, capabilities: ['text','reasoning','coding','analysis'],           speed: 'slow' },
   'nvidia/llama-3.3-nemotron-super-49b-v1.5':   { name: 'Llama 3.3 Nemotron Super 49B', description: 'Compact strong reasoner',                            maxTokens: 128000, capabilities: ['text','reasoning'],                                speed: 'medium' },
   'deepseek-ai/deepseek-v4-pro':                { name: 'DeepSeek V4 Pro',          description: 'DeepSeek V4 flagship (via NVIDIA)',                     maxTokens: 128000, capabilities: ['text','reasoning','coding'],                       speed: 'medium' },
@@ -96,7 +96,7 @@ const META: Record<string, Meta> = {
   'nvidia/llama-3.1-nemotron-nano-vl-8b-v1':    { name: 'Llama Nemotron Nano VL 8B', description: 'Small vision-language NVIDIA model',                     maxTokens: 128000, capabilities: ['text','vision','reasoning'],                       speed: 'fast' },
   'meta/llama-3.2-90b-vision-instruct':         { name: 'Llama 3.2 Vision 90B',     description: 'Large Llama vision (via NVIDIA)',                        maxTokens: 128000, capabilities: ['text','vision','reasoning'],                       speed: 'slow' },
   'meta/llama-3.2-11b-vision-instruct':         { name: 'Llama 3.2 Vision 11B',     description: 'Small Llama vision (via NVIDIA)',                        maxTokens: 128000, capabilities: ['text','vision','reasoning'],                       speed: 'fast' },
-  'microsoft/phi-4-multimodal-instruct':        { name: 'Phi-4 Multimodal',         description: 'Microsoft compact multimodal',                           maxTokens: 128000, capabilities: ['text','vision','reasoning'],                       speed: 'fast' },
+  'microsoft/phi-3-vision-128k-instruct':        { name: 'Phi-3 Vision 128k',         description: 'Microsoft compact multimodal',                           maxTokens: 128000, capabilities: ['text','vision','reasoning'],                       speed: 'fast' },
   'mistralai/codestral-22b-instruct-v0.1':      { name: 'Codestral 22B',            description: 'Mistral coding model (via NVIDIA)',                       maxTokens: 32000,  capabilities: ['coding','debugging','analysis'],                  speed: 'fast' },
   'writer/palmyra-med-70b-32k':                 { name: 'Palmyra Med 70B',          description: 'Medical-domain LLM (via NVIDIA)',                        maxTokens: 32000,  capabilities: ['text','reasoning','medical'],                     speed: 'medium' },
   'writer/palmyra-fin-70b-32k':                 { name: 'Palmyra Fin 70B',          description: 'Finance-domain LLM (via NVIDIA)',                        maxTokens: 32000,  capabilities: ['text','reasoning','finance'],                     speed: 'medium' },
@@ -119,7 +119,7 @@ const PREFERRED_DEFAULTS: Record<string, string> = {
   mistral:    'mistral-large-latest',
   perplexity: 'sonar-pro',
   qwen:       'qwen-plus',
-  nvidia:     'nvidia/nemotron-nano-3-30b-a3b',
+  nvidia:     'nvidia/nemotron-3-nano-30b-a3b',
 };
 
 // Mutable cache populated from DB.
