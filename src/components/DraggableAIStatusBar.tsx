@@ -124,7 +124,7 @@ const DraggableAIStatusBar: React.FC<DraggableAIStatusBarProps> = ({
             </div>
           </SortableContext>
         </DndContext>
-        {onSelectLocalModel && (
+        {onSelectLocalModel && isLocalAgentSupported() && (
           <AddLocalAgentButton localPlatform={localPlatform} onSelect={onSelectLocalModel} />
         )}
       </div>
