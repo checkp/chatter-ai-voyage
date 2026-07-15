@@ -91,7 +91,7 @@ const PRICING_MAP: Array<{
   { platform: 'nvidia', model_id: 'nvidia/llama-3.1-nemotron-nano-vl-8b-v1',        cost_tier: 'low',    api_cost_per_1k_tokens: 0.0006, tokens_per_message: 5 },
   { platform: 'nvidia', model_id: 'meta/llama-3.2-90b-vision-instruct',             cost_tier: 'high',   api_cost_per_1k_tokens: 0.006,  tokens_per_message: 14 },
   { platform: 'nvidia', model_id: 'meta/llama-3.2-11b-vision-instruct',             cost_tier: 'low',    api_cost_per_1k_tokens: 0.0008, tokens_per_message: 6 },
-  { platform: 'nvidia', model_id: 'microsoft/phi-4-multimodal-instruct',            cost_tier: 'low',    api_cost_per_1k_tokens: 0.0007, tokens_per_message: 5 },
+  { platform: 'nvidia', model_id: 'microsoft/phi-3-vision-128k-instruct',            cost_tier: 'low',    api_cost_per_1k_tokens: 0.0007, tokens_per_message: 5 },
   { platform: 'nvidia', model_id: 'mistralai/codestral-22b-instruct-v0.1',          cost_tier: 'low',    api_cost_per_1k_tokens: 0.0009, tokens_per_message: 6 },
   { platform: 'nvidia', model_id: 'writer/palmyra-med-70b-32k',                     cost_tier: 'medium', api_cost_per_1k_tokens: 0.005,  tokens_per_message: 12 },
   { platform: 'nvidia', model_id: 'writer/palmyra-fin-70b-32k',                     cost_tier: 'medium', api_cost_per_1k_tokens: 0.005,  tokens_per_message: 12 },
