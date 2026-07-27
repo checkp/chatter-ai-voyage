@@ -53,6 +53,18 @@ const LemonSqueezyPurchaseButton: React.FC<Props> = ({
       toast.error('Lemon Squeezy not configured for this package yet.');
       return;
     }
+    // Fire GA4 begin_checkout before we redirect to Lemon Squeezy.
+    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+      try {
+        window.gtag('event', 'begin_checkout', {
+          currency: 'USD',
+          value: priceCents / 100,
+          items: [{ item_id: packageId, item_name: packageId, price: priceCents / 100, quantity: 1 }],
+        });
+      } catch (e) {
+        console.warn('gtag begin_checkout event failed:', e);
+      }
+    }
     try {
       setIsLoading(true);
       const session = (await supabase.auth.getSession()).data.session;

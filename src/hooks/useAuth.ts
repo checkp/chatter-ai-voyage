@@ -28,6 +28,17 @@ export const useAuth = () => {
         
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('User signed in successfully:', session.user.email);
+
+          // Fire GA4 sign-up / login conversion signal before the redirect wipes the page.
+          if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+            try {
+              window.gtag('event', 'sign_up', { method: 'google' });
+              window.gtag('event', 'login', { method: 'google' });
+            } catch (e) {
+              console.warn('gtag sign_up event failed:', e);
+            }
+          }
+          
           
           // Give database trigger time to complete, then set up agent settings only
           setTimeout(async () => {

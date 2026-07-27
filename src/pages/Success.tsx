@@ -14,6 +14,7 @@ const Success = () => {
   const [error, setError] = useState<string | null>(null);
   const processedRef = useRef(false);
   const retryCountRef = useRef(0);
+  const conversionFiredRef = useRef(false);
 
   const checkoutId = searchParams.get('checkout_id');
   const packageId = searchParams.get('package_id');
@@ -77,6 +78,42 @@ const Success = () => {
             toast.success('Payment already processed.');
           } else {
             toast.success(`Successfully added ${response.data.tokensAdded.toLocaleString()} tokens to your account!`);
+          }
+
+          // Fire GA4 purchase + Google Ads conversion exactly once per completed purchase.
+          if (
+            !conversionFiredRef.current &&
+            !response.data.alreadyProcessed &&
+            typeof window !== 'undefined' &&
+            typeof window.gtag === 'function'
+          ) {
+            conversionFiredRef.current = true;
+            const orderId: string | undefined =
+              response.data.orderId ?? response.data.order_id ?? checkoutId ?? undefined;
+            const rawValue =
+              response.data.amount ?? response.data.value ?? response.data.priceCents;
+            const value =
+              typeof rawValue === 'number'
+                ? rawValue > 1000
+                  ? rawValue / 100 // cents → dollars
+                  : rawValue
+                : undefined;
+            try {
+              const purchasePayload: Record<string, unknown> = { currency: 'USD' };
+              if (orderId) purchasePayload.transaction_id = orderId;
+              if (typeof value === 'number') purchasePayload.value = value;
+              window.gtag('event', 'purchase', purchasePayload);
+
+              const conversionPayload: Record<string, unknown> = {
+                send_to: 'AW-17261200649',
+                currency: 'USD',
+              };
+              if (orderId) conversionPayload.transaction_id = orderId;
+              if (typeof value === 'number') conversionPayload.value = value;
+              window.gtag('event', 'conversion', conversionPayload);
+            } catch (e) {
+              console.warn('gtag purchase/conversion event failed:', e);
+            }
           }
         }
       } catch (error: any) {
