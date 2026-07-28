@@ -8,7 +8,7 @@ declare global {
   }
 }
 
-const GA_ID = 'G-TMXE4NJCKP';
+const GA_ID = 'GT-5NPDQTTS';
 
 /**
  * Fires a GA4 page_view on every SPA route change.
