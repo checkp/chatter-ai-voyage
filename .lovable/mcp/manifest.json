@@ -12,7 +12,7 @@
   "mcp": {
     "server": {
       "name": "chatter-ai-voyage",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "title": "chatter-ai-voyage"
     },
     "tools": [
@@ -188,6 +188,312 @@
           },
           "required": [
             "platform",
+            "prompt"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "web_search",
+        "title": "Live web search with citations",
+        "description": "Live web search grounded in real-time results with numbered source citations, powered by Perplexity Sonar. Returns { answer, citations: [{index, url, title}], model, query }. Use for time-sensitive facts, library changelogs, docs lookups, and anything training data may not cover. Always cite the returned sources.",
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "minLength": 2,
+              "description": "Search query."
+            },
+            "recency": {
+              "description": "Only include results from the last day/week/month/year.",
+              "type": "string",
+              "enum": [
+                "day",
+                "week",
+                "month",
+                "year"
+              ]
+            },
+            "mode": {
+              "description": "Search corpus. Defaults to web.",
+              "type": "string",
+              "enum": [
+                "web",
+                "academic",
+                "sec"
+              ]
+            },
+            "domains": {
+              "description": "Optional allow-list of domains (e.g. ['docs.python.org']). Prefix with '-' to exclude.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "max_results": {
+              "description": "Approximate max sources to consider (default 8).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            },
+            "model": {
+              "description": "Perplexity model. Defaults to your configured web-search model.",
+              "type": "string",
+              "enum": [
+                "sonar",
+                "sonar-pro",
+                "sonar-reasoning",
+                "sonar-reasoning-pro"
+              ]
+            }
+          },
+          "required": [
+            "query"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "conductor_route",
+        "title": "Conductor — routing plan only",
+        "description": "Ask the Conductor which agents SHOULD answer a prompt and why, without fanning out. Cheap — use to preview a plan before spending tokens with conductor_ask or conductor_debate.",
+        "annotations": {
+          "readOnlyHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The prompt to plan for."
+            },
+            "conductor_platform": {
+              "description": "Which model plans the route.",
+              "type": "string",
+              "enum": [
+                "openai",
+                "anthropic",
+                "google",
+                "grok",
+                "deepseek",
+                "perplexity",
+                "mistral",
+                "qwen",
+                "nvidia"
+              ]
+            },
+            "include_platforms": {
+              "description": "Candidate agents to choose from.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "openai",
+                  "anthropic",
+                  "google",
+                  "grok",
+                  "deepseek",
+                  "perplexity",
+                  "mistral",
+                  "qwen",
+                  "nvidia"
+                ]
+              }
+            }
+          },
+          "required": [
+            "prompt"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "conductor_compare",
+        "title": "Conductor — raw multi-model perspectives",
+        "description": "Fan the prompt out to the panel and return each agent's raw answer side-by-side, WITHOUT a synthesis step. Use to compare or benchmark models yourself. Cheaper than conductor_ask.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The prompt to send to every agent."
+            },
+            "include_platforms": {
+              "description": "Which agents to compare.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "openai",
+                  "anthropic",
+                  "google",
+                  "grok",
+                  "deepseek",
+                  "perplexity",
+                  "mistral",
+                  "qwen",
+                  "nvidia"
+                ]
+              }
+            },
+            "conversation_id": {
+              "description": "Optional existing conversation to continue.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          "required": [
+            "prompt"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "conductor_ask",
+        "title": "Conductor — orchestrated multi-model answer",
+        "description": "Run RoboHeard's Conductor: one model routes the prompt across a panel of frontier AIs, collects their perspectives, and synthesizes a single best answer. Prefer this over ask_model when the question is ambiguous, high-stakes, or spans multiple domains. Persists to chat history.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The user prompt to route across the panel."
+            },
+            "conductor_platform": {
+              "description": "Which model plays Conductor. Defaults to your configured one.",
+              "type": "string",
+              "enum": [
+                "openai",
+                "anthropic",
+                "google",
+                "grok",
+                "deepseek",
+                "perplexity",
+                "mistral",
+                "qwen",
+                "nvidia"
+              ]
+            },
+            "include_platforms": {
+              "description": "Restrict the panel. Defaults to 4 frontier models.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "openai",
+                  "anthropic",
+                  "google",
+                  "grok",
+                  "deepseek",
+                  "perplexity",
+                  "mistral",
+                  "qwen",
+                  "nvidia"
+                ]
+              }
+            },
+            "conversation_id": {
+              "description": "Optional existing conversation to continue.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          "required": [
+            "prompt"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "conductor_debate",
+        "title": "Conductor — multi-round critique loop",
+        "description": "Run the Conductor N times in a critique-and-improve loop, ending with a final synthesized answer. Use for hard reasoning, code review, or architecture decisions. Slower and consumes more tokens.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The problem to work through."
+            },
+            "iterations": {
+              "description": "Number of rounds (default 3).",
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 5
+            },
+            "conductor_platform": {
+              "description": "Which model plays Conductor.",
+              "type": "string",
+              "enum": [
+                "openai",
+                "anthropic",
+                "google",
+                "grok",
+                "deepseek",
+                "perplexity",
+                "mistral",
+                "qwen",
+                "nvidia"
+              ]
+            },
+            "include_platforms": {
+              "description": "Restrict the panel.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "openai",
+                  "anthropic",
+                  "google",
+                  "grok",
+                  "deepseek",
+                  "perplexity",
+                  "mistral",
+                  "qwen",
+                  "nvidia"
+                ]
+              }
+            },
+            "conversation_id": {
+              "description": "Optional existing conversation to continue.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          "required": [
             "prompt"
           ]
         },

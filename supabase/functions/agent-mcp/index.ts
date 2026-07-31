@@ -178,6 +178,13 @@ function assertPlatformAllowed(settings, platform) {
     throw new Error(`Platform "${platform}" is disabled in your MCP settings.`);
   }
 }
+function allowedPanel(settings, conductor, include) {
+  const requested = (include ?? []).filter(
+    (p) => settings.enabledPlatforms.includes(p)
+  );
+  if (requested.length > 0) return requested;
+  return settings.enabledPlatforms.filter((p) => p !== conductor).slice(0, 4);
+}
 async function ensureConversation(ctx, opts) {
   if (opts.conversationId) return opts.conversationId;
   const supabase = supabaseForUser(ctx);
@@ -206,6 +213,55 @@ async function loadHistory(ctx, conversationId) {
     role: m.sender === "user" ? "user" : "assistant",
     content: m.content
   }));
+}
+async function runConductorRound(ctx, opts) {
+  const { conversationId, prompt, conductorPlatform, panel } = opts;
+  const decisionPrompt = `You are the Conductor coordinating multiple AI agents.
+User message: "${prompt}"
+Available agents: ${panel.join(", ")}
+Provide a brief coordination plan, then respond. Add [COORDINATION_NEEDED: YES] to trigger multi-agent fan-out, or [COORDINATION_NEEDED: NO] to answer solo.`;
+  const decision = await callChatFunction(ctx, PLATFORM_TO_FN[conductorPlatform], {
+    messages: [{ role: "user", content: decisionPrompt }],
+    model: DEFAULT_MODELS[conductorPlatform]
+  });
+  await saveMessage(ctx, conversationId, "ai", decision, conductorPlatform);
+  const needsFanout = !/\[COORDINATION_NEEDED:\s*NO\s*\]/i.test(decision);
+  if (!needsFanout || panel.length === 0) {
+    return { decision, agent_responses: [], synthesis: decision };
+  }
+  const coordinationPrompt = `The Conductor asked for your perspective on: "${prompt}"
+
+Conductor's plan: ${decision}
+
+Provide your specialized angle.`;
+  const settled = await Promise.allSettled(
+    panel.map(async (p) => ({
+      platform: p,
+      content: await callChatFunction(ctx, PLATFORM_TO_FN[p], {
+        messages: [{ role: "user", content: coordinationPrompt }],
+        model: DEFAULT_MODELS[p]
+      })
+    }))
+  );
+  const agentResponses = settled.filter((r) => r.status === "fulfilled").map((r) => r.value);
+  for (const ar of agentResponses) {
+    await saveMessage(ctx, conversationId, "ai", ar.content, ar.platform);
+  }
+  if (agentResponses.length === 0) return { decision, agent_responses: [], synthesis: decision };
+  const synthesisPrompt = `Synthesize these agent responses into one coherent answer for the user.
+
+Original question: "${prompt}"
+
+${agentResponses.map((a) => `[${a.platform}]:
+${a.content}`).join("\n\n")}
+
+Provide the best synthesized answer.`;
+  const synthesis = await callChatFunction(ctx, PLATFORM_TO_FN[conductorPlatform], {
+    messages: [{ role: "user", content: synthesisPrompt }],
+    model: DEFAULT_MODELS[conductorPlatform]
+  });
+  await saveMessage(ctx, conversationId, "ai", synthesis, conductorPlatform);
+  return { decision, agent_responses: agentResponses, synthesis };
 }
 
 // src/lib/mcp/tools/list-models.ts
@@ -369,18 +425,280 @@ var ask_model_default = defineTool5({
   }
 });
 
+// src/lib/mcp/tools/web-search.ts
+import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@0.26.1";
+import { z as z5 } from "npm:zod@^4.4.3";
+var web_search_default = defineTool6({
+  name: "web_search",
+  title: "Live web search with citations",
+  description: "Live web search grounded in real-time results with numbered source citations, powered by Perplexity Sonar. Returns { answer, citations: [{index, url, title}], model, query }. Use for time-sensitive facts, library changelogs, docs lookups, and anything training data may not cover. Always cite the returned sources.",
+  inputSchema: {
+    query: z5.string().trim().min(2).describe("Search query."),
+    recency: z5.enum(["day", "week", "month", "year"]).optional().describe("Only include results from the last day/week/month/year."),
+    mode: z5.enum(["web", "academic", "sec"]).optional().describe("Search corpus. Defaults to web."),
+    domains: z5.array(z5.string()).optional().describe("Optional allow-list of domains (e.g. ['docs.python.org']). Prefix with '-' to exclude."),
+    max_results: z5.number().int().min(1).max(20).optional().describe("Approximate max sources to consider (default 8)."),
+    model: z5.enum(["sonar", "sonar-pro", "sonar-reasoning", "sonar-reasoning-pro"]).optional().describe("Perplexity model. Defaults to your configured web-search model.")
+  },
+  annotations: { readOnlyHint: true, openWorldHint: true },
+  handler: async ({ query, recency, mode, domains, max_results, model }, ctx) => {
+    const g = await guard(ctx, "web_search");
+    if (g.error) return g.error;
+    const key = runtimeEnv("PERPLEXITY_API_KEY");
+    if (!key) return errorResult("Web search unavailable: PERPLEXITY_API_KEY is not configured on the server.");
+    const chosenModel = model ?? g.settings.defaultWebSearchModel;
+    const searchMode = mode ?? "web";
+    const maxResults = max_results ?? 8;
+    const body = {
+      model: chosenModel,
+      messages: [
+        {
+          role: "system",
+          content: "You are a research assistant. Answer the user's query concisely using ONLY the retrieved web sources. Use inline numeric citations like [1], [2] tied to the citations array. Prefer authoritative and recent sources. If sources conflict, say so."
+        },
+        { role: "user", content: query }
+      ],
+      return_related_questions: false,
+      max_tokens: 1500,
+      web_search_options: {
+        search_context_size: maxResults >= 12 ? "high" : maxResults >= 6 ? "medium" : "low"
+      }
+    };
+    if (recency) body.search_recency_filter = recency;
+    if (searchMode !== "web") body.search_mode = searchMode;
+    if (domains && domains.length > 0) body.search_domain_filter = domains.slice(0, 20);
+    const res = await fetch("https://api.perplexity.ai/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      return errorResult(`Perplexity ${res.status}: ${errText.slice(0, 400)}`);
+    }
+    const data = await res.json();
+    const answer = String(data.choices?.[0]?.message?.content ?? "");
+    const raw = data.citations ?? data.search_results ?? [];
+    const citations = raw.map((c, i) => {
+      const url = typeof c === "string" ? c : c?.url ?? "";
+      const title = typeof c === "string" ? void 0 : c?.title;
+      return { index: i + 1, url, ...title ? { title } : {} };
+    }).filter((c) => c.url);
+    return jsonResult({
+      query,
+      model: chosenModel,
+      answer,
+      citations,
+      search_mode: searchMode,
+      recency: recency ?? null
+    });
+  }
+});
+
+// src/lib/mcp/tools/conductor.ts
+import { defineTool as defineTool7 } from "npm:@lovable.dev/mcp-js@0.26.1";
+import { z as z6 } from "npm:zod@^4.4.3";
+var platformEnum = z6.enum(PLATFORM_IDS);
+var conductorAskTool = defineTool7({
+  name: "conductor_ask",
+  title: "Conductor \u2014 orchestrated multi-model answer",
+  description: "Run RoboHeard's Conductor: one model routes the prompt across a panel of frontier AIs, collects their perspectives, and synthesizes a single best answer. Prefer this over ask_model when the question is ambiguous, high-stakes, or spans multiple domains. Persists to chat history.",
+  inputSchema: {
+    prompt: z6.string().trim().min(1).describe("The user prompt to route across the panel."),
+    conductor_platform: platformEnum.optional().describe("Which model plays Conductor. Defaults to your configured one."),
+    include_platforms: z6.array(platformEnum).optional().describe("Restrict the panel. Defaults to 4 frontier models."),
+    conversation_id: z6.string().uuid().optional().describe("Optional existing conversation to continue.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+  handler: async ({ prompt, conductor_platform, include_platforms, conversation_id }, ctx) => {
+    const g = await guard(ctx, "conductor_ask");
+    if (g.error) return g.error;
+    const conductor = conductor_platform ?? g.settings.defaultConductorPlatform;
+    const panel = allowedPanel(g.settings, conductor, include_platforms);
+    try {
+      const conversationId = await ensureConversation(ctx, {
+        conversationId: conversation_id,
+        title: `MCP: ${prompt.slice(0, 50)}`,
+        chatMode: "conductor",
+        conductorPlatform: conductor
+      });
+      await saveMessage(ctx, conversationId, "user", prompt);
+      const round = await runConductorRound(ctx, { conversationId, prompt, conductorPlatform: conductor, panel });
+      return jsonResult({ conversation_id: conversationId, conductor_platform: conductor, panel, ...round });
+    } catch (e) {
+      return errorResult(e instanceof Error ? e.message : String(e));
+    }
+  }
+});
+var conductorRouteTool = defineTool7({
+  name: "conductor_route",
+  title: "Conductor \u2014 routing plan only",
+  description: "Ask the Conductor which agents SHOULD answer a prompt and why, without fanning out. Cheap \u2014 use to preview a plan before spending tokens with conductor_ask or conductor_debate.",
+  inputSchema: {
+    prompt: z6.string().trim().min(1).describe("The prompt to plan for."),
+    conductor_platform: platformEnum.optional().describe("Which model plans the route."),
+    include_platforms: z6.array(platformEnum).optional().describe("Candidate agents to choose from.")
+  },
+  annotations: { readOnlyHint: true, openWorldHint: false },
+  handler: async ({ prompt, conductor_platform, include_platforms }, ctx) => {
+    const g = await guard(ctx, "conductor_route");
+    if (g.error) return g.error;
+    const conductor = conductor_platform ?? g.settings.defaultConductorPlatform;
+    const panel = allowedPanel(g.settings, conductor, include_platforms);
+    const planPrompt = `You are the RoboHeard Conductor. Do NOT answer the user's question.
+Instead, return a JSON routing plan with fields:
+  { "strategy": "solo"|"fanout"|"debate", "agents": string[], "reasoning": string }
+where "agents" is a subset of: ${panel.join(", ")}.
+User prompt: "${prompt}"
+Reply with ONLY the JSON object.`;
+    try {
+      const raw = await callChatFunction(ctx, PLATFORM_TO_FN[conductor], {
+        messages: [{ role: "user", content: planPrompt }],
+        model: DEFAULT_MODELS[conductor]
+      });
+      let plan = raw;
+      const match = raw.match(/\{[\s\S]*\}/);
+      if (match) {
+        try {
+          plan = JSON.parse(match[0]);
+        } catch {
+        }
+      }
+      return jsonResult({ conductor_platform: conductor, panel, plan });
+    } catch (e) {
+      return errorResult(e instanceof Error ? e.message : String(e));
+    }
+  }
+});
+var conductorCompareTool = defineTool7({
+  name: "conductor_compare",
+  title: "Conductor \u2014 raw multi-model perspectives",
+  description: "Fan the prompt out to the panel and return each agent's raw answer side-by-side, WITHOUT a synthesis step. Use to compare or benchmark models yourself. Cheaper than conductor_ask.",
+  inputSchema: {
+    prompt: z6.string().trim().min(1).describe("The prompt to send to every agent."),
+    include_platforms: z6.array(platformEnum).optional().describe("Which agents to compare."),
+    conversation_id: z6.string().uuid().optional().describe("Optional existing conversation to continue.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+  handler: async ({ prompt, include_platforms, conversation_id }, ctx) => {
+    const g = await guard(ctx, "conductor_compare");
+    if (g.error) return g.error;
+    const panel = allowedPanel(g.settings, g.settings.defaultConductorPlatform, include_platforms);
+    if (panel.length === 0) return errorResult("No platforms are enabled in your MCP settings.");
+    try {
+      const conversationId = await ensureConversation(ctx, {
+        conversationId: conversation_id,
+        title: `MCP compare: ${prompt.slice(0, 40)}`,
+        chatMode: "side-by-side"
+      });
+      await saveMessage(ctx, conversationId, "user", prompt);
+      const settled = await Promise.allSettled(
+        panel.map(async (p) => ({
+          platform: p,
+          model: DEFAULT_MODELS[p],
+          content: await callChatFunction(ctx, PLATFORM_TO_FN[p], {
+            messages: [{ role: "user", content: prompt }],
+            model: DEFAULT_MODELS[p]
+          })
+        }))
+      );
+      const perspectives = settled.map(
+        (r, i) => r.status === "fulfilled" ? r.value : {
+          platform: panel[i],
+          model: DEFAULT_MODELS[panel[i]],
+          content: "",
+          error: r.reason instanceof Error ? r.reason.message : String(r.reason)
+        }
+      );
+      for (const p of perspectives) {
+        if (p.content) await saveMessage(ctx, conversationId, "ai", p.content, p.platform);
+      }
+      return jsonResult({ conversation_id: conversationId, perspectives });
+    } catch (e) {
+      return errorResult(e instanceof Error ? e.message : String(e));
+    }
+  }
+});
+var conductorDebateTool = defineTool7({
+  name: "conductor_debate",
+  title: "Conductor \u2014 multi-round critique loop",
+  description: "Run the Conductor N times in a critique-and-improve loop, ending with a final synthesized answer. Use for hard reasoning, code review, or architecture decisions. Slower and consumes more tokens.",
+  inputSchema: {
+    prompt: z6.string().trim().min(1).describe("The problem to work through."),
+    iterations: z6.number().int().min(2).max(5).optional().describe("Number of rounds (default 3)."),
+    conductor_platform: platformEnum.optional().describe("Which model plays Conductor."),
+    include_platforms: z6.array(platformEnum).optional().describe("Restrict the panel."),
+    conversation_id: z6.string().uuid().optional().describe("Optional existing conversation to continue.")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+  handler: async ({ prompt, iterations, conductor_platform, include_platforms, conversation_id }, ctx) => {
+    const g = await guard(ctx, "conductor_debate");
+    if (g.error) return g.error;
+    const rounds = iterations ?? 3;
+    const conductor = conductor_platform ?? g.settings.defaultConductorPlatform;
+    const panel = allowedPanel(g.settings, conductor, include_platforms);
+    try {
+      const conversationId = await ensureConversation(ctx, {
+        conversationId: conversation_id,
+        title: `MCP debate: ${prompt.slice(0, 40)}`,
+        chatMode: "conductor",
+        conductorPlatform: conductor
+      });
+      await saveMessage(ctx, conversationId, "user", prompt);
+      const results = [];
+      let current = prompt;
+      for (let i = 1; i <= rounds; i++) {
+        const isFinal = i === rounds;
+        const framed = i === 1 ? current : `Iteration ${i} of ${rounds}${isFinal ? " (FINAL)" : ""}. Prior synthesis:
+
+${current}
+
+Critique it, resolve gaps, and produce ${isFinal ? "the final answer" : "an improved answer"} to the original question: "${prompt}"`;
+        const round = await runConductorRound(ctx, {
+          conversationId,
+          prompt: framed,
+          conductorPlatform: conductor,
+          panel
+        });
+        results.push({ iteration: i, synthesis: round.synthesis });
+        current = round.synthesis;
+      }
+      return jsonResult({
+        conversation_id: conversationId,
+        conductor_platform: conductor,
+        panel,
+        iterations: results,
+        final: results[results.length - 1]?.synthesis ?? ""
+      });
+    } catch (e) {
+      return errorResult(e instanceof Error ? e.message : String(e));
+    }
+  }
+});
+
 // src/lib/mcp/index.ts
 var projectRef = "vczxurigjttwxwilosjz";
 var mcp_default = defineMcp({
   name: "chatter-ai-voyage",
   title: "chatter-ai-voyage",
-  version: "0.1.0",
-  instructions: "Tools for RoboHeard, a multi-model AI orchestrator. Use list_models to see available providers and model ids, list_chats/get_chat/search_messages to read the signed-in user's conversation history, and ask_model to route a prompt to a specific provider (this consumes the user's tokens).",
+  version: "0.2.0",
+  instructions: "RoboHeard MCP \u2014 multi-model orchestration. Discovery: call list_models first. Single model: ask_model (supports think/search/deep_research/code_exec capabilities). Live web facts with citations: web_search. Orchestrated reasoning: conductor_route (plan only), conductor_compare (raw side-by-side perspectives), conductor_ask (routed + synthesized answer), conductor_debate (multi-round critique loop). History: list_chats, get_chat, search_messages. Every call runs as the signed-in user, spends their RoboHeard tokens, and appears in their RoboHeard sidebar. Tool availability, platforms, and defaults follow the user's MCP settings at /mcp.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated"
   }),
-  tools: [list_models_default, list_chats_default, get_chat_default, search_messages_default, ask_model_default]
+  tools: [
+    list_models_default,
+    list_chats_default,
+    get_chat_default,
+    search_messages_default,
+    ask_model_default,
+    web_search_default,
+    conductorRouteTool,
+    conductorCompareTool,
+    conductorAskTool,
+    conductorDebateTool
+  ]
 });
 
 // lovable-mcp-supabase-entry.ts
