@@ -1,6 +1,7 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { supabaseForUser } from "../supabase";
+import { guard } from "../runtime";
 
 export default defineTool({
   name: "list_chats",
@@ -11,10 +12,10 @@ export default defineTool({
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ limit }, ctx) => {
-    if (!ctx.isAuthenticated()) {
-      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    }
+    const g = await guard(ctx, "list_chats");
+    if (g.error) return g.error;
     const supabase = supabaseForUser(ctx);
+
     const { data, error } = await supabase
       .from("conversations")
       .select("id, title, chat_mode, conductor_platform, updated_at, created_at")

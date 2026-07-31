@@ -250,9 +250,8 @@ var list_chats_default = defineTool2({
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ limit }, ctx) => {
-    if (!ctx.isAuthenticated()) {
-      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    }
+    const g = await guard(ctx, "list_chats");
+    if (g.error) return g.error;
     const supabase = supabaseForUser(ctx);
     const { data, error } = await supabase.from("conversations").select("id, title, chat_mode, conductor_platform, updated_at, created_at").order("updated_at", { ascending: false }).limit(limit ?? 20);
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
