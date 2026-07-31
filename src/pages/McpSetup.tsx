@@ -15,6 +15,8 @@ import PageSeo from "@/components/PageSeo";
 
 
 const MCP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mcp`;
+const OAUTH_MCP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-mcp`;
+
 
 interface McpToken {
   id: string;
