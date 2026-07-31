@@ -121,6 +121,48 @@ const TOOLS = [
     },
     annotations: { readOnlyHint: true, openWorldHint: true },
   },
+  // ─── Chat history (mirrors the OAuth /agent-mcp server) ──────────────────
+  {
+    name: "list_chats",
+    title: "List chats",
+    description: "List the user's most recent RoboHeard conversations, newest first.",
+    inputSchema: {
+      type: "object",
+      properties: { limit: { type: "number", description: "How many conversations to return (default 20, max 50)." } },
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true, openWorldHint: false },
+  },
+  {
+    name: "get_chat",
+    title: "Get chat messages",
+    description: "Read the messages of one of the user's conversations, including which AI platform produced each reply.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        chat_id: { type: "string", description: "Conversation UUID, as returned by list_chats." },
+        limit: { type: "number", description: "How many messages to return (default 50, newest last)." },
+      },
+      required: ["chat_id"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true, openWorldHint: false },
+  },
+  {
+    name: "search_messages",
+    title: "Search messages",
+    description: "Search across the user's RoboHeard chat messages, newest first.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Text to look for inside message content." },
+        limit: { type: "number", description: "How many matches to return (default 20, max 50)." },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true, openWorldHint: false },
+  },
 
 
   // ─── Conductor family ────────────────────────────────────────────────────
