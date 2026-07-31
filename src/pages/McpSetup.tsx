@@ -226,28 +226,58 @@ export default function McpSetup() {
         </Card>
 
         <Card className="p-5 space-y-3">
-          <h2 className="font-medium">2. Add to Cursor / Codex</h2>
-          <p className="text-xs text-muted-foreground">Add to <code>~/.cursor/mcp.json</code> (Cursor) or your Codex/Windsurf MCP config:</p>
+          <h2 className="font-medium">2. Add to Claude Code</h2>
+          <p className="text-xs text-muted-foreground">Token auth (works everywhere, recommended):</p>
+          <pre className="bg-muted p-3 rounded text-xs overflow-x-auto whitespace-pre">{claudeCli}</pre>
+          <Button variant="outline" size="sm" onClick={() => copy(claudeCli, "Claude CLI command")}>
+            <Copy className="h-3 w-3 mr-1" />Copy command
+          </Button>
+          <p className="text-xs text-muted-foreground pt-2">Or browser sign-in via OAuth (no token to manage):</p>
+          <pre className="bg-muted p-3 rounded text-xs overflow-x-auto whitespace-pre">{claudeOauthCli}</pre>
+          <Button variant="outline" size="sm" onClick={() => copy(claudeOauthCli, "OAuth command")}>
+            <Copy className="h-3 w-3 mr-1" />Copy command
+          </Button>
+          <p className="text-xs text-muted-foreground pt-1">
+            Verify with <code>claude mcp list</code>, then <code>/mcp</code> inside Claude Code.
+          </p>
+        </Card>
+
+        <Card className="p-5 space-y-3">
+          <h2 className="font-medium">3. Add to Cursor</h2>
+          <p className="text-xs text-muted-foreground">
+            Project: <code>.cursor/mcp.json</code> · Global: <code>~/.cursor/mcp.json</code>
+          </p>
           <pre className="bg-muted p-3 rounded text-xs overflow-x-auto whitespace-pre">{cursorConfig}</pre>
           <Button variant="outline" size="sm" onClick={() => copy(cursorConfig, "Cursor config")}>
+            <Copy className="h-3 w-3 mr-1" />Copy
+          </Button>
+          <p className="text-xs text-muted-foreground pt-1">
+            Windsurf and Claude Desktop use the same <code>mcpServers</code> shape.
+          </p>
+        </Card>
+
+        <Card className="p-5 space-y-3">
+          <h2 className="font-medium">4. Add to Codex CLI</h2>
+          <p className="text-xs text-muted-foreground">Codex uses TOML, not JSON — add to <code>~/.codex/config.toml</code>:</p>
+          <pre className="bg-muted p-3 rounded text-xs overflow-x-auto whitespace-pre">{codexConfig}</pre>
+          <Button variant="outline" size="sm" onClick={() => copy(codexConfig, "Codex config")}>
             <Copy className="h-3 w-3 mr-1" />Copy
           </Button>
         </Card>
 
         <Card className="p-5 space-y-3">
-          <h2 className="font-medium">3. Add to Claude Code</h2>
-          <p className="text-xs text-muted-foreground">One-liner (recommended):</p>
-          <pre className="bg-muted p-3 rounded text-xs overflow-x-auto whitespace-pre">{claudeCli}</pre>
-          <Button variant="outline" size="sm" onClick={() => copy(claudeCli, "Claude CLI command")}>
-            <Copy className="h-3 w-3 mr-1" />Copy command
+          <h2 className="font-medium">5. Add to VS Code / Copilot</h2>
+          <p className="text-xs text-muted-foreground">Add to <code>.vscode/mcp.json</code>:</p>
+          <pre className="bg-muted p-3 rounded text-xs overflow-x-auto whitespace-pre">{vscodeConfig}</pre>
+          <Button variant="outline" size="sm" onClick={() => copy(vscodeConfig, "VS Code config")}>
+            <Copy className="h-3 w-3 mr-1" />Copy
           </Button>
-          <p className="text-xs text-muted-foreground pt-2">Or add manually to <code>~/.claude/mcp_config.json</code>:</p>
-          <pre className="bg-muted p-3 rounded text-xs overflow-x-auto whitespace-pre">{claudeConfig}</pre>
-          <Button variant="outline" size="sm" onClick={() => copy(claudeConfig, "Claude config")}>
-            <Copy className="h-3 w-3 mr-1" />Copy config
-          </Button>
-          <p className="text-xs text-muted-foreground pt-1">⚠️ Use an <code>rh_*</code> token from above — Supabase session JWTs expire after ~60 minutes.</p>
+          <p className="text-xs text-muted-foreground pt-1">
+            ⚠️ Always use an <code>rh_*</code> token from step 1 — app session JWTs expire after ~60 minutes.
+            No <code>apikey</code> header is needed.
+          </p>
         </Card>
+
 
 
         <Card className="p-5 space-y-2">
