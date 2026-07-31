@@ -71,24 +71,25 @@ export function jsonResult(payload: Record<string, unknown>): ToolResult {
 
 /**
  * Shared entry guard: verifies auth and that the tool is enabled in the
- * signed-in user's MCP settings. Returns an error result when blocked.
+ * signed-in user's MCP settings. Returns `error` when the call is blocked.
  */
 export async function guard(
   ctx: ToolContext,
   toolName: string,
-): Promise<{ ok: true; settings: McpSettings } | { ok: false; result: ToolResult }> {
+): Promise<{ error: ToolResult | null; settings: McpSettings }> {
   if (!ctx.isAuthenticated()) {
-    return { ok: false, result: errorResult("Not authenticated") };
+    return { error: errorResult("Not authenticated"), settings: DEFAULT_SETTINGS };
   }
   const settings = await loadMcpSettings(ctx);
   if (!settings.enabledTools.includes(toolName)) {
     return {
-      ok: false,
-      result: errorResult(`Tool "${toolName}" is disabled in your MCP settings. Enable it at /mcp in RoboHeard.`),
+      error: errorResult(`Tool "${toolName}" is disabled in your MCP settings. Enable it at /mcp in RoboHeard.`),
+      settings,
     };
   }
-  return { ok: true, settings };
+  return { error: null, settings };
 }
+
 
 export function assertPlatformAllowed(settings: McpSettings, platform: string): void {
   if (!settings.enabledPlatforms.includes(platform as PlatformId)) {
