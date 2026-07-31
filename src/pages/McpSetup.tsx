@@ -175,19 +175,31 @@ export default function McpSetup() {
           </p>
           <div className="grid gap-3 sm:grid-cols-2 text-sm">
             <div className="rounded-md border border-border p-3 space-y-1">
-              <div className="font-medium">Token endpoint (recommended for CLI agents)</div>
+              <div className="font-medium">Token endpoint (recommended)</div>
               <code className="text-xs break-all block">{MCP_URL}</code>
-              <div className="text-xs text-muted-foreground">Auth: <code>Bearer rh_&lt;token&gt;</code> — create one below.</div>
+              <div className="text-xs text-muted-foreground">
+                Streamable HTTP · Auth: <code>Authorization: Bearer rh_&lt;token&gt;</code> — create one in step 1.
+              </div>
+              <Button variant="outline" size="sm" onClick={() => copy(MCP_URL, "Token endpoint URL")}>
+                <Copy className="h-3 w-3 mr-1" />Copy URL
+              </Button>
             </div>
             <div className="rounded-md border border-border p-3 space-y-1">
               <div className="font-medium">OAuth endpoint (one-click clients)</div>
               <code className="text-xs break-all block">{OAUTH_MCP_URL}</code>
-              <div className="text-xs text-muted-foreground">Auth: OAuth 2.1 — you sign in and approve in the browser.</div>
+              <div className="text-xs text-muted-foreground">
+                Streamable HTTP · OAuth 2.1 with dynamic client registration — no header, you approve in the browser.
+              </div>
+              <Button variant="outline" size="sm" onClick={() => copy(OAUTH_MCP_URL, "OAuth endpoint URL")}>
+                <Copy className="h-3 w-3 mr-1" />Copy URL
+              </Button>
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            Both endpoints expose the same tool set and honour the MCP configuration below.
+            Both endpoints speak MCP <code>2025-06-18</code> over Streamable HTTP, expose the same 10 tools, and honour
+            the MCP configuration below. Swap the URL in any snippet to use OAuth instead of a token.
           </p>
+
         </Card>
 
 
