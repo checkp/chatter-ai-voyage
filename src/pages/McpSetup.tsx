@@ -151,15 +151,27 @@ export default function McpSetup() {
 
         <Card className="p-5 space-y-3">
           <p className="text-sm text-muted-foreground">
-            Expose RoboHeard's Conductor, individual models, and Perplexity web search as tools inside
+            Expose RoboHeard's Conductor, individual models, live web search, and your chat history as tools inside
             Claude Code, Cursor, Codex, or any MCP-compatible coding agent. Every call runs as
             <span className="font-medium text-foreground"> {email || "you"}</span> and spends your RoboHeard tokens.
           </p>
-          <div className="grid gap-2 sm:grid-cols-2 text-sm">
-            <div><span className="text-muted-foreground">Endpoint</span><br /><code className="text-xs break-all">{MCP_URL}</code></div>
-            <div><span className="text-muted-foreground">Auth</span><br /><code className="text-xs">Bearer rh_&lt;token&gt;</code></div>
+          <div className="grid gap-3 sm:grid-cols-2 text-sm">
+            <div className="rounded-md border border-border p-3 space-y-1">
+              <div className="font-medium">Token endpoint (recommended for CLI agents)</div>
+              <code className="text-xs break-all block">{MCP_URL}</code>
+              <div className="text-xs text-muted-foreground">Auth: <code>Bearer rh_&lt;token&gt;</code> — create one below.</div>
+            </div>
+            <div className="rounded-md border border-border p-3 space-y-1">
+              <div className="font-medium">OAuth endpoint (one-click clients)</div>
+              <code className="text-xs break-all block">{OAUTH_MCP_URL}</code>
+              <div className="text-xs text-muted-foreground">Auth: OAuth 2.1 — you sign in and approve in the browser.</div>
+            </div>
           </div>
+          <p className="text-xs text-muted-foreground">
+            Both endpoints expose the same tool set and honour the MCP configuration below.
+          </p>
         </Card>
+
 
         <Card className="p-5 space-y-3">
           <div className="flex items-center justify-between">
