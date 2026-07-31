@@ -845,6 +845,10 @@ async function handleRpc(rpc: JsonRpcRequest, ctx: AuthCtx | null): Promise<Reco
       let out: unknown;
       switch (name) {
         case "list_models":        out = await toolListModels(ctx); break;
+        case "list_chats":         out = await toolListChats(ctx, args); break;
+        case "get_chat":           out = await toolGetChat(ctx, args); break;
+        case "search_messages":    out = await toolSearchMessages(ctx, args); break;
+
         case "ask_model":          out = await toolAskModel(ctx, args); break;
         case "web_search":         out = await toolWebSearch(ctx, args); break;
         case "conductor_ask":
