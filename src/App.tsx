@@ -17,6 +17,7 @@ import Help from "./pages/Help";
 import Features from "./pages/Features";
 import WhatsNew from "./pages/WhatsNew";
 import Terms from "./pages/Terms";
+import OAuthConsent from "./pages/OAuthConsent";
 import McpSetup from "./pages/McpSetup";
 import Tools from "./pages/Tools";
 import ApiAccess from "./pages/ApiAccess";
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/features" element={<Features />} />
             <Route path="/whats-new" element={<WhatsNew />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             <Route path="/mcp" element={<McpSetup />} />
             <Route path="/tools" element={<Tools />} />
             <Route path="/api" element={<ApiAccess />} />
