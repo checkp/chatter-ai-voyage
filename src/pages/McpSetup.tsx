@@ -237,12 +237,14 @@ export default function McpSetup() {
         <Card className="p-5 space-y-2">
           <h2 className="font-medium">Available tools</h2>
           <ul className="text-sm space-y-1 list-disc pl-5 text-muted-foreground">
-            <li><code className="text-foreground">list_models</code> — discover platforms &amp; capabilities</li>
-            <li><code className="text-foreground">ask_model</code> — one-shot query to a specific model</li>
+            <li><code className="text-foreground">list_models</code> — discover platforms, model ids &amp; capabilities</li>
+            <li><code className="text-foreground">ask_model</code> — one-shot query with optional think / search / deep_research / code_exec</li>
             <li><code className="text-foreground">web_search</code> — Perplexity live search with citations</li>
-            <li><code className="text-foreground">conductor_ask</code> / <code className="text-foreground">conductor_route</code> / <code className="text-foreground">conductor_compare</code> / <code className="text-foreground">conductor_debate</code> — multi-model orchestration</li>
+            <li><code className="text-foreground">conductor_route</code> / <code className="text-foreground">conductor_compare</code> / <code className="text-foreground">conductor_ask</code> / <code className="text-foreground">conductor_debate</code> — multi-model orchestration</li>
+            <li><code className="text-foreground">list_chats</code> / <code className="text-foreground">get_chat</code> / <code className="text-foreground">search_messages</code> — read your RoboHeard history</li>
           </ul>
           <p className="text-xs text-muted-foreground pt-2">Chats created by these tools appear in your RoboHeard sidebar.</p>
+
         </Card>
 
         <McpSettingsCard />
