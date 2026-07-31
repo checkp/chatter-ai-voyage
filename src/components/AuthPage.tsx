@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +10,10 @@ import { toast } from 'sonner';
 import { Mail, Lock, Eye, EyeOff, Github, Bot, Brain, Search, Zap, Gem, Users, MessageCircle, Grid3X3, Star, Quote } from 'lucide-react';
 
 const AuthPage = () => {
+  const [searchParams] = useSearchParams();
+  // Same-origin relative path only: used to return users to an OAuth consent screen.
+  const rawNext = searchParams.get('next') ?? '';
+  const nextPath = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/';
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -130,6 +135,7 @@ const AuthPage = () => {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
+          options: { emailRedirectTo: `${window.location.origin}${nextPath}` },
         });
         
         if (error) {
@@ -142,7 +148,7 @@ const AuthPage = () => {
           if (data.user.email_confirmed_at) {
             toast.success('Account created successfully! Redirecting...');
             setTimeout(() => {
-              window.location.href = '/';
+              window.location.href = nextPath;
             }, 1000);
           } else {
             toast.success('Account created! Please check your email for verification.');
@@ -164,7 +170,7 @@ const AuthPage = () => {
           console.log('User signed in successfully:', data.user.id);
           toast.success('Signed in successfully! Redirecting...');
           setTimeout(() => {
-            window.location.href = '/';
+            window.location.href = nextPath;
           }, 500);
         }
       }
@@ -190,7 +196,7 @@ const AuthPage = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}${nextPath}`,
         }
       });
       
@@ -219,7 +225,7 @@ const AuthPage = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}${nextPath}`,
         }
       });
       
