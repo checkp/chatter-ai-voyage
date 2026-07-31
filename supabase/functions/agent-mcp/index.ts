@@ -184,6 +184,19 @@ var search_messages_default = defineTool4({
 // src/lib/mcp/tools/ask-model.ts
 import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.26.1";
 import { z as z4 } from "npm:zod@^4.4.3";
+
+// src/lib/mcp/platforms.ts
+var PLATFORM_IDS = [
+  "openai",
+  "anthropic",
+  "google",
+  "grok",
+  "deepseek",
+  "perplexity",
+  "mistral",
+  "qwen",
+  "nvidia"
+];
 var PLATFORM_TO_FN = {
   openai: "openai-chat",
   anthropic: "claude-chat",
@@ -195,36 +208,152 @@ var PLATFORM_TO_FN = {
   qwen: "qwen-chat",
   nvidia: "nvidia-chat"
 };
+var DEFAULT_MODELS = {
+  openai: "gpt-4o-mini",
+  anthropic: "claude-3-5-sonnet-20241022",
+  google: "gemini-2.0-flash",
+  grok: "grok-2-1212",
+  deepseek: "deepseek-chat",
+  perplexity: "sonar-pro",
+  mistral: "mistral-small-latest",
+  qwen: "qwen-plus",
+  nvidia: "nvidia/nemotron-3-nano-30b-a3b"
+};
+
+// src/lib/mcp/runtime.ts
+var ALL_TOOL_NAMES = [
+  "list_models",
+  "list_chats",
+  "get_chat",
+  "search_messages",
+  "ask_model",
+  "web_search",
+  "conductor_ask",
+  "conductor_route",
+  "conductor_compare",
+  "conductor_debate"
+];
+var DEFAULT_SETTINGS = {
+  enabledTools: [...ALL_TOOL_NAMES],
+  enabledPlatforms: [...PLATFORM_IDS],
+  defaultConductorPlatform: "openai",
+  defaultWebSearchModel: "sonar-pro"
+};
+async function loadMcpSettings(ctx) {
+  const supabase = supabaseForUser(ctx);
+  const { data } = await supabase.from("user_mcp_settings").select("enabled_tools, enabled_platforms, default_conductor_platform, default_web_search_model").eq("user_id", ctx.getUserId()).maybeSingle();
+  if (!data) return DEFAULT_SETTINGS;
+  const row = data;
+  return {
+    enabledTools: row.enabled_tools ?? [...ALL_TOOL_NAMES],
+    enabledPlatforms: row.enabled_platforms ?? [...PLATFORM_IDS],
+    defaultConductorPlatform: row.default_conductor_platform ?? "openai",
+    defaultWebSearchModel: row.default_web_search_model ?? "sonar-pro"
+  };
+}
+function errorResult(message) {
+  return { content: [{ type: "text", text: message }], isError: true };
+}
+function jsonResult(payload) {
+  return {
+    content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+    structuredContent: payload
+  };
+}
+async function guard(ctx, toolName) {
+  if (!ctx.isAuthenticated()) {
+    return { error: errorResult("Not authenticated"), settings: DEFAULT_SETTINGS };
+  }
+  const settings = await loadMcpSettings(ctx);
+  if (!settings.enabledTools.includes(toolName)) {
+    return {
+      error: errorResult(`Tool "${toolName}" is disabled in your MCP settings. Enable it at /mcp in RoboHeard.`),
+      settings
+    };
+  }
+  return { error: null, settings };
+}
+function assertPlatformAllowed(settings, platform) {
+  if (!settings.enabledPlatforms.includes(platform)) {
+    throw new Error(`Platform "${platform}" is disabled in your MCP settings.`);
+  }
+}
+async function ensureConversation(ctx, opts) {
+  if (opts.conversationId) return opts.conversationId;
+  const supabase = supabaseForUser(ctx);
+  const { data, error } = await supabase.from("conversations").insert({
+    user_id: ctx.getUserId(),
+    title: opts.title,
+    chat_mode: opts.chatMode,
+    conductor_platform: opts.conductorPlatform ?? null
+  }).select("id").single();
+  if (error || !data) throw new Error(`Failed to create conversation: ${error?.message}`);
+  return data.id;
+}
+async function saveMessage(ctx, conversationId, sender, content, platform) {
+  const supabase = supabaseForUser(ctx);
+  await supabase.from("messages").insert({
+    conversation_id: conversationId,
+    sender,
+    content,
+    platform: platform ?? null
+  });
+}
+async function loadHistory(ctx, conversationId) {
+  const supabase = supabaseForUser(ctx);
+  const { data } = await supabase.from("messages").select("sender, content").eq("conversation_id", conversationId).order("created_at", { ascending: true });
+  return (data ?? []).map((m) => ({
+    role: m.sender === "user" ? "user" : "assistant",
+    content: m.content
+  }));
+}
+
+// src/lib/mcp/tools/ask-model.ts
 var ask_model_default = defineTool5({
   name: "ask_model",
-  title: "Ask a model",
-  description: "Send a prompt to one of the app's AI providers and return its answer. Consumes the signed-in user's tokens. Use list_models to discover valid model ids.",
+  title: "Ask a single AI model",
+  description: "Send a prompt to ONE AI model through RoboHeard \u2014 fastest and cheapest path. Optionally enable advanced capabilities (think, search, deep_research, code_exec) and continue an existing conversation. Consumes the signed-in user's tokens and persists to chat history. Use list_models to discover valid model ids.",
   inputSchema: {
-    platform: z4.enum(["openai", "anthropic", "google", "grok", "deepseek", "perplexity", "mistral", "qwen", "nvidia"]).describe("Which provider to route the prompt to."),
+    platform: z4.enum(PLATFORM_IDS).describe("Which provider to route the prompt to."),
     prompt: z4.string().trim().min(1).describe("The user prompt to send."),
-    model: z4.string().trim().min(1).optional().describe("Optional explicit model id; the provider default is used otherwise."),
-    system: z4.string().trim().min(1).optional().describe("Optional system instruction.")
+    model: z4.string().trim().min(1).optional().describe("Optional explicit model id; the platform default is used otherwise."),
+    system: z4.string().trim().min(1).optional().describe("Optional system instruction."),
+    capabilities: z4.object({
+      think: z4.boolean().optional(),
+      search: z4.boolean().optional(),
+      deep_research: z4.boolean().optional(),
+      code_exec: z4.boolean().optional()
+    }).optional().describe("Advanced capabilities to enable for supported models."),
+    conversation_id: z4.string().uuid().optional().describe("Optional existing RoboHeard conversation to continue.")
   },
   annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
-  handler: async ({ platform, prompt, model, system }, ctx) => {
-    if (!ctx.isAuthenticated()) {
-      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    }
-    const messages = [
-      ...system ? [{ role: "system", content: system }] : [],
-      { role: "user", content: prompt }
-    ];
+  handler: async ({ platform, prompt, model, system, capabilities, conversation_id }, ctx) => {
+    const g = await guard(ctx, "ask_model");
+    if (g.error) return g.error;
     try {
+      assertPlatformAllowed(g.settings, platform);
+      const chosenModel = model ?? DEFAULT_MODELS[platform];
+      const conversationId = await ensureConversation(ctx, {
+        conversationId: conversation_id,
+        title: prompt.slice(0, 60),
+        chatMode: "free"
+      });
+      const history = conversation_id ? await loadHistory(ctx, conversationId) : [];
+      await saveMessage(ctx, conversationId, "user", prompt);
+      const messages = [
+        ...system ? [{ role: "system", content: system }] : [],
+        ...history,
+        { role: "user", content: prompt }
+      ];
       const content = await callChatFunction(ctx, PLATFORM_TO_FN[platform], {
         messages,
-        ...model ? { model } : {}
+        model: chosenModel,
+        ...capabilities ? { capabilities } : {}
       });
-      return { content: [{ type: "text", text: content }], structuredContent: { platform, model, content } };
+      await saveMessage(ctx, conversationId, "ai", content, platform);
+      return jsonResult({ platform, model: chosenModel, conversation_id: conversationId, content });
     } catch (e) {
-      return {
-        content: [{ type: "text", text: e instanceof Error ? e.message : String(e) }],
-        isError: true
-      };
+      return errorResult(e instanceof Error ? e.message : String(e));
     }
   }
 });

@@ -120,8 +120,8 @@
       },
       {
         "name": "ask_model",
-        "title": "Ask a model",
-        "description": "Send a prompt to one of the app's AI providers and return its answer. Consumes the signed-in user's tokens. Use list_models to discover valid model ids.",
+        "title": "Ask a single AI model",
+        "description": "Send a prompt to ONE AI model through RoboHeard — fastest and cheapest path. Optionally enable advanced capabilities (think, search, deep_research, code_exec) and continue an existing conversation. Consumes the signed-in user's tokens and persists to chat history. Use list_models to discover valid model ids.",
         "annotations": {
           "readOnlyHint": false,
           "destructiveHint": false,
@@ -152,7 +152,7 @@
               "description": "The user prompt to send."
             },
             "model": {
-              "description": "Optional explicit model id; the provider default is used otherwise.",
+              "description": "Optional explicit model id; the platform default is used otherwise.",
               "type": "string",
               "minLength": 1
             },
@@ -160,6 +160,30 @@
               "description": "Optional system instruction.",
               "type": "string",
               "minLength": 1
+            },
+            "capabilities": {
+              "description": "Advanced capabilities to enable for supported models.",
+              "type": "object",
+              "properties": {
+                "think": {
+                  "type": "boolean"
+                },
+                "search": {
+                  "type": "boolean"
+                },
+                "deep_research": {
+                  "type": "boolean"
+                },
+                "code_exec": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "conversation_id": {
+              "description": "Optional existing RoboHeard conversation to continue.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             }
           },
           "required": [
