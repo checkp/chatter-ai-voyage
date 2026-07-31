@@ -456,6 +456,8 @@ async function toolListModels(ctx: AuthCtx) {
     perplexity: { think: true,  search: true,  deep_research: true,  code_exec: false },
     mistral:    { think: false, search: false, deep_research: false, code_exec: false },
     qwen:       { think: false, search: false, deep_research: false, code_exec: false },
+    nvidia:     { think: true,  search: false, deep_research: false, code_exec: false },
+
   };
   return {
     platforms: PLATFORM_IDS.map((id) => ({
