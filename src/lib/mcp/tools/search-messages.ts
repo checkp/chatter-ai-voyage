@@ -1,6 +1,7 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { supabaseForUser } from "../supabase";
+import { guard } from "../runtime";
 
 export default defineTool({
   name: "search_messages",
@@ -12,9 +13,9 @@ export default defineTool({
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ query, limit }, ctx) => {
-    if (!ctx.isAuthenticated()) {
-      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    }
+    const g = await guard(ctx, "search_messages");
+    if (g.error) return g.error;
+
     const supabase = supabaseForUser(ctx);
     const { data, error } = await supabase
       .from("messages")

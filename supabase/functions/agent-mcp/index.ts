@@ -304,9 +304,8 @@ var search_messages_default = defineTool4({
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ query, limit }, ctx) => {
-    if (!ctx.isAuthenticated()) {
-      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    }
+    const g = await guard(ctx, "search_messages");
+    if (g.error) return g.error;
     const supabase = supabaseForUser(ctx);
     const { data, error } = await supabase.from("messages").select("id, conversation_id, sender, platform, content, created_at").ilike("content", `%${query.replace(/[%_]/g, "")}%`).order("created_at", { ascending: false }).limit(limit ?? 20);
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
