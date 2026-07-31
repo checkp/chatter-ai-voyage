@@ -28,7 +28,7 @@ export default defineTool({
   annotations: { readOnlyHint: true, openWorldHint: true },
   handler: async ({ query, recency, mode, domains, max_results, model }, ctx) => {
     const g = await guard(ctx, "web_search");
-    if (!g.ok) return g.result;
+    if (g.error) return g.error;
 
     const key = runtimeEnv("PERPLEXITY_API_KEY");
     if (!key) return errorResult("Web search unavailable: PERPLEXITY_API_KEY is not configured on the server.");
