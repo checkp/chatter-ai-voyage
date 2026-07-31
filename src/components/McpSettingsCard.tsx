@@ -9,13 +9,17 @@ import { Loader2 } from "lucide-react";
 
 const ALL_TOOLS: { id: string; label: string; desc: string }[] = [
   { id: "list_models", label: "list_models", desc: "Discover available models & capabilities" },
-  { id: "ask_model", label: "ask_model", desc: "Single-model prompt" },
+  { id: "ask_model", label: "ask_model", desc: "Single-model prompt (+ think/search capabilities)" },
   { id: "web_search", label: "web_search", desc: "Perplexity live search with citations" },
   { id: "conductor_ask", label: "conductor_ask", desc: "Multi-model orchestration + synthesis" },
   { id: "conductor_route", label: "conductor_route", desc: "Plan only (cheap preview)" },
   { id: "conductor_compare", label: "conductor_compare", desc: "Raw side-by-side perspectives" },
   { id: "conductor_debate", label: "conductor_debate", desc: "Multi-round critique loop" },
+  { id: "list_chats", label: "list_chats", desc: "List your recent conversations" },
+  { id: "get_chat", label: "get_chat", desc: "Read one conversation's messages" },
+  { id: "search_messages", label: "search_messages", desc: "Search across your chat history" },
 ];
+
 
 const ALL_PLATFORMS = ["openai", "anthropic", "google", "grok", "deepseek", "perplexity", "mistral", "qwen", "nvidia"] as const;
 const WEB_MODELS = ["sonar", "sonar-pro", "sonar-reasoning", "sonar-reasoning-pro"];
