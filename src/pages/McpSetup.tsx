@@ -15,6 +15,8 @@ import PageSeo from "@/components/PageSeo";
 
 
 const MCP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mcp`;
+const OAUTH_MCP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-mcp`;
+
 
 interface McpToken {
   id: string;
@@ -151,15 +153,27 @@ export default function McpSetup() {
 
         <Card className="p-5 space-y-3">
           <p className="text-sm text-muted-foreground">
-            Expose RoboHeard's Conductor, individual models, and Perplexity web search as tools inside
+            Expose RoboHeard's Conductor, individual models, live web search, and your chat history as tools inside
             Claude Code, Cursor, Codex, or any MCP-compatible coding agent. Every call runs as
             <span className="font-medium text-foreground"> {email || "you"}</span> and spends your RoboHeard tokens.
           </p>
-          <div className="grid gap-2 sm:grid-cols-2 text-sm">
-            <div><span className="text-muted-foreground">Endpoint</span><br /><code className="text-xs break-all">{MCP_URL}</code></div>
-            <div><span className="text-muted-foreground">Auth</span><br /><code className="text-xs">Bearer rh_&lt;token&gt;</code></div>
+          <div className="grid gap-3 sm:grid-cols-2 text-sm">
+            <div className="rounded-md border border-border p-3 space-y-1">
+              <div className="font-medium">Token endpoint (recommended for CLI agents)</div>
+              <code className="text-xs break-all block">{MCP_URL}</code>
+              <div className="text-xs text-muted-foreground">Auth: <code>Bearer rh_&lt;token&gt;</code> — create one below.</div>
+            </div>
+            <div className="rounded-md border border-border p-3 space-y-1">
+              <div className="font-medium">OAuth endpoint (one-click clients)</div>
+              <code className="text-xs break-all block">{OAUTH_MCP_URL}</code>
+              <div className="text-xs text-muted-foreground">Auth: OAuth 2.1 — you sign in and approve in the browser.</div>
+            </div>
           </div>
+          <p className="text-xs text-muted-foreground">
+            Both endpoints expose the same tool set and honour the MCP configuration below.
+          </p>
         </Card>
+
 
         <Card className="p-5 space-y-3">
           <div className="flex items-center justify-between">
@@ -223,12 +237,14 @@ export default function McpSetup() {
         <Card className="p-5 space-y-2">
           <h2 className="font-medium">Available tools</h2>
           <ul className="text-sm space-y-1 list-disc pl-5 text-muted-foreground">
-            <li><code className="text-foreground">list_models</code> — discover platforms &amp; capabilities</li>
-            <li><code className="text-foreground">ask_model</code> — one-shot query to a specific model</li>
+            <li><code className="text-foreground">list_models</code> — discover platforms, model ids &amp; capabilities</li>
+            <li><code className="text-foreground">ask_model</code> — one-shot query with optional think / search / deep_research / code_exec</li>
             <li><code className="text-foreground">web_search</code> — Perplexity live search with citations</li>
-            <li><code className="text-foreground">conductor_ask</code> / <code className="text-foreground">conductor_route</code> / <code className="text-foreground">conductor_compare</code> / <code className="text-foreground">conductor_debate</code> — multi-model orchestration</li>
+            <li><code className="text-foreground">conductor_route</code> / <code className="text-foreground">conductor_compare</code> / <code className="text-foreground">conductor_ask</code> / <code className="text-foreground">conductor_debate</code> — multi-model orchestration</li>
+            <li><code className="text-foreground">list_chats</code> / <code className="text-foreground">get_chat</code> / <code className="text-foreground">search_messages</code> — read your RoboHeard history</li>
           </ul>
           <p className="text-xs text-muted-foreground pt-2">Chats created by these tools appear in your RoboHeard sidebar.</p>
+
         </Card>
 
         <McpSettingsCard />

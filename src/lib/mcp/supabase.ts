@@ -6,10 +6,11 @@ type RuntimeGlobals = typeof globalThis & {
   process?: { env?: Record<string, string | undefined> };
 };
 
-function runtimeEnv(name: string): string | undefined {
+export function runtimeEnv(name: string): string | undefined {
   const runtime = globalThis as RuntimeGlobals;
   return runtime.Deno?.env?.get?.(name) ?? runtime.process?.env?.[name];
 }
+
 
 function configuredEnv(names: readonly string[]): string | undefined {
   for (const name of names) {

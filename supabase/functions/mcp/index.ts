@@ -121,6 +121,48 @@ const TOOLS = [
     },
     annotations: { readOnlyHint: true, openWorldHint: true },
   },
+  // ─── Chat history (mirrors the OAuth /agent-mcp server) ──────────────────
+  {
+    name: "list_chats",
+    title: "List chats",
+    description: "List the user's most recent RoboHeard conversations, newest first.",
+    inputSchema: {
+      type: "object",
+      properties: { limit: { type: "number", description: "How many conversations to return (default 20, max 50)." } },
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true, openWorldHint: false },
+  },
+  {
+    name: "get_chat",
+    title: "Get chat messages",
+    description: "Read the messages of one of the user's conversations, including which AI platform produced each reply.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        chat_id: { type: "string", description: "Conversation UUID, as returned by list_chats." },
+        limit: { type: "number", description: "How many messages to return (default 50, newest last)." },
+      },
+      required: ["chat_id"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true, openWorldHint: false },
+  },
+  {
+    name: "search_messages",
+    title: "Search messages",
+    description: "Search across the user's RoboHeard chat messages, newest first.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Text to look for inside message content." },
+        limit: { type: "number", description: "How many matches to return (default 20, max 50)." },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true, openWorldHint: false },
+  },
 
 
   // ─── Conductor family ────────────────────────────────────────────────────
@@ -414,6 +456,8 @@ async function toolListModels(ctx: AuthCtx) {
     perplexity: { think: true,  search: true,  deep_research: true,  code_exec: false },
     mistral:    { think: false, search: false, deep_research: false, code_exec: false },
     qwen:       { think: false, search: false, deep_research: false, code_exec: false },
+    nvidia:     { think: true,  search: false, deep_research: false, code_exec: false },
+
   };
   return {
     platforms: PLATFORM_IDS.map((id) => ({
@@ -448,6 +492,61 @@ async function toolAskModel(ctx: AuthCtx, args: Record<string, unknown>) {
   await saveMessage(ctx, conversationId, "ai", content, platform);
   return { platform, model, conversation_id: conversationId, content };
 }
+
+async function toolListChats(ctx: AuthCtx, args: Record<string, unknown>) {
+  const limit = Math.min(50, Math.max(1, Number(args.limit ?? 20)));
+  const { data, error } = await ctx.supabase
+    .from("conversations")
+    .select("id, title, chat_mode, conductor_platform, updated_at, created_at")
+    .eq("user_id", ctx.userId)
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(error.message);
+  return { chats: data ?? [] };
+}
+
+async function toolGetChat(ctx: AuthCtx, args: Record<string, unknown>) {
+  const chatId = String(args.chat_id ?? "");
+  if (!chatId) throw new Error("chat_id is required");
+  const limit = Math.min(200, Math.max(1, Number(args.limit ?? 50)));
+  const { data: convo } = await ctx.supabase
+    .from("conversations")
+    .select("id")
+    .eq("id", chatId)
+    .eq("user_id", ctx.userId)
+    .maybeSingle();
+  if (!convo) throw new Error("Conversation not found");
+  const { data, error } = await ctx.supabase
+    .from("messages")
+    .select("id, sender, platform, content, created_at")
+    .eq("conversation_id", chatId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(error.message);
+  return { conversation_id: chatId, messages: (data ?? []).slice().reverse() };
+}
+
+async function toolSearchMessages(ctx: AuthCtx, args: Record<string, unknown>) {
+  const query = String(args.query ?? "").trim();
+  if (query.length < 2) throw new Error("query must be at least 2 characters");
+  const limit = Math.min(50, Math.max(1, Number(args.limit ?? 20)));
+  const { data: convos } = await ctx.supabase
+    .from("conversations")
+    .select("id")
+    .eq("user_id", ctx.userId);
+  const ids = ((convos ?? []) as Array<{ id: string }>).map((c) => c.id);
+  if (ids.length === 0) return { matches: [] };
+  const { data, error } = await ctx.supabase
+    .from("messages")
+    .select("id, conversation_id, sender, platform, content, created_at")
+    .in("conversation_id", ids)
+    .ilike("content", `%${query.replace(/[%_]/g, "")}%`)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(error.message);
+  return { matches: data ?? [] };
+}
+
 
 const PERPLEXITY_KEY = Deno.env.get("PERPLEXITY_API_KEY");
 
@@ -748,6 +847,10 @@ async function handleRpc(rpc: JsonRpcRequest, ctx: AuthCtx | null): Promise<Reco
       let out: unknown;
       switch (name) {
         case "list_models":        out = await toolListModels(ctx); break;
+        case "list_chats":         out = await toolListChats(ctx, args); break;
+        case "get_chat":           out = await toolGetChat(ctx, args); break;
+        case "search_messages":    out = await toolSearchMessages(ctx, args); break;
+
         case "ask_model":          out = await toolAskModel(ctx, args); break;
         case "web_search":         out = await toolWebSearch(ctx, args); break;
         case "conductor_ask":
