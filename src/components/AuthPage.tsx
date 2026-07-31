@@ -97,7 +97,7 @@ const AuthPage = () => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        window.location.href = '/';
+        window.location.href = nextPath;
       }
     };
     checkAuth();
