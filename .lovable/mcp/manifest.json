@@ -1,0 +1,174 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/functions/v1/agent-mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://vczxurigjttwxwilosjz.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "chatter-ai-voyage",
+      "version": "0.1.0",
+      "title": "chatter-ai-voyage"
+    },
+    "tools": [
+      {
+        "name": "list_models",
+        "title": "List models",
+        "description": "List the AI models available in this app, grouped by provider (OpenAI, Anthropic, Google, xAI, DeepSeek, Mistral, Perplexity, Qwen, NVIDIA), with their token cost tier.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_chats",
+        "title": "List chats",
+        "description": "List the signed-in user's most recent conversations, newest first.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "description": "How many conversations to return (default 20).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_chat",
+        "title": "Get chat messages",
+        "description": "Read the messages of one of the signed-in user's conversations, including which AI platform produced each reply.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "chat_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "The conversation id, as returned by list_chats."
+            },
+            "limit": {
+              "description": "How many messages to return (default 50, newest last).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          },
+          "required": [
+            "chat_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "search_messages",
+        "title": "Search messages",
+        "description": "Full-text-ish search across the signed-in user's chat messages, newest first.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "minLength": 2,
+              "description": "Text to look for inside message content."
+            },
+            "limit": {
+              "description": "How many matches to return (default 20).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          },
+          "required": [
+            "query"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "ask_model",
+        "title": "Ask a model",
+        "description": "Send a prompt to one of the app's AI providers and return its answer. Consumes the signed-in user's tokens. Use list_models to discover valid model ids.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": true
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "platform": {
+              "type": "string",
+              "enum": [
+                "openai",
+                "anthropic",
+                "google",
+                "grok",
+                "deepseek",
+                "perplexity",
+                "mistral",
+                "qwen",
+                "nvidia"
+              ],
+              "description": "Which provider to route the prompt to."
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The user prompt to send."
+            },
+            "model": {
+              "description": "Optional explicit model id; the provider default is used otherwise.",
+              "type": "string",
+              "minLength": 1
+            },
+            "system": {
+              "description": "Optional system instruction.",
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "platform",
+            "prompt"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

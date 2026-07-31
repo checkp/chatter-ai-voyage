@@ -101,7 +101,7 @@ var list_models_default = defineTool({
 
 // src/lib/mcp/tools/list-chats.ts
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.26.1";
-import { z } from "npm:zod@^3.23.8";
+import { z } from "npm:zod@^4.4.3";
 var list_chats_default = defineTool2({
   name: "list_chats",
   title: "List chats",
@@ -125,7 +125,7 @@ var list_chats_default = defineTool2({
 
 // src/lib/mcp/tools/get-chat.ts
 import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.26.1";
-import { z as z2 } from "npm:zod@^3.23.8";
+import { z as z2 } from "npm:zod@^4.4.3";
 var get_chat_default = defineTool3({
   name: "get_chat",
   title: "Get chat messages",
@@ -156,7 +156,7 @@ var get_chat_default = defineTool3({
 
 // src/lib/mcp/tools/search-messages.ts
 import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.26.1";
-import { z as z3 } from "npm:zod@^3.23.8";
+import { z as z3 } from "npm:zod@^4.4.3";
 var search_messages_default = defineTool4({
   name: "search_messages",
   title: "Search messages",
@@ -183,7 +183,7 @@ var search_messages_default = defineTool4({
 
 // src/lib/mcp/tools/ask-model.ts
 import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.26.1";
-import { z as z4 } from "npm:zod@^3.23.8";
+import { z as z4 } from "npm:zod@^4.4.3";
 var PLATFORM_TO_FN = {
   openai: "openai-chat",
   anthropic: "claude-chat",
