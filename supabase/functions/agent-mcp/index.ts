@@ -74,117 +74,6 @@ async function callChatFunction(ctx, fn, body) {
   return json.content;
 }
 
-// src/lib/mcp/tools/list-models.ts
-var list_models_default = defineTool({
-  name: "list_models",
-  title: "List models",
-  description: "List the AI models available in this app, grouped by provider (OpenAI, Anthropic, Google, xAI, DeepSeek, Mistral, Perplexity, Qwen, NVIDIA), with their token cost tier.",
-  inputSchema: {},
-  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async (_input, ctx) => {
-    if (!ctx.isAuthenticated()) {
-      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    }
-    const supabase = supabaseForUser(ctx);
-    const { data, error } = await supabase.from("model_pricing").select("platform, model_id, cost_tier, tokens_per_message").order("platform", { ascending: true }).order("model_id", { ascending: true });
-    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
-    const models = data ?? [];
-    const lines = models.map(
-      (m) => `${m.platform} \xB7 ${m.model_id} (${m.cost_tier}, ~${m.tokens_per_message} tokens/message)`
-    );
-    return {
-      content: [{ type: "text", text: lines.join("\n") || "No models configured." }],
-      structuredContent: { models }
-    };
-  }
-});
-
-// src/lib/mcp/tools/list-chats.ts
-import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.26.1";
-import { z } from "npm:zod@^4.4.3";
-var list_chats_default = defineTool2({
-  name: "list_chats",
-  title: "List chats",
-  description: "List the signed-in user's most recent conversations, newest first.",
-  inputSchema: {
-    limit: z.number().int().min(1).max(50).optional().describe("How many conversations to return (default 20).")
-  },
-  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ limit }, ctx) => {
-    if (!ctx.isAuthenticated()) {
-      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    }
-    const supabase = supabaseForUser(ctx);
-    const { data, error } = await supabase.from("conversations").select("id, title, chat_mode, conductor_platform, updated_at, created_at").order("updated_at", { ascending: false }).limit(limit ?? 20);
-    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
-    const chats = data ?? [];
-    const text = chats.length ? chats.map((c) => `${c.id} \xB7 ${c.title} [${c.chat_mode}] updated ${c.updated_at}`).join("\n") : "No conversations yet.";
-    return { content: [{ type: "text", text }], structuredContent: { chats } };
-  }
-});
-
-// src/lib/mcp/tools/get-chat.ts
-import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.26.1";
-import { z as z2 } from "npm:zod@^4.4.3";
-var get_chat_default = defineTool3({
-  name: "get_chat",
-  title: "Get chat messages",
-  description: "Read the messages of one of the signed-in user's conversations, including which AI platform produced each reply.",
-  inputSchema: {
-    chat_id: z2.string().uuid().describe("The conversation id, as returned by list_chats."),
-    limit: z2.number().int().min(1).max(200).optional().describe("How many messages to return (default 50, newest last).")
-  },
-  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ chat_id, limit }, ctx) => {
-    if (!ctx.isAuthenticated()) {
-      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    }
-    const supabase = supabaseForUser(ctx);
-    const { data, error } = await supabase.from("messages").select("id, sender, platform, content, created_at").eq("conversation_id", chat_id).order("created_at", { ascending: false }).limit(limit ?? 50);
-    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
-    const messages = (data ?? []).slice().reverse();
-    if (messages.length === 0) {
-      return {
-        content: [{ type: "text", text: "No messages found for that conversation (or it isn't yours)." }],
-        structuredContent: { messages: [] }
-      };
-    }
-    const text = messages.map((m) => `[${m.sender}${m.platform ? `/${m.platform}` : ""}] ${m.content}`).join("\n\n");
-    return { content: [{ type: "text", text }], structuredContent: { messages } };
-  }
-});
-
-// src/lib/mcp/tools/search-messages.ts
-import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.26.1";
-import { z as z3 } from "npm:zod@^4.4.3";
-var search_messages_default = defineTool4({
-  name: "search_messages",
-  title: "Search messages",
-  description: "Full-text-ish search across the signed-in user's chat messages, newest first.",
-  inputSchema: {
-    query: z3.string().trim().min(2).describe("Text to look for inside message content."),
-    limit: z3.number().int().min(1).max(50).optional().describe("How many matches to return (default 20).")
-  },
-  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ query, limit }, ctx) => {
-    if (!ctx.isAuthenticated()) {
-      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    }
-    const supabase = supabaseForUser(ctx);
-    const { data, error } = await supabase.from("messages").select("id, conversation_id, sender, platform, content, created_at").ilike("content", `%${query.replace(/[%_]/g, "")}%`).order("created_at", { ascending: false }).limit(limit ?? 20);
-    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
-    const matches = data ?? [];
-    const text = matches.length ? matches.map(
-      (m) => `${m.conversation_id} \xB7 [${m.sender}${m.platform ? `/${m.platform}` : ""}] ${m.content.slice(0, 300)}`
-    ).join("\n\n") : `No messages matching "${query}".`;
-    return { content: [{ type: "text", text }], structuredContent: { matches } };
-  }
-});
-
-// src/lib/mcp/tools/ask-model.ts
-import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.26.1";
-import { z as z4 } from "npm:zod@^4.4.3";
-
 // src/lib/mcp/platforms.ts
 var PLATFORM_IDS = [
   "openai",
@@ -218,6 +107,17 @@ var DEFAULT_MODELS = {
   mistral: "mistral-small-latest",
   qwen: "qwen-plus",
   nvidia: "nvidia/nemotron-3-nano-30b-a3b"
+};
+var CAPABILITY_MATRIX = {
+  openai: { think: true, search: true, deep_research: true, code_exec: true },
+  anthropic: { think: true, search: true, deep_research: true, code_exec: true },
+  google: { think: true, search: true, deep_research: true, code_exec: true },
+  grok: { think: true, search: true, deep_research: true, code_exec: false },
+  deepseek: { think: true, search: false, deep_research: true, code_exec: false },
+  perplexity: { think: true, search: true, deep_research: true, code_exec: false },
+  mistral: { think: false, search: false, deep_research: false, code_exec: false },
+  qwen: { think: false, search: false, deep_research: false, code_exec: false },
+  nvidia: { think: true, search: false, deep_research: false, code_exec: false }
 };
 
 // src/lib/mcp/runtime.ts
@@ -308,7 +208,121 @@ async function loadHistory(ctx, conversationId) {
   }));
 }
 
+// src/lib/mcp/tools/list-models.ts
+var list_models_default = defineTool({
+  name: "list_models",
+  title: "List available models",
+  description: "List RoboHeard's AI platforms (OpenAI, Anthropic, Google, xAI, DeepSeek, Mistral, Perplexity, Qwen, NVIDIA), their model ids and cost tiers, and which advanced capabilities (think, search, deep_research, code_exec) each supports. Call first to discover what to route to.",
+  inputSchema: {},
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async (_input, ctx) => {
+    const g = await guard(ctx, "list_models");
+    if (g.error) return g.error;
+    const supabase = supabaseForUser(ctx);
+    const { data, error } = await supabase.from("model_pricing").select("platform, model_id, cost_tier, tokens_per_message").order("platform", { ascending: true }).order("model_id", { ascending: true });
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    const rows = data ?? [];
+    const byPlatform = {};
+    for (const row of rows) (byPlatform[row.platform] ??= []).push(row);
+    const platforms = PLATFORM_IDS.filter((id) => g.settings.enabledPlatforms.includes(id)).map((id) => ({
+      id,
+      default_model: DEFAULT_MODELS[id],
+      capabilities: CAPABILITY_MATRIX[id],
+      models: (byPlatform[id] ?? []).map((m) => ({
+        model_id: m.model_id,
+        cost_tier: m.cost_tier,
+        tokens_per_message: m.tokens_per_message
+      }))
+    }));
+    return jsonResult({ platforms, enabled_tools: g.settings.enabledTools });
+  }
+});
+
+// src/lib/mcp/tools/list-chats.ts
+import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.26.1";
+import { z } from "npm:zod@^4.4.3";
+var list_chats_default = defineTool2({
+  name: "list_chats",
+  title: "List chats",
+  description: "List the signed-in user's most recent conversations, newest first.",
+  inputSchema: {
+    limit: z.number().int().min(1).max(50).optional().describe("How many conversations to return (default 20).")
+  },
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ limit }, ctx) => {
+    if (!ctx.isAuthenticated()) {
+      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    }
+    const supabase = supabaseForUser(ctx);
+    const { data, error } = await supabase.from("conversations").select("id, title, chat_mode, conductor_platform, updated_at, created_at").order("updated_at", { ascending: false }).limit(limit ?? 20);
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    const chats = data ?? [];
+    const text = chats.length ? chats.map((c) => `${c.id} \xB7 ${c.title} [${c.chat_mode}] updated ${c.updated_at}`).join("\n") : "No conversations yet.";
+    return { content: [{ type: "text", text }], structuredContent: { chats } };
+  }
+});
+
+// src/lib/mcp/tools/get-chat.ts
+import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.26.1";
+import { z as z2 } from "npm:zod@^4.4.3";
+var get_chat_default = defineTool3({
+  name: "get_chat",
+  title: "Get chat messages",
+  description: "Read the messages of one of the signed-in user's conversations, including which AI platform produced each reply.",
+  inputSchema: {
+    chat_id: z2.string().uuid().describe("The conversation id, as returned by list_chats."),
+    limit: z2.number().int().min(1).max(200).optional().describe("How many messages to return (default 50, newest last).")
+  },
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ chat_id, limit }, ctx) => {
+    if (!ctx.isAuthenticated()) {
+      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    }
+    const supabase = supabaseForUser(ctx);
+    const { data, error } = await supabase.from("messages").select("id, sender, platform, content, created_at").eq("conversation_id", chat_id).order("created_at", { ascending: false }).limit(limit ?? 50);
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    const messages = (data ?? []).slice().reverse();
+    if (messages.length === 0) {
+      return {
+        content: [{ type: "text", text: "No messages found for that conversation (or it isn't yours)." }],
+        structuredContent: { messages: [] }
+      };
+    }
+    const text = messages.map((m) => `[${m.sender}${m.platform ? `/${m.platform}` : ""}] ${m.content}`).join("\n\n");
+    return { content: [{ type: "text", text }], structuredContent: { messages } };
+  }
+});
+
+// src/lib/mcp/tools/search-messages.ts
+import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.26.1";
+import { z as z3 } from "npm:zod@^4.4.3";
+var search_messages_default = defineTool4({
+  name: "search_messages",
+  title: "Search messages",
+  description: "Full-text-ish search across the signed-in user's chat messages, newest first.",
+  inputSchema: {
+    query: z3.string().trim().min(2).describe("Text to look for inside message content."),
+    limit: z3.number().int().min(1).max(50).optional().describe("How many matches to return (default 20).")
+  },
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ query, limit }, ctx) => {
+    if (!ctx.isAuthenticated()) {
+      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    }
+    const supabase = supabaseForUser(ctx);
+    const { data, error } = await supabase.from("messages").select("id, conversation_id, sender, platform, content, created_at").ilike("content", `%${query.replace(/[%_]/g, "")}%`).order("created_at", { ascending: false }).limit(limit ?? 20);
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    const matches = data ?? [];
+    const text = matches.length ? matches.map(
+      (m) => `${m.conversation_id} \xB7 [${m.sender}${m.platform ? `/${m.platform}` : ""}] ${m.content.slice(0, 300)}`
+    ).join("\n\n") : `No messages matching "${query}".`;
+    return { content: [{ type: "text", text }], structuredContent: { matches } };
+  }
+});
+
 // src/lib/mcp/tools/ask-model.ts
+import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.26.1";
+import { z as z4 } from "npm:zod@^4.4.3";
 var ask_model_default = defineTool5({
   name: "ask_model",
   title: "Ask a single AI model",

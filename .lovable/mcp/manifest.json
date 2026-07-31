@@ -18,8 +18,8 @@
     "tools": [
       {
         "name": "list_models",
-        "title": "List models",
-        "description": "List the AI models available in this app, grouped by provider (OpenAI, Anthropic, Google, xAI, DeepSeek, Mistral, Perplexity, Qwen, NVIDIA), with their token cost tier.",
+        "title": "List available models",
+        "description": "List RoboHeard's AI platforms (OpenAI, Anthropic, Google, xAI, DeepSeek, Mistral, Perplexity, Qwen, NVIDIA), their model ids and cost tiers, and which advanced capabilities (think, search, deep_research, code_exec) each supports. Call first to discover what to route to.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
