@@ -119,12 +119,28 @@ export default function McpSetup() {
 
   const displayToken = freshToken ?? "<PASTE_TOKEN>";
   const cursorConfig = JSON.stringify({
-    mcpServers: { roboheard: { url: MCP_URL, headers: { Authorization: `Bearer ${displayToken}` } } },
+    mcpServers: {
+      roboheard: {
+        type: "http",
+        url: MCP_URL,
+        headers: { Authorization: `Bearer ${displayToken}` },
+      },
+    },
   }, null, 2);
-  const claudeConfig = JSON.stringify({
-    mcpServers: { roboheard: { type: "http", url: MCP_URL, headers: { Authorization: `Bearer ${displayToken}` } } },
-  }, null, 2);
+  const claudeConfig = cursorConfig;
   const claudeCli = `claude mcp add --transport http roboheard ${MCP_URL} \\\n  --header "Authorization: Bearer ${displayToken}"`;
+  const claudeOauthCli = `claude mcp add --transport http roboheard-oauth ${OAUTH_MCP_URL}\n# then run /mcp inside Claude Code and pick "roboheard-oauth" to sign in`;
+  const codexConfig = `# ~/.codex/config.toml\n[mcp_servers.roboheard]\nurl = "${MCP_URL}"\n\n[mcp_servers.roboheard.http_headers]\nAuthorization = "Bearer ${displayToken}"`;
+  const vscodeConfig = JSON.stringify({
+    servers: {
+      roboheard: {
+        type: "http",
+        url: MCP_URL,
+        headers: { Authorization: `Bearer ${displayToken}` },
+      },
+    },
+  }, null, 2);
+
 
 
   const expiryLabel = (t: McpToken) => {
