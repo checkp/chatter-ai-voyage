@@ -273,32 +273,93 @@ serve(async (req) => {
 
       /* ---------------- sync (notebook tree) ---------------- */
       case "sync": {
+        const force = body.force === true;
         const token = await getUserToken(admin, userId);
-        const docs = await listDocuments(token);
+        const now = new Date().toISOString();
+
+        const { data: conn } = await admin
+          .from("remarkable_connections")
+          .select("root_hash")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        const { rootHash, entries } = await readRoot(token);
+
+        // Nothing at all changed on the tablet — one root request and we're done.
+        if (!force && conn?.root_hash && conn.root_hash === rootHash) {
+          const { count } = await admin
+            .from("remarkable_notes")
+            .select("doc_id", { count: "exact", head: true })
+            .eq("user_id", userId);
+          await admin
+            .from("remarkable_connections")
+            .update({ last_sync_at: now })
+            .eq("user_id", userId);
+          return json({ count: count ?? 0, changed: 0, removed: 0, unchanged: count ?? 0, up_to_date: true });
+        }
+
+        // Compare per-document hashes against the cache and only walk what moved.
+        const { data: cached } = await admin
+          .from("remarkable_notes")
+          .select("doc_id, doc_hash")
+          .eq("user_id", userId);
+        const cachedHashes = new Map<string, string | null>(
+          (cached ?? []).map((r: any) => [r.doc_id, r.doc_hash]),
+        );
+
+        const changedEntries = force
+          ? entries
+          : entries.filter((e) => cachedHashes.get(e.id) !== e.hash);
+
+        const docs = await fetchDocs(changedEntries, token);
 
         if (docs.length) {
-          const rows = docs.map((d) => ({ ...d, user_id: userId, synced_at: new Date().toISOString() }));
+          const rows = docs.map((d) => ({
+            ...d,
+            user_id: userId,
+            synced_at: now,
+            // Content moved on the tablet, so any cached PDF/transcription is behind.
+            stale: cachedHashes.has(d.doc_id),
+          }));
           const { error } = await admin
             .from("remarkable_notes")
             .upsert(rows, { onConflict: "user_id,doc_id" });
           if (error) throw new Error(error.message);
+        }
 
-          // Drop rows that no longer exist on the tablet.
-          const ids = docs.map((d) => d.doc_id);
+        // Drop rows that no longer exist on the tablet.
+        const liveIds = new Set(entries.map((e) => e.id));
+        const goneIds = [...cachedHashes.keys()].filter((id) => !liveIds.has(id));
+        if (goneIds.length) {
+          const { data: gone } = await admin
+            .from("remarkable_notes")
+            .select("pdf_path")
+            .eq("user_id", userId)
+            .in("doc_id", goneIds)
+            .not("pdf_path", "is", null);
+          const paths = (gone ?? []).map((n: any) => n.pdf_path).filter(Boolean);
+          if (paths.length) await admin.storage.from(BUCKET).remove(paths);
           await admin
             .from("remarkable_notes")
             .delete()
             .eq("user_id", userId)
-            .not("doc_id", "in", `(${ids.map((i) => `"${i}"`).join(",")})`);
+            .in("doc_id", goneIds);
         }
 
         await admin
           .from("remarkable_connections")
-          .update({ last_sync_at: new Date().toISOString() })
+          .update({ last_sync_at: now, root_hash: rootHash })
           .eq("user_id", userId);
 
-        return json({ count: docs.length });
+        return json({
+          count: entries.length,
+          changed: docs.length,
+          removed: goneIds.length,
+          unchanged: entries.length - changedEntries.length,
+          up_to_date: docs.length === 0 && goneIds.length === 0,
+        });
       }
+
 
       /* ---------------- fetch one document as PDF ---------------- */
       case "fetch_pdf": {
