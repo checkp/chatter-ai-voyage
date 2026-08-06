@@ -30,7 +30,7 @@ const ChatModeControls: React.FC<ChatModeControlsProps> = ({
   };
 
   const getNextMode = (current: ChatMode): ChatMode => {
-    const modes: ChatMode[] = ['discussion', 'side-by-side', 'conductor'];
+    const modes: ChatMode[] = ['discussion', 'side-by-side', 'conductor', 'build'];
     const currentIndex = modes.indexOf(current);
     return modes[(currentIndex + 1) % modes.length];
   };
