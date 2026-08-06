@@ -17,8 +17,8 @@ type StreamHandler = (chunk: { stream: 'stdout' | 'stderr' | 'system'; text: str
 
 const WORKER_SOURCE = `
 const CDN = ${JSON.stringify(PYODIDE_CDN)};
-importScripts(CDN + 'pyodide.js');
 
+let loadPyodide = null;
 let pyodide = null;
 let booting = null;
 
@@ -47,6 +47,7 @@ async function boot() {
   if (booting) return booting;
   booting = (async () => {
     send({ type: 'stream', stream: 'system', text: 'Loading CPython (Pyodide)…' });
+    if (!loadPyodide) ({ loadPyodide } = await import(CDN + 'pyodide.mjs'));
     pyodide = await loadPyodide({ indexURL: CDN });
     pyodide.setStdout({ batched: (text) => send({ type: 'stream', stream: 'stdout', text }) });
     pyodide.setStderr({ batched: (text) => send({ type: 'stream', stream: 'stderr', text }) });
@@ -134,7 +135,7 @@ export class PyodideRunner {
   private ensure() {
     if (this.worker) return this.worker;
     this.blobUrl = URL.createObjectURL(new Blob([WORKER_SOURCE], { type: 'text/javascript' }));
-    const worker = new Worker(this.blobUrl);
+    const worker = new Worker(this.blobUrl, { type: 'module' });
     worker.onmessage = (event: MessageEvent) => {
       const data = event.data || {};
       if (data.type === 'stream') {
