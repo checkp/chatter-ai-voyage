@@ -34,13 +34,14 @@ export const featureCategories: FeatureCategory[] = [
   },
   {
     id: "modes",
-    name: "Four Chat Modes",
-    blurb: "Match the interaction pattern to your task — collaboration, comparison, or solo focus.",
+    name: "Five Chat Modes",
+    blurb: "Match the interaction pattern to your task — collaboration, comparison, solo focus, or building.",
     features: [
       { title: "Conductor Mode", tag: "Flagship", description: "A meta-agent plans the work, delegates to specialists, mediates disagreements, and returns a synthesised answer." },
       { title: "Discussion Mode", description: "All enabled agents see each other's messages and build on one another — a roundtable conversation." },
       { title: "Isolated Mode", description: "Each agent answers independently. Ideal for honest, unbiased comparison of replies." },
-      { title: "Side-by-Side Mode", description: "Dedicated columns per agent for quick visual scanning of parallel responses." }
+      { title: "Side-by-Side Mode", description: "Dedicated columns per agent for quick visual scanning of parallel responses." },
+      { title: "Build Mode", tag: "New", description: "Split chat and live artifact: you and the agents iterate on one self-contained web app, each round rewriting the HTML with instant preview, version history, code editing, and download." }
     ]
   },
   {

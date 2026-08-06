@@ -35,14 +35,15 @@ Every flagship LLM, in one calm workspace — pick one, compare a few, run all e
 - **Alibaba Qwen** — Qwen Max, Plus, Turbo and Qwen3-Max via DashScope — strong multilingual reasoning.
 - **Local Models** — Add any model running in LM Studio or Ollama as a Local agent — private, offline-capable, and a flat 1 token per message.
 
-### Four Chat Modes
+### Five Chat Modes
 
-Match the interaction pattern to your task — collaboration, comparison, or solo focus.
+Match the interaction pattern to your task — collaboration, comparison, solo focus, or building.
 
 - **Conductor Mode** — A meta-agent plans the work, delegates to specialists, mediates disagreements, and returns a synthesised answer.
 - **Discussion Mode** — All enabled agents see each other's messages and build on one another — a roundtable conversation.
 - **Isolated Mode** — Each agent answers independently. Ideal for honest, unbiased comparison of replies.
 - **Side-by-Side Mode** — Dedicated columns per agent for quick visual scanning of parallel responses.
+- **Build Mode** — Split chat and live artifact: you and the agents iterate on one self-contained web app, each round rewriting the HTML with instant preview, version history, code editing, and download.
 
 ### Agentic Orchestration
 
@@ -131,6 +132,19 @@ Production posture: strict RLS, encrypted secrets, retried calls.
 ### August 2026
 
 <details open>
+<summary><strong>v2.12.0</strong> · Build Mode — Chat Plus a Live App Artifact <sub>August 6, 2026 · ✨ Feature</sub></summary>
+
+> A new split view where you and the agents build a small web app together. Left side is the conversation, right side is the running app. Every round rewrites the artifact, so you can watch it evolve, roll back, edit the code by hand, or download it.
+
+  - ✨ Feature 🔨 Build mode — resizable split layout: chat on the left, live sandboxed preview of the app on the right
+  - ✨ Feature 🔁 Relay building — every enabled agent takes a turn in order, each one iterating on the previous agent's version; or pick a single agent to do the work
+  - ✨ Feature 🕓 Version history — each round is saved as a revision you can jump back to, with the author of every version
+  - ✨ Feature ✏️ Code tab — edit the HTML by hand and save it as a new revision; download the app or open it in a new tab
+  - 🔧 Improvement 📱 Mobile-width preview toggle and one-click reload for the artifact frame
+
+</details>
+
+<details>
 <summary><strong>v2.11.0</strong> · reMarkable Tablet Integration <sub>August 6, 2026 · ✨ Feature</sub></summary>
 
 > Pair your reMarkable tablet with a single one-time code, browse your notebooks and folders, pull any notebook down as a rendered PDF, transcribe the handwriting with AI, and send the result into a chat as context for every agent.

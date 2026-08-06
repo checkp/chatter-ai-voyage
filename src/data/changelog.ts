@@ -12,6 +12,20 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.12.0",
+    date: "2026-08-06",
+    title: "Build Mode — Chat Plus a Live App Artifact",
+    description: "A new split view where you and the agents build a small web app together. Left side is the conversation, right side is the running app. Every round rewrites the artifact, so you can watch it evolve, roll back, edit the code by hand, or download it.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "🔨 Build mode — resizable split layout: chat on the left, live sandboxed preview of the app on the right" },
+      { type: "feature", description: "🔁 Relay building — every enabled agent takes a turn in order, each one iterating on the previous agent's version; or pick a single agent to do the work" },
+      { type: "feature", description: "🕓 Version history — each round is saved as a revision you can jump back to, with the author of every version" },
+      { type: "feature", description: "✏️ Code tab — edit the HTML by hand and save it as a new revision; download the app or open it in a new tab" },
+      { type: "improvement", description: "📱 Mobile-width preview toggle and one-click reload for the artifact frame" }
+    ]
+  },
+  {
     version: "2.11.0",
     date: "2026-08-06",
     title: "reMarkable Tablet Integration",

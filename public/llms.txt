@@ -16,12 +16,12 @@ RoboHeard lets you chat with eight frontier AI models at once, orchestrate them 
 
 ## Latest release
 
-- v2.11.0 (2026-08-06) — reMarkable Tablet Integration: Pair your reMarkable tablet with a single one-time code, browse your notebooks and folders, pull any notebook down as a rendered PDF, transcribe the handwriting with AI, and send the result into a chat as context for every agent.
+- v2.12.0 (2026-08-06) — Build Mode — Chat Plus a Live App Artifact: A new split view where you and the agents build a small web app together. Left side is the conversation, right side is the running app. Every round rewrites the artifact, so you can watch it evolve, roll back, edit the code by hand, or download it.
 
 ## Feature categories
 
 - Eight Frontier Models — Plus Yours: Every flagship LLM, in one calm workspace — pick one, compare a few, run all eight in parallel, or bring your own local model.
-- Four Chat Modes: Match the interaction pattern to your task — collaboration, comparison, or solo focus.
+- Five Chat Modes: Match the interaction pattern to your task — collaboration, comparison, solo focus, or building.
 - Agentic Orchestration: Beyond chat — the Conductor turns eight models into one coordinated system.
 - Advanced AI Capabilities: Per-message superpowers — toggle in the composer or let the Conductor assign them per agent.
 - Market & Web Research: Grounded answers with citations — not confident guesses.
