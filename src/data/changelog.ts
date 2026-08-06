@@ -12,6 +12,22 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.13.0",
+    date: "2026-08-06",
+    title: "Python in Build Mode — Real CPython in Your Browser",
+    description: "Build mode now speaks Python as well as HTML. Pick Python as the target and the agents write a script that runs as real CPython in your browser through Pyodide, with numpy, pandas, matplotlib and friends. The artifact panel is now split in two: the running artifact on top, the code browser and an interactive console underneath.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "🐍 Python target in build mode — agents write a self-contained script executed by Pyodide (CPython compiled to WebAssembly) inside a sandboxed worker, with no server round trip" },
+      { type: "feature", description: "📦 Batteries included — numpy, pandas, matplotlib, scipy, scikit-learn, sympy and other bundled wheels load automatically from the script's imports" },
+      { type: "feature", description: "📊 Charts render inline — every matplotlib figure the script leaves open is captured and shown in the artifact stage" },
+      { type: "feature", description: "🖥️ Split artifact panel — the artifact on top, code browser plus console below, both resizable" },
+      { type: "feature", description: "⌨️ Interactive console — a live Python prompt sharing the interpreter session with the script, with command history and streamed stdout/stderr" },
+      { type: "improvement", description: "🔁 Scripts re-run automatically when a new revision lands, plus Run, stop and restart-interpreter controls" }
+    ]
+  },
+
+  {
     version: "2.12.0",
     date: "2026-08-06",
     title: "Build Mode — Chat Plus a Live App Artifact",
