@@ -377,7 +377,7 @@ serve(async (req) => {
 
         await admin
           .from("remarkable_notes")
-          .update({ pdf_path: path, pdf_size: pdf.length })
+          .update({ pdf_path: path, pdf_size: pdf.length, stale: false })
           .eq("user_id", userId)
           .eq("doc_id", docId);
 
@@ -427,7 +427,7 @@ serve(async (req) => {
             .upload(path, pdf, { contentType: "application/pdf", upsert: true });
           await admin
             .from("remarkable_notes")
-            .update({ pdf_path: path, pdf_size: pdf.length })
+            .update({ pdf_path: path, pdf_size: pdf.length, stale: false })
             .eq("user_id", userId)
             .eq("doc_id", docId);
         }
