@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Grid3X3, Users, Shield, ShieldOff, Brain, Palette } from 'lucide-react';
+import { Grid3X3, Users, Shield, ShieldOff, Brain, Palette, Hammer } from 'lucide-react';
 import { useFunTheme } from '@/contexts/FunThemeContext';
 import type { ChatMode } from '@/types/chat';
 
