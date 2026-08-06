@@ -71,6 +71,12 @@ const SettingsPanel = () => {
           <AgentSettings />
         </TabsContent>
 
+        <TabsContent value="remarkable" className="mt-6">
+          <RemarkableCard />
+        </TabsContent>
+
+
+
         {showAdminTab && (
           <TabsContent value="admin" className="mt-6">
             {user && <AdminPanel user={user} />}
