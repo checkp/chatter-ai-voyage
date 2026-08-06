@@ -54,7 +54,9 @@ const SettingsPanel = () => {
           <TabsTrigger value="tokens" className="modern-text-primary">Buy Tokens</TabsTrigger>
           <TabsTrigger value="history" className="modern-text-primary">Usage History</TabsTrigger>
           <TabsTrigger value="agents" className="modern-text-primary">Agent Models</TabsTrigger>
+          <TabsTrigger value="remarkable" className="modern-text-primary">reMarkable</TabsTrigger>
           {showAdminTab && <TabsTrigger value="admin" className="modern-text-primary">Admin</TabsTrigger>}
+
         </TabsList>
         
         <TabsContent value="tokens" className="mt-6">
