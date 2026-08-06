@@ -116,6 +116,17 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const isDisabled = isLoadingResponse || isPending;
   const looksLikeImage = isImageGenerationIntent(input);
 
+  // External sources (e.g. reMarkable notes) can push context into the composer.
+  useEffect(() => {
+    const onInsert = (e: Event) => {
+      const text = (e as CustomEvent<string>).detail;
+      if (typeof text === 'string' && text) setInput(input ? `${input}\n\n${text}` : text);
+    };
+    window.addEventListener('roboheard:insert-text', onInsert);
+    return () => window.removeEventListener('roboheard:insert-text', onInsert);
+  }, [input, setInput]);
+
+
   const onSendClick = () => {
     // Push per-message capability overrides into the shared registry; one-shot
     // by default so they don't leak into the next message.
