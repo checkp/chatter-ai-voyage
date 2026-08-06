@@ -34,7 +34,8 @@ const SettingsPanel = () => {
   const showAdminTab = isAdmin;
 
   // Determine grid columns based on whether admin tab is shown
-  const gridCols = showAdminTab ? 'grid-cols-4' : 'grid-cols-3';
+  const gridCols = showAdminTab ? 'grid-cols-5' : 'grid-cols-4';
+
 
   if (isLoadingProfile) {
     return (
