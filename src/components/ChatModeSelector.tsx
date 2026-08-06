@@ -3,7 +3,7 @@ import React from 'react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { MessageCircle, Users, Grid3X3, Brain } from 'lucide-react';
+import { MessageCircle, Users, Grid3X3, Brain, Hammer } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { ChatMode } from '@/types/chat';
@@ -45,6 +45,13 @@ const ChatModeSelector: React.FC<ChatModeSelectorProps> = ({
       icon: Brain,
       description: 'AI orchestrated conversations',
       disabled: isMobile
+    },
+    {
+      value: 'build' as ChatMode,
+      label: 'Build',
+      icon: Hammer,
+      description: 'Chat + live web app artifact the agents iterate on (desktop only)',
+      disabled: isMobile
     }
   ];
 
@@ -76,7 +83,7 @@ const ChatModeSelector: React.FC<ChatModeSelectorProps> = ({
         </ToggleGroup>
       </div>
 
-      {currentMode !== 'conductor' && (
+      {currentMode !== 'conductor' && currentMode !== 'build' && (
         <div className="flex items-center gap-2">
           <Switch 
             id="isolated-mode" 
