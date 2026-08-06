@@ -1,16 +1,19 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform, Message } from '@/types/chat';
-import { ARTIFACT_PLATFORM, buildInstructions, extractArtifact } from '@/config/buildMode';
+import {
+  ARTIFACT_PLATFORM, buildInstructions, extractArtifact, type ArtifactLang,
+} from '@/config/buildMode';
 import { callPlatformRaw, type History } from '@/services/buildAgentService';
 import { generateChatId } from '@/utils/chatUtils';
 
 export interface ArtifactVersion {
   id: string;
-  html: string;
+  code: string;
+  lang: ArtifactLang;
   author: string | null;
   created_at: string;
 }
@@ -26,6 +29,8 @@ export const useBuildMode = (
 ) => {
   const queryClient = useQueryClient();
   const [builder, setBuilder] = useState<Builder>('relay');
+  const [lang, setLang] = useState<ArtifactLang>('html');
+  const langTouched = useRef(false);
   const [isBuilding, setIsBuilding] = useState(false);
   const [workingAgent, setWorkingAgent] = useState<string | null>(null);
 
@@ -40,16 +45,22 @@ export const useBuildMode = (
       (messages ?? [])
         .filter(m => m.platform === ARTIFACT_PLATFORM && typeof m.content === 'string')
         .map(m => {
-          let html = m.content;
+          let code = m.content;
           let author: string | null = null;
+          let vLang: ArtifactLang = 'html';
           try {
             const parsed = JSON.parse(m.content);
-            if (parsed && typeof parsed.html === 'string') {
-              html = parsed.html;
+            if (parsed && typeof parsed.code === 'string') {
+              code = parsed.code;
+              vLang = parsed.lang === 'python' ? 'python' : 'html';
+              author = parsed.author ?? null;
+            } else if (parsed && typeof parsed.html === 'string') {
+              // legacy payload — HTML only
+              code = parsed.html;
               author = parsed.author ?? null;
             }
           } catch { /* legacy plain-HTML rows */ }
-          return { id: m.id, html, author, created_at: m.created_at };
+          return { id: m.id, code, lang: vLang, author, created_at: m.created_at };
         }),
     [messages],
   );
@@ -61,6 +72,16 @@ export const useBuildMode = (
   );
 
   const latest = versions[versions.length - 1] ?? null;
+
+  // Follow the artifact's own language until the human picks one explicitly.
+  useEffect(() => {
+    if (!langTouched.current && latest) setLang(latest.lang);
+  }, [latest]);
+
+  const chooseLang = useCallback((next: ArtifactLang) => {
+    langTouched.current = true;
+    setLang(next);
+  }, []);
 
   const insertMessage = useCallback(
     async (row: { content: string; sender: 'user' | 'ai'; platform?: string }) => {
@@ -91,9 +112,9 @@ export const useBuildMode = (
   );
 
   const runAgent = useCallback(
-    async (platform: AIPlatform, request: string, currentHtml: string | null, recent: Message[]) => {
+    async (platform: AIPlatform, request: string, currentCode: string | null, recent: Message[]) => {
       const history: History = [
-        { role: 'user', content: buildInstructions(platform.name, currentHtml) },
+        { role: 'user', content: buildInstructions(platform.name, currentCode, lang) },
         ...recent.slice(-8).map(m => ({
           role: (m.sender === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
           content: m.sender === 'ai' && m.platform ? `[${m.platform}] ${m.content}` : m.content,
@@ -102,24 +123,24 @@ export const useBuildMode = (
       ];
 
       const reply = await callPlatformRaw(platform, history, user!);
-      const { html, notes } = extractArtifact(reply);
+      const { code, lang: replyLang, notes } = extractArtifact(reply, lang);
 
       await insertMessage({
-        content: notes || (html ? 'Updated the app.' : reply),
+        content: notes || (code ? 'Updated the app.' : reply),
         sender: 'ai',
         platform: platform.id,
       });
 
-      if (html) {
+      if (code) {
         await insertMessage({
-          content: JSON.stringify({ html, author: platform.id }),
+          content: JSON.stringify({ code, lang: replyLang, author: platform.id }),
           sender: 'ai',
           platform: ARTIFACT_PLATFORM,
         });
       }
-      return html;
+      return code;
     },
-    [insertMessage, user],
+    [insertMessage, lang, user],
   );
 
   const send = useCallback(
@@ -140,15 +161,15 @@ export const useBuildMode = (
       setIsBuilding(true);
       await insertMessage({ content: request, sender: 'user' });
 
-      let currentHtml = latest?.html ?? null;
+      let currentCode = latest?.code ?? null;
       const recent = transcript;
 
       try {
         for (const platform of queue) {
           setWorkingAgent(platform.id);
           try {
-            const html = await runAgent(platform, request, currentHtml, recent);
-            if (html) currentHtml = html;
+            const code = await runAgent(platform, request, currentCode, recent);
+            if (code) currentCode = code;
           } catch (e) {
             const msg = e instanceof Error ? e.message : String(e);
             toast.error(`${platform.name}: ${msg}`);
@@ -171,10 +192,10 @@ export const useBuildMode = (
 
   /** Manual edits from the code editor become a new revision authored by the user. */
   const saveManualEdit = useCallback(
-    async (html: string) => {
-      if (!activeChatId || html === latest?.html) return;
+    async (code: string, editLang: ArtifactLang) => {
+      if (!activeChatId || (code === latest?.code && editLang === latest?.lang)) return;
       await insertMessage({
-        content: JSON.stringify({ html, author: 'you' }),
+        content: JSON.stringify({ code, lang: editLang, author: 'you' }),
         sender: 'ai',
         platform: ARTIFACT_PLATFORM,
       });
@@ -187,6 +208,8 @@ export const useBuildMode = (
   return {
     builder,
     setBuilder,
+    lang,
+    setLang: chooseLang,
     buildAgents,
     isBuilding,
     workingAgent,
