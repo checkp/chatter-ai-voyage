@@ -24,6 +24,7 @@ const ChatModeControls: React.FC<ChatModeControlsProps> = ({
     switch (mode) {
       case 'side-by-side': return Grid3X3;
       case 'conductor': return Brain;
+      case 'build': return Hammer;
       default: return Users;
     }
   };
