@@ -475,6 +475,8 @@ serve(async (req) => {
             extracted_text: text,
             extracted_at: new Date().toISOString(),
             extract_model: OCR_MODEL,
+            stale: false,
+
           })
           .eq("user_id", userId)
           .eq("doc_id", docId);
