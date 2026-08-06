@@ -56,7 +56,7 @@ const ChatModeControls: React.FC<ChatModeControlsProps> = ({
         </TooltipContent>
       </Tooltip>
 
-      {currentChatMode !== 'conductor' && (
+      {currentChatMode !== 'conductor' && currentChatMode !== 'build' && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
