@@ -53,7 +53,21 @@ const BuildLayout: React.FC<BuildLayoutProps> = ({
               ))}
             </SelectContent>
           </Select>
+
+          <div className="ml-auto flex items-center gap-1">
+            <span className="text-xs font-semibold text-muted-foreground">Target</span>
+            <Select value={build.lang} onValueChange={(v) => build.setLang(v as 'html' | 'python')}>
+              <SelectTrigger className="h-7 w-[130px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="html" className="text-xs">Web app</SelectItem>
+                <SelectItem value="python" className="text-xs">Python</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
 
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
           <ChatMessages
