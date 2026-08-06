@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Grid3X3, Users, Shield, ShieldOff, Brain, Palette } from 'lucide-react';
+import { Grid3X3, Users, Shield, ShieldOff, Brain, Palette, Hammer } from 'lucide-react';
 import { useFunTheme } from '@/contexts/FunThemeContext';
 import type { ChatMode } from '@/types/chat';
 
@@ -24,12 +24,13 @@ const ChatModeControls: React.FC<ChatModeControlsProps> = ({
     switch (mode) {
       case 'side-by-side': return Grid3X3;
       case 'conductor': return Brain;
+      case 'build': return Hammer;
       default: return Users;
     }
   };
 
   const getNextMode = (current: ChatMode): ChatMode => {
-    const modes: ChatMode[] = ['discussion', 'side-by-side', 'conductor'];
+    const modes: ChatMode[] = ['discussion', 'side-by-side', 'conductor', 'build'];
     const currentIndex = modes.indexOf(current);
     return modes[(currentIndex + 1) % modes.length];
   };
@@ -55,7 +56,7 @@ const ChatModeControls: React.FC<ChatModeControlsProps> = ({
         </TooltipContent>
       </Tooltip>
 
-      {currentChatMode !== 'conductor' && (
+      {currentChatMode !== 'conductor' && currentChatMode !== 'build' && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
