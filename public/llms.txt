@@ -16,7 +16,7 @@ RoboHeard lets you chat with eight frontier AI models at once, orchestrate them 
 
 ## Latest release
 
-- v2.10.0 (2026-07-04) — Local Models & Self-Hosting: Run models on your own machine: a new Local agent connects to LM Studio or Ollama through a '+' menu in the agent bar — pick any local model, chat for a flat 1 token, keep everything on your hardware. Plus a full self-hosting path: containerized frontend and a reproducible self-hosted Supabase setup.
+- v2.11.0 (2026-08-06) — reMarkable Tablet Integration: Pair your reMarkable tablet with a single one-time code, browse your notebooks and folders, pull any notebook down as a rendered PDF, transcribe the handwriting with AI, and send the result into a chat as context for every agent.
 
 ## Feature categories
 
@@ -27,5 +27,6 @@ RoboHeard lets you chat with eight frontier AI models at once, orchestrate them 
 - Market & Web Research: Grounded answers with citations — not confident guesses.
 - Multi-Model Image Studio: One brief, several visual minds. Render once, pick the result that fits.
 - Workspace & Controls: Small details that make multi-agent work feel calm instead of chaotic.
+- Device Integrations: Bring notes and files from your own hardware into the conversation.
 - Account & Billing: Transparent pricing, flexible access, no surprises.
 - Security & Reliability: Production posture: strict RLS, encrypted secrets, retried calls.
