@@ -12,6 +12,22 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.11.0",
+    date: "2026-08-06",
+    title: "reMarkable Tablet Integration",
+    description: "Pair your reMarkable tablet with a single one-time code, browse your notebooks and folders, pull any notebook down as a rendered PDF, transcribe the handwriting with AI, and send the result into a chat as context for every agent.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "📱 reMarkable pairing — enter the 8-character code from my.remarkable.com/device/desktop/connect; the device token is stored server-side and session tokens refresh automatically" },
+      { type: "feature", description: "🗂️ Notebook sync — walks the reMarkable cloud sync tree and caches your document/folder list with names, parents, and modified times" },
+      { type: "feature", description: "📄 PDF fetch — exports any notebook (handwriting included) into a private owner-scoped bucket with signed, expiring links" },
+      { type: "feature", description: "✍️ Handwriting → text — Gemini 2.5 Flash transcribes notebook pages into clean markdown, stored per note" },
+      { type: "feature", description: "💬 Send to chat — push a transcribed note into the composer as context for all enabled agents" },
+      { type: "improvement", description: "⚙️ New 'reMarkable' tab in Settings for pairing, syncing, searching notebooks, and disconnecting (which also wipes cached notes and PDFs)" }
+    ]
+  },
+  {
+
     version: "2.10.0",
     date: "2026-07-04",
     title: "Local Models & Self-Hosting",
