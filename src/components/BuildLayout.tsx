@@ -94,6 +94,8 @@ const BuildLayout: React.FC<BuildLayoutProps> = ({
       <ResizablePanel defaultSize={58} minSize={30} className="min-w-0">
         <ArtifactPanel
           versions={build.versions}
+          lang={build.lang}
+
           isBuilding={build.isBuilding}
           workingAgent={build.workingAgent}
           platforms={platforms}
