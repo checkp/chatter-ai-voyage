@@ -105,8 +105,8 @@ function parseIndex(text: string): IndexEntry[] {
     });
 }
 
-/** Walk the sync tree and return every document/folder with its metadata. */
-async function listDocuments(token: string) {
+/** Read the sync root and its top-level index (2 cheap requests). */
+async function readRoot(token: string) {
   const rootRes = await fetch(`${SYNC_BASE}/sync/v4/root`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -114,10 +114,17 @@ async function listDocuments(token: string) {
     throw new Error(`Could not read tablet root [${rootRes.status}]: ${await rootRes.text()}`);
   }
   const root = await rootRes.json();
-  const rootIndex = parseIndex(await (await fetchBlob(root.hash, token)).text());
+  const entries = parseIndex(await (await fetchBlob(root.hash, token)).text());
+  return { rootHash: String(root.hash), entries };
+}
 
+/**
+ * Resolve metadata for the given index entries only.
+ * Entries whose hash matches the cached one are never fetched.
+ */
+async function fetchDocs(entries: IndexEntry[], token: string) {
   const results: any[] = [];
-  const queue = [...rootIndex];
+  const queue = [...entries];
   const CONCURRENCY = 8;
 
   async function worker() {
@@ -132,6 +139,7 @@ async function listDocuments(token: string) {
         if (meta.deleted) continue;
         results.push({
           doc_id: entry.id,
+          doc_hash: entry.hash,
           name: meta.visibleName ?? "Untitled",
           parent_id: meta.parent || null,
           doc_type: meta.type ?? "DocumentType",
@@ -148,6 +156,7 @@ async function listDocuments(token: string) {
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
   return results;
 }
+
 
 /** Rendered PDF export of one document (includes handwriting). */
 async function exportPdf(docId: string, token: string): Promise<Uint8Array> {
