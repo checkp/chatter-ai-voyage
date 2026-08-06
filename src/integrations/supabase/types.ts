@@ -310,6 +310,96 @@ export type Database = {
         }
         Relationships: []
       }
+      remarkable_connections: {
+        Row: {
+          connected_at: string
+          device_id: string
+          device_token: string
+          last_sync_at: string | null
+          updated_at: string
+          user_id: string
+          user_token: string | null
+          user_token_expires_at: string | null
+        }
+        Insert: {
+          connected_at?: string
+          device_id: string
+          device_token: string
+          last_sync_at?: string | null
+          updated_at?: string
+          user_id: string
+          user_token?: string | null
+          user_token_expires_at?: string | null
+        }
+        Update: {
+          connected_at?: string
+          device_id?: string
+          device_token?: string
+          last_sync_at?: string | null
+          updated_at?: string
+          user_id?: string
+          user_token?: string | null
+          user_token_expires_at?: string | null
+        }
+        Relationships: []
+      }
+      remarkable_notes: {
+        Row: {
+          created_at: string
+          doc_id: string
+          doc_type: string
+          extract_model: string | null
+          extracted_at: string | null
+          extracted_text: string | null
+          id: string
+          modified_at: string | null
+          name: string
+          parent_id: string | null
+          path: string | null
+          pdf_path: string | null
+          pdf_size: number | null
+          synced_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          doc_id: string
+          doc_type?: string
+          extract_model?: string | null
+          extracted_at?: string | null
+          extracted_text?: string | null
+          id?: string
+          modified_at?: string | null
+          name?: string
+          parent_id?: string | null
+          path?: string | null
+          pdf_path?: string | null
+          pdf_size?: number | null
+          synced_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          doc_id?: string
+          doc_type?: string
+          extract_model?: string | null
+          extracted_at?: string | null
+          extracted_text?: string | null
+          id?: string
+          modified_at?: string | null
+          name?: string
+          parent_id?: string | null
+          path?: string | null
+          pdf_path?: string | null
+          pdf_size?: number | null
+          synced_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       roboheard_api_keys: {
         Row: {
           created_at: string
