@@ -95,6 +95,15 @@ Small details that make multi-agent work feel calm instead of chaotic.
 - **Guided Tour** — Step-by-step walkthrough of every mode, the Conductor, and Free Mode.
 - **Light & Dark Themes** — Multiple themes including dark and high-contrast options.
 
+### Device Integrations
+
+Bring notes and files from your own hardware into the conversation.
+
+- **reMarkable Tablet** — Pair your reMarkable with an 8-character one-time code, browse notebooks and folders, and fetch any notebook as a rendered PDF.
+- **Handwriting → Text** — AI transcription turns handwritten notebook pages into clean markdown you can search, edit, and reuse.
+- **Notes as Chat Context** — Drop any transcribed note straight into the composer so every agent can reason over your handwritten thinking.
+- **Private Note Storage** — Fetched PDFs live in a private, owner-scoped bucket with signed, expiring links — never public.
+
 ### Account & Billing
 
 Transparent pricing, flexible access, no surprises.
@@ -119,9 +128,27 @@ Production posture: strict RLS, encrypted secrets, retried calls.
 ## Changelog
 
 <!-- AUTO:CHANGELOG:START -->
-### July 2026
+### August 2026
 
 <details open>
+<summary><strong>v2.11.0</strong> · reMarkable Tablet Integration <sub>August 6, 2026 · ✨ Feature</sub></summary>
+
+> Pair your reMarkable tablet with a single one-time code, browse your notebooks and folders, pull any notebook down as a rendered PDF, transcribe the handwriting with AI, and send the result into a chat as context for every agent.
+
+  - ✨ Feature 📱 reMarkable pairing — enter the 8-character code from my.remarkable.com/device/desktop/connect; the device token is stored server-side and session tokens refresh automatically
+  - ✨ Feature 🗂️ Notebook sync — walks the reMarkable cloud sync tree and caches your document/folder list with names, parents, and modified times
+  - ✨ Feature 📄 PDF fetch — exports any notebook (handwriting included) into a private owner-scoped bucket with signed, expiring links
+  - ✨ Feature ✍️ Handwriting → text — Gemini 2.5 Flash transcribes notebook pages into clean markdown, stored per note
+  - ✨ Feature 💬 Send to chat — push a transcribed note into the composer as context for all enabled agents
+  - 🔧 Improvement ⚙️ New 'reMarkable' tab in Settings for pairing, syncing, searching notebooks, and disconnecting (which also wipes cached notes and PDFs)
+
+</details>
+
+---
+
+### July 2026
+
+<details>
 <summary><strong>v2.10.0</strong> · Local Models & Self-Hosting <sub>July 4, 2026 · ✨ Feature</sub></summary>
 
 > Run models on your own machine: a new Local agent connects to LM Studio or Ollama through a '+' menu in the agent bar — pick any local model, chat for a flat 1 token, keep everything on your hardware. Plus a full self-hosting path: containerized frontend and a reproducible self-hosted Supabase setup.

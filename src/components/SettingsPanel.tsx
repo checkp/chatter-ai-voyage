@@ -5,6 +5,8 @@ import TokenPurchase from './TokenPurchase';
 import TokenHistory from './TokenHistory';
 import AgentSettings from './AgentSettings';
 import AdminPanel from './AdminPanel';
+import RemarkableCard from './RemarkableCard';
+
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,7 +36,8 @@ const SettingsPanel = () => {
   const showAdminTab = isAdmin;
 
   // Determine grid columns based on whether admin tab is shown
-  const gridCols = showAdminTab ? 'grid-cols-4' : 'grid-cols-3';
+  const gridCols = showAdminTab ? 'grid-cols-5' : 'grid-cols-4';
+
 
   if (isLoadingProfile) {
     return (
@@ -53,7 +56,9 @@ const SettingsPanel = () => {
           <TabsTrigger value="tokens" className="modern-text-primary">Buy Tokens</TabsTrigger>
           <TabsTrigger value="history" className="modern-text-primary">Usage History</TabsTrigger>
           <TabsTrigger value="agents" className="modern-text-primary">Agent Models</TabsTrigger>
+          <TabsTrigger value="remarkable" className="modern-text-primary">reMarkable</TabsTrigger>
           {showAdminTab && <TabsTrigger value="admin" className="modern-text-primary">Admin</TabsTrigger>}
+
         </TabsList>
         
         <TabsContent value="tokens" className="mt-6">
@@ -67,6 +72,12 @@ const SettingsPanel = () => {
         <TabsContent value="agents" className="mt-6">
           <AgentSettings />
         </TabsContent>
+
+        <TabsContent value="remarkable" className="mt-6">
+          <RemarkableCard />
+        </TabsContent>
+
+
 
         {showAdminTab && (
           <TabsContent value="admin" className="mt-6">

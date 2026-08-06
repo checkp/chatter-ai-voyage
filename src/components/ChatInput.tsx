@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -115,6 +115,17 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const isDisabled = isLoadingResponse || isPending;
   const looksLikeImage = isImageGenerationIntent(input);
+
+  // External sources (e.g. reMarkable notes) can push context into the composer.
+  useEffect(() => {
+    const onInsert = (e: Event) => {
+      const text = (e as CustomEvent<string>).detail;
+      if (typeof text === 'string' && text) setInput(input ? `${input}\n\n${text}` : text);
+    };
+    window.addEventListener('roboheard:insert-text', onInsert);
+    return () => window.removeEventListener('roboheard:insert-text', onInsert);
+  }, [input, setInput]);
+
 
   const onSendClick = () => {
     // Push per-message capability overrides into the shared registry; one-shot

@@ -105,6 +105,18 @@ export const featureCategories: FeatureCategory[] = [
     ]
   },
   {
+    id: "integrations",
+    name: "Device Integrations",
+    blurb: "Bring notes and files from your own hardware into the conversation.",
+    features: [
+      { title: "reMarkable Tablet", tag: "New", description: "Pair your reMarkable with an 8-character one-time code, browse notebooks and folders, and fetch any notebook as a rendered PDF." },
+      { title: "Handwriting → Text", tag: "New", description: "AI transcription turns handwritten notebook pages into clean markdown you can search, edit, and reuse." },
+      { title: "Notes as Chat Context", tag: "New", description: "Drop any transcribed note straight into the composer so every agent can reason over your handwritten thinking." },
+      { title: "Private Note Storage", description: "Fetched PDFs live in a private, owner-scoped bucket with signed, expiring links — never public." }
+    ]
+  },
+
+  {
     id: "account",
     name: "Account & Billing",
     blurb: "Transparent pricing, flexible access, no surprises.",
