@@ -41,7 +41,9 @@ export const featureCategories: FeatureCategory[] = [
       { title: "Discussion Mode", description: "All enabled agents see each other's messages and build on one another — a roundtable conversation." },
       { title: "Isolated Mode", description: "Each agent answers independently. Ideal for honest, unbiased comparison of replies." },
       { title: "Side-by-Side Mode", description: "Dedicated columns per agent for quick visual scanning of parallel responses." },
-      { title: "Build Mode", tag: "New", description: "Split chat and live artifact: you and the agents iterate on one self-contained web app, each round rewriting the HTML with instant preview, version history, code editing, and download." }
+      { title: "Build Mode", tag: "New", description: "Split chat and live artifact: you and the agents iterate on one self-contained web app or Python script. The panel splits into the running artifact plus a code browser and console, with instant preview, version history, hand editing, and download." },
+      { title: "Python Sandbox", tag: "New", description: "Build mode runs real CPython in your browser via Pyodide — numpy, pandas, matplotlib, scipy and scikit-learn included, matplotlib figures rendered inline, and an interactive console that shares the session with the script." }
+
     ]
   },
   {

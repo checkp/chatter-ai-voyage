@@ -16,7 +16,7 @@ RoboHeard lets you chat with eight frontier AI models at once, orchestrate them 
 
 ## Latest release
 
-- v2.12.0 (2026-08-06) — Build Mode — Chat Plus a Live App Artifact: A new split view where you and the agents build a small web app together. Left side is the conversation, right side is the running app. Every round rewrites the artifact, so you can watch it evolve, roll back, edit the code by hand, or download it.
+- v2.13.0 (2026-08-06) — Python in Build Mode — Real CPython in Your Browser: Build mode now speaks Python as well as HTML. Pick Python as the target and the agents write a script that runs as real CPython in your browser through Pyodide, with numpy, pandas, matplotlib and friends. The artifact panel is now split in two: the running artifact on top, the code browser and an interactive console underneath.
 
 ## Feature categories
 

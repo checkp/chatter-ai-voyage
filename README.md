@@ -43,7 +43,8 @@ Match the interaction pattern to your task — collaboration, comparison, solo f
 - **Discussion Mode** — All enabled agents see each other's messages and build on one another — a roundtable conversation.
 - **Isolated Mode** — Each agent answers independently. Ideal for honest, unbiased comparison of replies.
 - **Side-by-Side Mode** — Dedicated columns per agent for quick visual scanning of parallel responses.
-- **Build Mode** — Split chat and live artifact: you and the agents iterate on one self-contained web app, each round rewriting the HTML with instant preview, version history, code editing, and download.
+- **Build Mode** — Split chat and live artifact: you and the agents iterate on one self-contained web app or Python script. The panel splits into the running artifact plus a code browser and console, with instant preview, version history, hand editing, and download.
+- **Python Sandbox** — Build mode runs real CPython in your browser via Pyodide — numpy, pandas, matplotlib, scipy and scikit-learn included, matplotlib figures rendered inline, and an interactive console that shares the session with the script.
 
 ### Agentic Orchestration
 
@@ -132,6 +133,20 @@ Production posture: strict RLS, encrypted secrets, retried calls.
 ### August 2026
 
 <details open>
+<summary><strong>v2.13.0</strong> · Python in Build Mode — Real CPython in Your Browser <sub>August 6, 2026 · ✨ Feature</sub></summary>
+
+> Build mode now speaks Python as well as HTML. Pick Python as the target and the agents write a script that runs as real CPython in your browser through Pyodide, with numpy, pandas, matplotlib and friends. The artifact panel is now split in two: the running artifact on top, the code browser and an interactive console underneath.
+
+  - ✨ Feature 🐍 Python target in build mode — agents write a self-contained script executed by Pyodide (CPython compiled to WebAssembly) inside a sandboxed worker, with no server round trip
+  - ✨ Feature 📦 Batteries included — numpy, pandas, matplotlib, scipy, scikit-learn, sympy and other bundled wheels load automatically from the script's imports
+  - ✨ Feature 📊 Charts render inline — every matplotlib figure the script leaves open is captured and shown in the artifact stage
+  - ✨ Feature 🖥️ Split artifact panel — the artifact on top, code browser plus console below, both resizable
+  - ✨ Feature ⌨️ Interactive console — a live Python prompt sharing the interpreter session with the script, with command history and streamed stdout/stderr
+  - 🔧 Improvement 🔁 Scripts re-run automatically when a new revision lands, plus Run, stop and restart-interpreter controls
+
+</details>
+
+<details>
 <summary><strong>v2.12.0</strong> · Build Mode — Chat Plus a Live App Artifact <sub>August 6, 2026 · ✨ Feature</sub></summary>
 
 > A new split view where you and the agents build a small web app together. Left side is the conversation, right side is the running app. Every round rewrites the artifact, so you can watch it evolve, roll back, edit the code by hand, or download it.
