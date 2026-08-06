@@ -11,6 +11,7 @@ import ChatInput from '@/components/ChatInput';
 import SettingsPanel from '@/components/SettingsPanel';
 import SideBySideLayout from '@/components/SideBySideLayout';
 import ConductorLayout from '@/components/ConductorLayout';
+import BuildLayout from '@/components/BuildLayout';
 import { useMultiImageGeneration } from '@/hooks/useMultiImageGeneration';
 import { IMAGE_PANEL_PLATFORM } from '@/config/imageModels';
 import type { AIPlatform, ChatMode } from '@/types/chat';
@@ -138,6 +139,16 @@ const MainContent: React.FC<MainContentProps> = ({
                 onGenerateImages={activeChatId ? handleGenerateImages : undefined}
                 user={user}
               />
+            ) : activeChatMode === 'build' ? (
+              <BuildLayout
+                user={user}
+                platforms={platforms}
+                activeChatId={activeChatId}
+                messages={messages}
+                isLoadingMessages={isLoadingMessages}
+                input={input}
+                setInput={setInput}
+              />
             ) : activeChatMode === 'side-by-side' ? (
               <SideBySideLayout
                 enabledPlatforms={platforms}
@@ -171,7 +182,7 @@ const MainContent: React.FC<MainContentProps> = ({
 
 
       {/* Chat Input - only show for non-conductor modes */}
-      {activeTab === 'chat' && activeChatMode !== 'conductor' && (
+      {activeTab === 'chat' && activeChatMode !== 'conductor' && activeChatMode !== 'build' && (
         <ChatInput
           input={input}
           setInput={setInput}
