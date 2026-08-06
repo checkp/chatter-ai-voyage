@@ -19,6 +19,7 @@ type Note = {
   modified_at: string | null;
   pdf_path: string | null;
   extracted_text: string | null;
+  stale: boolean | null;
 };
 
 type Status = { connected: boolean; connected_at: string | null; last_sync_at: string | null };
@@ -45,7 +46,7 @@ const RemarkableCard = () => {
   const loadNotes = useCallback(async () => {
     const { data } = await supabase
       .from('remarkable_notes')
-      .select('doc_id, name, parent_id, doc_type, modified_at, pdf_path, extracted_text')
+      .select('doc_id, name, parent_id, doc_type, modified_at, pdf_path, extracted_text, stale')
       .order('modified_at', { ascending: false });
     setNotes((data as Note[]) ?? []);
   }, []);
@@ -90,13 +91,22 @@ const RemarkableCard = () => {
     }
   };
 
-  const sync = async () => {
-    setBusy('sync');
+  const sync = async (force = false) => {
+    setBusy(force ? 'resync' : 'sync');
     try {
-      const res = await call({ action: 'sync' });
+      const res = await call({ action: 'sync', force });
       await loadNotes();
       setStatus(await call({ action: 'status' }));
-      toast.success(`Synced ${res.count} items`);
+      if (res.up_to_date) {
+        toast.success('Already up to date');
+      } else {
+        const parts = [
+          res.changed ? `${res.changed} updated` : null,
+          res.removed ? `${res.removed} removed` : null,
+          res.unchanged ? `${res.unchanged} unchanged` : null,
+        ].filter(Boolean);
+        toast.success(`Synced — ${parts.join(', ')}`);
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Sync failed');
     } finally {
@@ -181,9 +191,19 @@ const RemarkableCard = () => {
           {status?.connected ? (
             <div className="flex items-center gap-2">
               <Badge variant="secondary">Connected</Badge>
-              <Button size="sm" variant="outline" onClick={sync} disabled={!!busy}>
+              <Button size="sm" variant="outline" onClick={() => sync(false)} disabled={!!busy}>
                 {busy === 'sync' ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                 <span className="ml-1.5">Sync</span>
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => sync(true)}
+                disabled={!!busy}
+                title="Full re-sync: re-read every notebook, ignoring the change cache"
+              >
+                {busy === 'resync' ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                <span className="ml-1.5 text-xs">Full</span>
               </Button>
               <Button size="sm" variant="ghost" onClick={disconnect} disabled={!!busy}>
                 <Unplug className="h-4 w-4" />
@@ -273,9 +293,10 @@ const RemarkableCard = () => {
                         </span>
                       )}
                       {n.extracted_text && <Badge variant="secondary" className="text-[10px]">text</Badge>}
+                      {n.stale && <Badge variant="outline" className="text-[10px] shrink-0">changed</Badge>}
                     </button>
                     <div className="flex items-center gap-1">
-                      {n.pdf_path ? (
+                      {n.pdf_path && !n.stale ? (
                         <Button size="sm" variant="ghost" onClick={() => openPdf(n.doc_id)} disabled={!!busy}>
                           {busy === `open:${n.doc_id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5" />}
                           <span className="ml-1 text-xs">PDF</span>
@@ -283,7 +304,7 @@ const RemarkableCard = () => {
                       ) : (
                         <Button size="sm" variant="ghost" onClick={() => fetchPdf(n.doc_id)} disabled={!!busy}>
                           {busy === `pdf:${n.doc_id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-                          <span className="ml-1 text-xs">Fetch PDF</span>
+                          <span className="ml-1 text-xs">{n.pdf_path ? 'Refresh PDF' : 'Fetch PDF'}</span>
                         </Button>
                       )}
                       <Button size="sm" variant="ghost" onClick={() => transcribe(n.doc_id)} disabled={!!busy}>

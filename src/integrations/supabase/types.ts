@@ -316,6 +316,7 @@ export type Database = {
           device_id: string
           device_token: string
           last_sync_at: string | null
+          root_hash: string | null
           updated_at: string
           user_id: string
           user_token: string | null
@@ -326,6 +327,7 @@ export type Database = {
           device_id: string
           device_token: string
           last_sync_at?: string | null
+          root_hash?: string | null
           updated_at?: string
           user_id: string
           user_token?: string | null
@@ -336,6 +338,7 @@ export type Database = {
           device_id?: string
           device_token?: string
           last_sync_at?: string | null
+          root_hash?: string | null
           updated_at?: string
           user_id?: string
           user_token?: string | null
@@ -346,6 +349,7 @@ export type Database = {
       remarkable_notes: {
         Row: {
           created_at: string
+          doc_hash: string | null
           doc_id: string
           doc_type: string
           extract_model: string | null
@@ -358,12 +362,14 @@ export type Database = {
           path: string | null
           pdf_path: string | null
           pdf_size: number | null
+          stale: boolean
           synced_at: string
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          doc_hash?: string | null
           doc_id: string
           doc_type?: string
           extract_model?: string | null
@@ -376,12 +382,14 @@ export type Database = {
           path?: string | null
           pdf_path?: string | null
           pdf_size?: number | null
+          stale?: boolean
           synced_at?: string
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          doc_hash?: string | null
           doc_id?: string
           doc_type?: string
           extract_model?: string | null
@@ -394,6 +402,7 @@ export type Database = {
           path?: string | null
           pdf_path?: string | null
           pdf_size?: number | null
+          stale?: boolean
           synced_at?: string
           updated_at?: string
           user_id?: string

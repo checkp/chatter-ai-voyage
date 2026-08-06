@@ -105,8 +105,8 @@ function parseIndex(text: string): IndexEntry[] {
     });
 }
 
-/** Walk the sync tree and return every document/folder with its metadata. */
-async function listDocuments(token: string) {
+/** Read the sync root and its top-level index (2 cheap requests). */
+async function readRoot(token: string) {
   const rootRes = await fetch(`${SYNC_BASE}/sync/v4/root`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -114,10 +114,17 @@ async function listDocuments(token: string) {
     throw new Error(`Could not read tablet root [${rootRes.status}]: ${await rootRes.text()}`);
   }
   const root = await rootRes.json();
-  const rootIndex = parseIndex(await (await fetchBlob(root.hash, token)).text());
+  const entries = parseIndex(await (await fetchBlob(root.hash, token)).text());
+  return { rootHash: String(root.hash), entries };
+}
 
+/**
+ * Resolve metadata for the given index entries only.
+ * Entries whose hash matches the cached one are never fetched.
+ */
+async function fetchDocs(entries: IndexEntry[], token: string) {
   const results: any[] = [];
-  const queue = [...rootIndex];
+  const queue = [...entries];
   const CONCURRENCY = 8;
 
   async function worker() {
@@ -132,6 +139,7 @@ async function listDocuments(token: string) {
         if (meta.deleted) continue;
         results.push({
           doc_id: entry.id,
+          doc_hash: entry.hash,
           name: meta.visibleName ?? "Untitled",
           parent_id: meta.parent || null,
           doc_type: meta.type ?? "DocumentType",
@@ -148,6 +156,7 @@ async function listDocuments(token: string) {
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
   return results;
 }
+
 
 /** Rendered PDF export of one document (includes handwriting). */
 async function exportPdf(docId: string, token: string): Promise<Uint8Array> {
@@ -264,32 +273,93 @@ serve(async (req) => {
 
       /* ---------------- sync (notebook tree) ---------------- */
       case "sync": {
+        const force = body.force === true;
         const token = await getUserToken(admin, userId);
-        const docs = await listDocuments(token);
+        const now = new Date().toISOString();
+
+        const { data: conn } = await admin
+          .from("remarkable_connections")
+          .select("root_hash")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        const { rootHash, entries } = await readRoot(token);
+
+        // Nothing at all changed on the tablet — one root request and we're done.
+        if (!force && conn?.root_hash && conn.root_hash === rootHash) {
+          const { count } = await admin
+            .from("remarkable_notes")
+            .select("doc_id", { count: "exact", head: true })
+            .eq("user_id", userId);
+          await admin
+            .from("remarkable_connections")
+            .update({ last_sync_at: now })
+            .eq("user_id", userId);
+          return json({ count: count ?? 0, changed: 0, removed: 0, unchanged: count ?? 0, up_to_date: true });
+        }
+
+        // Compare per-document hashes against the cache and only walk what moved.
+        const { data: cached } = await admin
+          .from("remarkable_notes")
+          .select("doc_id, doc_hash")
+          .eq("user_id", userId);
+        const cachedHashes = new Map<string, string | null>(
+          (cached ?? []).map((r: any) => [r.doc_id, r.doc_hash]),
+        );
+
+        const changedEntries = force
+          ? entries
+          : entries.filter((e) => cachedHashes.get(e.id) !== e.hash);
+
+        const docs = await fetchDocs(changedEntries, token);
 
         if (docs.length) {
-          const rows = docs.map((d) => ({ ...d, user_id: userId, synced_at: new Date().toISOString() }));
+          const rows = docs.map((d) => ({
+            ...d,
+            user_id: userId,
+            synced_at: now,
+            // Content moved on the tablet, so any cached PDF/transcription is behind.
+            stale: cachedHashes.has(d.doc_id),
+          }));
           const { error } = await admin
             .from("remarkable_notes")
             .upsert(rows, { onConflict: "user_id,doc_id" });
           if (error) throw new Error(error.message);
+        }
 
-          // Drop rows that no longer exist on the tablet.
-          const ids = docs.map((d) => d.doc_id);
+        // Drop rows that no longer exist on the tablet.
+        const liveIds = new Set(entries.map((e) => e.id));
+        const goneIds = [...cachedHashes.keys()].filter((id) => !liveIds.has(id));
+        if (goneIds.length) {
+          const { data: gone } = await admin
+            .from("remarkable_notes")
+            .select("pdf_path")
+            .eq("user_id", userId)
+            .in("doc_id", goneIds)
+            .not("pdf_path", "is", null);
+          const paths = (gone ?? []).map((n: any) => n.pdf_path).filter(Boolean);
+          if (paths.length) await admin.storage.from(BUCKET).remove(paths);
           await admin
             .from("remarkable_notes")
             .delete()
             .eq("user_id", userId)
-            .not("doc_id", "in", `(${ids.map((i) => `"${i}"`).join(",")})`);
+            .in("doc_id", goneIds);
         }
 
         await admin
           .from("remarkable_connections")
-          .update({ last_sync_at: new Date().toISOString() })
+          .update({ last_sync_at: now, root_hash: rootHash })
           .eq("user_id", userId);
 
-        return json({ count: docs.length });
+        return json({
+          count: entries.length,
+          changed: docs.length,
+          removed: goneIds.length,
+          unchanged: entries.length - changedEntries.length,
+          up_to_date: docs.length === 0 && goneIds.length === 0,
+        });
       }
+
 
       /* ---------------- fetch one document as PDF ---------------- */
       case "fetch_pdf": {
@@ -307,7 +377,7 @@ serve(async (req) => {
 
         await admin
           .from("remarkable_notes")
-          .update({ pdf_path: path, pdf_size: pdf.length })
+          .update({ pdf_path: path, pdf_size: pdf.length, stale: false })
           .eq("user_id", userId)
           .eq("doc_id", docId);
 
@@ -357,7 +427,7 @@ serve(async (req) => {
             .upload(path, pdf, { contentType: "application/pdf", upsert: true });
           await admin
             .from("remarkable_notes")
-            .update({ pdf_path: path, pdf_size: pdf.length })
+            .update({ pdf_path: path, pdf_size: pdf.length, stale: false })
             .eq("user_id", userId)
             .eq("doc_id", docId);
         }
@@ -405,6 +475,8 @@ serve(async (req) => {
             extracted_text: text,
             extracted_at: new Date().toISOString(),
             extract_model: OCR_MODEL,
+            stale: false,
+
           })
           .eq("user_id", userId)
           .eq("doc_id", docId);
