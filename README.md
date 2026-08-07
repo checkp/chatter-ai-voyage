@@ -133,6 +133,20 @@ Production posture: strict RLS, encrypted secrets, retried calls.
 ### August 2026
 
 <details open>
+<summary><strong>v2.14.0</strong> · Compound Engineering in Build Mode — TDD Harness & Proof of Work <sub>August 7, 2026 · ✨ Feature</sub></summary>
+
+> Build mode agents now work like a real engineering team: an orchestrator decomposes the request into acceptance criteria, implementers build against them, a QA engineer hardens the test suite, and a reviewer gates the result. Every revision is executed against its own tests in the same sandbox it runs in, and the pass/fail report is posted into the chat as proof of work.
+
+  - ✨ Feature 🧭 Orchestration stage — the lead agent produces a goal, 3-6 checkable acceptance criteria, ordered work items and risks before anyone writes code
+  - ✨ Feature 🧪 Real TDD harness — Python artifacts are verified by running every module-level test_* function in Pyodide; web artifacts register RH.test(name, fn) cases that run in a throwaway sandboxed iframe against the live DOM
+  - ✨ Feature 🛡️ QA and review gates — a QA pass adds edge cases and regression guards, then a reviewer validates the criteria and gets up to two repair rounds while the suite is red
+  - ✨ Feature 📋 Proof of work — per-test results (name, duration, failure message) are posted into the transcript and stored with the revision, so every version carries its own evidence
+  - ✨ Feature ✅ Tests tab in the artifact panel with a pass/fail badge, plus a manual Run tests button and RH.assert / RH.assertEqual helpers
+  - 🔧 Improvement ⚡ Rigor selector — Compound runs the full plan → build → QA → review pipeline, Fast keeps the old build-only loop
+
+</details>
+
+<details>
 <summary><strong>v2.13.0</strong> · Python in Build Mode — Real CPython in Your Browser <sub>August 6, 2026 · ✨ Feature</sub></summary>
 
 > Build mode now speaks Python as well as HTML. Pick Python as the target and the agents write a script that runs as real CPython in your browser through Pyodide, with numpy, pandas, matplotlib and friends. The artifact panel is now split in two: the running artifact on top, the code browser and an interactive console underneath.

@@ -16,7 +16,7 @@ RoboHeard lets you chat with eight frontier AI models at once, orchestrate them 
 
 ## Latest release
 
-- v2.13.0 (2026-08-06) — Python in Build Mode — Real CPython in Your Browser: Build mode now speaks Python as well as HTML. Pick Python as the target and the agents write a script that runs as real CPython in your browser through Pyodide, with numpy, pandas, matplotlib and friends. The artifact panel is now split in two: the running artifact on top, the code browser and an interactive console underneath.
+- v2.14.0 (2026-08-07) — Compound Engineering in Build Mode — TDD Harness & Proof of Work: Build mode agents now work like a real engineering team: an orchestrator decomposes the request into acceptance criteria, implementers build against them, a QA engineer hardens the test suite, and a reviewer gates the result. Every revision is executed against its own tests in the same sandbox it runs in, and the pass/fail report is posted into the chat as proof of work.
 
 ## Feature categories
 

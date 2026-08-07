@@ -12,6 +12,22 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.14.0",
+    date: "2026-08-07",
+    title: "Compound Engineering in Build Mode — TDD Harness & Proof of Work",
+    description: "Build mode agents now work like a real engineering team: an orchestrator decomposes the request into acceptance criteria, implementers build against them, a QA engineer hardens the test suite, and a reviewer gates the result. Every revision is executed against its own tests in the same sandbox it runs in, and the pass/fail report is posted into the chat as proof of work.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "🧭 Orchestration stage — the lead agent produces a goal, 3-6 checkable acceptance criteria, ordered work items and risks before anyone writes code" },
+      { type: "feature", description: "🧪 Real TDD harness — Python artifacts are verified by running every module-level test_* function in Pyodide; web artifacts register RH.test(name, fn) cases that run in a throwaway sandboxed iframe against the live DOM" },
+      { type: "feature", description: "🛡️ QA and review gates — a QA pass adds edge cases and regression guards, then a reviewer validates the criteria and gets up to two repair rounds while the suite is red" },
+      { type: "feature", description: "📋 Proof of work — per-test results (name, duration, failure message) are posted into the transcript and stored with the revision, so every version carries its own evidence" },
+      { type: "feature", description: "✅ Tests tab in the artifact panel with a pass/fail badge, plus a manual Run tests button and RH.assert / RH.assertEqual helpers" },
+      { type: "improvement", description: "⚡ Rigor selector — Compound runs the full plan → build → QA → review pipeline, Fast keeps the old build-only loop" }
+    ]
+  },
+
+  {
     version: "2.13.0",
     date: "2026-08-06",
     title: "Python in Build Mode — Real CPython in Your Browser",
