@@ -11,11 +11,16 @@ import {
 } from '@/components/ui/select';
 import {
   Download, ExternalLink, RotateCw, Save, Loader2, Smartphone, Monitor, Play, Square,
+  FlaskConical, CheckCircle2, XCircle,
 } from 'lucide-react';
-import { starterCode, type ArtifactLang } from '@/config/buildMode';
+import { starterCode, ROLE_LABEL, type ArtifactLang, type BuildRole } from '@/config/buildMode';
 import { PyodideRunner } from '@/lib/pyodideRunner';
+import {
+  PYTHON_HARNESS, emptyReport, hasTests, parsePythonReport, runHtmlTests, summarise,
+  type TestReport,
+} from '@/lib/buildHarness';
 import ConsolePane, { type ConsoleLine } from '@/components/build/ConsolePane';
-import type { ArtifactVersion } from '@/hooks/useBuildMode';
+import type { ArtifactVersion, VerifyFn } from '@/hooks/useBuildMode';
 import type { AIPlatform } from '@/types/chat';
 
 interface ArtifactPanelProps {
@@ -23,12 +28,15 @@ interface ArtifactPanelProps {
   lang: ArtifactLang;
   isBuilding: boolean;
   workingAgent: string | null;
+  stage: BuildRole | null;
   platforms: AIPlatform[];
   onSaveEdit: (code: string, lang: ArtifactLang) => void;
+  /** Hands the TDD harness up to the build loop so agents get real results. */
+  registerVerify?: (fn: VerifyFn | null) => void;
 }
 
 const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
-  versions, lang, isBuilding, workingAgent, platforms, onSaveEdit,
+  versions, lang, isBuilding, workingAgent, stage, platforms, onSaveEdit, registerVerify,
 }) => {
   const [versionId, setVersionId] = useState<string | null>(null);
   const [draft, setDraft] = useState<string | null>(null);
@@ -41,6 +49,9 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
   const [images, setImages] = useState<string[]>([]);
   const [runOutput, setRunOutput] = useState('');
   const [lastRun, setLastRun] = useState<{ ok: boolean; ms: number } | null>(null);
+  const [report, setReport] = useState<TestReport | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [tab, setTab] = useState('code');
 
   const lineId = useRef(0);
   const runnerRef = useRef<PyodideRunner | null>(null);
@@ -115,6 +126,56 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected?.id, activeLang, booted]);
 
+  /** Run the artifact's own test suite in the sandbox it lives in. */
+  const runTests = useCallback(async (source: string, testLang: ArtifactLang): Promise<TestReport> => {
+    setTesting(true);
+    try {
+      if (!hasTests(source, testLang)) {
+        const missing = emptyReport(testLang);
+        setReport(missing);
+        return missing;
+      }
+      if (testLang === 'html') {
+        const html = await runHtmlTests(source);
+        setReport(html);
+        return html;
+      }
+      push('system', '— tests —');
+      const runResult = await getRunner().run(source, 'exec');
+      if (runResult.error) {
+        const crashed = emptyReport('python', runResult.error);
+        setReport(crashed);
+        push('stderr', runResult.error);
+        return crashed;
+      }
+      const harness = await getRunner().run(PYTHON_HARNESS, 'exec');
+      const parsed = harness.error
+        ? emptyReport('python', harness.error)
+        : parsePythonReport(harness.stdout, harness.ms);
+      setReport(parsed);
+      push('system', summarise(parsed));
+      return parsed;
+    } finally {
+      setTesting(false);
+    }
+  }, [getRunner, push]);
+
+  const verify = useCallback<VerifyFn>(async (source, verifyLang) => {
+    const result = await runTests(source, verifyLang);
+    setTab('tests');
+    return result;
+  }, [runTests]);
+
+  useEffect(() => {
+    registerVerify?.(verify);
+    return () => registerVerify?.(null);
+  }, [registerVerify, verify]);
+
+  // Show the stored report when browsing revisions.
+  useEffect(() => {
+    if (selected?.tests) setReport(selected.tests);
+  }, [selected?.id, selected?.tests]);
+
   const stop = () => {
     runnerRef.current?.terminate();
     runnerRef.current = null;
@@ -176,6 +237,21 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
           </Badge>
         )}
 
+        {isBuilding && stage && (
+          <Badge variant="outline" className="text-[10px]">{ROLE_LABEL[stage]}</Badge>
+        )}
+
+        {testing ? (
+          <Badge variant="secondary" className="gap-1 text-[10px]">
+            <Loader2 className="h-3 w-3 animate-spin" /> running tests
+          </Badge>
+        ) : report && (
+          <Badge variant={report.failed || report.error ? 'destructive' : report.missing ? 'outline' : 'secondary'} className="gap-1 text-[10px]">
+            {report.failed || report.error ? <XCircle className="h-3 w-3" /> : report.missing ? null : <CheckCircle2 className="h-3 w-3" />}
+            {summarise(report)}
+          </Badge>
+        )}
+
         {activeLang === 'python' && lastRun && !running && (
           <Badge variant={lastRun.ok ? 'secondary' : 'destructive'} className="text-[10px]">
             {lastRun.ok ? `ran in ${lastRun.ms} ms` : 'error'}
@@ -183,6 +259,17 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
         )}
 
         <div className="ml-auto flex items-center gap-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 gap-1 px-2 text-xs"
+            onClick={() => { void runTests(code, activeLang); setTab('tests'); }}
+            disabled={testing || running}
+            title="Run the artifact's test suite"
+          >
+            {testing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FlaskConical className="h-3.5 w-3.5" />}
+            Tests
+          </Button>
           {activeLang === 'python' ? (
             <>
               <Button size="sm" variant="ghost" className="h-7 gap-1 px-2 text-xs" onClick={() => runPython(code)} disabled={running}>
@@ -266,9 +353,12 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
 
         {/* Bottom half — code browser + console */}
         <ResizablePanel defaultSize={42} minSize={15} className="min-h-0">
-          <Tabs defaultValue="code" className="flex h-full min-h-0 flex-col">
+          <Tabs value={tab} onValueChange={setTab} className="flex h-full min-h-0 flex-col">
             <TabsList className="mx-3 mt-2 h-8 w-fit shrink-0">
               <TabsTrigger value="code" className="h-6 px-3 text-xs">Code</TabsTrigger>
+              <TabsTrigger value="tests" className="h-6 px-3 text-xs">
+                Tests{report && !report.missing && !report.error ? ` ${report.passed}/${report.total}` : ''}
+              </TabsTrigger>
               <TabsTrigger value="console" className="h-6 px-3 text-xs">Console</TabsTrigger>
             </TabsList>
 
@@ -291,6 +381,47 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
                   <Save className="mr-1.5 h-3.5 w-3.5" /> Save revision
                 </Button>
               </div>
+            </TabsContent>
+
+            <TabsContent value="tests" className="m-0 min-h-0 flex-1 overflow-y-auto p-3 pt-2">
+              {!report ? (
+                <div className="grid h-full place-items-center text-center text-xs text-muted-foreground">
+                  <div>
+                    <p>No harness run yet. Agents run this suite on every revision.</p>
+                    <Button size="sm" variant="outline" className="mt-3" onClick={() => void runTests(code, activeLang)} disabled={testing}>
+                      <FlaskConical className="mr-1.5 h-3.5 w-3.5" /> Run tests
+                    </Button>
+                  </div>
+                </div>
+              ) : report.error ? (
+                <pre className="whitespace-pre-wrap break-words rounded-md border border-destructive/40 bg-destructive/5 p-3 font-mono text-[11px]">
+                  {report.error}
+                </pre>
+              ) : report.missing ? (
+                <p className="text-xs text-muted-foreground">
+                  This revision ships no tests, so nothing could be verified. Ask the agents for a test suite —
+                  {activeLang === 'python' ? ' module-level `test_*` functions.' : ' `RH.test(name, fn)` registrations.'}
+                </p>
+              ) : (
+                <div className="space-y-1.5">
+                  <p className="text-[11px] text-muted-foreground">
+                    {summarise(report)} · {report.ms} ms · proof of work for v{versions.findIndex(v => v.id === selected?.id) + 1 || versions.length}
+                  </p>
+                  {report.cases.map(c => (
+                    <div key={c.name} className="flex items-start gap-2 rounded-md border border-border/60 bg-background/50 px-2 py-1.5">
+                      {c.ok
+                        ? <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                        : <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" />}
+                      <div className="min-w-0">
+                        <p className="font-mono text-[11px]">{c.name}{c.ms != null ? ` · ${c.ms} ms` : ''}</p>
+                        {!c.ok && c.message && (
+                          <p className="break-words font-mono text-[10px] text-destructive">{c.message}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="console" className="m-0 min-h-0 flex-1 border-t border-border/60">
