@@ -10,6 +10,8 @@ export interface PyRunResult {
   value?: string;
   images: string[];
   packages: string[];
+  /** stdout+stderr produced by this run (used by the TDD harness). */
+  stdout: string;
   ms: number;
 }
 
@@ -124,6 +126,7 @@ export class PyodideRunner {
   private blobUrl: string | null = null;
   private seq = 0;
   private pending = new Map<number, (r: PyRunResult) => void>();
+  private capture = '';
   private onStream: StreamHandler;
   private onReady: (version: string) => void;
 
@@ -139,6 +142,9 @@ export class PyodideRunner {
     worker.onmessage = (event: MessageEvent) => {
       const data = event.data || {};
       if (data.type === 'stream') {
+        if (data.stream === 'stdout' || data.stream === 'stderr') {
+          this.capture += (this.capture ? '\n' : '') + data.text;
+        }
         this.onStream({ stream: data.stream, text: data.text });
       } else if (data.type === 'ready') {
         this.onReady(data.version);
@@ -153,6 +159,7 @@ export class PyodideRunner {
           value: data.value,
           images: data.images ?? [],
           packages: data.packages ?? [],
+          stdout: this.capture,
           ms: data.ms ?? 0,
         });
       }
@@ -169,6 +176,7 @@ export class PyodideRunner {
   run(code: string, mode: 'exec' | 'eval' = 'exec') {
     const worker = this.ensure();
     const id = ++this.seq;
+    this.capture = '';
     return new Promise<PyRunResult>((resolve) => {
       this.pending.set(id, resolve);
       worker.postMessage({ type: 'run', id, code, mode });

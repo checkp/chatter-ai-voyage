@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   ResizableHandle, ResizablePanel, ResizablePanelGroup,
 } from '@/components/ui/resizable';
@@ -8,7 +8,8 @@ import {
 import ChatMessages from '@/components/ChatMessages';
 import ChatInput from '@/components/ChatInput';
 import ArtifactPanel from '@/components/build/ArtifactPanel';
-import { useBuildMode } from '@/hooks/useBuildMode';
+import { useBuildMode, type VerifyFn } from '@/hooks/useBuildMode';
+import type { ArtifactLang } from '@/config/buildMode';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform, Message } from '@/types/chat';
 
@@ -25,7 +26,17 @@ interface BuildLayoutProps {
 const BuildLayout: React.FC<BuildLayoutProps> = ({
   user, platforms, activeChatId, messages, isLoadingMessages, input, setInput,
 }) => {
-  const build = useBuildMode(user, platforms, activeChatId, messages);
+  // The harness lives in the artifact panel (it owns the sandbox); the build loop
+  // calls into it so agents are judged by real test runs, not by their own claims.
+  const verifyRef = useRef<VerifyFn | null>(null);
+  const registerVerify = useCallback((fn: VerifyFn | null) => { verifyRef.current = fn; }, []);
+  const verify = useCallback<VerifyFn>(
+    (code: string, codeLang: ArtifactLang) =>
+      verifyRef.current ? verifyRef.current(code, codeLang) : Promise.resolve(null),
+    [],
+  );
+
+  const build = useBuildMode(user, platforms, activeChatId, messages, verify);
 
   const handleSend = async () => {
     const prompt = input;
@@ -55,6 +66,15 @@ const BuildLayout: React.FC<BuildLayoutProps> = ({
           </Select>
 
           <div className="ml-auto flex items-center gap-1">
+            <Select value={build.rigor} onValueChange={(v) => build.setRigor(v as 'compound' | 'fast')}>
+              <SelectTrigger className="h-7 w-[190px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="compound" className="text-xs">Compound — plan → build → QA → review</SelectItem>
+                <SelectItem value="fast" className="text-xs">Fast — build only</SelectItem>
+              </SelectContent>
+            </Select>
             <span className="text-xs font-semibold text-muted-foreground">Target</span>
             <Select value={build.lang} onValueChange={(v) => build.setLang(v as 'html' | 'python')}>
               <SelectTrigger className="h-7 w-[130px] text-xs">
@@ -98,8 +118,10 @@ const BuildLayout: React.FC<BuildLayoutProps> = ({
 
           isBuilding={build.isBuilding}
           workingAgent={build.workingAgent}
+          stage={build.stage}
           platforms={platforms}
           onSaveEdit={build.saveManualEdit}
+          registerVerify={registerVerify}
         />
       </ResizablePanel>
     </ResizablePanelGroup>

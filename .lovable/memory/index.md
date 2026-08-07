@@ -18,6 +18,7 @@
 - [User Engagement](mem://features/user-engagement) — LocalStorage-driven guided tours and auto-showing changelogs on version bumps
 - [Pricing Sync](mem://admin/pricing-sync) — `sync-model-pricing` edge function logic for administrative cost management
 - [Branding & SEO](mem://marketing/branding-seo) — JSON-LD structured data specs and Google Ads tracking configuration
+- [Build Mode Compound Engineering](mem://features/build-mode-compound) — Build pipeline roles, TDD harness for Python/HTML artifacts, proof-of-work reports
 - [Feature Inventory](mem://features/feature-inventory) — /features page powered by src/data/features.ts; keep in sync with changelog on each release
 - [Docs Sync](mem://preferences/docs-sync) — Always run scripts/sync-docs.mjs after updating changelog/features data
 - [Build Mode](mem://features/build-mode) — Split chat + live HTML artifact, relay building across agents, artifact_panel message storage
