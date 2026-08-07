@@ -45,6 +45,8 @@ Match the interaction pattern to your task — collaboration, comparison, solo f
 - **Side-by-Side Mode** — Dedicated columns per agent for quick visual scanning of parallel responses.
 - **Build Mode** — Split chat and live artifact: you and the agents iterate on one self-contained web app or Python script. The panel splits into the running artifact plus a code browser and console, with instant preview, version history, hand editing, and download.
 - **Python Sandbox** — Build mode runs real CPython in your browser via Pyodide — numpy, pandas, matplotlib, scipy and scikit-learn included, matplotlib figures rendered inline, and an interactive console that shares the session with the script.
+- **Compound Engineering** — Build mode agents run a real pipeline: an orchestrator writes acceptance criteria, implementers build against them, QA hardens the suite, and a reviewer gates the result with repair rounds while tests are red.
+- **TDD Harness & Proof of Work** — Every revision is executed against its own tests in the sandbox it runs in — test_* functions in Pyodide, RH.test cases in a sandboxed iframe — and the per-test pass/fail report is posted into the chat and stored with the version.
 
 ### Agentic Orchestration
 
