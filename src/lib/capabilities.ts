@@ -93,10 +93,10 @@ export const getSupportedCapabilities = (
   return out;
 };
 
-const filterToSupported = (platform: string, caps: Capabilities): Capabilities => {
+const filterToSupported = (platform: string, caps: Capabilities, modelId?: string): Capabilities => {
   const out: Capabilities = {};
   for (const key of ALL_CAPABILITY_KEYS) {
-    if (caps[key] && isCapabilitySupported(platform, key)) out[key] = true;
+    if (caps[key] && isCapabilitySupported(platform, key, modelId)) out[key] = true;
   }
   return out;
 };
