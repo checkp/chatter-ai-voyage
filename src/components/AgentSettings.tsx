@@ -15,6 +15,8 @@ import { DEFAULT_GLOBAL_SYSTEM_PROMPT, DEFAULT_AGENT_INSTRUCTIONS } from '@/conf
 import { useAuth } from '@/hooks/useAuth';
 import { useCapabilityDefaults } from '@/hooks/useCapabilityDefaults';
 import { ALL_CAPABILITY_KEYS, CAPABILITY_META, isCapabilitySupported, setActiveAgentModels, getActiveAgentModels, type CapabilityKey } from '@/lib/capabilities';
+import CapabilityDetailsPanel from './chat/CapabilityDetailsPanel';
+
 
 const CAP_ICONS: Record<CapabilityKey, React.ComponentType<{ className?: string }>> = {
   think: Brain,
