@@ -228,16 +228,27 @@ export const modelSupports = (modelId: string | undefined, capability: string): 
   return false;
 };
 
+/**
+ * Advanced capability flags (think / search / deep_research / code_exec) for a
+ * model id, or undefined when the model has no metadata yet. Registered with
+ * `@/lib/capabilities` so the UI can grey out toggles per selected model.
+ */
+export const getModelAdvancedCapabilities = (modelId: string): AdvancedFlags | undefined =>
+  META[modelId]?.advanced;
+
+registerModelAdvancedLookup(getModelAdvancedCapabilities);
+
 /** Convenience: which providers can accept image attachments at all (any model). */
 export const PLATFORM_VISION_DEFAULT_MODEL: Record<string, string> = {
-  openai: 'gpt-4o',
-  anthropic: 'claude-sonnet-4-20250514',
-  google: 'gemini-2.5-flash',
-  grok: 'grok-2-vision-1212',
-  mistral: 'pixtral-12b-2409',
-  qwen: 'qwen-vl-max',
+  openai: 'gpt-5.6-terra',
+  anthropic: 'claude-sonnet-5',
+  google: 'gemini-3.6-flash',
+  grok: 'grok-4.3',
+  mistral: 'mistral-medium-3.5',
+  qwen: 'qwen3-vl-plus',
   nvidia: 'nvidia/nemotron-nano-12b-v2-vl',
 };
+
 
 export const getDefaultModel = (platformId: string): string => {
   const models = AI_MODELS[platformId];
