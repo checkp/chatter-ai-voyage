@@ -45,8 +45,8 @@ export const CAPABILITY_MATRIX: Record<PlatformId, Record<string, boolean>> = {
   grok: { think: true, search: true, deep_research: true, code_exec: false },
   deepseek: { think: true, search: false, deep_research: true, code_exec: false },
   perplexity: { think: true, search: true, deep_research: true, code_exec: false },
-  mistral: { think: false, search: false, deep_research: false, code_exec: false },
-  qwen: { think: false, search: false, deep_research: false, code_exec: false },
+  mistral: { think: true, search: false, deep_research: false, code_exec: true },
+  qwen: { think: true, search: true, deep_research: false, code_exec: false },
   nvidia: { think: true, search: false, deep_research: false, code_exec: false },
 };
 
