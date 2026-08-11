@@ -127,16 +127,17 @@ const EXCLUDED_MODELS = new Set(['dall-e-2','dall-e-3','gpt-image-1']);
 
 // Preferred default per platform when no DB hint exists.
 const PREFERRED_DEFAULTS: Record<string, string> = {
-  openai:     'gpt-4o-mini',
-  anthropic:  'claude-sonnet-4-20250514',
+  openai:     'gpt-5.6-terra',
+  anthropic:  'claude-sonnet-5',
   deepseek:   'deepseek-chat',
-  grok:       'grok-4',
-  google:     'gemini-2.5-flash',
-  mistral:    'mistral-large-latest',
+  grok:       'grok-4.3',
+  google:     'gemini-3.6-flash',
+  mistral:    'mistral-medium-3.5',
   perplexity: 'sonar-pro',
-  qwen:       'qwen-plus',
+  qwen:       'qwen3.8-max',
   nvidia:     'nvidia/nemotron-3-nano-30b-a3b',
 };
+
 
 // Mutable cache populated from DB.
 export const AI_MODELS: Record<string, ModelConfig[]> = {
