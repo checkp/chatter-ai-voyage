@@ -339,7 +339,21 @@ const AgentSettings = () => {
                     );
                   })}
                 </div>
+                <details className="group rounded-lg border border-border/60 bg-background/40 p-2">
+                  <summary className="cursor-pointer list-none text-xs font-medium text-muted-foreground hover:text-foreground">
+                    What do these do? · capability support for this model
+                  </summary>
+                  <div className="mt-2">
+                    <CapabilityDetailsPanel
+                      agentModels={{
+                        [platform.id]: selectedModels[platform.id] || getDefaultModel(platform.id),
+                      }}
+                      active={capabilityDefaults[platform.id]}
+                    />
+                  </div>
+                </details>
               </div>
+
 
             </CardContent>
           </Card>
