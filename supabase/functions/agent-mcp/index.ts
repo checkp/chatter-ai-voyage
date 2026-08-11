@@ -98,14 +98,14 @@ var PLATFORM_TO_FN = {
   nvidia: "nvidia-chat"
 };
 var DEFAULT_MODELS = {
-  openai: "gpt-4o-mini",
-  anthropic: "claude-3-5-sonnet-20241022",
-  google: "gemini-2.0-flash",
-  grok: "grok-2-1212",
+  openai: "gpt-5.6-terra",
+  anthropic: "claude-sonnet-5",
+  google: "gemini-3.6-flash",
+  grok: "grok-4.3",
   deepseek: "deepseek-chat",
   perplexity: "sonar-pro",
-  mistral: "mistral-small-latest",
-  qwen: "qwen-plus",
+  mistral: "mistral-medium-3.5",
+  qwen: "qwen3.6-plus",
   nvidia: "nvidia/nemotron-3-nano-30b-a3b"
 };
 var CAPABILITY_MATRIX = {
