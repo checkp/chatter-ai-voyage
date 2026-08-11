@@ -162,7 +162,7 @@ serve(async (req) => {
       max_tokens: 4096,
       messages,
     };
-    if (capabilities.think && /sonnet|opus|haiku-4/i.test(model)) {
+    if (capabilities.think && /sonnet|opus|fable|haiku-4/i.test(model)) {
       reqBody.thinking = { type: 'enabled', budget_tokens: 8000 };
       // Anthropic requires max_tokens > thinking budget
       reqBody.max_tokens = 12000;
