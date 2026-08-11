@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import CapabilityToggles from './CapabilityToggles';
@@ -89,7 +89,7 @@ describe('CapabilityToggles — provider-valid toggles only', () => {
     );
     onChange.mockClear();
     // gpt-4-turbo supports none of the advanced capabilities.
-    setActiveAgentModels({ openai: 'gpt-4-turbo' });
+    act(() => setActiveAgentModels({ openai: 'gpt-4-turbo' }));
     rerender(
       <TooltipProvider>
         <CapabilityToggles value={{ deep_research: true }} onChange={onChange} />
