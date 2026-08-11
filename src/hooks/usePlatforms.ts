@@ -555,7 +555,7 @@ ${languageLock}`;
   useEffect(() => {
     const map: Record<string, string> = {};
     platforms.forEach(p => {
-      if (p.selectedModel) map[p.id] = p.selectedModel;
+      if (p.enabled && p.selectedModel) map[p.id] = p.selectedModel;
     });
     setActiveAgentModels(map);
   }, [platforms]);
