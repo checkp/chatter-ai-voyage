@@ -13,7 +13,13 @@ import {
   CAPABILITY_META,
   type Capabilities,
 } from '@/lib/capabilities';
-import '@/config/aiModels';
+import { AI_MODELS } from '@/config/aiModels';
+
+// The model list loads from the DB at runtime — seed it for deterministic names.
+AI_MODELS.openai = [{
+  id: 'gpt-5.6-sol', name: 'GPT-5.6 Sol', description: '', maxTokens: 1000,
+  costTier: 'medium', capabilities: ['text'], speed: 'medium',
+}];
 
 const renderToggles = (value: Capabilities, onChange = vi.fn()) => {
   const utils = render(

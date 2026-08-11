@@ -17,7 +17,33 @@ import {
 // Importing the model registry registers the per-model advanced lookup.
 import { AI_MODELS, getModelAdvancedCapabilities, getModelConfig } from '@/config/aiModels';
 
+// AI_MODELS is populated from the DB at runtime; seed it with a fixture so the
+// tests are deterministic and offline.
+const FIXTURE: Record<string, string[]> = {
+  openai: ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'o3-deep-research', 'gpt-4o', 'gpt-4-turbo'],
+  anthropic: ['claude-fable-5', 'claude-opus-5', 'claude-sonnet-5', 'claude-haiku-4-5'],
+  deepseek: ['deepseek-chat', 'deepseek-reasoner', 'deepseek-v4-pro', 'deepseek-coder'],
+  grok: ['grok-4.5', 'grok-4.3', 'grok-code-fast-1'],
+  google: ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite'],
+  mistral: ['mistral-medium-3.5', 'mistral-small-4', 'mistral-large-3'],
+};
+
+const seedModels = () => {
+  for (const [platform, ids] of Object.entries(FIXTURE)) {
+    AI_MODELS[platform] = ids.map((id) => ({
+      id,
+      name: id,
+      description: '',
+      maxTokens: 1000,
+      costTier: 'medium' as const,
+      capabilities: ['text'],
+      speed: 'medium' as const,
+    }));
+  }
+};
+
 const resetGlobals = () => {
+  seedModels();
   setActiveAgentModels({});
   setAgentCapabilityDefaults({});
   clearPendingCapabilities();
@@ -140,7 +166,8 @@ describe('parseConductorCapabilities', () => {
 
 describe('model registry sanity', () => {
   it('resolves model configs used by the capability UI', () => {
-    expect(getModelConfig('openai', 'gpt-5.6-sol')?.name).toBe('GPT-5.6 Sol');
+    seedModels();
+    expect(getModelConfig('openai', 'gpt-5.6-sol')?.id).toBe('gpt-5.6-sol');
     expect(getModelConfig('openai', 'nope-not-real')).toBeUndefined();
   });
 });
