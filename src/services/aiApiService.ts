@@ -103,7 +103,7 @@ export const callDeepSeek = async (
 export const callGrokAPI = async (
   conversationHistory: History,
   user: SupabaseUser,
-  model: string = 'grok-3',
+  model: string = 'grok-4.3',
   attachments?: Attachment[],
   capabilities?: Capabilities,
 ): Promise<string> => {
