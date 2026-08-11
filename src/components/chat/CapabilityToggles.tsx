@@ -40,6 +40,21 @@ const CapabilityToggles: React.FC<Props> = ({ value, onChange, disabled }) => {
     };
   };
 
+  // When the selected models change, drop any active toggle no model can do.
+  useEffect(() => {
+    if (platformIds.length === 0) return;
+    const cleared: Capabilities = { ...value };
+    let changed = false;
+    for (const key of ALL_CAPABILITY_KEYS) {
+      if (value[key] && !platformIds.some(id => isCapabilitySupported(id, key, agentModels[id]))) {
+        cleared[key] = false;
+        changed = true;
+      }
+    }
+    if (changed) onChange(cleared);
+  }, [agentModels, value, onChange]);
+
+
   const toggle = (key: CapabilityKey) => {
     onChange({ ...value, [key]: !value[key] });
   };
