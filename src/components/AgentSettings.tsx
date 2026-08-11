@@ -14,7 +14,7 @@ import { DEFAULT_CONDUCTOR_PROMPT } from '@/config/conductorPrompt';
 import { DEFAULT_GLOBAL_SYSTEM_PROMPT, DEFAULT_AGENT_INSTRUCTIONS } from '@/config/defaultPrompts';
 import { useAuth } from '@/hooks/useAuth';
 import { useCapabilityDefaults } from '@/hooks/useCapabilityDefaults';
-import { ALL_CAPABILITY_KEYS, CAPABILITY_META, isCapabilitySupported, type CapabilityKey } from '@/lib/capabilities';
+import { ALL_CAPABILITY_KEYS, CAPABILITY_META, isCapabilitySupported, setActiveAgentModels, getActiveAgentModels, type CapabilityKey } from '@/lib/capabilities';
 
 const CAP_ICONS: Record<CapabilityKey, React.ComponentType<{ className?: string }>> = {
   think: Brain,
