@@ -148,13 +148,13 @@ export const clearConductorCapabilityOverrides = () => {
  * the pending bag is cleared automatically when this is called from the
  * "primary" send path. The conductor flow uses its own setter and clearer.
  */
-export const resolveCapabilitiesForPlatform = (platform: string): Capabilities => {
+export const resolveCapabilitiesForPlatform = (platform: string, modelId?: string): Capabilities => {
   const merged: Capabilities = {
     ...getAgentCapabilityDefault(platform),
     ...pendingCapabilities,
     ...(conductorOverrides[platform] ?? {}),
   };
-  return filterToSupported(platform, merged);
+  return filterToSupported(platform, merged, modelId);
 };
 
 /** Call after the entire send fan-out completes, to drop one-shot pending caps. */
