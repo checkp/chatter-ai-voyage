@@ -5,6 +5,7 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform, Message, ChatMode } from '@/types/chat';
 import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI, callGeminiAPI, callMistralAPI, callPerplexityAPI, callQwenAPI, callNvidiaAPI, callLocalAPI } from '@/services/aiApiService';
 import { getDefaultModel, getModelConfig, modelSupports } from '@/config/aiModels';
+import { setActiveAgentModels } from '@/lib/capabilities';
 
 const resolvePlatformModel = (platformId: string, model?: string | null) => {
   if (!model) {
