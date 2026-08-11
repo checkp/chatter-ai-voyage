@@ -15,6 +15,8 @@ import { DEFAULT_GLOBAL_SYSTEM_PROMPT, DEFAULT_AGENT_INSTRUCTIONS } from '@/conf
 import { useAuth } from '@/hooks/useAuth';
 import { useCapabilityDefaults } from '@/hooks/useCapabilityDefaults';
 import { ALL_CAPABILITY_KEYS, CAPABILITY_META, isCapabilitySupported, setActiveAgentModels, getActiveAgentModels, type CapabilityKey } from '@/lib/capabilities';
+import CapabilityDetailsPanel from './chat/CapabilityDetailsPanel';
+
 
 const CAP_ICONS: Record<CapabilityKey, React.ComponentType<{ className?: string }>> = {
   think: Brain,
@@ -339,7 +341,21 @@ const AgentSettings = () => {
                     );
                   })}
                 </div>
+                <details className="group rounded-lg border border-border/60 bg-background/40 p-2">
+                  <summary className="cursor-pointer list-none text-xs font-medium text-muted-foreground hover:text-foreground">
+                    What do these do? · capability support for this model
+                  </summary>
+                  <div className="mt-2">
+                    <CapabilityDetailsPanel
+                      agentModels={{
+                        [platform.id]: selectedModels[platform.id] || getDefaultModel(platform.id),
+                      }}
+                      active={capabilityDefaults[platform.id]}
+                    />
+                  </div>
+                </details>
               </div>
+
 
             </CardContent>
           </Card>
