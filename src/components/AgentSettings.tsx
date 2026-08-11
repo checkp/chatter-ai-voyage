@@ -295,13 +295,16 @@ const AgentSettings = () => {
               </div>
               <div className="space-y-2">
                 <Label className="text-sm text-muted-foreground">
-                  Default advanced capabilities (always on for this agent)
+                  Default advanced capabilities for{' '}
+                  {getModelConfig(platform.id, selectedModels[platform.id])?.name ??
+                    (selectedModels[platform.id] || 'this agent')}
                 </Label>
                 <div className="flex flex-wrap gap-2">
                   {ALL_CAPABILITY_KEYS.map((key) => {
                     const Icon = CAP_ICONS[key];
-                    const supported = isCapabilitySupported(platform.id, key);
-                    const active = !!capabilityDefaults[platform.id]?.[key];
+                    const model = selectedModels[platform.id] || getDefaultModel(platform.id);
+                    const supported = isCapabilitySupported(platform.id, key, model);
+                    const active = supported && !!capabilityDefaults[platform.id]?.[key];
                     return (
                       <button
                         key={key}
@@ -315,7 +318,7 @@ const AgentSettings = () => {
                             : 'bg-background hover:bg-accent text-muted-foreground border-border',
                           (!enabledPlatforms[platform.id] || !supported) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
                         ].join(' ')}
-                        title={supported ? CAPABILITY_META[key].tooltip : `Not supported on ${platform.name}`}
+                        title={supported ? CAPABILITY_META[key].tooltip : `Not supported by this model`}
                       >
                         <Icon className="h-3.5 w-3.5" />
                         <span className="font-medium">{CAPABILITY_META[key].label}</span>
@@ -324,6 +327,7 @@ const AgentSettings = () => {
                   })}
                 </div>
               </div>
+
             </CardContent>
           </Card>
         ))}
