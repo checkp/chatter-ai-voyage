@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { registerModelAdvancedLookup } from '@/lib/capabilities';
 
 export interface ModelConfig {
   id: string;
