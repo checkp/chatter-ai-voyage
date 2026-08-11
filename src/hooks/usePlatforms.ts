@@ -508,7 +508,7 @@ ${languageLock}`;
     // Resolve advanced capabilities (think/search/deep_research/code_exec)
     // from per-message overrides + per-agent defaults + conductor overrides.
     const { resolveCapabilitiesForPlatform } = await import('@/lib/capabilities');
-    const advancedCaps = resolveCapabilitiesForPlatform(platform.id);
+    const advancedCaps = resolveCapabilitiesForPlatform(platform.id, selectedModel);
     if (Object.values(advancedCaps).some(Boolean)) {
       console.log(`[${platform.name}] advanced capabilities:`, advancedCaps);
     }
