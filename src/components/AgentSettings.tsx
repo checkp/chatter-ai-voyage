@@ -14,7 +14,7 @@ import { DEFAULT_CONDUCTOR_PROMPT } from '@/config/conductorPrompt';
 import { DEFAULT_GLOBAL_SYSTEM_PROMPT, DEFAULT_AGENT_INSTRUCTIONS } from '@/config/defaultPrompts';
 import { useAuth } from '@/hooks/useAuth';
 import { useCapabilityDefaults } from '@/hooks/useCapabilityDefaults';
-import { ALL_CAPABILITY_KEYS, CAPABILITY_META, isCapabilitySupported, type CapabilityKey } from '@/lib/capabilities';
+import { ALL_CAPABILITY_KEYS, CAPABILITY_META, isCapabilitySupported, setActiveAgentModels, getActiveAgentModels, type CapabilityKey } from '@/lib/capabilities';
 
 const CAP_ICONS: Record<CapabilityKey, React.ComponentType<{ className?: string }>> = {
   think: Brain,
@@ -148,9 +148,22 @@ const AgentSettings = () => {
   };
 
   const handleModelChange = useCallback((platform: string, model: string) => {
-    setSelectedModels(prev => ({ ...prev, [platform]: resolvePlatformModel(platform, model) }));
+    const resolved = resolvePlatformModel(platform, model);
+    setSelectedModels(prev => {
+      const next = { ...prev, [platform]: resolved };
+      // Keep the shared registry in sync so capability UIs re-render instantly.
+      setActiveAgentModels({ ...getActiveAgentModels(), [platform]: resolved });
+      return next;
+    });
+    // Drop any saved default the new model can't actually do.
+    ALL_CAPABILITY_KEYS.forEach((key) => {
+      if (capabilityDefaults[platform]?.[key] && !isCapabilitySupported(platform, key, resolved)) {
+        setCapability(platform, key, false);
+      }
+    });
     saveSetting(platform, { model });
-  }, []);
+  }, [capabilityDefaults, setCapability]);
+
 
   const handleToggleEnabled = useCallback((platform: string, enabled: boolean) => {
     setEnabledPlatforms(prev => ({ ...prev, [platform]: enabled }));
