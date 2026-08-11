@@ -19,51 +19,62 @@ const PRICING_MAP: Array<{
   api_cost_per_1k_tokens: number; // USD (blended avg of input/output)
   tokens_per_message: number;     // internal app tokens per msg
 }> = [
-  // OpenAI
+  // OpenAI — GPT-5.6 family current; GPT-5 / GPT-4o legacy
+  { platform: 'openai', model_id: 'gpt-5.6-sol',   cost_tier: 'high',   api_cost_per_1k_tokens: 0.0175,  tokens_per_message: 22 },
+  { platform: 'openai', model_id: 'gpt-5.6-terra', cost_tier: 'medium', api_cost_per_1k_tokens: 0.004,   tokens_per_message: 10 },
+  { platform: 'openai', model_id: 'gpt-5.6-luna',  cost_tier: 'low',    api_cost_per_1k_tokens: 0.0008,  tokens_per_message: 5 },
+  { platform: 'openai', model_id: 'o3-deep-research', cost_tier: 'high', api_cost_per_1k_tokens: 0.030,  tokens_per_message: 30 },
   { platform: 'openai', model_id: 'gpt-4o-mini',  cost_tier: 'low',  api_cost_per_1k_tokens: 0.000375, tokens_per_message: 5 },
   { platform: 'openai', model_id: 'gpt-4o',       cost_tier: 'high', api_cost_per_1k_tokens: 0.00625,  tokens_per_message: 20 },
-  { platform: 'openai', model_id: 'gpt-4-turbo',  cost_tier: 'high', api_cost_per_1k_tokens: 0.020,    tokens_per_message: 20 },
   { platform: 'openai', model_id: 'gpt-5',        cost_tier: 'high', api_cost_per_1k_tokens: 0.0075,   tokens_per_message: 22 },
 
-  // Anthropic — Claude 4 family
-  { platform: 'anthropic', model_id: 'claude-haiku-4-5',  cost_tier: 'low',    api_cost_per_1k_tokens: 0.0025, tokens_per_message: 6 },
-  { platform: 'anthropic', model_id: 'claude-sonnet-4-20250514', cost_tier: 'medium', api_cost_per_1k_tokens: 0.009,  tokens_per_message: 12 },
-  { platform: 'anthropic', model_id: 'claude-opus-4-20250514',   cost_tier: 'high',   api_cost_per_1k_tokens: 0.045,  tokens_per_message: 24 },
+  // Anthropic — Claude 5 family current; Haiku 4.5 still active
+  { platform: 'anthropic', model_id: 'claude-fable-5',  cost_tier: 'high',   api_cost_per_1k_tokens: 0.030, tokens_per_message: 28 },
+  { platform: 'anthropic', model_id: 'claude-opus-5',   cost_tier: 'high',   api_cost_per_1k_tokens: 0.015, tokens_per_message: 20 },
+  { platform: 'anthropic', model_id: 'claude-sonnet-5', cost_tier: 'medium', api_cost_per_1k_tokens: 0.009, tokens_per_message: 12 },
+  { platform: 'anthropic', model_id: 'claude-haiku-4-5', cost_tier: 'low',   api_cost_per_1k_tokens: 0.003, tokens_per_message: 6 },
 
-  // Google Gemini 2.5
+  // Google Gemini 3.x
+  { platform: 'google', model_id: 'gemini-3.6-flash',      cost_tier: 'medium', api_cost_per_1k_tokens: 0.0015, tokens_per_message: 7 },
+  { platform: 'google', model_id: 'gemini-3.5-flash',      cost_tier: 'medium', api_cost_per_1k_tokens: 0.002,  tokens_per_message: 8 },
+  { platform: 'google', model_id: 'gemini-3.5-flash-lite', cost_tier: 'low',    api_cost_per_1k_tokens: 0.0005, tokens_per_message: 4 },
+  { platform: 'google', model_id: 'gemini-3.1-flash-lite', cost_tier: 'low',    api_cost_per_1k_tokens: 0.0004, tokens_per_message: 4 },
   { platform: 'google', model_id: 'gemini-2.5-flash', cost_tier: 'low',  api_cost_per_1k_tokens: 0.0008, tokens_per_message: 5 },
   { platform: 'google', model_id: 'gemini-2.5-pro',   cost_tier: 'high', api_cost_per_1k_tokens: 0.008,  tokens_per_message: 14 },
 
-  // DeepSeek
-  { platform: 'deepseek', model_id: 'deepseek-chat',  cost_tier: 'low', api_cost_per_1k_tokens: 0.00028, tokens_per_message: 5 },
-  { platform: 'deepseek', model_id: 'deepseek-coder', cost_tier: 'low', api_cost_per_1k_tokens: 0.00028, tokens_per_message: 6 },
+  // DeepSeek — ids route to DeepSeek V4
+  { platform: 'deepseek', model_id: 'deepseek-chat',     cost_tier: 'low',    api_cost_per_1k_tokens: 0.00028, tokens_per_message: 5 },
+  { platform: 'deepseek', model_id: 'deepseek-reasoner', cost_tier: 'medium', api_cost_per_1k_tokens: 0.00065, tokens_per_message: 3 },
+  { platform: 'deepseek', model_id: 'deepseek-v4-pro',   cost_tier: 'medium', api_cost_per_1k_tokens: 0.0012,  tokens_per_message: 8 },
+  { platform: 'deepseek', model_id: 'deepseek-coder',    cost_tier: 'low',    api_cost_per_1k_tokens: 0.00028, tokens_per_message: 6 },
 
-  // xAI Grok
-  { platform: 'grok', model_id: 'grok-4',             cost_tier: 'high',   api_cost_per_1k_tokens: 0.010, tokens_per_message: 18 },
-  { platform: 'grok', model_id: 'grok-4-heavy',       cost_tier: 'high',   api_cost_per_1k_tokens: 0.015, tokens_per_message: 24 },
-  { platform: 'grok', model_id: 'grok-3',             cost_tier: 'high',   api_cost_per_1k_tokens: 0.010, tokens_per_message: 16 },
-  { platform: 'grok', model_id: 'grok-3-mini',        cost_tier: 'medium', api_cost_per_1k_tokens: 0.006, tokens_per_message: 10 },
-  { platform: 'grok', model_id: 'grok-3-fast',        cost_tier: 'low',    api_cost_per_1k_tokens: 0.004, tokens_per_message: 8 },
-  { platform: 'grok', model_id: 'grok-3-mini-fast',   cost_tier: 'low',    api_cost_per_1k_tokens: 0.003, tokens_per_message: 6 },
-  { platform: 'grok', model_id: 'grok-2-vision-1212', cost_tier: 'medium', api_cost_per_1k_tokens: 0.007, tokens_per_message: 12 },
-  { platform: 'grok', model_id: 'grok-2-1212',        cost_tier: 'medium', api_cost_per_1k_tokens: 0.006, tokens_per_message: 10 },
+  // xAI Grok 4.x
+  { platform: 'grok', model_id: 'grok-4.5',                 cost_tier: 'high',   api_cost_per_1k_tokens: 0.004,  tokens_per_message: 18 },
+  { platform: 'grok', model_id: 'grok-4.3',                 cost_tier: 'medium', api_cost_per_1k_tokens: 0.0019, tokens_per_message: 10 },
+  { platform: 'grok', model_id: 'grok-4.20-0309-reasoning', cost_tier: 'medium', api_cost_per_1k_tokens: 0.0025, tokens_per_message: 12 },
+  { platform: 'grok', model_id: 'grok-code-fast-1',         cost_tier: 'low',    api_cost_per_1k_tokens: 0.0008, tokens_per_message: 5 },
+  { platform: 'grok', model_id: 'grok-4',                   cost_tier: 'high',   api_cost_per_1k_tokens: 0.010,  tokens_per_message: 18 },
+  { platform: 'grok', model_id: 'grok-3',                   cost_tier: 'high',   api_cost_per_1k_tokens: 0.010,  tokens_per_message: 16 },
+  { platform: 'grok', model_id: 'grok-3-mini',              cost_tier: 'medium', api_cost_per_1k_tokens: 0.006,  tokens_per_message: 10 },
 
   // Mistral AI
-  { platform: 'mistral', model_id: 'mistral-large-latest',  cost_tier: 'high',   api_cost_per_1k_tokens: 0.006, tokens_per_message: 16 },
-  { platform: 'mistral', model_id: 'mistral-medium-latest', cost_tier: 'medium', api_cost_per_1k_tokens: 0.0027, tokens_per_message: 10 },
-  { platform: 'mistral', model_id: 'mistral-small-latest',  cost_tier: 'low',    api_cost_per_1k_tokens: 0.0006, tokens_per_message: 6 },
-  { platform: 'mistral', model_id: 'codestral-latest',      cost_tier: 'medium', api_cost_per_1k_tokens: 0.0009, tokens_per_message: 8 },
+  { platform: 'mistral', model_id: 'mistral-medium-3.5', cost_tier: 'medium', api_cost_per_1k_tokens: 0.0027, tokens_per_message: 10 },
+  { platform: 'mistral', model_id: 'mistral-small-4',    cost_tier: 'low',    api_cost_per_1k_tokens: 0.0006, tokens_per_message: 5 },
+  { platform: 'mistral', model_id: 'mistral-large-3',    cost_tier: 'medium', api_cost_per_1k_tokens: 0.004,  tokens_per_message: 12 },
+  { platform: 'mistral', model_id: 'codestral-latest',   cost_tier: 'medium', api_cost_per_1k_tokens: 0.0009, tokens_per_message: 8 },
 
-  // Perplexity AI
-  { platform: 'perplexity', model_id: 'sonar',               cost_tier: 'low',  api_cost_per_1k_tokens: 0.001, tokens_per_message: 6 },
-  { platform: 'perplexity', model_id: 'sonar-pro',           cost_tier: 'high', api_cost_per_1k_tokens: 0.009, tokens_per_message: 14 },
-  { platform: 'perplexity', model_id: 'sonar-reasoning-pro', cost_tier: 'high', api_cost_per_1k_tokens: 0.012, tokens_per_message: 18 },
+  // Perplexity Sonar
+  { platform: 'perplexity', model_id: 'sonar',               cost_tier: 'low',    api_cost_per_1k_tokens: 0.001, tokens_per_message: 5 },
+  { platform: 'perplexity', model_id: 'sonar-pro',           cost_tier: 'medium', api_cost_per_1k_tokens: 0.009, tokens_per_message: 10 },
+  { platform: 'perplexity', model_id: 'sonar-reasoning-pro', cost_tier: 'high',   api_cost_per_1k_tokens: 0.012, tokens_per_message: 16 },
+  { platform: 'perplexity', model_id: 'sonar-deep-research', cost_tier: 'high',   api_cost_per_1k_tokens: 0.025, tokens_per_message: 30 },
 
   // Qwen (Alibaba DashScope)
-  { platform: 'qwen', model_id: 'qwen-max',   cost_tier: 'high',   api_cost_per_1k_tokens: 0.010,  tokens_per_message: 16 },
-  { platform: 'qwen', model_id: 'qwen-plus',  cost_tier: 'medium', api_cost_per_1k_tokens: 0.002,  tokens_per_message: 8 },
-  { platform: 'qwen', model_id: 'qwen-turbo', cost_tier: 'low',    api_cost_per_1k_tokens: 0.0006, tokens_per_message: 5 },
-  { platform: 'qwen', model_id: 'qwen3-max',  cost_tier: 'high',   api_cost_per_1k_tokens: 0.012,  tokens_per_message: 18 },
+  { platform: 'qwen', model_id: 'qwen3.8-max',   cost_tier: 'high',   api_cost_per_1k_tokens: 0.010,  tokens_per_message: 16 },
+  { platform: 'qwen', model_id: 'qwen3.6-plus',  cost_tier: 'medium', api_cost_per_1k_tokens: 0.002,  tokens_per_message: 8 },
+  { platform: 'qwen', model_id: 'qwen3-vl-plus', cost_tier: 'medium', api_cost_per_1k_tokens: 0.0025, tokens_per_message: 9 },
+  { platform: 'qwen', model_id: 'qwen-turbo',    cost_tier: 'low',    api_cost_per_1k_tokens: 0.0006, tokens_per_message: 4 },
+
 
   // NVIDIA-hosted NIMs (integrate.api.nvidia.com) — OpenAI-compatible.
   { platform: 'nvidia', model_id: 'nvidia/nemotron-3-ultra-550b-a55b',              cost_tier: 'high',   api_cost_per_1k_tokens: 0.020,  tokens_per_message: 26 },
