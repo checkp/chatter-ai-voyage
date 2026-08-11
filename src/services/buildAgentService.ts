@@ -16,19 +16,21 @@ export const callPlatformRaw = async (
   platform: AIPlatform,
   history: History,
   user: SupabaseUser,
+  /** Whole files (code + tests) need far more room than a chat reply. */
+  maxTokens = 16000,
 ): Promise<string> => {
   const model = platform.selectedModel || '';
   switch (platform.id) {
-    case 'openai': return callOpenAI(history, user, model || undefined);
-    case 'deepseek': return callDeepSeek(history, user, model || undefined);
-    case 'grok': return callGrokAPI(history, user, model || undefined);
-    case 'anthropic': return callClaudeAPI(history, model || undefined);
-    case 'google': return callGeminiAPI(history, user, model || undefined);
-    case 'mistral': return callMistralAPI(history, user, model || undefined);
-    case 'perplexity': return callPerplexityAPI(history, user, model || undefined);
-    case 'qwen': return callQwenAPI(history, user, model || undefined);
-    case 'nvidia': return callNvidiaAPI(history, user, model);
-    case 'local': return callLocalAPI(history, user, model);
+    case 'openai': return callOpenAI(history, user, model || undefined, undefined, undefined, maxTokens);
+    case 'deepseek': return callDeepSeek(history, user, model || undefined, undefined, undefined, maxTokens);
+    case 'grok': return callGrokAPI(history, user, model || undefined, undefined, undefined, maxTokens);
+    case 'anthropic': return callClaudeAPI(history, model || undefined, undefined, undefined, maxTokens);
+    case 'google': return callGeminiAPI(history, user, model || undefined, undefined, undefined, maxTokens);
+    case 'mistral': return callMistralAPI(history, user, model || undefined, undefined, undefined, maxTokens);
+    case 'perplexity': return callPerplexityAPI(history, user, model || undefined, undefined, undefined, maxTokens);
+    case 'qwen': return callQwenAPI(history, user, model || undefined, undefined, undefined, maxTokens);
+    case 'nvidia': return callNvidiaAPI(history, user, model, undefined, undefined, maxTokens);
+    case 'local': return callLocalAPI(history, user, model, undefined, undefined, maxTokens);
     default: throw new Error(`${platform.name} can't build yet`);
   }
 };
