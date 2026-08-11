@@ -28,7 +28,8 @@ export const CAPABILITY_META: Record<CapabilityKey, { label: string; tooltip: st
   code_exec:     { label: 'Code',          tooltip: 'Run code to compute answers and analyze data.' },
 };
 
-/** Which platforms can plausibly handle each capability (used for UI grey-out). */
+/** Which platforms can plausibly handle each capability (fallback when the
+ *  selected model has no per-model capability metadata). */
 export const PLATFORM_CAPABILITY_SUPPORT: Record<string, Record<CapabilityKey, boolean>> = {
   openai:     { think: true,  search: true,  deep_research: true,  code_exec: true  },
   anthropic:  { think: true,  search: true,  deep_research: true,  code_exec: true  },
@@ -36,20 +37,70 @@ export const PLATFORM_CAPABILITY_SUPPORT: Record<string, Record<CapabilityKey, b
   grok:       { think: true,  search: true,  deep_research: true,  code_exec: false },
   deepseek:   { think: true,  search: false, deep_research: true,  code_exec: false },
   perplexity: { think: true,  search: true,  deep_research: true,  code_exec: false },
-  mistral:    { think: false, search: false, deep_research: false, code_exec: false },
-  qwen:       { think: false, search: false, deep_research: false, code_exec: false },
+  mistral:    { think: true,  search: false, deep_research: false, code_exec: true  },
+  qwen:       { think: true,  search: true,  deep_research: false, code_exec: false },
+  nvidia:     { think: true,  search: false, deep_research: false, code_exec: false },
 };
 
-export const isCapabilitySupported = (platform: string, cap: CapabilityKey): boolean =>
-  !!PLATFORM_CAPABILITY_SUPPORT[platform]?.[cap];
+// ─── Per-model advanced capability metadata ─────────────────────────────────────
+// Registered by `@/config/aiModels` so this module stays dependency-free.
+type ModelAdvancedLookup = (modelId: string) => Partial<Record<CapabilityKey, boolean>> | undefined;
+let modelAdvancedLookup: ModelAdvancedLookup = () => undefined;
 
-const filterToSupported = (platform: string, caps: Capabilities): Capabilities => {
+export const registerModelAdvancedLookup = (fn: ModelAdvancedLookup) => {
+  modelAdvancedLookup = fn;
+};
+
+/** Currently selected model per platform (kept in sync by usePlatforms). */
+let activeAgentModels: Record<string, string> = {};
+const modelListeners = new Set<() => void>();
+
+export const setActiveAgentModels = (map: Record<string, string>) => {
+  const changed = JSON.stringify(map) !== JSON.stringify(activeAgentModels);
+  activeAgentModels = { ...map };
+  if (changed) modelListeners.forEach(fn => { try { fn(); } catch {} });
+};
+
+export const getActiveAgentModels = (): Record<string, string> => ({ ...activeAgentModels });
+
+export const subscribeActiveAgentModels = (fn: () => void) => {
+  modelListeners.add(fn);
+  return () => { modelListeners.delete(fn); };
+};
+
+/**
+ * Is a capability usable for this platform / model pair?
+ * Per-model metadata wins; otherwise fall back to the platform matrix.
+ */
+export const isCapabilitySupported = (
+  platform: string,
+  cap: CapabilityKey,
+  modelId?: string,
+): boolean => {
+  const model = modelId ?? activeAgentModels[platform];
+  const perModel = model ? modelAdvancedLookup(model) : undefined;
+  if (perModel && perModel[cap] !== undefined) return !!perModel[cap];
+  return !!PLATFORM_CAPABILITY_SUPPORT[platform]?.[cap];
+};
+
+/** Full capability support map for a platform/model pair (for UI). */
+export const getSupportedCapabilities = (
+  platform: string,
+  modelId?: string,
+): Record<CapabilityKey, boolean> => {
+  const out = {} as Record<CapabilityKey, boolean>;
+  for (const key of ALL_CAPABILITY_KEYS) out[key] = isCapabilitySupported(platform, key, modelId);
+  return out;
+};
+
+const filterToSupported = (platform: string, caps: Capabilities, modelId?: string): Capabilities => {
   const out: Capabilities = {};
   for (const key of ALL_CAPABILITY_KEYS) {
-    if (caps[key] && isCapabilitySupported(platform, key)) out[key] = true;
+    if (caps[key] && isCapabilitySupported(platform, key, modelId)) out[key] = true;
   }
   return out;
 };
+
 
 // ─── Pending per-message overrides ──────────────────────────────────────────────
 let pendingCapabilities: Capabilities = {};
@@ -97,13 +148,13 @@ export const clearConductorCapabilityOverrides = () => {
  * the pending bag is cleared automatically when this is called from the
  * "primary" send path. The conductor flow uses its own setter and clearer.
  */
-export const resolveCapabilitiesForPlatform = (platform: string): Capabilities => {
+export const resolveCapabilitiesForPlatform = (platform: string, modelId?: string): Capabilities => {
   const merged: Capabilities = {
     ...getAgentCapabilityDefault(platform),
     ...pendingCapabilities,
     ...(conductorOverrides[platform] ?? {}),
   };
-  return filterToSupported(platform, merged);
+  return filterToSupported(platform, merged, modelId);
 };
 
 /** Call after the entire send fan-out completes, to drop one-shot pending caps. */

@@ -5,6 +5,7 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform, Message, ChatMode } from '@/types/chat';
 import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI, callGeminiAPI, callMistralAPI, callPerplexityAPI, callQwenAPI, callNvidiaAPI, callLocalAPI } from '@/services/aiApiService';
 import { getDefaultModel, getModelConfig, modelSupports } from '@/config/aiModels';
+import { setActiveAgentModels } from '@/lib/capabilities';
 
 const resolvePlatformModel = (platformId: string, model?: string | null) => {
   if (!model) {
@@ -508,7 +509,7 @@ ${languageLock}`;
     // Resolve advanced capabilities (think/search/deep_research/code_exec)
     // from per-message overrides + per-agent defaults + conductor overrides.
     const { resolveCapabilitiesForPlatform } = await import('@/lib/capabilities');
-    const advancedCaps = resolveCapabilitiesForPlatform(platform.id);
+    const advancedCaps = resolveCapabilitiesForPlatform(platform.id, selectedModel);
     if (Object.values(advancedCaps).some(Boolean)) {
       console.log(`[${platform.name}] advanced capabilities:`, advancedCaps);
     }
@@ -548,6 +549,17 @@ ${languageLock}`;
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
     };
   }, [loadAgentSettings]);
+
+  // Keep the shared capability registry aware of each agent's selected model so
+  // the UI can grey out capabilities the chosen model can't actually do.
+  useEffect(() => {
+    const map: Record<string, string> = {};
+    platforms.forEach(p => {
+      if (p.enabled && p.selectedModel) map[p.id] = p.selectedModel;
+    });
+    setActiveAgentModels(map);
+  }, [platforms]);
+
 
   return {
     platforms,
