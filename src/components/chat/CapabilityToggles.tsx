@@ -107,8 +107,25 @@ const CapabilityToggles: React.FC<Props> = ({ value, onChange, disabled }) => {
           </Tooltip>
         );
       })}
+
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            aria-label="About advanced capabilities"
+            className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent"
+          >
+            <Info className="h-3.5 w-3.5" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-[320px] max-h-[60vh] overflow-y-auto">
+          <p className="mb-2 text-sm font-medium">Advanced capabilities</p>
+          <CapabilityDetailsPanel agentModels={agentModels} active={value} />
+        </PopoverContent>
+      </Popover>
     </div>
   );
+
 };
 
 export default CapabilityToggles;
