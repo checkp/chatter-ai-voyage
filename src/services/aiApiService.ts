@@ -62,17 +62,26 @@ const buildBody = (
   return body;
 };
 
+/**
+ * Opt-in larger output budget. Build mode needs whole files (code + tests) in a
+ * single reply, which blows past the conversational defaults the edge functions
+ * use. The functions clamp this server-side.
+ */
+const withMax = (body: Record<string, unknown>, maxTokens?: number) =>
+  maxTokens ? { ...body, max_output_tokens: maxTokens } : body;
+
 export const callOpenAI = async (
   conversationHistory: History,
   user: SupabaseUser,
   model: string = 'gpt-5.6-terra',
   attachments?: Attachment[],
   capabilities?: Capabilities,
+  maxTokens?: number,
 ): Promise<string> => {
   return withRetry(async () => {
     const session = await getValidSession();
     const response = await supabase.functions.invoke('openai-chat', {
-      body: buildBody(conversationHistory, model, user.id, attachments, capabilities),
+      body: withMax(buildBody(conversationHistory, model, user.id, attachments, capabilities), maxTokens),
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (response.error) throw new Error(response.error.message || 'OpenAI API call failed');
@@ -87,11 +96,12 @@ export const callDeepSeek = async (
   model: string = 'deepseek-chat',
   _attachments?: Attachment[],
   capabilities?: Capabilities,
+  maxTokens?: number,
 ): Promise<string> => {
   return withRetry(async () => {
     const session = await getValidSession();
     const response = await supabase.functions.invoke('deepseek-chat', {
-      body: buildBody(conversationHistory, model, user.id, undefined, capabilities),
+      body: withMax(buildBody(conversationHistory, model, user.id, undefined, capabilities), maxTokens),
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (response.error) throw new Error(response.error.message || 'DeepSeek API call failed');
@@ -106,11 +116,12 @@ export const callGrokAPI = async (
   model: string = 'grok-4.3',
   attachments?: Attachment[],
   capabilities?: Capabilities,
+  maxTokens?: number,
 ): Promise<string> => {
   return withRetry(async () => {
     const session = await getValidSession();
     const response = await supabase.functions.invoke('grok-chat', {
-      body: buildBody(conversationHistory, model, user.id, attachments, capabilities),
+      body: withMax(buildBody(conversationHistory, model, user.id, attachments, capabilities), maxTokens),
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (response.error) throw new Error(response.error.message || 'Grok API call failed');
@@ -124,11 +135,12 @@ export const callClaudeAPI = async (
   model: string = 'claude-sonnet-5',
   attachments?: Attachment[],
   capabilities?: Capabilities,
+  maxTokens?: number,
 ): Promise<string> => {
   return withRetry(async () => {
     const session = await getValidSession();
     const response = await supabase.functions.invoke('claude-chat', {
-      body: buildBody(conversationHistory, model, undefined, attachments, capabilities),
+      body: withMax(buildBody(conversationHistory, model, undefined, attachments, capabilities), maxTokens),
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (response.error) throw new Error(response.error.message || 'Claude API call failed');
@@ -143,11 +155,12 @@ export const callGeminiAPI = async (
   model: string = 'gemini-3.6-flash',
   attachments?: Attachment[],
   capabilities?: Capabilities,
+  maxTokens?: number,
 ): Promise<string> => {
   return withRetry(async () => {
     const session = await getValidSession();
     const response = await supabase.functions.invoke('gemini-chat', {
-      body: buildBody(conversationHistory, model, user.id, attachments, capabilities),
+      body: withMax(buildBody(conversationHistory, model, user.id, attachments, capabilities), maxTokens),
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (response.error) throw new Error(response.error.message || 'Gemini API call failed');
@@ -162,11 +175,12 @@ export const callMistralAPI = async (
   model: string = 'mistral-medium-3.5',
   attachments?: Attachment[],
   _capabilities?: Capabilities,
+  maxTokens?: number,
 ): Promise<string> => {
   return withRetry(async () => {
     const session = await getValidSession();
     const response = await supabase.functions.invoke('mistral-chat', {
-      body: buildBody(conversationHistory, model, user.id, attachments),
+      body: withMax(buildBody(conversationHistory, model, user.id, attachments), maxTokens),
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (response.error) throw new Error(response.error.message || 'Mistral API call failed');
@@ -181,11 +195,12 @@ export const callPerplexityAPI = async (
   model: string = 'sonar-pro',
   _attachments?: Attachment[],
   capabilities?: Capabilities,
+  maxTokens?: number,
 ): Promise<string> => {
   return withRetry(async () => {
     const session = await getValidSession();
     const response = await supabase.functions.invoke('perplexity-chat', {
-      body: buildBody(conversationHistory, model, user.id, undefined, capabilities),
+      body: withMax(buildBody(conversationHistory, model, user.id, undefined, capabilities), maxTokens),
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (response.error) throw new Error(response.error.message || 'Perplexity API call failed');
@@ -200,11 +215,12 @@ export const callQwenAPI = async (
   model: string = 'qwen3.6-plus',
   _attachments?: Attachment[],
   _capabilities?: Capabilities,
+  maxTokens?: number,
 ): Promise<string> => {
   return withRetry(async () => {
     const session = await getValidSession();
     const response = await supabase.functions.invoke('qwen-chat', {
-      body: buildBody(conversationHistory, model, user.id),
+      body: withMax(buildBody(conversationHistory, model, user.id), maxTokens),
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (response.error) throw new Error(response.error.message || 'Qwen API call failed');
@@ -219,11 +235,12 @@ export const callNvidiaAPI = async (
   model: string,
   attachments?: Attachment[],
   _capabilities?: Capabilities,
+  maxTokens?: number,
 ): Promise<string> => {
   return withRetry(async () => {
     const session = await getValidSession();
     const response = await supabase.functions.invoke('nvidia-chat', {
-      body: buildBody(conversationHistory, model, user.id, attachments),
+      body: withMax(buildBody(conversationHistory, model, user.id, attachments), maxTokens),
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (response.error) throw new Error(response.error.message || 'NVIDIA API call failed');
@@ -279,6 +296,7 @@ export const callLocalAPI = async (
   model: string = '',
   _attachments?: Attachment[],
   _capabilities?: Capabilities,
+  maxTokens?: number,
 ): Promise<string> => {
   const sep = model.indexOf('::');
   const providerId = sep > 0 ? model.slice(0, sep) : 'lmstudio';
@@ -290,7 +308,7 @@ export const callLocalAPI = async (
     const res = await fetch(`${provider.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: modelId, messages: conversationHistory, max_tokens: 4096 }),
+      body: JSON.stringify({ model: modelId, messages: conversationHistory, max_tokens: maxTokens ?? 4096 }),
     });
     if (!res.ok) {
       const text = await res.text().catch(() => '');
