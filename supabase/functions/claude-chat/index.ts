@@ -46,16 +46,19 @@ serve(async (req) => {
 
     console.log('User authenticated successfully:', user.id)
 
-    let { messages, model = 'claude-sonnet-4-20250514', attachments, capabilities = {} } = await req.json()
-    const user_id = user.id;
+    let { messages, model = 'claude-sonnet-5', attachments, capabilities = {} } = await req.json()
 
     // Normalize legacy / invalid Claude model ids to current Anthropic ids
     const modelAliases: Record<string, string> = {
       'claude-haiku-4-20250514': 'claude-haiku-4-5',
       'claude-haiku-4': 'claude-haiku-4-5',
       'claude-3-5-haiku-20241022': 'claude-haiku-4-5',
-      'claude-3-5-sonnet-20241022': 'claude-sonnet-4-20250514',
-      'claude-3-opus-20240229': 'claude-opus-4-20250514',
+      'claude-3-5-sonnet-20241022': 'claude-sonnet-5',
+      'claude-sonnet-4-20250514': 'claude-sonnet-5',
+      'claude-sonnet-4-5': 'claude-sonnet-5',
+      'claude-3-opus-20240229': 'claude-opus-5',
+      'claude-opus-4-20250514': 'claude-opus-5',
+      'claude-opus-4-5': 'claude-opus-5',
     };
     if (modelAliases[model]) {
       console.log(`Remapping model ${model} -> ${modelAliases[model]}`);
@@ -65,7 +68,7 @@ serve(async (req) => {
     console.log('Received messages:', messages?.length || 0, 'messages, model:', model)
 
     // Splice image attachments into the last user message (Claude vision format)
-    if (Array.isArray(attachments) && attachments.length > 0 && /claude-(3|opus|sonnet|haiku|4)/i.test(model)) {
+    if (Array.isArray(attachments) && attachments.length > 0 && /claude-(fable|opus|sonnet|haiku|3|4|5)/i.test(model)) {
       for (let i = messages.length - 1; i >= 0; i--) {
         if (messages[i].role === 'user') {
           const textPart = { type: 'text', text: messages[i].content };
