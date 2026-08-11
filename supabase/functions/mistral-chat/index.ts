@@ -25,11 +25,11 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = 'mistral-large-latest', attachments } = await req.json();
+    const { messages, model = 'mistral-medium-3.5', attachments } = await req.json();
     const user_id = user.id;
 
-    // Splice image attachments into the last user message for Pixtral / vision Mistral models
-    if (Array.isArray(attachments) && attachments.length > 0 && /pixtral|vision/i.test(model)) {
+    // Splice image attachments into the last user message for vision-capable Mistral models
+    if (Array.isArray(attachments) && attachments.length > 0 && /pixtral|vision|mistral-(medium|small|large)-[34]/i.test(model)) {
       for (let i = messages.length - 1; i >= 0; i--) {
         if (messages[i].role === 'user') {
           const textPart = { type: 'text', text: messages[i].content };
