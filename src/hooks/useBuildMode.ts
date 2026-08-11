@@ -38,6 +38,8 @@ export const useBuildMode = (
   activeChatId: string | null,
   messages: Message[] | undefined,
   verify?: VerifyFn,
+  /** Creates a conversation on the fly when the user starts straight in Build mode. */
+  ensureChat?: () => Promise<string | null>,
 ) => {
   const queryClient = useQueryClient();
   const [builder, setBuilder] = useState<Builder>('relay');
@@ -48,10 +50,13 @@ export const useBuildMode = (
   const [workingAgent, setWorkingAgent] = useState<string | null>(null);
   const [stage, setStage] = useState<BuildRole | null>(null);
 
-  const buildAgents = useMemo(
-    () => platforms.filter(p => p.enabled && p.hasApiKey && (p.id !== 'local' || p.selectedModel)),
-    [platforms],
-  );
+  const buildAgents = useMemo(() => {
+    const enabled = platforms.filter(p => p.enabled && (p.id !== 'local' || p.selectedModel));
+    // Prefer agents with a verified key, but never end up with an empty queue
+    // just because key detection hasn't resolved (keys live server-side).
+    const keyed = enabled.filter(p => p.hasApiKey);
+    return keyed.length > 0 ? keyed : enabled;
+  }, [platforms]);
 
   /** Artifact revisions, oldest → newest. */
   const versions = useMemo<ArtifactVersion[]>(
@@ -102,22 +107,25 @@ export const useBuildMode = (
   }, []);
 
   const insertMessage = useCallback(
-    async (row: { content: string; sender: 'user' | 'ai'; platform?: string }) => {
-      if (!activeChatId) return;
+    async (
+      row: { content: string; sender: 'user' | 'ai'; platform?: string },
+      chatId: string | null = activeChatId,
+    ) => {
+      if (!chatId) return;
       const message: Message = {
         id: generateChatId(),
-        conversation_id: activeChatId,
+        conversation_id: chatId,
         created_at: new Date().toISOString(),
         attachments: [],
         ...row,
       };
-      queryClient.setQueryData(['messages', activeChatId], (prev: Message[] | undefined) => [
+      queryClient.setQueryData(['messages', chatId], (prev: Message[] | undefined) => [
         ...(prev ?? []),
         message,
       ]);
       const { error } = await supabase.from('messages').insert({
         id: message.id,
-        conversation_id: activeChatId,
+        conversation_id: chatId,
         content: message.content,
         sender: message.sender,
         platform: message.platform ?? null,
@@ -138,6 +146,7 @@ export const useBuildMode = (
       currentCode: string | null,
       recent: Message[],
       extras: { plan?: string | null; harness?: string | null } = {},
+      chatId: string | null = null,
     ): Promise<{ code: string | null; notes: string; replyLang: ArtifactLang }> => {
       const history: History = [
         {
@@ -161,16 +170,21 @@ export const useBuildMode = (
           content: `**${ROLE_LABEL.plan} · ${platform.name}**\n\n${plan}`,
           sender: 'ai',
           platform: platform.id,
-        });
+        }, chatId);
         return { code: null, notes: plan, replyLang: lang };
       }
 
       const { code, lang: replyLang, notes } = extractArtifact(reply, lang);
+      const truncated = !code && (reply.match(/```/g)?.length ?? 0) % 2 === 1;
       await insertMessage({
-        content: `**${ROLE_LABEL[role]} · ${platform.name}** — ${notes || (code ? 'updated the artifact.' : reply)}`,
+        content: `**${ROLE_LABEL[role]} · ${platform.name}** — ${
+          truncated
+            ? 'the reply was cut off mid-code, so the artifact was left untouched. Ask for a smaller change, or switch to a model with a bigger output limit.'
+            : notes || (code ? 'updated the artifact.' : reply)
+        }`,
         sender: 'ai',
         platform: platform.id,
-      });
+      }, chatId);
       return { code, notes, replyLang };
     },
     [insertMessage, lang, user],
@@ -183,6 +197,7 @@ export const useBuildMode = (
       codeLang: ArtifactLang,
       author: string,
       role: BuildRole,
+      chatId: string | null = null,
     ): Promise<TestReport | null> => {
       let report: TestReport | null = null;
       if (verify) {
@@ -197,16 +212,16 @@ export const useBuildMode = (
         content: JSON.stringify({ code, lang: codeLang, author, role, tests: report }),
         sender: 'ai',
         platform: ARTIFACT_PLATFORM,
-      });
+      }, chatId);
 
       if (report) {
-        await insertMessage({ content: proofOfWork(report), sender: 'ai', platform: author });
+        await insertMessage({ content: proofOfWork(report), sender: 'ai', platform: author }, chatId);
       } else if (!hasTests(code, codeLang)) {
         await insertMessage({
           content: '**QA gate — no tests found.** The artifact was not verified.',
           sender: 'ai',
           platform: author,
-        });
+        }, chatId);
       }
       return report;
     },
@@ -216,7 +231,21 @@ export const useBuildMode = (
   const send = useCallback(
     async (prompt: string) => {
       const request = prompt.trim();
-      if (!request || !activeChatId || !user || isBuilding) return;
+      if (!request || !user || isBuilding) return;
+
+      // Starting in Build mode with no conversation yet — open one first.
+      let chatId = activeChatId;
+      if (!chatId && ensureChat) {
+        try {
+          chatId = await ensureChat();
+        } catch (e) {
+          console.error('build mode: could not create a conversation', e);
+        }
+      }
+      if (!chatId) {
+        toast.error('Start a chat first');
+        return;
+      }
 
       const queue =
         builder === 'relay'
@@ -229,7 +258,7 @@ export const useBuildMode = (
       }
 
       setIsBuilding(true);
-      await insertMessage({ content: request, sender: 'user' });
+      await insertMessage({ content: request, sender: 'user' }, chatId);
 
       let currentCode = latest?.code ?? null;
       let currentLang: ArtifactLang = latest?.lang ?? lang;
@@ -247,11 +276,11 @@ export const useBuildMode = (
         setWorkingAgent(platform.id);
         setStage(role);
         try {
-          const out = await runStage(platform, role, request, currentCode, recent, extras);
+          const out = await runStage(platform, role, request, currentCode, recent, extras, chatId);
           if (out.code) {
             currentCode = out.code;
             currentLang = out.replyLang;
-            report = await gate(out.code, out.replyLang, platform.id, role);
+            report = await gate(out.code, out.replyLang, platform.id, role, chatId);
           }
           return out;
         } catch (e) {
@@ -261,7 +290,7 @@ export const useBuildMode = (
             content: `**${ROLE_LABEL[role]} · ${platform.name}** — could not finish this stage: ${msg}`,
             sender: 'ai',
             platform: platform.id,
-          });
+          }, chatId);
           return { code: null, notes: '', replyLang: currentLang };
         }
       };
@@ -301,18 +330,18 @@ export const useBuildMode = (
               content: `⚠️ Shipped **red**: ${summarise(report)} after repair rounds. Latest failures are above.`,
               sender: 'ai',
               platform: lead.id,
-            });
+            }, chatId);
           }
         }
       } finally {
         setWorkingAgent(null);
         setStage(null);
         setIsBuilding(false);
-        queryClient.invalidateQueries({ queryKey: ['messages', activeChatId] });
+        queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
         queryClient.invalidateQueries({ queryKey: ['tokens'] });
       }
     },
-    [activeChatId, builder, buildAgents, gate, insertMessage, isBuilding, lang, latest, queryClient, rigor, runStage, transcript, user],
+    [activeChatId, builder, buildAgents, ensureChat, gate, insertMessage, isBuilding, lang, latest, queryClient, rigor, runStage, transcript, user],
   );
 
   /** Manual edits from the code editor become a new revision authored by the user. */
