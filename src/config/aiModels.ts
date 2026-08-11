@@ -17,58 +17,74 @@ export interface ModelConfig {
 // Anything in the DB without metadata here still appears with sensible defaults.
 // ────────────────────────────────────────────────────────────────────────────
 
-type Meta = Omit<ModelConfig, 'id' | 'costTier'>;
+type AdvancedFlags = { think?: boolean; search?: boolean; deep_research?: boolean; code_exec?: boolean };
+type Meta = Omit<ModelConfig, 'id' | 'costTier'> & { advanced?: AdvancedFlags };
+
+const NONE: AdvancedFlags = { think: false, search: false, deep_research: false, code_exec: false };
+const ALL: AdvancedFlags = { think: true, search: true, deep_research: true, code_exec: true };
 
 const META: Record<string, Meta> = {
-  // OpenAI
-  'gpt-4o-mini':  { name: 'GPT-4o Mini',  description: 'Fast and cost-effective for everyday tasks', maxTokens: 128000, capabilities: ['text','reasoning'],                          speed: 'fast' },
-  'gpt-4o':       { name: 'GPT-4o',       description: 'Flagship multimodal model',                  maxTokens: 128000, capabilities: ['text','vision','reasoning','coding'],        speed: 'medium' },
-  'gpt-4-turbo':  { name: 'GPT-4 Turbo',  description: 'Previous-generation flagship',               maxTokens: 128000, capabilities: ['text','reasoning','coding'],                 speed: 'medium' },
-  'gpt-5':        { name: 'ChatGPT 5',    description: 'Next-gen multimodal reasoning',              maxTokens: 200000, capabilities: ['text','vision','reasoning','coding'],        speed: 'medium' },
+  // ── OpenAI (GPT-5.6 family is current; GPT-5 / GPT-4o are legacy) ──
+  'gpt-5.6-sol':   { name: 'GPT-5.6 Sol',   description: 'Frontier model for the hardest reasoning and coding', maxTokens: 1050000, capabilities: ['text','vision','reasoning','coding','analysis'], speed: 'medium', advanced: ALL },
+  'gpt-5.6-terra': { name: 'GPT-5.6 Terra', description: 'Balanced GPT-5.6 for everyday work',                  maxTokens: 400000,  capabilities: ['text','vision','reasoning','coding'],            speed: 'fast',   advanced: { think: true, search: true, deep_research: false, code_exec: true } },
+  'gpt-5.6-luna':  { name: 'GPT-5.6 Luna',  description: 'Fast, low-cost GPT-5.6 for high-volume tasks',        maxTokens: 400000,  capabilities: ['text','vision','reasoning'],                     speed: 'fast',   advanced: { think: false, search: true, deep_research: false, code_exec: true } },
+  'o3-deep-research': { name: 'o3 Deep Research', description: 'Dedicated multi-step research model',            maxTokens: 200000,  capabilities: ['text','vision','reasoning','search','analysis'],  speed: 'slow',   advanced: ALL },
+  'gpt-4o-mini':  { name: 'GPT-4o Mini',  description: 'Legacy fast, cost-effective model',        maxTokens: 128000, capabilities: ['text','reasoning'],                    speed: 'fast',   advanced: { think: false, search: false, deep_research: false, code_exec: true } },
+  'gpt-4o':       { name: 'GPT-4o',       description: 'Legacy flagship multimodal model',         maxTokens: 128000, capabilities: ['text','vision','reasoning','coding'],  speed: 'medium', advanced: { think: false, search: true, deep_research: false, code_exec: true } },
+  'gpt-4-turbo':  { name: 'GPT-4 Turbo',  description: 'Legacy previous-generation flagship',      maxTokens: 128000, capabilities: ['text','reasoning','coding'],           speed: 'medium', advanced: NONE },
+  'gpt-5':        { name: 'GPT-5',        description: 'Legacy GPT-5 (retiring Dec 2026)',         maxTokens: 400000, capabilities: ['text','vision','reasoning','coding'], speed: 'medium', advanced: { think: true, search: true, deep_research: true, code_exec: true } },
 
-  // Anthropic
-  'claude-haiku-4-5':  { name: 'Claude Haiku 4',  description: 'Fast and cost-effective Claude', maxTokens: 200000, capabilities: ['text','reasoning'],                       speed: 'fast' },
-  'claude-sonnet-4-20250514': { name: 'Claude Sonnet 4', description: 'Balanced Claude with strong reasoning', maxTokens: 200000, capabilities: ['text','reasoning','coding','analysis'], speed: 'medium' },
-  'claude-opus-4-20250514':   { name: 'Claude Opus 4',   description: 'Most powerful Claude for complex tasks', maxTokens: 200000, capabilities: ['text','reasoning','coding','analysis','creative'], speed: 'slow' },
+  // ── Anthropic (Claude 5 family is current) ──
+  'claude-fable-5':  { name: 'Claude Fable 5',  description: 'Most capable Claude for long-running agents', maxTokens: 1000000, capabilities: ['text','vision','reasoning','coding','analysis','creative'], speed: 'slow',   advanced: ALL },
+  'claude-opus-5':   { name: 'Claude Opus 5',   description: 'Complex agentic coding and enterprise work',  maxTokens: 1000000, capabilities: ['text','vision','reasoning','coding','analysis'],            speed: 'medium', advanced: ALL },
+  'claude-sonnet-5': { name: 'Claude Sonnet 5', description: 'Best Claude balance of speed and depth',      maxTokens: 1000000, capabilities: ['text','vision','reasoning','coding','analysis'],            speed: 'fast',   advanced: { think: true, search: true, deep_research: false, code_exec: true } },
+  'claude-haiku-4-5':  { name: 'Claude Haiku 4.5',  description: 'Fastest Claude, near-frontier quality',  maxTokens: 200000, capabilities: ['text','vision','reasoning'],                                 speed: 'fast',   advanced: { think: true, search: true, deep_research: false, code_exec: true } },
+  'claude-sonnet-4-20250514': { name: 'Claude Sonnet 4', description: 'Legacy balanced Claude', maxTokens: 200000, capabilities: ['text','vision','reasoning','coding','analysis'], speed: 'medium', advanced: { think: true, search: true, deep_research: false, code_exec: true } },
+  'claude-opus-4-20250514':   { name: 'Claude Opus 4',   description: 'Legacy top-end Claude',  maxTokens: 200000, capabilities: ['text','vision','reasoning','coding','analysis','creative'], speed: 'slow', advanced: { think: true, search: true, deep_research: true, code_exec: true } },
 
-  // DeepSeek
-  'deepseek-chat':     { name: 'DeepSeek Chat',     description: 'General-purpose conversational model',     maxTokens: 32000, capabilities: ['text','reasoning','coding'],          speed: 'fast' },
-  'deepseek-coder':    { name: 'DeepSeek Coder',    description: 'Specialised coding model',                 maxTokens: 32000, capabilities: ['coding','debugging','analysis'],     speed: 'fast' },
-  'deepseek-reasoner': { name: 'DeepSeek Reasoner', description: 'Chain-of-thought reasoning model',          maxTokens: 64000, capabilities: ['text','reasoning'],                  speed: 'medium' },
+  // ── DeepSeek (ids route to DeepSeek V4) ──
+  'deepseek-chat':     { name: 'DeepSeek V4 Flash',  description: 'Fast agentic DeepSeek V4, hybrid thinking',  maxTokens: 1000000, capabilities: ['text','reasoning','coding'],      speed: 'fast',   advanced: { think: true, search: false, deep_research: false, code_exec: false } },
+  'deepseek-reasoner': { name: 'DeepSeek V4 Reasoner', description: 'Chain-of-thought reasoning mode of V4',    maxTokens: 1000000, capabilities: ['text','reasoning'],               speed: 'medium', advanced: { think: true, search: false, deep_research: true,  code_exec: false } },
+  'deepseek-v4-pro':   { name: 'DeepSeek V4 Pro',    description: 'Higher-capability DeepSeek V4 tier',         maxTokens: 1000000, capabilities: ['text','reasoning','coding'],      speed: 'medium', advanced: { think: true, search: false, deep_research: true,  code_exec: false } },
+  'deepseek-coder':    { name: 'DeepSeek Coder',     description: 'Specialised coding model',                   maxTokens: 32000,   capabilities: ['coding','debugging','analysis'],  speed: 'fast',   advanced: NONE },
 
-  // Grok
-  'grok-4':             { name: 'Grok 4',             description: 'Next-gen Grok with real-time capabilities', maxTokens: 200000, capabilities: ['text','reasoning','real-time','analysis'], speed: 'medium' },
-  'grok-4-heavy':       { name: 'Grok 4 Heavy',       description: 'Most powerful Grok for deep reasoning',     maxTokens: 200000, capabilities: ['text','reasoning','real-time','analysis'], speed: 'slow' },
-  'grok-3':             { name: 'Grok 3',             description: 'Previous-generation Grok',                  maxTokens: 128000, capabilities: ['text','reasoning','real-time'],       speed: 'medium' },
-  'grok-3-mini':        { name: 'Grok 3 Mini',        description: 'Smaller, faster Grok 3',                    maxTokens: 64000,  capabilities: ['text','reasoning'],                  speed: 'fast' },
-  'grok-3-fast':        { name: 'Grok 3 Fast',        description: 'Optimised for speed',                       maxTokens: 32000,  capabilities: ['text','reasoning'],                  speed: 'fast' },
-  'grok-3-mini-fast':   { name: 'Grok 3 Mini Fast',   description: 'Ultra-fast lightweight model',              maxTokens: 16000,  capabilities: ['text'],                              speed: 'fast' },
-  'grok-2-vision-1212': { name: 'Grok 2 Vision',      description: 'Previous generation with vision',           maxTokens: 64000,  capabilities: ['text','vision','reasoning'],         speed: 'medium' },
-  'grok-2-1212':        { name: 'Grok 2',             description: 'Previous generation general model',          maxTokens: 64000,  capabilities: ['text','reasoning'],                  speed: 'medium' },
+  // ── xAI Grok (4.x family; no native web search — tool calling only) ──
+  'grok-4.5':                  { name: 'Grok 4.5',            description: 'xAI flagship with selectable reasoning effort', maxTokens: 500000,  capabilities: ['text','vision','reasoning','analysis'], speed: 'medium', advanced: { think: true, search: false, deep_research: false, code_exec: false } },
+  'grok-4.3':                  { name: 'Grok 4.3',            description: 'Fast Grok with strong tool calling',            maxTokens: 1000000, capabilities: ['text','vision','reasoning'],            speed: 'fast',   advanced: { think: true, search: false, deep_research: false, code_exec: false } },
+  'grok-4.20-0309-reasoning':  { name: 'Grok 4.20 Reasoning', description: 'Reasoning-tuned Grok 4.20',                     maxTokens: 1000000, capabilities: ['text','vision','reasoning','analysis'], speed: 'medium', advanced: { think: true, search: false, deep_research: false, code_exec: false } },
+  'grok-code-fast-1':          { name: 'Grok Code Fast',      description: 'Cheap coding-optimised Grok',                   maxTokens: 256000,  capabilities: ['text','coding','reasoning'],            speed: 'fast',   advanced: { think: false, search: false, deep_research: false, code_exec: false } },
+  'grok-4':       { name: 'Grok 4',       description: 'Legacy alias of the current Grok build', maxTokens: 256000, capabilities: ['text','vision','reasoning','analysis'], speed: 'medium', advanced: { think: true, search: false, deep_research: false, code_exec: false } },
+  'grok-4-heavy': { name: 'Grok 4 Heavy', description: 'Legacy deep-reasoning Grok',             maxTokens: 256000, capabilities: ['text','reasoning','analysis'],          speed: 'slow',   advanced: { think: true, search: false, deep_research: false, code_exec: false } },
+  'grok-3':       { name: 'Grok 3',       description: 'Legacy alias routed to Grok 4.3',        maxTokens: 128000, capabilities: ['text','reasoning'],                     speed: 'medium', advanced: { think: true, search: false, deep_research: false, code_exec: false } },
+  'grok-3-mini':  { name: 'Grok 3 Mini',  description: 'Legacy small Grok alias',                maxTokens: 64000,  capabilities: ['text','reasoning'],                     speed: 'fast',   advanced: NONE },
 
-  // Google
-  'gemini-2.5-flash':    { name: 'Gemini 2.5 Flash',    description: 'Fast and cost-effective Gemini',           maxTokens: 1000000, capabilities: ['text','reasoning','vision'],                speed: 'fast' },
-  'gemini-2.5-pro':      { name: 'Gemini 2.5 Pro',      description: 'Advanced reasoning Gemini',                maxTokens: 1000000, capabilities: ['text','reasoning','vision','coding','analysis'], speed: 'medium' },
-  'gemini-2.0-flash-exp':{ name: 'Gemini 2.0 Flash',    description: 'Experimental 2.0 Flash',                   maxTokens: 1000000, capabilities: ['text','reasoning','vision'],                speed: 'fast' },
-  'gemini-1.5-flash':    { name: 'Gemini 1.5 Flash',    description: 'Previous-gen fast Gemini',                 maxTokens: 1000000, capabilities: ['text','reasoning','vision'],                speed: 'fast' },
-  'gemini-1.5-pro':      { name: 'Gemini 1.5 Pro',      description: 'Previous-gen pro Gemini',                  maxTokens: 1000000, capabilities: ['text','reasoning','vision','coding'],       speed: 'medium' },
+  // ── Google Gemini (3.x is current) ──
+  'gemini-3.6-flash':      { name: 'Gemini 3.6 Flash',      description: 'Latest Gemini — fast agentic multimodal',   maxTokens: 1000000, capabilities: ['text','vision','audio','reasoning','coding'], speed: 'fast',   advanced: ALL },
+  'gemini-3.5-flash':      { name: 'Gemini 3.5 Flash',      description: 'Frontier agentic and coding Gemini',        maxTokens: 1000000, capabilities: ['text','vision','audio','reasoning','coding','analysis'], speed: 'fast', advanced: ALL },
+  'gemini-3.5-flash-lite': { name: 'Gemini 3.5 Flash Lite', description: 'Fastest, cheapest Gemini 3.5',              maxTokens: 1000000, capabilities: ['text','vision','audio','reasoning'],          speed: 'fast',   advanced: { think: false, search: true, deep_research: false, code_exec: true } },
+  'gemini-3.1-flash-lite': { name: 'Gemini 3.1 Flash Lite', description: 'Cost-efficient high-volume Gemini',         maxTokens: 1000000, capabilities: ['text','vision','audio','reasoning'],          speed: 'fast',   advanced: { think: false, search: true, deep_research: false, code_exec: true } },
+  'gemini-2.5-flash': { name: 'Gemini 2.5 Flash', description: 'Legacy fast Gemini',      maxTokens: 1000000, capabilities: ['text','reasoning','vision'],                     speed: 'fast',   advanced: { think: true, search: true, deep_research: false, code_exec: true } },
+  'gemini-2.5-pro':   { name: 'Gemini 2.5 Pro',   description: 'Legacy advanced Gemini',  maxTokens: 1000000, capabilities: ['text','reasoning','vision','coding','analysis'], speed: 'medium', advanced: { think: true, search: true, deep_research: false, code_exec: true } },
 
-  // Mistral
-  'mistral-large-latest':  { name: 'Mistral Large',  description: 'Most capable Mistral model',     maxTokens: 128000, capabilities: ['text','reasoning','coding','multilingual'], speed: 'medium' },
-  'mistral-medium-latest': { name: 'Mistral Medium', description: 'Balanced model for general tasks', maxTokens: 128000, capabilities: ['text','reasoning','coding'],                speed: 'medium' },
-  'mistral-small-latest':  { name: 'Mistral Small',  description: 'Fast and cost-effective Mistral',  maxTokens: 128000, capabilities: ['text','reasoning'],                         speed: 'fast' },
-  'codestral-latest':      { name: 'Codestral',      description: 'Specialised coding model',         maxTokens: 32000,  capabilities: ['coding','debugging','analysis'],            speed: 'fast' },
+  // ── Mistral ──
+  'mistral-medium-3.5': { name: 'Mistral Medium 3.5', description: 'Mistral frontier multimodal agentic model', maxTokens: 128000, capabilities: ['text','vision','reasoning','coding','multilingual'], speed: 'medium', advanced: { think: true, search: false, deep_research: false, code_exec: true } },
+  'mistral-small-4':    { name: 'Mistral Small 4',    description: 'Efficient hybrid reasoning Mistral',        maxTokens: 128000, capabilities: ['text','vision','reasoning','coding'],               speed: 'fast',   advanced: { think: true, search: false, deep_research: false, code_exec: true } },
+  'mistral-large-3':    { name: 'Mistral Large 3',    description: 'Open-weight general-purpose Mistral',       maxTokens: 128000, capabilities: ['text','vision','reasoning','coding','multilingual'], speed: 'medium', advanced: { think: false, search: false, deep_research: false, code_exec: true } },
+  'codestral-latest':   { name: 'Codestral',          description: 'Specialised coding model',                  maxTokens: 32000,  capabilities: ['coding','debugging','analysis'],                     speed: 'fast',   advanced: NONE },
 
-  // Perplexity
-  'sonar':               { name: 'Sonar',               description: 'Fast lightweight search',                    maxTokens: 128000, capabilities: ['text','search','citations'],          speed: 'fast' },
-  'sonar-pro':           { name: 'Sonar Pro',           description: 'Multi-step reasoning with web search',       maxTokens: 128000, capabilities: ['text','reasoning','search','citations'], speed: 'medium' },
-  'sonar-reasoning-pro': { name: 'Sonar Reasoning Pro', description: 'Advanced chain-of-thought with web search',  maxTokens: 128000, capabilities: ['text','reasoning','search','citations','analysis'], speed: 'slow' },
+  // ── Perplexity Sonar (search-native) ──
+  'sonar':                { name: 'Sonar',               description: 'Fast lightweight grounded search',           maxTokens: 128000, capabilities: ['text','search','citations'],                          speed: 'fast',   advanced: { think: false, search: true, deep_research: false, code_exec: false } },
+  'sonar-pro':            { name: 'Sonar Pro',           description: 'Advanced search for complex queries',        maxTokens: 128000, capabilities: ['text','reasoning','search','citations'],               speed: 'medium', advanced: { think: false, search: true, deep_research: false, code_exec: false } },
+  'sonar-reasoning-pro':  { name: 'Sonar Reasoning Pro', description: 'Multi-step chain-of-thought with search',    maxTokens: 128000, capabilities: ['text','reasoning','search','citations','analysis'],    speed: 'slow',   advanced: { think: true, search: true, deep_research: false, code_exec: false } },
+  'sonar-deep-research':  { name: 'Sonar Deep Research', description: 'Exhaustive multi-source research reports',   maxTokens: 128000, capabilities: ['text','reasoning','search','citations','analysis'],    speed: 'slow',   advanced: { think: true, search: true, deep_research: true, code_exec: false } },
 
-  // Qwen (Alibaba DashScope)
-  'qwen-max':   { name: 'Qwen Max',   description: 'Most capable Qwen for complex tasks',  maxTokens: 32000,  capabilities: ['text','reasoning','coding','multilingual'], speed: 'slow' },
-  'qwen-plus':  { name: 'Qwen Plus',  description: 'Balanced Qwen for everyday tasks',     maxTokens: 131072, capabilities: ['text','reasoning','multilingual'],          speed: 'medium' },
-  'qwen-turbo': { name: 'Qwen Turbo', description: 'Fast & cost-effective Qwen',           maxTokens: 1000000,capabilities: ['text','multilingual'],                      speed: 'fast' },
-  'qwen3-max':  { name: 'Qwen3 Max',  description: 'Latest flagship Qwen3 generation',     maxTokens: 32000,  capabilities: ['text','reasoning','coding','multilingual'], speed: 'slow' },
+  // ── Qwen (Alibaba DashScope) ──
+  'qwen3.8-max':   { name: 'Qwen3.8 Max',   description: 'Alibaba flagship MoE, native vision-language', maxTokens: 1000000, capabilities: ['text','vision','reasoning','coding','multilingual'], speed: 'medium', advanced: { think: true, search: true, deep_research: false, code_exec: true } },
+  'qwen3.6-plus':  { name: 'Qwen3.6 Plus',  description: 'Mid-tier Qwen with optional thinking',         maxTokens: 131072,  capabilities: ['text','reasoning','multilingual'],                  speed: 'fast',   advanced: { think: true, search: false, deep_research: false, code_exec: true } },
+  'qwen3-vl-plus': { name: 'Qwen3 VL Plus', description: 'Qwen vision-language specialist',              maxTokens: 131072,  capabilities: ['text','vision','reasoning','multilingual'],         speed: 'medium', advanced: NONE },
+  'qwen-turbo':    { name: 'Qwen Turbo',    description: 'Fast & cost-effective Qwen',                   maxTokens: 1000000, capabilities: ['text','multilingual'],                              speed: 'fast',   advanced: NONE },
+  'qwen3-max':     { name: 'Qwen3 Max',     description: 'Legacy Qwen3 flagship',                        maxTokens: 32000,   capabilities: ['text','reasoning','coding','multilingual'],         speed: 'slow',   advanced: { think: true, search: false, deep_research: false, code_exec: false } },
+
 
   // NVIDIA-hosted NIMs (integrate.api.nvidia.com)
   'nvidia/nemotron-3-ultra-550b-a55b':          { name: 'Nemotron 3 Ultra 550B',    description: 'NVIDIA flagship MoE reasoning model',                   maxTokens: 131072, capabilities: ['text','reasoning','coding','analysis'],           speed: 'slow' },
