@@ -549,6 +549,17 @@ ${languageLock}`;
     };
   }, [loadAgentSettings]);
 
+  // Keep the shared capability registry aware of each agent's selected model so
+  // the UI can grey out capabilities the chosen model can't actually do.
+  useEffect(() => {
+    const map: Record<string, string> = {};
+    platforms.forEach(p => {
+      if (p.selectedModel) map[p.id] = p.selectedModel;
+    });
+    setActiveAgentModels(map);
+  }, [platforms]);
+
+
   return {
     platforms,
     setPlatforms,
