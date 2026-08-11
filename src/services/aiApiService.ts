@@ -65,7 +65,7 @@ const buildBody = (
 export const callOpenAI = async (
   conversationHistory: History,
   user: SupabaseUser,
-  model: string = 'gpt-4o-mini',
+  model: string = 'gpt-5.6-terra',
   attachments?: Attachment[],
   capabilities?: Capabilities,
 ): Promise<string> => {
@@ -103,7 +103,7 @@ export const callDeepSeek = async (
 export const callGrokAPI = async (
   conversationHistory: History,
   user: SupabaseUser,
-  model: string = 'grok-3',
+  model: string = 'grok-4.3',
   attachments?: Attachment[],
   capabilities?: Capabilities,
 ): Promise<string> => {
@@ -121,7 +121,7 @@ export const callGrokAPI = async (
 
 export const callClaudeAPI = async (
   conversationHistory: History,
-  model: string = 'claude-3-5-haiku-20241022',
+  model: string = 'claude-sonnet-5',
   attachments?: Attachment[],
   capabilities?: Capabilities,
 ): Promise<string> => {
@@ -140,7 +140,7 @@ export const callClaudeAPI = async (
 export const callGeminiAPI = async (
   conversationHistory: History,
   user: SupabaseUser,
-  model: string = 'gemini-2.5-flash',
+  model: string = 'gemini-3.6-flash',
   attachments?: Attachment[],
   capabilities?: Capabilities,
 ): Promise<string> => {
@@ -159,7 +159,7 @@ export const callGeminiAPI = async (
 export const callMistralAPI = async (
   conversationHistory: History,
   user: SupabaseUser,
-  model: string = 'mistral-large-latest',
+  model: string = 'mistral-medium-3.5',
   attachments?: Attachment[],
   _capabilities?: Capabilities,
 ): Promise<string> => {
@@ -197,7 +197,7 @@ export const callPerplexityAPI = async (
 export const callQwenAPI = async (
   conversationHistory: History,
   user: SupabaseUser,
-  model: string = 'qwen-plus',
+  model: string = 'qwen3.6-plus',
   _attachments?: Attachment[],
   _capabilities?: Capabilities,
 ): Promise<string> => {

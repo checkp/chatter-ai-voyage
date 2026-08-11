@@ -8,10 +8,11 @@ const corsHeaders = {
 };
 
 const LEGACY_MODEL_MAP: Record<string, string> = {
-  "gemini-1.5-flash": "gemini-2.5-flash",
+  "gemini-1.5-flash": "gemini-3.6-flash",
   "gemini-1.5-pro": "gemini-2.5-pro",
-  "gemini-2.0-flash": "gemini-2.5-flash",
-  "gemini-2.0-flash-exp": "gemini-2.5-flash",
+  "gemini-2.0-flash": "gemini-3.6-flash",
+  "gemini-2.0-flash-exp": "gemini-3.6-flash",
+  "gemini-2.5-flash-lite": "gemini-3.5-flash-lite",
 };
 
 serve(async (req) => {
@@ -39,7 +40,7 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = "gemini-2.5-flash", attachments, capabilities = {} } = await req.json();
+    const { messages, model = "gemini-3.6-flash", attachments, capabilities = {} } = await req.json();
     const user_id = user.id;
     const resolvedModel = LEGACY_MODEL_MAP[model] ?? model;
 

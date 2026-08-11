@@ -27,14 +27,14 @@ export const PLATFORM_TO_FN: Record<PlatformId, string> = {
 };
 
 export const DEFAULT_MODELS: Record<PlatformId, string> = {
-  openai: "gpt-4o-mini",
-  anthropic: "claude-3-5-sonnet-20241022",
-  google: "gemini-2.0-flash",
-  grok: "grok-2-1212",
+  openai: "gpt-5.6-terra",
+  anthropic: "claude-sonnet-5",
+  google: "gemini-3.6-flash",
+  grok: "grok-4.3",
   deepseek: "deepseek-chat",
   perplexity: "sonar-pro",
-  mistral: "mistral-small-latest",
-  qwen: "qwen-plus",
+  mistral: "mistral-medium-3.5",
+  qwen: "qwen3.6-plus",
   nvidia: "nvidia/nemotron-3-nano-30b-a3b",
 };
 
@@ -45,8 +45,8 @@ export const CAPABILITY_MATRIX: Record<PlatformId, Record<string, boolean>> = {
   grok: { think: true, search: true, deep_research: true, code_exec: false },
   deepseek: { think: true, search: false, deep_research: true, code_exec: false },
   perplexity: { think: true, search: true, deep_research: true, code_exec: false },
-  mistral: { think: false, search: false, deep_research: false, code_exec: false },
-  qwen: { think: false, search: false, deep_research: false, code_exec: false },
+  mistral: { think: true, search: false, deep_research: false, code_exec: true },
+  qwen: { think: true, search: true, deep_research: false, code_exec: false },
   nvidia: { think: true, search: false, deep_research: false, code_exec: false },
 };
 

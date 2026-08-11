@@ -25,7 +25,7 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = 'gpt-4o-mini', attachments, capabilities = {} } = await req.json();
+    const { messages, model = 'gpt-5.6-terra', attachments, capabilities = {} } = await req.json();
     const user_id = user.id;
 
     // If the client sent image attachments and the model supports vision,

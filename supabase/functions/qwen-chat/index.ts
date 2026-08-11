@@ -24,7 +24,7 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = 'qwen-plus' } = await req.json();
+    const { messages, model = 'qwen3.6-plus' } = await req.json();
     const user_id = user.id;
 
     let { data: tokenData, error: tokenError } = await supabaseClient
