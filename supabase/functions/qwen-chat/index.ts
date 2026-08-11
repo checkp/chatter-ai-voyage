@@ -24,7 +24,8 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = 'qwen3.6-plus' } = await req.json();
+    const { messages, model = 'qwen3.6-plus' , max_output_tokens } = await req.json();
+    const outBudget = Math.min(Math.max(Number(max_output_tokens) || 4096, 256), 32000);
     const user_id = user.id;
 
     let { data: tokenData, error: tokenError } = await supabaseClient
@@ -81,7 +82,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model,
         messages,
-        max_tokens: 4096,
+        max_tokens: outBudget,
       }),
     });
 

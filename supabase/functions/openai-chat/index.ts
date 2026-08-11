@@ -25,7 +25,8 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = 'gpt-5.6-terra', attachments, capabilities = {} } = await req.json();
+    const { messages, model = 'gpt-5.6-terra', attachments, capabilities = {} , max_output_tokens } = await req.json();
+    const outBudget = Math.min(Math.max(Number(max_output_tokens) || 4096, 256), 32000);
     const user_id = user.id;
 
     // If the client sent image attachments and the model supports vision,
@@ -117,7 +118,7 @@ serve(async (req) => {
     const reqBody: Record<string, unknown> = {
       model,
       messages,
-      max_completion_tokens: 4096,
+      max_completion_tokens: outBudget,
     };
     const reasoningModels = /^(gpt-5|o1|o3|o4)/i;
     if (capabilities.think && reasoningModels.test(model)) {

@@ -77,7 +77,7 @@ serve(async (req) => {
     const response = await fetch(`${provider.base.replace(/\/$/, "")}/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: modelId, messages, max_tokens: 4096 }),
+      body: JSON.stringify({ model: modelId, messages, max_tokens: Math.min(Math.max(Number(body.max_output_tokens) || 4096, 256), 32000) }),
     });
 
     if (!response.ok) {

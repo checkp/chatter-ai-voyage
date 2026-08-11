@@ -39,7 +39,8 @@ serve(async (req) => {
     const user = data.user;
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model, attachments } = await req.json();
+    const { messages, model, attachments , max_output_tokens } = await req.json();
+    const outBudget = Math.min(Math.max(Number(max_output_tokens) || 4096, 256), 32000);
     const user_id = user.id;
 
     if (!model || typeof model !== "string") {
@@ -122,7 +123,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model,
         messages,
-        max_tokens: 1500,
+        max_tokens: outBudget,
         stream: false,
       }),
     });

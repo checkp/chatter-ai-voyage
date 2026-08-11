@@ -25,7 +25,8 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = 'mistral-medium-3.5', attachments } = await req.json();
+    const { messages, model = 'mistral-medium-3.5', attachments , max_output_tokens } = await req.json();
+    const outBudget = Math.min(Math.max(Number(max_output_tokens) || 4096, 256), 32000);
     const user_id = user.id;
 
     // Splice image attachments into the last user message for vision-capable Mistral models
@@ -97,7 +98,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model,
         messages,
-        max_tokens: 4096
+        max_tokens: outBudget
       })
     });
 

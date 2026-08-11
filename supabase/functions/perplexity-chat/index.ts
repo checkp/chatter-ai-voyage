@@ -25,7 +25,8 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    let { messages: rawMessages, model = 'sonar-pro', capabilities = {} } = await req.json();
+    let { messages: rawMessages, model = 'sonar-pro', capabilities = {} , max_output_tokens } = await req.json();
+    const outBudget = Math.min(Math.max(Number(max_output_tokens) || 4096, 256), 32000);
 
     // Capability-driven model swap: deep_research → sonar-deep-research,
     // think → sonar-reasoning-pro. Search is always-on for Perplexity.
@@ -117,7 +118,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model,
         messages,
-        max_tokens: 4096
+        max_tokens: outBudget
       })
     });
 

@@ -46,7 +46,8 @@ serve(async (req) => {
 
     console.log('User authenticated successfully:', user.id)
 
-    let { messages, model = 'claude-sonnet-5', attachments, capabilities = {} } = await req.json()
+    let { messages, model = 'claude-sonnet-5', attachments, capabilities = {} , max_output_tokens } = await req.json()
+    const outBudget = Math.min(Math.max(Number(max_output_tokens) || 4096, 256), 32000);
 
     // Normalize legacy / invalid Claude model ids to current Anthropic ids
     const modelAliases: Record<string, string> = {
@@ -159,13 +160,13 @@ serve(async (req) => {
     // Build request body — apply advanced capabilities when supported.
     const reqBody: Record<string, unknown> = {
       model,
-      max_tokens: 4096,
+      max_tokens: outBudget,
       messages,
     };
     if (capabilities.think && /sonnet|opus|fable|haiku-4/i.test(model)) {
       reqBody.thinking = { type: 'enabled', budget_tokens: 8000 };
       // Anthropic requires max_tokens > thinking budget
-      reqBody.max_tokens = 12000;
+      reqBody.max_tokens = Math.max(outBudget, 12000);
       console.log('[claude] enabling extended thinking');
     }
     const tools: any[] = [];
