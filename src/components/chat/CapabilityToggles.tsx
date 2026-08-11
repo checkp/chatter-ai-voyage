@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Brain, Globe, Telescope, Terminal } from 'lucide-react';
+import { Brain, Globe, Telescope, Terminal, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import CapabilityDetailsPanel from './CapabilityDetailsPanel';
+
 import {
   ALL_CAPABILITY_KEYS,
   CAPABILITY_META,
