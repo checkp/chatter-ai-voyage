@@ -21,10 +21,12 @@ interface BuildLayoutProps {
   isLoadingMessages: boolean;
   input: string;
   setInput: (value: string) => void;
+  /** Opens a conversation when the user starts straight in Build mode. */
+  ensureChat?: () => Promise<string | null>;
 }
 
 const BuildLayout: React.FC<BuildLayoutProps> = ({
-  user, platforms, activeChatId, messages, isLoadingMessages, input, setInput,
+  user, platforms, activeChatId, messages, isLoadingMessages, input, setInput, ensureChat,
 }) => {
   // The harness lives in the artifact panel (it owns the sandbox); the build loop
   // calls into it so agents are judged by real test runs, not by their own claims.
@@ -36,7 +38,7 @@ const BuildLayout: React.FC<BuildLayoutProps> = ({
     [],
   );
 
-  const build = useBuildMode(user, platforms, activeChatId, messages, verify);
+  const build = useBuildMode(user, platforms, activeChatId, messages, verify, ensureChat);
 
   const handleSend = async () => {
     const prompt = input;

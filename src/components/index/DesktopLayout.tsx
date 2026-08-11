@@ -216,6 +216,7 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           isFreeMode={isFreeMode}
           isFreeModeRunning={isFreeModeRunning}
           handleSendAndStartConversation={handleSendAndStartConversation}
+          createChatMutation={createChatMutation}
           conductorMessages={conductorMessages}
           conductorAgent={conductorAgent}
           onConductorAgentChange={onConductorAgentChange}

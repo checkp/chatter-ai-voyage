@@ -25,7 +25,8 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = 'grok-4.3', attachments, capabilities = {} } = await req.json();
+    const { messages, model = 'grok-4.3', attachments, capabilities = {} , max_output_tokens } = await req.json();
+    const outBudget = Math.min(Math.max(Number(max_output_tokens) || 4096, 256), 32000);
     const user_id = user.id;
 
     // Splice image attachments into the last user message for vision-capable Grok models
@@ -106,7 +107,7 @@ serve(async (req) => {
     const reqBody: Record<string, unknown> = {
       model,
       messages,
-      max_completion_tokens: 1000,
+      max_completion_tokens: outBudget,
     };
     if (capabilities.think && /grok-4|reasoning/i.test(model)) {
       reqBody.reasoning_effort = 'high';

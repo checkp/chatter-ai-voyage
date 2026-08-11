@@ -40,6 +40,7 @@ interface MainContentProps {
   isFreeMode: boolean;
   isFreeModeRunning: boolean;
   handleSendAndStartConversation: () => void;
+  createChatMutation?: any;
   // Conductor mode props
   conductorMessages?: any;
   conductorAgent?: string;
@@ -72,6 +73,7 @@ const MainContent: React.FC<MainContentProps> = ({
   isFreeMode,
   isFreeModeRunning,
   handleSendAndStartConversation,
+  createChatMutation,
   conductorMessages,
   conductorAgent = 'openai',
   onConductorAgentChange,
@@ -148,6 +150,17 @@ const MainContent: React.FC<MainContentProps> = ({
                 isLoadingMessages={isLoadingMessages}
                 input={input}
                 setInput={setInput}
+                ensureChat={
+                  createChatMutation
+                    ? async () => {
+                        const chat = await createChatMutation.mutateAsync({
+                          title: 'Build session',
+                          chatMode: 'build',
+                        });
+                        return chat?.id ?? null;
+                      }
+                    : undefined
+                }
               />
             ) : activeChatMode === 'side-by-side' ? (
               <SideBySideLayout

@@ -25,7 +25,8 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    let { messages, model = 'deepseek-chat', capabilities = {} } = await req.json();
+    let { messages, model = 'deepseek-chat', capabilities = {} , max_output_tokens } = await req.json();
+    const outBudget = Math.min(Math.max(Number(max_output_tokens) || 4096, 256), 32000);
     const user_id = user.id;
 
     // Honor "think" / "deep_research" by switching to the reasoner variant.
@@ -102,7 +103,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: model,
         messages: messages,
-        max_tokens: 1000
+        max_tokens: outBudget
       })
     });
 
