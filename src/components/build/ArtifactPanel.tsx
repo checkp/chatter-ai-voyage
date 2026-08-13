@@ -183,10 +183,14 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
     return () => registerVerify?.(null);
   }, [registerVerify, verify]);
 
-  // Show the stored report when browsing revisions.
+  // Show the stored report for the revision being browsed — and clear it when
+  // that revision has none, so an older version never wears a newer one's badge.
   useEffect(() => {
-    if (selected?.tests) setReport(selected.tests);
-  }, [selected?.id, selected?.tests]);
+    setReport(selected?.tests ?? null);
+    if (activeLang !== 'python') { setImages([]); setRunOutput(''); setLastRun(null); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected?.id]);
+
 
   const stop = () => {
     runnerRef.current?.terminate();
