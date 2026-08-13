@@ -516,7 +516,7 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
                     <div className="overflow-x-auto rounded-md border border-border/60 bg-background/50">
                       <div className="grid grid-cols-2 border-b border-border/60 bg-muted/40 text-[10px] font-semibold text-muted-foreground">
                         <div className="border-r border-border/60 px-2 py-1">
-                          v{selectedIndex} — {agentName(previous.author)} (before)
+                          v{baselineIndex + 1} — {agentName(previous.author)} (before)
                         </div>
                         <div className="px-2 py-1">
                           v{selectedIndex + 1} — {agentName(selected.author)} (after)
