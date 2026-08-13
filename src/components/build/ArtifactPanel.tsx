@@ -60,13 +60,23 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
   const outputRef = useRef('');
 
   const latest = versions[versions.length - 1] ?? null;
-  const selected = useMemo(
-    () => versions.find(v => v.id === versionId) ?? latest,
-    [versions, versionId, latest],
-  );
+  const selectedIndex = useMemo(() => {
+    const found = versions.findIndex(v => v.id === versionId);
+    return found >= 0 ? found : versions.length - 1;
+  }, [versions, versionId]);
+  const selected = versions[selectedIndex] ?? null;
+  const previous = selectedIndex > 0 ? versions[selectedIndex - 1] : null;
 
   const activeLang: ArtifactLang = selected?.lang ?? lang;
   const code = draft ?? selected?.code ?? starterCode(activeLang);
+
+  /** What this revision actually changed, relative to the one before it. */
+  const diff = useMemo(
+    () => (selected ? diffLines(previous?.code ?? '', selected.code) : null),
+    [selected, previous],
+  );
+  const diffRows = useMemo(() => (diff ? collapseContext(diff.rows) : []), [diff]);
+
 
   // Follow the newest revision unless the user pinned an older one.
   useEffect(() => {
