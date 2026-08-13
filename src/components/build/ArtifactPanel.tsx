@@ -280,16 +280,34 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
           </Button>
         )}
 
+        {versions.length > 1 && (
+          <Select value={baseline} onValueChange={setBaseline}>
+            <SelectTrigger className="h-7 w-[210px] text-xs" title="Diff baseline">
+              <SelectValue placeholder="Compare against" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="previous" className="text-xs">vs previous revision</SelectItem>
+              <SelectItem value="first" className="text-xs">vs first revision</SelectItem>
+              <SelectItem value="latest" className="text-xs">vs latest revision</SelectItem>
+              {versions.map((v, i) => (
+                <SelectItem key={v.id} value={v.id} className="text-xs" disabled={v.id === selected?.id}>
+                  vs v{i + 1} · {agentName(v.author)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
         {diff && (
           <Badge
             variant={diff.identical && previous ? 'outline' : 'secondary'}
             className="text-[10px]"
-            title="Change relative to the previous revision"
+            title={previous ? `Change relative to v${baselineIndex + 1}` : 'No baseline revision'}
           >
             {!previous
               ? 'first revision'
               : diff.identical
-                ? 'identical to previous'
+                ? `identical to v${baselineIndex + 1}`
                 : `+${diff.added} / −${diff.removed} lines`}
           </Badge>
         )}
