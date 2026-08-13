@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select';
 import {
   Download, ExternalLink, RotateCw, Save, Loader2, Smartphone, Monitor, Play, Square,
-  FlaskConical, CheckCircle2, XCircle,
+  FlaskConical, CheckCircle2, XCircle, Columns,
 } from 'lucide-react';
 import { starterCode, ROLE_LABEL, type ArtifactLang, type BuildRole } from '@/config/buildMode';
 import { PyodideRunner } from '@/lib/pyodideRunner';
@@ -19,7 +19,7 @@ import {
   PYTHON_HARNESS, emptyReport, hasTests, parsePythonReport, runHtmlTests, summarise,
   type TestReport,
 } from '@/lib/buildHarness';
-import { collapseContext, diffLines } from '@/lib/artifactDiff';
+import { collapseContext, diffLines, toSplitRows } from '@/lib/artifactDiff';
 import ConsolePane, { type ConsoleLine } from '@/components/build/ConsolePane';
 import type { ArtifactVersion, VerifyFn } from '@/hooks/useBuildMode';
 import type { AIPlatform } from '@/types/chat';
@@ -54,6 +54,8 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
   const [report, setReport] = useState<TestReport | null>(null);
   const [testing, setTesting] = useState(false);
   const [tab, setTab] = useState('code');
+  const [diffView, setDiffView] = useState<'split' | 'unified'>('split');
+  const [diffContext, setDiffContext] = useState(2);
 
   const lineId = useRef(0);
   const runnerRef = useRef<PyodideRunner | null>(null);
@@ -75,7 +77,11 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
     () => (selected ? diffLines(previous?.code ?? '', selected.code) : null),
     [selected, previous],
   );
-  const diffRows = useMemo(() => (diff ? collapseContext(diff.rows) : []), [diff]);
+  const diffRows = useMemo(
+    () => (diff ? collapseContext(diff.rows, diffContext) : []),
+    [diff, diffContext],
+  );
+  const splitRows = useMemo(() => toSplitRows(diffRows), [diffRows]);
 
 
   // Follow the newest revision unless the user pinned an older one.
@@ -444,32 +450,118 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
                   {agentName(selected.author)} returned the artifact unchanged — byte-for-byte identical to v{selectedIndex}.
                 </p>
               ) : (
-                <div className="space-y-1">
-                  <p className="text-[11px] text-muted-foreground">
-                    v{selectedIndex + 1} ({agentName(selected.author)}
-                    {selected.role ? `, ${ROLE_LABEL[selected.role]}` : ''}) vs v{selectedIndex} ({agentName(previous.author)}) ·
-                    {' '}+{diff?.added} / −{diff?.removed} lines
-                  </p>
-                  <pre className="overflow-x-auto rounded-md border border-border/60 bg-background/50 font-mono text-[11px] leading-relaxed">
-                    {diffRows.map((row, i) =>
-                      row.kind === 'gap' ? (
-                        <div key={`gap-${i}`} className="bg-muted/40 px-2 text-muted-foreground">⋯ {row.count} unchanged lines</div>
-                      ) : (
-                        <div
-                          key={`${row.kind}-${i}`}
-                          className={
-                            row.kind === 'add'
-                              ? 'bg-emerald-500/10 px-2 text-emerald-600 dark:text-emerald-400'
-                              : row.kind === 'del'
-                                ? 'bg-destructive/10 px-2 text-destructive'
-                                : 'px-2 text-muted-foreground'
-                          }
-                        >
-                          {row.kind === 'add' ? '+' : row.kind === 'del' ? '−' : ' '} {row.text || ' '}
+                <div className="space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-[11px] text-muted-foreground">
+                      v{selectedIndex + 1} ({agentName(selected.author)}
+                      {selected.role ? `, ${ROLE_LABEL[selected.role]}` : ''}) vs v{selectedIndex} ({agentName(previous.author)}) ·
+                      {' '}<span className="text-emerald-600 dark:text-emerald-400">+{diff?.added}</span>
+                      {' / '}<span className="text-destructive">−{diff?.removed}</span> lines
+                    </p>
+                    <div className="ml-auto flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-6 px-2 text-[10px]"
+                        onClick={() => setDiffContext(c => (c === 2 ? 8 : c === 8 ? Number.MAX_SAFE_INTEGER : 2))}
+                        title="How many unchanged lines to keep around each change"
+                      >
+                        Context: {diffContext === 2 ? 'tight' : diffContext === 8 ? 'wide' : 'full file'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-6 gap-1 px-2 text-[10px]"
+                        onClick={() => setDiffView(v => (v === 'split' ? 'unified' : 'split'))}
+                      >
+                        <Columns className="h-3 w-3" />
+                        {diffView === 'split' ? 'Side by side' : 'Unified'}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {diffView === 'split' ? (
+                    <div className="overflow-x-auto rounded-md border border-border/60 bg-background/50">
+                      <div className="grid grid-cols-2 border-b border-border/60 bg-muted/40 text-[10px] font-semibold text-muted-foreground">
+                        <div className="border-r border-border/60 px-2 py-1">
+                          v{selectedIndex} — {agentName(previous.author)} (before)
                         </div>
-                      ),
-                    )}
-                  </pre>
+                        <div className="px-2 py-1">
+                          v{selectedIndex + 1} — {agentName(selected.author)} (after)
+                        </div>
+                      </div>
+                      <div className="font-mono text-[11px] leading-relaxed">
+                        {splitRows.map((row, i) => {
+                          if (row.kind === 'gap') {
+                            return (
+                              <div key={`gap-${i}`} className="bg-muted/40 px-2 py-0.5 text-center text-[10px] text-muted-foreground">
+                                ⋯ {row.count} unchanged lines
+                              </div>
+                            );
+                          }
+                          const tone = (side: 'left' | 'right') => {
+                            if (row.kind === 'ctx') return '';
+                            if (row.kind === 'add') return side === 'right' ? 'bg-emerald-500/10' : 'bg-muted/30';
+                            if (row.kind === 'del') return side === 'left' ? 'bg-destructive/10' : 'bg-muted/30';
+                            return side === 'left' ? 'bg-destructive/10' : 'bg-emerald-500/10';
+                          };
+                          const cell = (side: 'left' | 'right') => {
+                            const data = side === 'left' ? row.left : row.right;
+                            const changed = row.kind !== 'ctx' && !!data;
+                            const changedTint = side === 'left'
+                              ? 'bg-destructive/30 text-destructive'
+                              : 'bg-emerald-500/30 text-emerald-700 dark:text-emerald-300';
+                            return (
+                              <div className={`flex min-w-0 gap-2 px-2 ${tone(side)} ${side === 'left' ? 'border-r border-border/60' : ''}`}>
+                                <span className="w-8 shrink-0 select-none text-right text-muted-foreground/60">
+                                  {data?.line ?? ''}
+                                </span>
+                                <span className="w-2 shrink-0 select-none text-muted-foreground">
+                                  {!data ? '' : row.kind === 'ctx' ? ' ' : side === 'left' ? '−' : '+'}
+                                </span>
+                                <span className={`min-w-0 flex-1 whitespace-pre-wrap break-words ${changed ? '' : 'text-muted-foreground'}`}>
+                                  {data
+                                    ? data.segments.map((seg, k) => (
+                                        <span key={k} className={seg.changed ? `rounded-sm ${changedTint}` : undefined}>
+                                          {seg.text}
+                                        </span>
+                                      ))
+                                    : ''}
+                                </span>
+                              </div>
+                            );
+                          };
+                          return (
+                            <div key={`${row.kind}-${i}`} className="grid grid-cols-2">
+                              {cell('left')}
+                              {cell('right')}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <pre className="overflow-x-auto rounded-md border border-border/60 bg-background/50 font-mono text-[11px] leading-relaxed">
+                      {diffRows.map((row, i) =>
+                        row.kind === 'gap' ? (
+                          <div key={`gap-${i}`} className="bg-muted/40 px-2 text-muted-foreground">⋯ {row.count} unchanged lines</div>
+                        ) : (
+                          <div
+                            key={`${row.kind}-${i}`}
+                            className={
+                              row.kind === 'add'
+                                ? 'bg-emerald-500/10 px-2 text-emerald-600 dark:text-emerald-400'
+                                : row.kind === 'del'
+                                  ? 'bg-destructive/10 px-2 text-destructive'
+                                  : 'px-2 text-muted-foreground'
+                            }
+                          >
+                            {row.kind === 'add' ? '+' : row.kind === 'del' ? '−' : ' '} {row.text || ' '}
+                          </div>
+                        ),
+                      )}
+                    </pre>
+                  )}
                 </div>
               )}
             </TabsContent>
