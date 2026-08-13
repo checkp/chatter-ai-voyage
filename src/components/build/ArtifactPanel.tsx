@@ -19,9 +19,11 @@ import {
   PYTHON_HARNESS, emptyReport, hasTests, parsePythonReport, runHtmlTests, summarise,
   type TestReport,
 } from '@/lib/buildHarness';
+import { collapseContext, diffLines } from '@/lib/artifactDiff';
 import ConsolePane, { type ConsoleLine } from '@/components/build/ConsolePane';
 import type { ArtifactVersion, VerifyFn } from '@/hooks/useBuildMode';
 import type { AIPlatform } from '@/types/chat';
+
 
 interface ArtifactPanelProps {
   versions: ArtifactVersion[];
@@ -58,13 +60,23 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
   const outputRef = useRef('');
 
   const latest = versions[versions.length - 1] ?? null;
-  const selected = useMemo(
-    () => versions.find(v => v.id === versionId) ?? latest,
-    [versions, versionId, latest],
-  );
+  const selectedIndex = useMemo(() => {
+    const found = versions.findIndex(v => v.id === versionId);
+    return found >= 0 ? found : versions.length - 1;
+  }, [versions, versionId]);
+  const selected = versions[selectedIndex] ?? null;
+  const previous = selectedIndex > 0 ? versions[selectedIndex - 1] : null;
 
   const activeLang: ArtifactLang = selected?.lang ?? lang;
   const code = draft ?? selected?.code ?? starterCode(activeLang);
+
+  /** What this revision actually changed, relative to the one before it. */
+  const diff = useMemo(
+    () => (selected ? diffLines(previous?.code ?? '', selected.code) : null),
+    [selected, previous],
+  );
+  const diffRows = useMemo(() => (diff ? collapseContext(diff.rows) : []), [diff]);
+
 
   // Follow the newest revision unless the user pinned an older one.
   useEffect(() => {
@@ -171,10 +183,14 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
     return () => registerVerify?.(null);
   }, [registerVerify, verify]);
 
-  // Show the stored report when browsing revisions.
+  // Show the stored report for the revision being browsed — and clear it when
+  // that revision has none, so an older version never wears a newer one's badge.
   useEffect(() => {
-    if (selected?.tests) setReport(selected.tests);
-  }, [selected?.id, selected?.tests]);
+    setReport(selected?.tests ?? null);
+    if (activeLang !== 'python') { setImages([]); setRunOutput(''); setLastRun(null); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected?.id]);
+
 
   const stop = () => {
     runnerRef.current?.terminate();
@@ -216,19 +232,48 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
             value={selected?.id ?? ''}
             onValueChange={(v) => { setVersionId(v); setDraft(null); }}
           >
-            <SelectTrigger className="h-7 w-[190px] text-xs">
+            <SelectTrigger className="h-7 w-[280px] text-xs">
               <SelectValue placeholder="Version" />
             </SelectTrigger>
             <SelectContent>
-              {versions.map((v, i) => (
-                <SelectItem key={v.id} value={v.id} className="text-xs">
-                  v{i + 1} · {agentName(v.author)}
-                  {i === versions.length - 1 ? ' (latest)' : ''}
-                </SelectItem>
-              ))}
+              {versions.map((v, i) => {
+                const prev = i > 0 ? versions[i - 1] : null;
+                const delta = v.code.length - (prev?.code.length ?? 0);
+                return (
+                  <SelectItem key={v.id} value={v.id} className="text-xs">
+                    v{i + 1} · {agentName(v.author)}
+                    {v.role ? ` · ${ROLE_LABEL[v.role]}` : ''}
+                    {prev && v.code === prev.code
+                      ? ' · no change'
+                      : ` · ${delta >= 0 ? '+' : ''}${delta} chars`}
+                    {i === versions.length - 1 ? ' · latest' : ''}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         )}
+
+        {selected && versionId && selected.id !== latest?.id && (
+          <Button size="sm" variant="outline" className="h-7 px-2 text-[10px]" onClick={() => { setVersionId(null); setDraft(null); }}>
+            Back to latest
+          </Button>
+        )}
+
+        {diff && (
+          <Badge
+            variant={diff.identical && previous ? 'outline' : 'secondary'}
+            className="text-[10px]"
+            title="Change relative to the previous revision"
+          >
+            {!previous
+              ? 'first revision'
+              : diff.identical
+                ? 'identical to previous'
+                : `+${diff.added} / −${diff.removed} lines`}
+          </Badge>
+        )}
+
 
         {isBuilding && (
           <Badge variant="secondary" className="gap-1 text-[10px]">
@@ -356,10 +401,14 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
           <Tabs value={tab} onValueChange={setTab} className="flex h-full min-h-0 flex-col">
             <TabsList className="mx-3 mt-2 h-8 w-fit shrink-0">
               <TabsTrigger value="code" className="h-6 px-3 text-xs">Code</TabsTrigger>
+              <TabsTrigger value="diff" className="h-6 px-3 text-xs">
+                Diff{diff && previous && !diff.identical ? ` +${diff.added}/−${diff.removed}` : ''}
+              </TabsTrigger>
               <TabsTrigger value="tests" className="h-6 px-3 text-xs">
                 Tests{report && !report.missing && !report.error ? ` ${report.passed}/${report.total}` : ''}
               </TabsTrigger>
               <TabsTrigger value="console" className="h-6 px-3 text-xs">Console</TabsTrigger>
+
             </TabsList>
 
             <TabsContent value="code" className="m-0 flex min-h-0 flex-1 flex-col gap-2 p-3 pt-2">
@@ -382,6 +431,50 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
                 </Button>
               </div>
             </TabsContent>
+
+            <TabsContent value="diff" className="m-0 min-h-0 flex-1 overflow-auto p-3 pt-2">
+              {!selected ? (
+                <p className="text-xs text-muted-foreground">Nothing built yet.</p>
+              ) : !previous ? (
+                <p className="text-xs text-muted-foreground">
+                  This is the first revision (v1 by {agentName(selected.author)}) — there is nothing to compare it to.
+                </p>
+              ) : diff?.identical ? (
+                <p className="text-xs text-muted-foreground">
+                  {agentName(selected.author)} returned the artifact unchanged — byte-for-byte identical to v{selectedIndex}.
+                </p>
+              ) : (
+                <div className="space-y-1">
+                  <p className="text-[11px] text-muted-foreground">
+                    v{selectedIndex + 1} ({agentName(selected.author)}
+                    {selected.role ? `, ${ROLE_LABEL[selected.role]}` : ''}) vs v{selectedIndex} ({agentName(previous.author)}) ·
+                    {' '}+{diff?.added} / −{diff?.removed} lines
+                  </p>
+                  <pre className="overflow-x-auto rounded-md border border-border/60 bg-background/50 font-mono text-[11px] leading-relaxed">
+                    {diffRows.map((row, i) =>
+                      row.kind === 'gap' ? (
+                        <div key={`gap-${i}`} className="bg-muted/40 px-2 text-muted-foreground">⋯ {row.count} unchanged lines</div>
+                      ) : (
+                        <div
+                          key={`${row.kind}-${i}`}
+                          className={
+                            row.kind === 'add'
+                              ? 'bg-emerald-500/10 px-2 text-emerald-600 dark:text-emerald-400'
+                              : row.kind === 'del'
+                                ? 'bg-destructive/10 px-2 text-destructive'
+                                : 'px-2 text-muted-foreground'
+                          }
+                        >
+                          {row.kind === 'add' ? '+' : row.kind === 'del' ? '−' : ' '} {row.text || ' '}
+                        </div>
+                      ),
+                    )}
+                  </pre>
+                </div>
+              )}
+            </TabsContent>
+
+
 
             <TabsContent value="tests" className="m-0 min-h-0 flex-1 overflow-y-auto p-3 pt-2">
               {!report ? (
