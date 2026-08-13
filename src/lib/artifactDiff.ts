@@ -82,3 +82,108 @@ export const collapseContext = (rows: DiffRow[], pad = 2): Array<DiffRow | { kin
   if (skipped > 0) out.push({ kind: 'gap', count: skipped });
   return out;
 };
+
+export type CollapsedRow = DiffRow | { kind: 'gap'; count: number };
+
+export interface SplitCell {
+  line?: number;
+  text: string;
+  /** Inline segments so changed words stand out inside a modified line. */
+  segments: Array<{ text: string; changed: boolean }>;
+}
+
+export interface SplitRow {
+  /** 'mod' pairs a deletion with the addition that replaced it. */
+  kind: 'add' | 'del' | 'ctx' | 'mod' | 'gap';
+  left?: SplitCell;
+  right?: SplitCell;
+  count?: number;
+}
+
+/** Character-level highlight of the differing middle of two similar lines. */
+const inlineSegments = (before: string, after: string): [SplitCell['segments'], SplitCell['segments']] => {
+  let start = 0;
+  const max = Math.min(before.length, after.length);
+  while (start < max && before[start] === after[start]) start += 1;
+  let end = 0;
+  while (end < max - start && before[before.length - 1 - end] === after[after.length - 1 - end]) end += 1;
+
+  const seg = (text: string): SplitCell['segments'] => {
+    const head = text.slice(0, start);
+    const mid = text.slice(start, text.length - end);
+    const tail = end ? text.slice(text.length - end) : '';
+    return [
+      { text: head, changed: false },
+      { text: mid, changed: true },
+      { text: tail, changed: false },
+    ].filter(s => s.text.length > 0);
+  };
+  return [seg(before), seg(after)];
+};
+
+const plain = (text: string): SplitCell['segments'] => [{ text, changed: false }];
+
+/** Similar enough that pairing them as one modified line reads better than +/−. */
+const similar = (a: string, b: string): boolean => {
+  const x = a.trim();
+  const y = b.trim();
+  if (!x || !y) return false;
+  const shared = Math.min(x.length, y.length);
+  let common = 0;
+  while (common < shared && x[common] === y[common]) common += 1;
+  return common >= Math.max(3, Math.floor(Math.max(x.length, y.length) * 0.25));
+};
+
+/** Turn a collapsed unified diff into aligned left/right rows. */
+export const toSplitRows = (rows: CollapsedRow[]): SplitRow[] => {
+  const out: SplitRow[] = [];
+  let index = 0;
+
+  while (index < rows.length) {
+    const row = rows[index];
+
+    if (row.kind === 'gap') {
+      out.push({ kind: 'gap', count: row.count });
+      index += 1;
+      continue;
+    }
+
+    if (row.kind === 'ctx') {
+      out.push({
+        kind: 'ctx',
+        left: { line: row.oldLine, text: row.text, segments: plain(row.text) },
+        right: { line: row.line, text: row.text, segments: plain(row.text) },
+      });
+      index += 1;
+      continue;
+    }
+
+    // Gather the run of deletions then additions and align them pairwise.
+    const dels: DiffRow[] = [];
+    const adds: DiffRow[] = [];
+    while (index < rows.length && rows[index].kind === 'del') { dels.push(rows[index] as DiffRow); index += 1; }
+    while (index < rows.length && rows[index].kind === 'add') { adds.push(rows[index] as DiffRow); index += 1; }
+
+    const pairs = Math.max(dels.length, adds.length);
+    for (let k = 0; k < pairs; k += 1) {
+      const del = dels[k];
+      const add = adds[k];
+      if (del && add) {
+        const [l, r] = similar(del.text, add.text)
+          ? inlineSegments(del.text, add.text)
+          : [plain(del.text), plain(add.text)];
+        out.push({
+          kind: 'mod',
+          left: { line: del.oldLine, text: del.text, segments: l },
+          right: { line: add.line, text: add.text, segments: r },
+        });
+      } else if (del) {
+        out.push({ kind: 'del', left: { line: del.oldLine, text: del.text, segments: plain(del.text) } });
+      } else if (add) {
+        out.push({ kind: 'add', right: { line: add.line, text: add.text, segments: plain(add.text) } });
+      }
+    }
+  }
+
+  return out;
+};
