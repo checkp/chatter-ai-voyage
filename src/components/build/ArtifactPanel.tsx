@@ -56,6 +56,9 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
   const [tab, setTab] = useState('code');
   const [diffView, setDiffView] = useState<'split' | 'unified'>('split');
   const [diffContext, setDiffContext] = useState(2);
+  // What the selected revision is compared against: the one before it, the
+  // first revision, the newest one, or a pinned revision id.
+  const [baseline, setBaseline] = useState<string>('previous');
 
   const lineId = useRef(0);
   const runnerRef = useRef<PyodideRunner | null>(null);
@@ -67,7 +70,18 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
     return found >= 0 ? found : versions.length - 1;
   }, [versions, versionId]);
   const selected = versions[selectedIndex] ?? null;
-  const previous = selectedIndex > 0 ? versions[selectedIndex - 1] : null;
+
+  const baselineIndex = useMemo(() => {
+    if (baseline === 'previous') return selectedIndex - 1;
+    if (baseline === 'first') return selectedIndex === 0 ? -1 : 0;
+    if (baseline === 'latest') {
+      const last = versions.length - 1;
+      return last === selectedIndex ? selectedIndex - 1 : last;
+    }
+    const found = versions.findIndex(v => v.id === baseline);
+    return found === selectedIndex ? selectedIndex - 1 : found;
+  }, [baseline, selectedIndex, versions]);
+  const previous = baselineIndex >= 0 ? versions[baselineIndex] ?? null : null;
 
   const activeLang: ArtifactLang = selected?.lang ?? lang;
   const code = draft ?? selected?.code ?? starterCode(activeLang);
