@@ -56,6 +56,9 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
   const [tab, setTab] = useState('code');
   const [diffView, setDiffView] = useState<'split' | 'unified'>('split');
   const [diffContext, setDiffContext] = useState(2);
+  // What the selected revision is compared against: the one before it, the
+  // first revision, the newest one, or a pinned revision id.
+  const [baseline, setBaseline] = useState<string>('previous');
 
   const lineId = useRef(0);
   const runnerRef = useRef<PyodideRunner | null>(null);
@@ -67,7 +70,18 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
     return found >= 0 ? found : versions.length - 1;
   }, [versions, versionId]);
   const selected = versions[selectedIndex] ?? null;
-  const previous = selectedIndex > 0 ? versions[selectedIndex - 1] : null;
+
+  const baselineIndex = useMemo(() => {
+    if (baseline === 'previous') return selectedIndex - 1;
+    if (baseline === 'first') return selectedIndex === 0 ? -1 : 0;
+    if (baseline === 'latest') {
+      const last = versions.length - 1;
+      return last === selectedIndex ? selectedIndex - 1 : last;
+    }
+    const found = versions.findIndex(v => v.id === baseline);
+    return found === selectedIndex ? selectedIndex - 1 : found;
+  }, [baseline, selectedIndex, versions]);
+  const previous = baselineIndex >= 0 ? versions[baselineIndex] ?? null : null;
 
   const activeLang: ArtifactLang = selected?.lang ?? lang;
   const code = draft ?? selected?.code ?? starterCode(activeLang);
@@ -266,16 +280,34 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
           </Button>
         )}
 
+        {versions.length > 1 && (
+          <Select value={baseline} onValueChange={setBaseline}>
+            <SelectTrigger className="h-7 w-[210px] text-xs" title="Diff baseline">
+              <SelectValue placeholder="Compare against" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="previous" className="text-xs">vs previous revision</SelectItem>
+              <SelectItem value="first" className="text-xs">vs first revision</SelectItem>
+              <SelectItem value="latest" className="text-xs">vs latest revision</SelectItem>
+              {versions.map((v, i) => (
+                <SelectItem key={v.id} value={v.id} className="text-xs" disabled={v.id === selected?.id}>
+                  vs v{i + 1} · {agentName(v.author)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
         {diff && (
           <Badge
             variant={diff.identical && previous ? 'outline' : 'secondary'}
             className="text-[10px]"
-            title="Change relative to the previous revision"
+            title={previous ? `Change relative to v${baselineIndex + 1}` : 'No baseline revision'}
           >
             {!previous
               ? 'first revision'
               : diff.identical
-                ? 'identical to previous'
+                ? `identical to v${baselineIndex + 1}`
                 : `+${diff.added} / −${diff.removed} lines`}
           </Badge>
         )}
@@ -443,18 +475,18 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
                 <p className="text-xs text-muted-foreground">Nothing built yet.</p>
               ) : !previous ? (
                 <p className="text-xs text-muted-foreground">
-                  This is the first revision (v1 by {agentName(selected.author)}) — there is nothing to compare it to.
+                  No baseline revision to compare against — pick a different baseline above.
                 </p>
               ) : diff?.identical ? (
                 <p className="text-xs text-muted-foreground">
-                  {agentName(selected.author)} returned the artifact unchanged — byte-for-byte identical to v{selectedIndex}.
+                  {agentName(selected.author)} returned the artifact unchanged — byte-for-byte identical to v{baselineIndex + 1}.
                 </p>
               ) : (
                 <div className="space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-[11px] text-muted-foreground">
                       v{selectedIndex + 1} ({agentName(selected.author)}
-                      {selected.role ? `, ${ROLE_LABEL[selected.role]}` : ''}) vs v{selectedIndex} ({agentName(previous.author)}) ·
+                      {selected.role ? `, ${ROLE_LABEL[selected.role]}` : ''}) vs v{baselineIndex + 1} ({agentName(previous.author)}) ·
                       {' '}<span className="text-emerald-600 dark:text-emerald-400">+{diff?.added}</span>
                       {' / '}<span className="text-destructive">−{diff?.removed}</span> lines
                     </p>
@@ -484,7 +516,7 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
                     <div className="overflow-x-auto rounded-md border border-border/60 bg-background/50">
                       <div className="grid grid-cols-2 border-b border-border/60 bg-muted/40 text-[10px] font-semibold text-muted-foreground">
                         <div className="border-r border-border/60 px-2 py-1">
-                          v{selectedIndex} — {agentName(previous.author)} (before)
+                          v{baselineIndex + 1} — {agentName(previous.author)} (before)
                         </div>
                         <div className="px-2 py-1">
                           v{selectedIndex + 1} — {agentName(selected.author)} (after)
