@@ -6,6 +6,8 @@ export interface DiffRow {
   text: string;
   /** 1-based line number in the new document (for adds/context). */
   line?: number;
+  /** 1-based line number in the old document (for deletions/context). */
+  oldLine?: number;
 }
 
 export interface DiffResult {
@@ -40,11 +42,11 @@ export const diffLines = (before: string, after: string): DiffResult => {
   let j = 0;
   while (i < n && j < m) {
     if (a[i] === b[j]) {
-      rows.push({ kind: 'ctx', text: a[i], line: j + 1 });
+      rows.push({ kind: 'ctx', text: a[i], line: j + 1, oldLine: i + 1 });
       i += 1;
       j += 1;
     } else if (table[i + 1][j] >= table[i][j + 1]) {
-      rows.push({ kind: 'del', text: a[i] });
+      rows.push({ kind: 'del', text: a[i], oldLine: i + 1 });
       removed += 1;
       i += 1;
     } else {
@@ -53,7 +55,7 @@ export const diffLines = (before: string, after: string): DiffResult => {
       j += 1;
     }
   }
-  while (i < n) { rows.push({ kind: 'del', text: a[i] }); removed += 1; i += 1; }
+  while (i < n) { rows.push({ kind: 'del', text: a[i], oldLine: i + 1 }); removed += 1; i += 1; }
   while (j < m) { rows.push({ kind: 'add', text: b[j], line: j + 1 }); added += 1; j += 1; }
 
   return { rows, added, removed, identical: added === 0 && removed === 0 };
