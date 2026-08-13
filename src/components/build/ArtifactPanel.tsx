@@ -475,18 +475,18 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
                 <p className="text-xs text-muted-foreground">Nothing built yet.</p>
               ) : !previous ? (
                 <p className="text-xs text-muted-foreground">
-                  This is the first revision (v1 by {agentName(selected.author)}) — there is nothing to compare it to.
+                  No baseline revision to compare against — pick a different baseline above.
                 </p>
               ) : diff?.identical ? (
                 <p className="text-xs text-muted-foreground">
-                  {agentName(selected.author)} returned the artifact unchanged — byte-for-byte identical to v{selectedIndex}.
+                  {agentName(selected.author)} returned the artifact unchanged — byte-for-byte identical to v{baselineIndex + 1}.
                 </p>
               ) : (
                 <div className="space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-[11px] text-muted-foreground">
                       v{selectedIndex + 1} ({agentName(selected.author)}
-                      {selected.role ? `, ${ROLE_LABEL[selected.role]}` : ''}) vs v{selectedIndex} ({agentName(previous.author)}) ·
+                      {selected.role ? `, ${ROLE_LABEL[selected.role]}` : ''}) vs v{baselineIndex + 1} ({agentName(previous.author)}) ·
                       {' '}<span className="text-emerald-600 dark:text-emerald-400">+{diff?.added}</span>
                       {' / '}<span className="text-destructive">−{diff?.removed}</span> lines
                     </p>
