@@ -432,6 +432,50 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
               </div>
             </TabsContent>
 
+            <TabsContent value="diff" className="m-0 min-h-0 flex-1 overflow-auto p-3 pt-2">
+              {!selected ? (
+                <p className="text-xs text-muted-foreground">Nothing built yet.</p>
+              ) : !previous ? (
+                <p className="text-xs text-muted-foreground">
+                  This is the first revision (v1 by {agentName(selected.author)}) — there is nothing to compare it to.
+                </p>
+              ) : diff?.identical ? (
+                <p className="text-xs text-muted-foreground">
+                  {agentName(selected.author)} returned the artifact unchanged — byte-for-byte identical to v{selectedIndex}.
+                </p>
+              ) : (
+                <div className="space-y-1">
+                  <p className="text-[11px] text-muted-foreground">
+                    v{selectedIndex + 1} ({agentName(selected.author)}
+                    {selected.role ? `, ${ROLE_LABEL[selected.role]}` : ''}) vs v{selectedIndex} ({agentName(previous.author)}) ·
+                    {' '}+{diff?.added} / −{diff?.removed} lines
+                  </p>
+                  <pre className="overflow-x-auto rounded-md border border-border/60 bg-background/50 font-mono text-[11px] leading-relaxed">
+                    {diffRows.map((row, i) =>
+                      row.kind === 'gap' ? (
+                        <div key={`gap-${i}`} className="bg-muted/40 px-2 text-muted-foreground">⋯ {row.count} unchanged lines</div>
+                      ) : (
+                        <div
+                          key={`${row.kind}-${i}`}
+                          className={
+                            row.kind === 'add'
+                              ? 'bg-emerald-500/10 px-2 text-emerald-600 dark:text-emerald-400'
+                              : row.kind === 'del'
+                                ? 'bg-destructive/10 px-2 text-destructive'
+                                : 'px-2 text-muted-foreground'
+                          }
+                        >
+                          {row.kind === 'add' ? '+' : row.kind === 'del' ? '−' : ' '} {row.text || ' '}
+                        </div>
+                      ),
+                    )}
+                  </pre>
+                </div>
+              )}
+            </TabsContent>
+
+
+
             <TabsContent value="tests" className="m-0 min-h-0 flex-1 overflow-y-auto p-3 pt-2">
               {!report ? (
                 <div className="grid h-full place-items-center text-center text-xs text-muted-foreground">
