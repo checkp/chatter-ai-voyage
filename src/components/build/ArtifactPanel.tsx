@@ -19,9 +19,11 @@ import {
   PYTHON_HARNESS, emptyReport, hasTests, parsePythonReport, runHtmlTests, summarise,
   type TestReport,
 } from '@/lib/buildHarness';
+import { collapseContext, diffLines } from '@/lib/artifactDiff';
 import ConsolePane, { type ConsoleLine } from '@/components/build/ConsolePane';
 import type { ArtifactVersion, VerifyFn } from '@/hooks/useBuildMode';
 import type { AIPlatform } from '@/types/chat';
+
 
 interface ArtifactPanelProps {
   versions: ArtifactVersion[];
