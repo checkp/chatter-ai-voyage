@@ -401,10 +401,14 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
           <Tabs value={tab} onValueChange={setTab} className="flex h-full min-h-0 flex-col">
             <TabsList className="mx-3 mt-2 h-8 w-fit shrink-0">
               <TabsTrigger value="code" className="h-6 px-3 text-xs">Code</TabsTrigger>
+              <TabsTrigger value="diff" className="h-6 px-3 text-xs">
+                Diff{diff && previous && !diff.identical ? ` +${diff.added}/−${diff.removed}` : ''}
+              </TabsTrigger>
               <TabsTrigger value="tests" className="h-6 px-3 text-xs">
                 Tests{report && !report.missing && !report.error ? ` ${report.passed}/${report.total}` : ''}
               </TabsTrigger>
               <TabsTrigger value="console" className="h-6 px-3 text-xs">Console</TabsTrigger>
+
             </TabsList>
 
             <TabsContent value="code" className="m-0 flex min-h-0 flex-1 flex-col gap-2 p-3 pt-2">
