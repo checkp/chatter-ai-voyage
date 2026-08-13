@@ -232,19 +232,48 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
             value={selected?.id ?? ''}
             onValueChange={(v) => { setVersionId(v); setDraft(null); }}
           >
-            <SelectTrigger className="h-7 w-[190px] text-xs">
+            <SelectTrigger className="h-7 w-[280px] text-xs">
               <SelectValue placeholder="Version" />
             </SelectTrigger>
             <SelectContent>
-              {versions.map((v, i) => (
-                <SelectItem key={v.id} value={v.id} className="text-xs">
-                  v{i + 1} · {agentName(v.author)}
-                  {i === versions.length - 1 ? ' (latest)' : ''}
-                </SelectItem>
-              ))}
+              {versions.map((v, i) => {
+                const prev = i > 0 ? versions[i - 1] : null;
+                const delta = v.code.length - (prev?.code.length ?? 0);
+                return (
+                  <SelectItem key={v.id} value={v.id} className="text-xs">
+                    v{i + 1} · {agentName(v.author)}
+                    {v.role ? ` · ${ROLE_LABEL[v.role]}` : ''}
+                    {prev && v.code === prev.code
+                      ? ' · no change'
+                      : ` · ${delta >= 0 ? '+' : ''}${delta} chars`}
+                    {i === versions.length - 1 ? ' · latest' : ''}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         )}
+
+        {selected && versionId && selected.id !== latest?.id && (
+          <Button size="sm" variant="outline" className="h-7 px-2 text-[10px]" onClick={() => { setVersionId(null); setDraft(null); }}>
+            Back to latest
+          </Button>
+        )}
+
+        {diff && (
+          <Badge
+            variant={diff.identical && previous ? 'outline' : 'secondary'}
+            className="text-[10px]"
+            title="Change relative to the previous revision"
+          >
+            {!previous
+              ? 'first revision'
+              : diff.identical
+                ? 'identical to previous'
+                : `+${diff.added} / −${diff.removed} lines`}
+          </Badge>
+        )}
+
 
         {isBuilding && (
           <Badge variant="secondary" className="gap-1 text-[10px]">
