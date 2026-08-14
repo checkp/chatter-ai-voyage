@@ -35,7 +35,7 @@ type Settings = {
 };
 
 const DEFAULTS: Settings = {
-  enabled_tools: ALL_TOOLS.map((t) => t.id),
+  enabled_tools: [...ALL_TOOLS.map((t) => t.id), ...HUB_TOOLS],
   enabled_platforms: [...ALL_PLATFORMS],
   default_conductor_platform: "openai",
   default_web_search_model: "sonar-pro",
