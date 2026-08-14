@@ -1206,20 +1206,25 @@ async function toolHubAsk(ctx: AuthCtx, args: Record<string, unknown>, settings:
     if (!settings.enabledPlatforms.has(platform as PlatformId)) {
       throw new Error(`Platform "${platform}" is disabled in your MCP settings.`);
     }
-    const lastUser = [...messages].reverse().find((m) => m.role === "user");
-    const prompt = String(lastUser?.content ?? messages[messages.length - 1]?.content ?? "");
-    if (!prompt) throw new Error("messages must contain a user message with content");
+    // Stateless: hub asks never create a conversation — history lives in the job messages.
+    const chatMessages = messages
+      .map((m) => ({
+        role: m.role === "assistant" || m.role === "system" ? String(m.role) : "user",
+        content: String(m.content ?? ""),
+      }))
+      .filter((m) => m.content.length > 0);
+    if (chatMessages.length === 0) throw new Error("messages must contain content");
 
     let status = "done";
     let reply: string | null = null;
     let errText: string | null = null;
     try {
-      const out = await toolAskModel(ctx, {
-        platform,
-        prompt,
-        ...(cloudModel ? { model: cloudModel } : {}),
-      });
-      reply = (out as { content: string }).content ?? "";
+      const out = await callChatFn(
+        PLATFORM_TO_FN[platform as PlatformId],
+        { messages: chatMessages, model: cloudModel || DEFAULT_MODELS[platform as PlatformId] },
+        ctx.jwt,
+      );
+      reply = (out.content as string) ?? "";
     } catch (e) {
       status = "error";
       errText = e instanceof Error ? e.message : String(e);
