@@ -72,7 +72,14 @@ export default function McpSettingsCard() {
       if (!sess.session) { setSaving(false); return; }
       const { error } = await supabase
         .from("user_mcp_settings")
-        .upsert({ user_id: sess.session.user.id, ...settings }, { onConflict: "user_id" });
+        .upsert(
+          {
+            user_id: sess.session.user.id,
+            ...settings,
+            enabled_tools: [...new Set([...settings.enabled_tools, ...HUB_TOOLS])],
+          },
+          { onConflict: "user_id" },
+        );
       setSaving(false);
       if (error) toast.error("Could not save MCP settings");
       else toast.success("MCP settings saved", { duration: 1500 });
