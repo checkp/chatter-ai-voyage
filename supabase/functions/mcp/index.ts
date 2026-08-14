@@ -609,10 +609,22 @@ async function toolAskModel(ctx: AuthCtx, args: Record<string, unknown>) {
   const model = (args.model as string | undefined) ?? DEFAULT_MODELS[platform];
   const capabilities = (args.capabilities as Record<string, boolean> | undefined) ?? {};
 
+  // `persist: false` (hub-originated / machine-bridge calls) skips ALL
+  // conversations/messages writes — persistence lives in hub_model_jobs.
+  const persist = args.persist !== false;
+
+  if (!persist) {
+    const messages = [{ role: "user" as const, content: prompt }];
+    const result = await callChatFn(PLATFORM_TO_FN[platform], { messages, model, capabilities }, ctx.jwt);
+    return { platform, model, conversation_id: null, content: (result.content as string) ?? "" };
+  }
+
   const conversationId = await ensureConversation(ctx, {
     conversationId: args.conversation_id as string | undefined,
     title: prompt.slice(0, 60),
-    chatMode: "free",
+    // NOTE: must be one of the conversations.valid_chat_mode values:
+    // discussion | side-by-side | conductor | build
+    chatMode: "discussion",
   });
 
   const history = await loadHistory(ctx, conversationId);
