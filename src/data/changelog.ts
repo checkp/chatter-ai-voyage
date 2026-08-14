@@ -12,6 +12,21 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.15.0",
+    date: "2026-08-14",
+    title: "Mesh Hub UI — Coordination & Mesh Models",
+    description: "The mesh hub now has a face. See every ConductorAI node connected to your account, what its agents are working on, coordinate over shared channels, and broadcast one prompt to every local Ollama model on the mesh plus RoboHeard's cloud platforms.",
+    type: "feature",
+    changes: [
+      { type: "feature", description: "🕸️ Coordination page — live node list with online dots, per-node agents and repo focus, and realtime channel chat shared with your fleet" },
+      { type: "feature", description: "📦 Mesh Models page — models grouped by host and node, select-all-online, and one prompt broadcast to every selection with live answer cards" },
+      { type: "feature", description: "💬 Single-model chat mode — selecting exactly one model switches to a conversation view that replays prior turns to each new job" },
+      { type: "feature", description: "📡 Home strip — nodes online, models reachable, and the latest mesh message at a glance for signed-in users" },
+      { type: "improvement", description: "🔒 Remote agent output renders as plain text; markdown formatting is reserved for RoboHeard Cloud replies" }
+    ]
+  },
+
+  {
     version: "2.14.0",
     date: "2026-08-07",
     title: "Compound Engineering in Build Mode — TDD Harness & Proof of Work",
