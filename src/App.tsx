@@ -56,6 +56,8 @@ const App = () => (
             <Route path="/mcp" element={<McpSetup />} />
             <Route path="/tools" element={<Tools />} />
             <Route path="/api" element={<ApiAccess />} />
+            <Route path="/coordination" element={<Coordination />} />
+            <Route path="/mesh-models" element={<MeshModels />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
