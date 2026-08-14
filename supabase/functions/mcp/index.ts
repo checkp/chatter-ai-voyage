@@ -1307,9 +1307,9 @@ async function handleRpc(rpc: JsonRpcRequest, ctx: AuthCtx | null): Promise<Reco
     return respond({
       protocolVersion: PROTOCOL_VERSION,
       capabilities: { tools: {} },
-      serverInfo: { name: "roboheard-mcp", version: "0.2.0" },
+      serverInfo: { name: "roboheard-mcp", version: "0.3.0" },
       instructions:
-        "RoboHeard MCP — multi-model orchestration. Discovery: call list_models first. Single-model: ask_model. Web facts: web_search. Orchestrated (multi-model) reasoning: prefer the conductor_* family — conductor_route (plan only), conductor_compare (raw perspectives), conductor_ask (routed + synthesized answer), conductor_debate (multi-round critique loop). All calls consume the user's RoboHeard tokens.",
+        "RoboHeard MCP — multi-model orchestration + mesh hub. Discovery: call list_models first. Single-model: ask_model. Web facts: web_search. Orchestrated (multi-model) reasoning: prefer the conductor_* family — conductor_route (plan only), conductor_compare (raw perspectives), conductor_ask (routed + synthesized answer), conductor_debate (multi-round critique loop). Mesh hub for ConductorAI fleets: hub_register then hub_sync on a loop (presence + messages + job pickup), hub_presence to see nodes and their local Ollama models, hub_send/hub_messages to coordinate, hub_ask + hub_job to run a model on a node (or on RoboHeard Cloud via mesh_id 'roboheard'). All cloud calls consume the user's RoboHeard tokens.",
     });
   }
   if (method === "notifications/initialized" || method === "notifications/cancelled") return null;
@@ -1317,7 +1317,7 @@ async function handleRpc(rpc: JsonRpcRequest, ctx: AuthCtx | null): Promise<Reco
   if (method === "tools/list") {
     if (!ctx) return respond({ tools: TOOLS });
     const settings = await loadMcpSettings(ctx);
-    return respond({ tools: TOOLS.filter((t) => settings.enabledTools.has(t.name)) });
+    return respond({ tools: TOOLS.filter((t) => HUB_TOOL_NAMES.has(t.name) || settings.enabledTools.has(t.name)) });
   }
 
   if (method === "tools/call") {
@@ -1326,9 +1326,11 @@ async function handleRpc(rpc: JsonRpcRequest, ctx: AuthCtx | null): Promise<Reco
     const args = { ...((params?.arguments as Record<string, unknown>) ?? {}) };
     try {
       const settings = await loadMcpSettings(ctx);
-      if (!settings.enabledTools.has(name)) {
+      // Mesh hub tools are transport plumbing for ConductorAI nodes: always available.
+      if (!HUB_TOOL_NAMES.has(name) && !settings.enabledTools.has(name)) {
         return respond({ content: [{ type: "text", text: `Tool "${name}" is disabled in your MCP settings. Enable it at /mcp in RoboHeard.` }], isError: true });
       }
+
       // Enforce platform allow-list on args.
       if (typeof args.platform === "string" && !settings.enabledPlatforms.has(args.platform as PlatformId)) {
         return respond({ content: [{ type: "text", text: `Platform "${args.platform}" is disabled in your MCP settings.` }], isError: true });
