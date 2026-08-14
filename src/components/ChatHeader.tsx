@@ -167,6 +167,34 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             </TooltipContent>
           </Tooltip>
 
+          {/* Mesh Coordination */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button asChild variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="Coordination">
+                <Link to="/coordination">
+                  <Network className="h-4 w-4" />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Coordination</p>
+            </TooltipContent>
+          </Tooltip>
+
+          {/* Mesh Models */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button asChild variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label="Mesh Models">
+                <Link to="/mesh-models">
+                  <Boxes className="h-4 w-4" />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Mesh Models</p>
+            </TooltipContent>
+          </Tooltip>
+
           {/* Developer Tools */}
           <Tooltip>
             <TooltipTrigger asChild>
