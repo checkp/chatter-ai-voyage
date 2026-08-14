@@ -1135,6 +1135,16 @@ async function toolHubMessages(ctx: AuthCtx, args: Record<string, unknown>) {
   if (error) throw new Error(error.message);
   const rows = (data ?? []) as Array<{ id: number; channel: string; body: string; by: string; mesh_id: string | null; created_at: string }>;
   const ordered = hasSince ? rows : rows.slice().reverse();
+  const meshIds = [...new Set(rows.map((r) => r.mesh_id).filter((m): m is string => !!m))];
+  const nameByMesh: Record<string, string> = {};
+  if (meshIds.length > 0) {
+    const { data: nodes } = await ctx.supabase
+      .from("hub_nodes")
+      .select("mesh_id, name")
+      .eq("user_id", ctx.userId)
+      .in("mesh_id", meshIds);
+    for (const n of (nodes ?? []) as Array<{ mesh_id: string; name: string }>) nameByMesh[n.mesh_id] = n.name;
+  }
   return {
     messages: ordered.map((r) => ({
       id: r.id,
@@ -1142,6 +1152,7 @@ async function toolHubMessages(ctx: AuthCtx, args: Record<string, unknown>) {
       body: r.body,
       by: r.by,
       mesh_id: r.mesh_id,
+      mesh: r.mesh_id ? (nameByMesh[r.mesh_id] ?? null) : null,
       at: new Date(r.created_at).getTime(),
     })),
   };
@@ -1206,20 +1217,25 @@ async function toolHubAsk(ctx: AuthCtx, args: Record<string, unknown>, settings:
     if (!settings.enabledPlatforms.has(platform as PlatformId)) {
       throw new Error(`Platform "${platform}" is disabled in your MCP settings.`);
     }
-    const lastUser = [...messages].reverse().find((m) => m.role === "user");
-    const prompt = String(lastUser?.content ?? messages[messages.length - 1]?.content ?? "");
-    if (!prompt) throw new Error("messages must contain a user message with content");
+    // Stateless: hub asks never create a conversation — history lives in the job messages.
+    const chatMessages = messages
+      .map((m) => ({
+        role: m.role === "assistant" || m.role === "system" ? String(m.role) : "user",
+        content: String(m.content ?? ""),
+      }))
+      .filter((m) => m.content.length > 0);
+    if (chatMessages.length === 0) throw new Error("messages must contain content");
 
     let status = "done";
     let reply: string | null = null;
     let errText: string | null = null;
     try {
-      const out = await toolAskModel(ctx, {
-        platform,
-        prompt,
-        ...(cloudModel ? { model: cloudModel } : {}),
-      });
-      reply = (out as { content: string }).content ?? "";
+      const out = await callChatFn(
+        PLATFORM_TO_FN[platform as PlatformId],
+        { messages: chatMessages, model: cloudModel || DEFAULT_MODELS[platform as PlatformId] },
+        ctx.jwt,
+      );
+      reply = (out.content as string) ?? "";
     } catch (e) {
       status = "error";
       errText = e instanceof Error ? e.message : String(e);
