@@ -1194,6 +1194,7 @@ async function toolHubAsk(ctx: AuthCtx, args: Record<string, unknown>, settings:
   if (!host) throw new Error("host is required");
   if (!model) throw new Error("model is required");
   if (messages.length === 0) throw new Error("messages must be a non-empty array");
+  const createdBy = args.created_by ? String(args.created_by).slice(0, 120) : "mcp";
 
   if (meshId === CLOUD_MESH_ID) {
     const [platform, ...rest] = model.split("/");
@@ -1234,7 +1235,7 @@ async function toolHubAsk(ctx: AuthCtx, args: Record<string, unknown>, settings:
         reply,
         error: errText,
         timeout_ms: timeoutMs,
-        created_by: "mcp",
+        created_by: createdBy,
         updated_at: new Date().toISOString(),
       })
       .select("id")
@@ -1263,7 +1264,7 @@ async function toolHubAsk(ctx: AuthCtx, args: Record<string, unknown>, settings:
       messages,
       status: "queued",
       timeout_ms: timeoutMs,
-      created_by: "mcp",
+      created_by: createdBy,
       updated_at: new Date().toISOString(),
     })
     .select("id")

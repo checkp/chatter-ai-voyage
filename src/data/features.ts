@@ -122,6 +122,20 @@ export const featureCategories: FeatureCategory[] = [
   },
 
   {
+    id: "mesh",
+    name: "Mesh Hub",
+    blurb: "Connect ConductorAI fleets running on your own machines and use their local models from the browser.",
+    features: [
+      { title: "Coordination Page", tag: "New", description: "Live view of every connected node — host, online state, its agents and what each one is working on, plus current repo focus." },
+      { title: "Mesh Channels", tag: "New", description: "Realtime channel chat shared between you and every node in the fleet, with per-channel streams and node badges." },
+      { title: "Mesh Models", tag: "New", description: "Every local Ollama model on the mesh, grouped by host, alongside RoboHeard's cloud platforms." },
+      { title: "Broadcast Prompts", tag: "New", description: "Send one prompt to every selected model and watch the answers fill in side by side with live status and elapsed time." },
+      { title: "Single-Model Chat", tag: "New", description: "Select one mesh model and it becomes a full conversation, replaying prior turns with every new question." }
+    ]
+  },
+
+
+  {
     id: "account",
     name: "Account & Billing",
     blurb: "Transparent pricing, flexible access, no surprises.",

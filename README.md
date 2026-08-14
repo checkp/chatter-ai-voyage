@@ -108,6 +108,16 @@ Bring notes and files from your own hardware into the conversation.
 - **Notes as Chat Context** — Drop any transcribed note straight into the composer so every agent can reason over your handwritten thinking.
 - **Private Note Storage** — Fetched PDFs live in a private, owner-scoped bucket with signed, expiring links — never public.
 
+### Mesh Hub
+
+Connect ConductorAI fleets running on your own machines and use their local models from the browser.
+
+- **Coordination Page** — Live view of every connected node — host, online state, its agents and what each one is working on, plus current repo focus.
+- **Mesh Channels** — Realtime channel chat shared between you and every node in the fleet, with per-channel streams and node badges.
+- **Mesh Models** — Every local Ollama model on the mesh, grouped by host, alongside RoboHeard's cloud platforms.
+- **Broadcast Prompts** — Send one prompt to every selected model and watch the answers fill in side by side with live status and elapsed time.
+- **Single-Model Chat** — Select one mesh model and it becomes a full conversation, replaying prior turns with every new question.
+
 ### Account & Billing
 
 Transparent pricing, flexible access, no surprises.
@@ -135,6 +145,19 @@ Production posture: strict RLS, encrypted secrets, retried calls.
 ### August 2026
 
 <details open>
+<summary><strong>v2.15.0</strong> · Mesh Hub UI — Coordination & Mesh Models <sub>August 14, 2026 · ✨ Feature</sub></summary>
+
+> The mesh hub now has a face. See every ConductorAI node connected to your account, what its agents are working on, coordinate over shared channels, and broadcast one prompt to every local Ollama model on the mesh plus RoboHeard's cloud platforms.
+
+  - ✨ Feature 🕸️ Coordination page — live node list with online dots, per-node agents and repo focus, and realtime channel chat shared with your fleet
+  - ✨ Feature 📦 Mesh Models page — models grouped by host and node, select-all-online, and one prompt broadcast to every selection with live answer cards
+  - ✨ Feature 💬 Single-model chat mode — selecting exactly one model switches to a conversation view that replays prior turns to each new job
+  - ✨ Feature 📡 Home strip — nodes online, models reachable, and the latest mesh message at a glance for signed-in users
+  - 🔧 Improvement 🔒 Remote agent output renders as plain text; markdown formatting is reserved for RoboHeard Cloud replies
+
+</details>
+
+<details>
 <summary><strong>v2.14.0</strong> · Compound Engineering in Build Mode — TDD Harness & Proof of Work <sub>August 7, 2026 · ✨ Feature</sub></summary>
 
 > Build mode agents now work like a real engineering team: an orchestrator decomposes the request into acceptance criteria, implementers build against them, a QA engineer hardens the test suite, and a reviewer gates the result. Every revision is executed against its own tests in the same sandbox it runs in, and the pass/fail report is posted into the chat as proof of work.

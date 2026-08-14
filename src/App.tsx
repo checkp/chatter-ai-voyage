@@ -21,6 +21,8 @@ import OAuthConsent from "./pages/OAuthConsent";
 import McpSetup from "./pages/McpSetup";
 import Tools from "./pages/Tools";
 import ApiAccess from "./pages/ApiAccess";
+import Coordination from "./pages/Coordination";
+import MeshModels from "./pages/MeshModels";
 
 import Analytics from "./components/Analytics";
 import { loadAIModelsFromDB } from "@/config/aiModels";
@@ -54,6 +56,8 @@ const App = () => (
             <Route path="/mcp" element={<McpSetup />} />
             <Route path="/tools" element={<Tools />} />
             <Route path="/api" element={<ApiAccess />} />
+            <Route path="/coordination" element={<Coordination />} />
+            <Route path="/mesh-models" element={<MeshModels />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
