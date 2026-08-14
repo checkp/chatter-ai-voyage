@@ -1360,6 +1360,15 @@ async function handleRpc(rpc: JsonRpcRequest, ctx: AuthCtx | null): Promise<Reco
         case "iterate":            out = await toolIterate(ctx, args); break;
         case "conductor_route":    out = await toolConductorRoute(ctx, args); break;
         case "conductor_compare":  out = await toolConductorCompare(ctx, args); break;
+
+        case "hub_register":       out = await toolHubRegister(ctx, args); break;
+        case "hub_sync":           out = await toolHubSync(ctx, args); break;
+        case "hub_send":           out = await toolHubSend(ctx, args); break;
+        case "hub_messages":       out = await toolHubMessages(ctx, args); break;
+        case "hub_presence":       out = await toolHubPresence(ctx, settings); break;
+        case "hub_ask":            out = await toolHubAsk(ctx, args, settings); break;
+        case "hub_job":            out = await toolHubJob(ctx, args); break;
+
         default: return err(-32601, `Unknown tool: ${name}`);
       }
       return respond({
