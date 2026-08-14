@@ -132,6 +132,26 @@ const MeshModels: React.FC = () => {
     streamRef.current?.scrollTo({ top: streamRef.current.scrollHeight });
   }, [turns.length, runs.length]);
 
+  // In single-model chat mode, fold completed replies into the conversation history
+  // so the next send includes them. appendedJobsRef guards double-appends from realtime.
+  const appendedJobsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!singleChat) return;
+    const finished = runs.filter((r) => {
+      if (!r.jobId || appendedJobsRef.current.has(r.jobId)) return false;
+      return jobs[r.jobId]?.status === 'done' && !!jobs[r.jobId]?.reply;
+    });
+    if (finished.length === 0) return;
+    finished.forEach((r) => appendedJobsRef.current.add(r.jobId!));
+    setTurns((prev) => [
+      ...prev,
+      ...finished.map((r) => ({ role: 'assistant' as const, content: jobs[r.jobId!].reply ?? '' })),
+    ]);
+    const doneKeys = new Set(finished.map((r) => r.key));
+    setRuns((prev) => prev.filter((r) => !doneKeys.has(r.key)));
+  }, [jobs, runs, singleChat]);
+
+
   const send = async () => {
     const text = prompt.trim();
     if (!text || sending) return;

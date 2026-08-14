@@ -11,7 +11,7 @@ import ConductorShowcase from './ConductorShowcase';
 import DemoChat from './DemoChat';
 import SheepBubbles from './SheepBubbles';
 import UseCases from './UseCases';
-import MeshLiveStrip from './MeshLiveStrip';
+
 import LandingFooter from '@/components/landing/LandingFooter';
 import { Link } from 'react-router-dom';
 
@@ -58,7 +58,8 @@ const LandingPage: React.FC = () => {
       {/* FIRST FOLD — guaranteed to fit on a normal-height screen.
           Desktop: hero (with Start) on the left, logo on the right.
           Mobile: hero stacks naturally and includes its own mobile logo. */}
-      <MeshLiveStrip />
+
+
 
       <section className="container mx-auto px-4 md:min-h-[calc(100svh-3.5rem)] md:flex md:items-center py-4 md:py-0">
         <div className="w-full grid md:grid-cols-2 md:gap-10 items-center">
