@@ -131,6 +131,126 @@ export type Database = {
         }
         Relationships: []
       }
+      hub_messages: {
+        Row: {
+          body: string
+          by: string
+          channel: string
+          created_at: string
+          id: number
+          mesh_id: string | null
+          user_id: string
+        }
+        Insert: {
+          body: string
+          by: string
+          channel?: string
+          created_at?: string
+          id?: never
+          mesh_id?: string | null
+          user_id: string
+        }
+        Update: {
+          body?: string
+          by?: string
+          channel?: string
+          created_at?: string
+          id?: never
+          mesh_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      hub_model_jobs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          error: string | null
+          id: string
+          messages: Json
+          model: string
+          reply: string | null
+          running_since: string | null
+          status: string
+          target_host: string
+          target_mesh_id: string
+          timeout_ms: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          messages: Json
+          model: string
+          reply?: string | null
+          running_since?: string | null
+          status?: string
+          target_host: string
+          target_mesh_id: string
+          timeout_ms?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          messages?: Json
+          model?: string
+          reply?: string | null
+          running_since?: string | null
+          status?: string
+          target_host?: string
+          target_mesh_id?: string
+          timeout_ms?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      hub_nodes: {
+        Row: {
+          agents: Json
+          created_at: string
+          host: string
+          last_seen: string
+          mesh_id: string
+          models: Json
+          name: string
+          repo_focus: Json
+          user_id: string
+          version: string | null
+        }
+        Insert: {
+          agents?: Json
+          created_at?: string
+          host: string
+          last_seen?: string
+          mesh_id: string
+          models?: Json
+          name: string
+          repo_focus?: Json
+          user_id: string
+          version?: string | null
+        }
+        Update: {
+          agents?: Json
+          created_at?: string
+          host?: string
+          last_seen?: string
+          mesh_id?: string
+          models?: Json
+          name?: string
+          repo_focus?: Json
+          user_id?: string
+          version?: string | null
+        }
+        Relationships: []
+      }
       image_model_pricing: {
         Row: {
           created_at: string
