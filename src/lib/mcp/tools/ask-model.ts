@@ -44,7 +44,8 @@ export default defineTool({
       const conversationId = await ensureConversation(ctx, {
         conversationId: conversation_id,
         title: prompt.slice(0, 60),
-        chatMode: "free",
+        // must match conversations.valid_chat_mode
+        chatMode: "discussion",
       });
       const history = conversation_id ? await loadHistory(ctx, conversationId) : [];
       await saveMessage(ctx, conversationId, "user", prompt);
