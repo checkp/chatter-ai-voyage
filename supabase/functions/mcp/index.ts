@@ -561,7 +561,8 @@ async function loadMcpSettings(ctx: AuthCtx): Promise<McpSettings> {
     default_web_search_model: string;
   };
   return {
-    enabledTools: new Set(row.enabled_tools ?? ALL_TOOL_NAMES),
+    // Mesh hub tools are machine-bridge protocol: always enabled, regardless of settings.
+    enabledTools: new Set([...(row.enabled_tools ?? ALL_TOOL_NAMES), ...HUB_TOOL_NAMES]),
     enabledPlatforms: new Set((row.enabled_platforms ?? PLATFORM_IDS) as PlatformId[]),
     defaultConductorPlatform: (row.default_conductor_platform as PlatformId) ?? "openai",
     defaultWebSearchModel: row.default_web_search_model ?? "sonar-pro",

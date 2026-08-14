@@ -19,6 +19,9 @@ const ALL_TOOLS: { id: string; label: string; desc: string }[] = [
   { id: "get_chat", label: "get_chat", desc: "Read one conversation's messages" },
   { id: "search_messages", label: "search_messages", desc: "Search across your chat history" },
 ];
+// Mesh hub tools are machine-bridge protocol (ConductorAI nodes) — always enabled,
+// never shown as toggles, and always preserved when settings are saved.
+const HUB_TOOLS = ["hub_register", "hub_sync", "hub_send", "hub_messages", "hub_presence", "hub_ask", "hub_job"];
 
 
 const ALL_PLATFORMS = ["openai", "anthropic", "google", "grok", "deepseek", "perplexity", "mistral", "qwen", "nvidia"] as const;
@@ -32,7 +35,7 @@ type Settings = {
 };
 
 const DEFAULTS: Settings = {
-  enabled_tools: ALL_TOOLS.map((t) => t.id),
+  enabled_tools: [...ALL_TOOLS.map((t) => t.id), ...HUB_TOOLS],
   enabled_platforms: [...ALL_PLATFORMS],
   default_conductor_platform: "openai",
   default_web_search_model: "sonar-pro",
@@ -69,7 +72,14 @@ export default function McpSettingsCard() {
       if (!sess.session) { setSaving(false); return; }
       const { error } = await supabase
         .from("user_mcp_settings")
-        .upsert({ user_id: sess.session.user.id, ...settings }, { onConflict: "user_id" });
+        .upsert(
+          {
+            user_id: sess.session.user.id,
+            ...settings,
+            enabled_tools: [...new Set([...settings.enabled_tools, ...HUB_TOOLS])],
+          },
+          { onConflict: "user_id" },
+        );
       setSaving(false);
       if (error) toast.error("Could not save MCP settings");
       else toast.success("MCP settings saved", { duration: 1500 });
