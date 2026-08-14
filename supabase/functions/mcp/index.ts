@@ -1135,6 +1135,16 @@ async function toolHubMessages(ctx: AuthCtx, args: Record<string, unknown>) {
   if (error) throw new Error(error.message);
   const rows = (data ?? []) as Array<{ id: number; channel: string; body: string; by: string; mesh_id: string | null; created_at: string }>;
   const ordered = hasSince ? rows : rows.slice().reverse();
+  const meshIds = [...new Set(rows.map((r) => r.mesh_id).filter((m): m is string => !!m))];
+  const nameByMesh: Record<string, string> = {};
+  if (meshIds.length > 0) {
+    const { data: nodes } = await ctx.supabase
+      .from("hub_nodes")
+      .select("mesh_id, name")
+      .eq("user_id", ctx.userId)
+      .in("mesh_id", meshIds);
+    for (const n of (nodes ?? []) as Array<{ mesh_id: string; name: string }>) nameByMesh[n.mesh_id] = n.name;
+  }
   return {
     messages: ordered.map((r) => ({
       id: r.id,
@@ -1142,6 +1152,7 @@ async function toolHubMessages(ctx: AuthCtx, args: Record<string, unknown>) {
       body: r.body,
       by: r.by,
       mesh_id: r.mesh_id,
+      mesh: r.mesh_id ? (nameByMesh[r.mesh_id] ?? null) : null,
       at: new Date(r.created_at).getTime(),
     })),
   };
