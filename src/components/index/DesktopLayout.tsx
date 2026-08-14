@@ -189,8 +189,14 @@ const DesktopLayout: React.FC<DesktopLayoutProps> = ({
           />
         </div>
 
+        {activeTab === 'chat' && (
+          <div className="py-2">
+            <MeshLiveStrip />
+          </div>
+        )}
 
         {activeTab === 'chat' && <PreReleaseBanner />}
+
 
         <MainContent
           activeTab={activeTab}
