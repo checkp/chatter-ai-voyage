@@ -14,6 +14,7 @@ import ChangelogDialog from '@/components/ChangelogDialog';
 import { useTour } from '@/hooks/useTour';
 import { changelog } from '@/data/changelog';
 import MainContent from './MainContent';
+import MeshLiveStrip from './MeshLiveStrip';
 import type { DesktopInterfaceProps } from './types';
 
 const CHANGELOG_STORAGE_KEY = 'roboheard_last_seen_changelog';
