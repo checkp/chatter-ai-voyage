@@ -1337,7 +1337,7 @@ async function handleRpc(rpc: JsonRpcRequest, ctx: AuthCtx | null): Promise<Reco
     return respond({
       protocolVersion: PROTOCOL_VERSION,
       capabilities: { tools: {} },
-      serverInfo: { name: "roboheard-mcp", version: "0.3.0" },
+      serverInfo: { name: "roboheard-mcp", version: "0.3.1" },
       instructions:
         "RoboHeard MCP — multi-model orchestration + mesh hub. Discovery: call list_models first. Single-model: ask_model. Web facts: web_search. Orchestrated (multi-model) reasoning: prefer the conductor_* family — conductor_route (plan only), conductor_compare (raw perspectives), conductor_ask (routed + synthesized answer), conductor_debate (multi-round critique loop). Mesh hub for ConductorAI fleets: hub_register then hub_sync on a loop (presence + messages + job pickup), hub_presence to see nodes and their local Ollama models, hub_send/hub_messages to coordinate, hub_ask + hub_job to run a model on a node (or on RoboHeard Cloud via mesh_id 'roboheard'). All cloud calls consume the user's RoboHeard tokens.",
     });
@@ -1422,7 +1422,7 @@ serve(async (req) => {
     // Discovery ping
     return new Response(JSON.stringify({
       name: "roboheard-mcp",
-      version: "0.3.0",
+      version: "0.3.1",
       protocolVersion: PROTOCOL_VERSION,
       transport: "streamable-http",
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
