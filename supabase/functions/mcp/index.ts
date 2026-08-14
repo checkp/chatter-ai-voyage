@@ -1394,7 +1394,7 @@ serve(async (req) => {
     // Discovery ping
     return new Response(JSON.stringify({
       name: "roboheard-mcp",
-      version: "0.1.0",
+      version: "0.3.0",
       protocolVersion: PROTOCOL_VERSION,
       transport: "streamable-http",
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
