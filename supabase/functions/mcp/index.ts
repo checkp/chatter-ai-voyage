@@ -927,7 +927,375 @@ async function toolIterate(ctx: AuthCtx, args: Record<string, unknown>) {
   return { conversation_id: conversationId, iterations: rounds, final: rounds[rounds.length - 1].synthesis };
 }
 
+// ─── Mesh hub handlers ──────────────────────────────────────────────────────
+const CLOUD_MESH_ID = "roboheard";
+const HUB_TOOL_NAMES = new Set([
+  "hub_register", "hub_sync", "hub_send", "hub_messages", "hub_presence", "hub_ask", "hub_job",
+]);
+const MAX_QUEUED_JOBS_PER_USER = 30;
+
+/** Crash/timeout recovery sweep. Requeues stalled 'running' jobs and expires stale 'queued' ones. */
+async function sweepJobs(ctx: AuthCtx): Promise<void> {
+  const now = Date.now();
+  const { data: running } = await ctx.supabase
+    .from("hub_model_jobs")
+    .select("id, timeout_ms, running_since")
+    .eq("user_id", ctx.userId)
+    .eq("status", "running");
+  for (const job of (running ?? []) as Array<{ id: string; timeout_ms: number; running_since: string | null }>) {
+    const since = job.running_since ? new Date(job.running_since).getTime() : 0;
+    if (!since || now - since > (job.timeout_ms ?? 120000) + 30_000) {
+      await ctx.supabase
+        .from("hub_model_jobs")
+        .update({ status: "queued", running_since: null, updated_at: new Date().toISOString() })
+        .eq("id", job.id)
+        .eq("user_id", ctx.userId)
+        .eq("status", "running");
+    }
+  }
+  const staleCutoff = new Date(now - 10 * 60_000).toISOString();
+  await ctx.supabase
+    .from("hub_model_jobs")
+    .update({ status: "error", error: "node offline", updated_at: new Date().toISOString() })
+    .eq("user_id", ctx.userId)
+    .eq("status", "queued")
+    .lt("created_at", staleCutoff);
+}
+
+async function upsertNode(
+  ctx: AuthCtx,
+  meshId: string,
+  presence: { name?: string; host?: string; version?: string; agents?: unknown; repo_focus?: unknown; models?: unknown },
+): Promise<string> {
+  const name = String(presence.name ?? "node");
+  const row: Record<string, unknown> = {
+    mesh_id: meshId,
+    user_id: ctx.userId,
+    name,
+    host: String(presence.host ?? "localhost"),
+    version: presence.version ? String(presence.version) : null,
+    agents: Array.isArray(presence.agents) ? presence.agents : [],
+    repo_focus: Array.isArray(presence.repo_focus) ? presence.repo_focus : [],
+    models: Array.isArray(presence.models) ? presence.models : [],
+    last_seen: new Date().toISOString(),
+  };
+  const { error } = await ctx.supabase.from("hub_nodes").upsert(row, { onConflict: "mesh_id" });
+  if (error) throw new Error(error.message);
+  return name;
+}
+
+async function toolHubRegister(ctx: AuthCtx, args: Record<string, unknown>) {
+  const meshId = String(args.mesh_id ?? "");
+  if (!meshId) throw new Error("mesh_id is required");
+  const name = await upsertNode(ctx, meshId, {
+    name: args.name as string,
+    host: args.host as string,
+    version: args.version as string,
+  });
+  return { ok: true, node: name, poll_s: 5 };
+}
+
+async function toolHubSync(ctx: AuthCtx, args: Record<string, unknown>) {
+  const meshId = String(args.mesh_id ?? "");
+  if (!meshId) throw new Error("mesh_id is required");
+  const presence = (args.presence as Record<string, unknown> | undefined) ?? {};
+
+  // (a) sweep stalled / stale jobs first.
+  await sweepJobs(ctx);
+
+  // (b) presence upsert.
+  await upsertNode(ctx, meshId, presence as never);
+
+  // (c) apply results — only to jobs that are still queued/running.
+  const results = Array.isArray(args.results) ? (args.results as Array<Record<string, unknown>>) : [];
+  for (const r of results) {
+    const jobId = String(r.job_id ?? "");
+    const status = r.status === "error" ? "error" : "done";
+    if (!jobId) continue;
+    await ctx.supabase
+      .from("hub_model_jobs")
+      .update({
+        status,
+        reply: r.reply != null ? String(r.reply) : null,
+        error: r.error != null ? String(r.error) : null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", jobId)
+      .eq("user_id", ctx.userId)
+      .in("status", ["queued", "running"]);
+  }
+
+  // (d) messages. `cursor` absent/null = first sync (no backlog). Numeric 0 IS a cursor.
+  const rawCursor = args.cursor;
+  const hasCursor = rawCursor !== undefined && rawCursor !== null && Number.isFinite(Number(rawCursor));
+  let cursor = 0;
+  let messages: Array<Record<string, unknown>> = [];
+  if (!hasCursor) {
+    const { data } = await ctx.supabase
+      .from("hub_messages")
+      .select("id")
+      .eq("user_id", ctx.userId)
+      .order("id", { ascending: false })
+      .limit(1);
+    cursor = Number((data?.[0] as { id: number } | undefined)?.id ?? 0);
+  } else {
+    cursor = Number(rawCursor);
+    const { data } = await ctx.supabase
+      .from("hub_messages")
+      .select("id, channel, body, by, mesh_id, created_at")
+      .eq("user_id", ctx.userId)
+      .gt("id", cursor)
+      .order("id", { ascending: true })
+      .limit(100);
+    const rows = (data ?? []) as Array<{ id: number; channel: string; body: string; by: string; mesh_id: string | null; created_at: string }>;
+    const meshIds = [...new Set(rows.map((r) => r.mesh_id).filter((m): m is string => !!m))];
+    const nameByMesh: Record<string, string> = {};
+    if (meshIds.length > 0) {
+      const { data: nodes } = await ctx.supabase
+        .from("hub_nodes")
+        .select("mesh_id, name")
+        .eq("user_id", ctx.userId)
+        .in("mesh_id", meshIds);
+      for (const n of (nodes ?? []) as Array<{ mesh_id: string; name: string }>) nameByMesh[n.mesh_id] = n.name;
+    }
+    messages = rows.map((r) => ({
+      id: r.id,
+      channel: r.channel,
+      body: r.body,
+      by: r.by,
+      mesh: r.mesh_id ? (nameByMesh[r.mesh_id] ?? null) : null,
+      at: new Date(r.created_at).getTime(),
+    }));
+    if (rows.length > 0) cursor = rows[rows.length - 1].id;
+  }
+
+  // (e) hand out queued jobs targeted at this node.
+  const { data: queued } = await ctx.supabase
+    .from("hub_model_jobs")
+    .select("id, target_host, model, messages, timeout_ms")
+    .eq("user_id", ctx.userId)
+    .eq("target_mesh_id", meshId)
+    .eq("status", "queued")
+    .order("created_at", { ascending: true });
+  const jobs = ((queued ?? []) as Array<{ id: string; target_host: string; model: string; messages: unknown; timeout_ms: number }>).map((j) => ({
+    id: j.id,
+    host: j.target_host,
+    model: j.model,
+    messages: j.messages,
+    timeout_ms: j.timeout_ms,
+  }));
+  if (jobs.length > 0) {
+    await ctx.supabase
+      .from("hub_model_jobs")
+      .update({ status: "running", running_since: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq("user_id", ctx.userId)
+      .in("id", jobs.map((j) => j.id))
+      .eq("status", "queued");
+  }
+
+  return { now: Date.now(), cursor, messages, jobs };
+}
+
+async function toolHubSend(ctx: AuthCtx, args: Record<string, unknown>) {
+  const body = String(args.body ?? "");
+  const by = String(args.by ?? "");
+  if (!body) throw new Error("body is required");
+  if (!by) throw new Error("by is required");
+  const { data, error } = await ctx.supabase
+    .from("hub_messages")
+    .insert({
+      user_id: ctx.userId,
+      mesh_id: args.mesh_id ? String(args.mesh_id) : null,
+      channel: args.channel ? String(args.channel) : "general",
+      body,
+      by,
+    })
+    .select("id")
+    .single();
+  if (error || !data) throw new Error(error?.message ?? "Failed to send message");
+  return { id: Number((data as { id: number }).id) };
+}
+
+async function toolHubMessages(ctx: AuthCtx, args: Record<string, unknown>) {
+  const limit = Math.min(200, Math.max(1, Number(args.limit ?? 50)));
+  const hasSince = args.since_id !== undefined && args.since_id !== null && Number.isFinite(Number(args.since_id));
+  let q = ctx.supabase
+    .from("hub_messages")
+    .select("id, channel, body, by, mesh_id, created_at")
+    .eq("user_id", ctx.userId);
+  if (args.channel) q = q.eq("channel", String(args.channel));
+  if (hasSince) {
+    // Forward pagination: OLDEST unseen rows first, so a burst is never skipped.
+    q = q.gt("id", Number(args.since_id)).order("id", { ascending: true }).limit(limit);
+  } else {
+    q = q.order("id", { ascending: false }).limit(limit);
+  }
+  const { data, error } = await q;
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as Array<{ id: number; channel: string; body: string; by: string; mesh_id: string | null; created_at: string }>;
+  const ordered = hasSince ? rows : rows.slice().reverse();
+  return {
+    messages: ordered.map((r) => ({
+      id: r.id,
+      channel: r.channel,
+      body: r.body,
+      by: r.by,
+      mesh_id: r.mesh_id,
+      at: new Date(r.created_at).getTime(),
+    })),
+  };
+}
+
+async function toolHubPresence(ctx: AuthCtx, settings: McpSettings) {
+  const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60_000).toISOString();
+  const { data, error } = await ctx.supabase
+    .from("hub_nodes")
+    .select("mesh_id, name, host, agents, repo_focus, models, last_seen")
+    .eq("user_id", ctx.userId)
+    .gte("last_seen", cutoff)
+    .order("last_seen", { ascending: false });
+  if (error) throw new Error(error.message);
+
+  const cloudModels = PLATFORM_IDS.filter((p) => settings.enabledPlatforms.has(p)).map((p) => ({
+    host: CLOUD_MESH_ID,
+    model: `${p}/${DEFAULT_MODELS[p]}`,
+    via: "cloud",
+  }));
+  const cloudNode = {
+    mesh_id: CLOUD_MESH_ID,
+    name: "RoboHeard Cloud",
+    host: CLOUD_MESH_ID,
+    agents: [],
+    repo_focus: [],
+    models: cloudModels,
+    last_seen_s: 0,
+  };
+
+  const nodes = ((data ?? []) as Array<{ mesh_id: string; name: string; host: string; agents: unknown; repo_focus: unknown; models: unknown; last_seen: string }>).map((n) => ({
+    mesh_id: n.mesh_id,
+    name: n.name,
+    host: n.host,
+    agents: n.agents ?? [],
+    repo_focus: n.repo_focus ?? [],
+    models: n.models ?? [],
+    last_seen_s: Math.max(0, Math.round((Date.now() - new Date(n.last_seen).getTime()) / 1000)),
+  }));
+
+  return { nodes: [cloudNode, ...nodes] };
+}
+
+async function toolHubAsk(ctx: AuthCtx, args: Record<string, unknown>, settings: McpSettings) {
+  const meshId = String(args.mesh_id ?? "");
+  const host = String(args.host ?? "");
+  const model = String(args.model ?? "");
+  const messages = Array.isArray(args.messages) ? (args.messages as Array<Record<string, unknown>>) : [];
+  const timeoutMs = Math.min(600_000, Math.max(1_000, Number(args.timeout_ms ?? 120_000)));
+  if (!meshId) throw new Error("mesh_id is required");
+  if (!host) throw new Error("host is required");
+  if (!model) throw new Error("model is required");
+  if (messages.length === 0) throw new Error("messages must be a non-empty array");
+
+  if (meshId === CLOUD_MESH_ID) {
+    const [platform, ...rest] = model.split("/");
+    const cloudModel = rest.join("/");
+    if (!PLATFORM_IDS.includes(platform as PlatformId)) {
+      throw new Error(`Cloud model must be '<platform>/<model>', got: ${model}`);
+    }
+    if (!settings.enabledPlatforms.has(platform as PlatformId)) {
+      throw new Error(`Platform "${platform}" is disabled in your MCP settings.`);
+    }
+    const lastUser = [...messages].reverse().find((m) => m.role === "user");
+    const prompt = String(lastUser?.content ?? messages[messages.length - 1]?.content ?? "");
+    if (!prompt) throw new Error("messages must contain a user message with content");
+
+    let status = "done";
+    let reply: string | null = null;
+    let errText: string | null = null;
+    try {
+      const out = await toolAskModel(ctx, {
+        platform,
+        prompt,
+        ...(cloudModel ? { model: cloudModel } : {}),
+      });
+      reply = (out as { content: string }).content ?? "";
+    } catch (e) {
+      status = "error";
+      errText = e instanceof Error ? e.message : String(e);
+    }
+    const { data, error } = await ctx.supabase
+      .from("hub_model_jobs")
+      .insert({
+        user_id: ctx.userId,
+        target_mesh_id: meshId,
+        target_host: host,
+        model,
+        messages,
+        status,
+        reply,
+        error: errText,
+        timeout_ms: timeoutMs,
+        created_by: "mcp",
+        updated_at: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+    if (error || !data) throw new Error(error?.message ?? "Failed to record job");
+    return { job_id: (data as { id: string }).id };
+  }
+
+  // Remote node: queue for pickup on the node's next hub_sync.
+  const { count } = await ctx.supabase
+    .from("hub_model_jobs")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", ctx.userId)
+    .eq("status", "queued");
+  if ((count ?? 0) >= MAX_QUEUED_JOBS_PER_USER) {
+    throw new Error(`Too many queued mesh jobs (limit ${MAX_QUEUED_JOBS_PER_USER}). Wait for nodes to drain the queue.`);
+  }
+
+  const { data, error } = await ctx.supabase
+    .from("hub_model_jobs")
+    .insert({
+      user_id: ctx.userId,
+      target_mesh_id: meshId,
+      target_host: host,
+      model,
+      messages,
+      status: "queued",
+      timeout_ms: timeoutMs,
+      created_by: "mcp",
+      updated_at: new Date().toISOString(),
+    })
+    .select("id")
+    .single();
+  if (error || !data) throw new Error(error?.message ?? "Failed to queue job");
+  return { job_id: (data as { id: string }).id };
+}
+
+async function toolHubJob(ctx: AuthCtx, args: Record<string, unknown>) {
+  const jobId = String(args.job_id ?? "");
+  if (!jobId) throw new Error("job_id is required");
+  // Same sweep as hub_sync, so pollers see expiry even when no node is syncing.
+  await sweepJobs(ctx);
+  const { data, error } = await ctx.supabase
+    .from("hub_model_jobs")
+    .select("status, reply, error, created_at")
+    .eq("id", jobId)
+    .eq("user_id", ctx.userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error(`Unknown job_id: ${jobId}`);
+  const row = data as { status: string; reply: string | null; error: string | null; created_at: string };
+  return {
+    status: row.status,
+    ...(row.reply != null ? { reply: row.reply } : {}),
+    ...(row.error != null ? { error: row.error } : {}),
+    age_s: Math.max(0, Math.round((Date.now() - new Date(row.created_at).getTime()) / 1000)),
+  };
+}
+
 // ─── MCP dispatch ───────────────────────────────────────────────────────────
+
 type JsonRpcRequest = { jsonrpc: "2.0"; id?: string | number | null; method: string; params?: Record<string, unknown> };
 
 async function handleRpc(rpc: JsonRpcRequest, ctx: AuthCtx | null): Promise<Record<string, unknown> | null> {
