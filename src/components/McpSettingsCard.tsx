@@ -19,6 +19,9 @@ const ALL_TOOLS: { id: string; label: string; desc: string }[] = [
   { id: "get_chat", label: "get_chat", desc: "Read one conversation's messages" },
   { id: "search_messages", label: "search_messages", desc: "Search across your chat history" },
 ];
+// Mesh hub tools are machine-bridge protocol (ConductorAI nodes) — always enabled,
+// never shown as toggles, and always preserved when settings are saved.
+const HUB_TOOLS = ["hub_register", "hub_sync", "hub_send", "hub_messages", "hub_presence", "hub_ask", "hub_job"];
 
 
 const ALL_PLATFORMS = ["openai", "anthropic", "google", "grok", "deepseek", "perplexity", "mistral", "qwen", "nvidia"] as const;
