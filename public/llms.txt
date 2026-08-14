@@ -16,7 +16,7 @@ RoboHeard lets you chat with eight frontier AI models at once, orchestrate them 
 
 ## Latest release
 
-- v2.14.0 (2026-08-07) — Compound Engineering in Build Mode — TDD Harness & Proof of Work: Build mode agents now work like a real engineering team: an orchestrator decomposes the request into acceptance criteria, implementers build against them, a QA engineer hardens the test suite, and a reviewer gates the result. Every revision is executed against its own tests in the same sandbox it runs in, and the pass/fail report is posted into the chat as proof of work.
+- v2.15.0 (2026-08-14) — Mesh Hub UI — Coordination & Mesh Models: The mesh hub now has a face. See every ConductorAI node connected to your account, what its agents are working on, coordinate over shared channels, and broadcast one prompt to every local Ollama model on the mesh plus RoboHeard's cloud platforms.
 
 ## Feature categories
 
@@ -28,5 +28,6 @@ RoboHeard lets you chat with eight frontier AI models at once, orchestrate them 
 - Multi-Model Image Studio: One brief, several visual minds. Render once, pick the result that fits.
 - Workspace & Controls: Small details that make multi-agent work feel calm instead of chaotic.
 - Device Integrations: Bring notes and files from your own hardware into the conversation.
+- Mesh Hub: Connect ConductorAI fleets running on your own machines and use their local models from the browser.
 - Account & Billing: Transparent pricing, flexible access, no surprises.
 - Security & Reliability: Production posture: strict RLS, encrypted secrets, retried calls.
