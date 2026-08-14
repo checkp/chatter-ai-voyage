@@ -238,7 +238,138 @@ const TOOLS = [
     annotations: { readOnlyHint: false, openWorldHint: true },
   },
 
+  // ─── Mesh hub (ConductorAI fleets) ───────────────────────────────────────
+  {
+    name: "hub_register",
+    title: "Register a mesh node",
+    description: "Register (or refresh) a ConductorAI node in the mesh hub. Returns the recommended poll interval.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        mesh_id: { type: "string", description: "Stable UUID identifying this node." },
+        name: { type: "string", description: "Human-friendly node name." },
+        host: { type: "string", description: "Host/endpoint the node is reachable at locally." },
+        version: { type: "string", description: "ConductorAI version running on the node." },
+      },
+      required: ["mesh_id", "name", "host"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: false, openWorldHint: false },
+  },
+  {
+    name: "hub_sync",
+    title: "Sync mesh node (presence, messages, jobs)",
+    description: "Single round-trip mesh sync: reports presence, delivers job results, and returns new mesh messages plus queued local-model jobs for this node.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        mesh_id: { type: "string" },
+        cursor: { type: ["number", "null"], description: "Last mesh_messages id seen. Omit/null on the first sync to skip backlog." },
+        presence: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            host: { type: "string" },
+            version: { type: "string" },
+            agents: { type: "array", items: {} },
+            repo_focus: { type: "array", items: {} },
+            models: { type: "array", items: {} },
+          },
+          additionalProperties: true,
+        },
+        results: {
+          type: "array",
+          description: "Results for jobs previously handed to this node.",
+          items: {
+            type: "object",
+            properties: {
+              job_id: { type: "string" },
+              status: { type: "string", enum: ["done", "error"] },
+              reply: { type: "string" },
+              error: { type: "string" },
+            },
+            required: ["job_id", "status"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["mesh_id"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: false, openWorldHint: false },
+  },
+  {
+    name: "hub_send",
+    title: "Send a mesh message",
+    description: "Post a message to a mesh channel so every connected node sees it on its next sync.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        body: { type: "string" },
+        channel: { type: "string", description: "Defaults to 'general'." },
+        by: { type: "string", description: "Self-chosen author label (plain text)." },
+        mesh_id: { type: "string", description: "Sending node id, when sent from a node." },
+      },
+      required: ["body", "by"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: false, openWorldHint: false },
+  },
+  {
+    name: "hub_messages",
+    title: "Read mesh messages",
+    description: "Read mesh coordination messages, always ascending. With since_id it pages forward from the oldest unseen message; without it, returns the newest ones.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        channel: { type: "string" },
+        since_id: { type: "number" },
+        limit: { type: "number", description: "Defaults to 50." },
+      },
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true, openWorldHint: false },
+  },
+  {
+    name: "hub_presence",
+    title: "List mesh nodes",
+    description: "List mesh nodes seen in the last 7 days, plus a synthetic 'roboheard' cloud node exposing the caller's enabled cloud models.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    annotations: { readOnlyHint: true, openWorldHint: false },
+  },
+  {
+    name: "hub_ask",
+    title: "Ask a mesh model",
+    description: "Route a chat completion to a mesh node's local Ollama model, or to RoboHeard Cloud (mesh_id 'roboheard', model '<platform>/<model>') which runs immediately. Returns a job_id; poll with hub_job.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        mesh_id: { type: "string" },
+        host: { type: "string" },
+        model: { type: "string" },
+        messages: { type: "array", items: { type: "object", additionalProperties: true } },
+        timeout_ms: { type: "number", description: "Defaults to 120000." },
+      },
+      required: ["mesh_id", "host", "model", "messages"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: false, openWorldHint: true },
+  },
+  {
+    name: "hub_job",
+    title: "Poll a mesh model job",
+    description: "Check the status of a hub_ask job. Returns status, reply or error, and its age in seconds.",
+    inputSchema: {
+      type: "object",
+      properties: { job_id: { type: "string" } },
+      required: ["job_id"],
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true, openWorldHint: false },
+  },
+
   // ─── Deprecated aliases (kept for backward compatibility) ────────────────
+
   {
     name: "ask_conductor",
     title: "Conductor (deprecated alias)",
