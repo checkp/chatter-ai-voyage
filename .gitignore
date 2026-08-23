@@ -1,3 +1,4 @@
+.env
 # Logs
 logs
 *.log
@@ -24,5 +25,5 @@ dist-ssr
 *.sw?
 
 # Local self-host DB artifacts (kept out of the repo)
-supabase/schema.sql
-supabase/post-restore.sql
+#supabase/schema.sql
+#supabase/post-restore.sql
