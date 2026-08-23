@@ -291,7 +291,9 @@ const TOOLS = [
             },
             required: ["job_id", "status"],
             additionalProperties: false,
+          },
         },
+
         knowledge_cursor: { type: "number", description: "Highest knowledge updated_at (ms epoch) already applied by this node. Defaults to 0." },
         knowledge_push: {
           type: "object",
