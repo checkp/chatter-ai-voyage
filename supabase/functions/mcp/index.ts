@@ -258,8 +258,9 @@ const TOOLS = [
   },
   {
     name: "hub_sync",
-    title: "Sync mesh node (presence, messages, jobs)",
-    description: "Single round-trip mesh sync: reports presence, delivers job results, and returns new mesh messages plus queued local-model jobs for this node.",
+    title: "Sync mesh node (presence, messages, jobs, knowledge)",
+    description: "Single round-trip mesh sync: reports presence, delivers job results, converges the shared knowledge base (memory notes, skills, repo docs) by last-writer-wins, and returns new mesh messages plus queued local-model jobs for this node.",
+
     inputSchema: {
       type: "object",
       properties: {
@@ -292,6 +293,19 @@ const TOOLS = [
             additionalProperties: false,
           },
         },
+
+        knowledge_cursor: { type: "number", description: "Highest knowledge updated_at (ms epoch) already applied by this node. Defaults to 0." },
+        knowledge_push: {
+          type: "object",
+          description: "Knowledge rows authored locally since the last sync. Each row needs updated_at in ms epoch.",
+          properties: {
+            memory: { type: "array", items: { type: "object", additionalProperties: true } },
+            skills: { type: "array", items: { type: "object", additionalProperties: true } },
+            repo_docs: { type: "array", items: { type: "object", additionalProperties: true } },
+          },
+          additionalProperties: false,
+        },
+
       },
       required: ["mesh_id"],
       additionalProperties: false,
@@ -1106,8 +1120,103 @@ async function toolHubSync(ctx: AuthCtx, args: Record<string, unknown>) {
       .eq("status", "queued");
   }
 
-  return { now: Date.now(), cursor, messages, jobs };
+  // (f) durable knowledge convergence (last-writer-wins by ms epoch updated_at).
+  const knowledge = await syncKnowledge(ctx, meshId, args);
+
+  return { now: Date.now(), cursor, messages, jobs, ...knowledge };
 }
+
+type KnowledgeKind = "memory" | "skill" | "doc";
+
+const knowledgeItemId = (kind: KnowledgeKind, row: Record<string, unknown>): string =>
+  kind === "doc" ? `${String(row.repo ?? "")}\n${String(row.name ?? "")}` : String(row.id ?? "");
+
+/**
+ * Applies `knowledge_push` (LWW) and returns the rows authored by OTHER nodes
+ * that are newer than `knowledge_cursor`. Backward compatible: with neither
+ * argument present it pushes nothing and returns empty arrays.
+ */
+async function syncKnowledge(ctx: AuthCtx, meshId: string, args: Record<string, unknown>) {
+  const inCursor = Number(args.knowledge_cursor ?? 0) || 0;
+  const push = (args.knowledge_push as Record<string, unknown> | undefined) ?? {};
+
+  const incoming: Array<{ kind: KnowledgeKind; item_id: string; updated_at: number; row: Record<string, unknown> }> = [];
+  const collect = (kind: KnowledgeKind, list: unknown) => {
+    if (!Array.isArray(list)) return;
+    for (const raw of list) {
+      if (!raw || typeof raw !== "object") continue;
+      const row = raw as Record<string, unknown>;
+      const item_id = knowledgeItemId(kind, row);
+      if (!item_id || item_id === "\n") continue;
+      incoming.push({ kind, item_id, updated_at: Number(row.updated_at) || 0, row });
+    }
+  };
+  collect("memory", push.memory);
+  collect("skill", push.skills);
+  collect("doc", push.repo_docs);
+
+  if (incoming.length > 0) {
+    // Keep only the newest push per key within this batch.
+    const batch = new Map<string, (typeof incoming)[number]>();
+    for (const item of incoming) {
+      const key = `${item.kind}\u0000${item.item_id}`;
+      const prev = batch.get(key);
+      if (!prev || item.updated_at > prev.updated_at) batch.set(key, item);
+    }
+
+    const { data: existing } = await ctx.supabase
+      .from("hub_knowledge")
+      .select("kind, item_id, updated_at")
+      .eq("user_id", ctx.userId)
+      .in("kind", [...new Set([...batch.values()].map((i) => i.kind))])
+      .in("item_id", [...new Set([...batch.values()].map((i) => i.item_id))]);
+    const stored = new Map<string, number>();
+    for (const e of (existing ?? []) as Array<{ kind: string; item_id: string; updated_at: number }>) {
+      stored.set(`${e.kind}\u0000${e.item_id}`, Number(e.updated_at) || 0);
+    }
+
+    const winners = [...batch.entries()]
+      .filter(([key, item]) => item.updated_at > (stored.get(key) ?? -1))
+      .map(([, item]) => ({
+        user_id: ctx.userId,
+        kind: item.kind,
+        item_id: item.item_id,
+        origin_mesh_id: meshId,
+        updated_at: item.updated_at,
+        row: item.row,
+      }));
+
+    if (winners.length > 0) {
+      const { error } = await ctx.supabase
+        .from("hub_knowledge")
+        .upsert(winners, { onConflict: "user_id,kind,item_id" });
+      if (error) console.error("[hub_sync] knowledge upsert failed:", error.message);
+    }
+  }
+
+  const { data: pulled } = await ctx.supabase
+    .from("hub_knowledge")
+    .select("kind, updated_at, row")
+    .eq("user_id", ctx.userId)
+    .neq("origin_mesh_id", meshId)
+    .gt("updated_at", inCursor)
+    .order("updated_at", { ascending: true })
+    .limit(300);
+
+  const rows = (pulled ?? []) as Array<{ kind: string; updated_at: number; row: Record<string, unknown> }>;
+  const knowledge: { memory: unknown[]; skills: unknown[]; repo_docs: unknown[] } = { memory: [], skills: [], repo_docs: [] };
+  let outCursor = inCursor;
+  for (const r of rows) {
+    if (r.kind === "memory") knowledge.memory.push(r.row);
+    else if (r.kind === "skill") knowledge.skills.push(r.row);
+    else knowledge.repo_docs.push(r.row);
+    const u = Number(r.updated_at) || 0;
+    if (u > outCursor) outCursor = u;
+  }
+
+  return { knowledge, knowledge_cursor: outCursor };
+}
+
 
 async function toolHubSend(ctx: AuthCtx, args: Record<string, unknown>) {
   const body = String(args.body ?? "");
@@ -1337,7 +1446,7 @@ async function handleRpc(rpc: JsonRpcRequest, ctx: AuthCtx | null): Promise<Reco
     return respond({
       protocolVersion: PROTOCOL_VERSION,
       capabilities: { tools: {} },
-      serverInfo: { name: "roboheard-mcp", version: "0.3.1" },
+      serverInfo: { name: "roboheard-mcp", version: "0.4.0" },
       instructions:
         "RoboHeard MCP — multi-model orchestration + mesh hub. Discovery: call list_models first. Single-model: ask_model. Web facts: web_search. Orchestrated (multi-model) reasoning: prefer the conductor_* family — conductor_route (plan only), conductor_compare (raw perspectives), conductor_ask (routed + synthesized answer), conductor_debate (multi-round critique loop). Mesh hub for ConductorAI fleets: hub_register then hub_sync on a loop (presence + messages + job pickup), hub_presence to see nodes and their local Ollama models, hub_send/hub_messages to coordinate, hub_ask + hub_job to run a model on a node (or on RoboHeard Cloud via mesh_id 'roboheard'). All cloud calls consume the user's RoboHeard tokens.",
     });
@@ -1422,7 +1531,7 @@ serve(async (req) => {
     // Discovery ping
     return new Response(JSON.stringify({
       name: "roboheard-mcp",
-      version: "0.3.1",
+      version: "0.4.0",
       protocolVersion: PROTOCOL_VERSION,
       transport: "streamable-http",
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
