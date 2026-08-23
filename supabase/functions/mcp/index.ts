@@ -291,8 +291,19 @@ const TOOLS = [
             },
             required: ["job_id", "status"],
             additionalProperties: false,
-          },
         },
+        knowledge_cursor: { type: "number", description: "Highest knowledge updated_at (ms epoch) already applied by this node. Defaults to 0." },
+        knowledge_push: {
+          type: "object",
+          description: "Knowledge rows authored locally since the last sync. Each row needs updated_at in ms epoch.",
+          properties: {
+            memory: { type: "array", items: { type: "object", additionalProperties: true } },
+            skills: { type: "array", items: { type: "object", additionalProperties: true } },
+            repo_docs: { type: "array", items: { type: "object", additionalProperties: true } },
+          },
+          additionalProperties: false,
+        },
+
       },
       required: ["mesh_id"],
       additionalProperties: false,
