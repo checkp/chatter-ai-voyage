@@ -131,6 +131,36 @@ export type Database = {
         }
         Relationships: []
       }
+      hub_knowledge: {
+        Row: {
+          created_at: string
+          item_id: string
+          kind: string
+          origin_mesh_id: string
+          row: Json
+          updated_at: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          item_id: string
+          kind: string
+          origin_mesh_id: string
+          row: Json
+          updated_at: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          item_id?: string
+          kind?: string
+          origin_mesh_id?: string
+          row?: Json
+          updated_at?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       hub_messages: {
         Row: {
           body: string
