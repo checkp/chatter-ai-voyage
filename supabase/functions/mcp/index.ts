@@ -258,8 +258,9 @@ const TOOLS = [
   },
   {
     name: "hub_sync",
-    title: "Sync mesh node (presence, messages, jobs)",
-    description: "Single round-trip mesh sync: reports presence, delivers job results, and returns new mesh messages plus queued local-model jobs for this node.",
+    title: "Sync mesh node (presence, messages, jobs, knowledge)",
+    description: "Single round-trip mesh sync: reports presence, delivers job results, converges the shared knowledge base (memory notes, skills, repo docs) by last-writer-wins, and returns new mesh messages plus queued local-model jobs for this node.",
+
     inputSchema: {
       type: "object",
       properties: {
