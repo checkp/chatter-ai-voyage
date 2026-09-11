@@ -145,6 +145,13 @@ const AuthPage = () => {
         
         if (data.user) {
           console.log('User signed up successfully:', data.user.id);
+          if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+            try {
+              window.gtag('event', 'sign_up', { method: 'email' });
+            } catch (e) {
+              console.warn('gtag sign_up event failed:', e);
+            }
+          }
           if (data.user.email_confirmed_at) {
             toast.success('Account created successfully! Redirecting...');
             setTimeout(() => {
@@ -168,6 +175,13 @@ const AuthPage = () => {
         
         if (data.user) {
           console.log('User signed in successfully:', data.user.id);
+          if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+            try {
+              window.gtag('event', 'login', { method: 'email' });
+            } catch (e) {
+              console.warn('gtag login event failed:', e);
+            }
+          }
           toast.success('Signed in successfully! Redirecting...');
           setTimeout(() => {
             window.location.href = nextPath;
@@ -199,10 +213,18 @@ const AuthPage = () => {
           redirectTo: `${window.location.origin}${nextPath}`,
         }
       });
-      
+
       if (error) {
         console.error('Google auth error:', error);
         throw error;
+      }
+
+      if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+        try {
+          window.gtag('event', 'login', { method: 'google' });
+        } catch (e) {
+          console.warn('gtag login event failed:', e);
+        }
       }
     } catch (error: any) {
       console.error('Google auth error:', error);
@@ -228,10 +250,18 @@ const AuthPage = () => {
           redirectTo: `${window.location.origin}${nextPath}`,
         }
       });
-      
+
       if (error) {
         console.error('GitHub auth error:', error);
         throw error;
+      }
+
+      if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+        try {
+          window.gtag('event', 'login', { method: 'github' });
+        } catch (e) {
+          console.warn('gtag login event failed:', e);
+        }
       }
     } catch (error: any) {
       console.error('GitHub auth error:', error);
