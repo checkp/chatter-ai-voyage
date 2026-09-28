@@ -274,11 +274,12 @@ export const useMessageHandling = (
     },
   });
 
-  const handleSend = useCallback(async (chatId: string | null, attachments?: Attachment[]) => {
-    if ((!input.trim() && (!attachments || attachments.length === 0)) || !chatId || sendMessageMutation.isPending) return;
+  const handleSend = useCallback(async (chatId: string | null, attachments?: Attachment[], textOverride?: string) => {
+    const text = (textOverride ?? input).trim();
+    if ((!text && (!attachments || attachments.length === 0)) || !chatId || sendMessageMutation.isPending) return;
 
     console.log('handleSend called with chatId:', chatId, 'input length:', input.length, 'attachments:', attachments?.length || 0);
-    sendMessageMutation.mutate({ chatId, userMessage: input.trim(), attachments });
+    sendMessageMutation.mutate({ chatId, userMessage: text, attachments });
   }, [input, sendMessageMutation, queryClient, addEntry]);
 
   const handleStop = useCallback(() => {
