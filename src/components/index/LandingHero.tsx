@@ -108,20 +108,20 @@ const LandingHero: React.FC = () => {
 
 
   return (
-    <div className="text-center md:text-left max-w-4xl mx-auto md:mx-0">
-      {/* Logo only on mobile — sits above everything */}
+    <div className="text-center md:text-center max-w-4xl mx-auto">
+      {/* Herd illustration on top; title, text and Start button underneath */}
       <img
-        src="/lovable-uploads/herd-logo.webp"
-        alt="RoboHeard — the frontier AI conductor interface"
-        width={140}
-        height={140}
+        src="/lovable-uploads/roboheard-herd.webp"
+        alt="RoboHeard — a herd of nine fluffy robot sheep, each with its own personality"
+        width={800}
+        height={800}
         {...({ fetchpriority: "high" } as Record<string, string>)}
-        className="md:hidden w-full max-w-[140px] h-auto object-contain mx-auto mb-3 cursor-pointer hover:opacity-80 transition-opacity"
+        className="mx-auto mb-3 md:mb-4 w-auto h-auto max-w-full object-contain cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+        style={{ maxHeight: 'clamp(160px, 27vh, 290px)' }}
         onClick={() => window.location.href = '/auth'}
       />
 
-
-      <div className="flex justify-center md:justify-start mb-2">
+      <div className="flex justify-center mb-2">
         <Badge variant="outline" className="text-primary border-primary/20">
           <Sparkles className="mr-2 h-4 w-4" />
           For SEO hackers, AI researchers &amp; founders
@@ -130,10 +130,10 @@ const LandingHero: React.FC = () => {
 
       <h1
         className="font-bold text-foreground mb-3 md:mb-4 leading-tight"
-        style={{ fontSize: 'clamp(1.75rem, 4vw + 0.5rem, 3.5rem)' }}
+        style={{ fontSize: 'clamp(1.75rem, 4vw + 0.5rem, 3rem)' }}
       >
-        <span className="block">What Did the Robots Hear?</span>
-        <span className="block text-primary">Meet the Herd.</span>
+        <span className="block">Ask Nine Robots One Question.</span>
+        <span className="block text-primary">Watch the Herd Disagree.</span>
       </h1>
 
       <p
@@ -149,7 +149,7 @@ const LandingHero: React.FC = () => {
           never gets pushed off-screen on short displays. The cloud becomes
           position:fixed at mount, so the container reserves its spot. */}
       <div
-        className="flex justify-center md:justify-start"
+        className="flex justify-center"
         style={{ minHeight: 'calc(clamp(150px, 22vh, 240px) * 0.58)' }}
       >
         <div ref={driftRef} style={{ willChange: 'transform' }}>
