@@ -139,23 +139,22 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
   try {
-    // Require JWT (anonymous sessions are fine)
+    // Signed-in users are rate-limited by their account; visitors without a
+    // session are rate-limited by a hashed IP (anonymous sign-ins are disabled).
+    let userId: string | null = null;
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...CORS, "Content-Type": "application/json" },
-      });
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claimsRes } = await supabaseAdmin.auth.getClaims(token);
+      const sub = claimsRes?.claims?.sub;
+      if (typeof sub === "string" && sub) userId = sub;
     }
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsRes, error: claimsErr } = await supabaseAdmin.auth.getClaims(token);
-    if (claimsErr || !claimsRes?.claims?.sub) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...CORS, "Content-Type": "application/json" },
-      });
+    if (!userId) {
+      const ip = (req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("cf-connecting-ip") || "unknown").trim();
+      const buf = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`demo-ip:${ip}`)));
+      const h = Array.from(buf.slice(0, 16), (b) => b.toString(16).padStart(2, "0")).join("");
+      userId = `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`;
     }
-    const userId = claimsRes.claims.sub as string;
 
     // Per-user rate limit (unspoofable — keyed by JWT sub)
     const userCheck = await checkAndIncrementUser(userId);
