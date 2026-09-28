@@ -38,17 +38,6 @@ const DemoChat: React.FC = () => {
     }
   }, [messages]);
 
-  // Ensure we have a session (anonymous is fine) so the demo function can rate-limit per user
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        await supabase.auth.signInAnonymously();
-      }
-    })();
-  }, []);
-
-
   const typewriterAppend = async (platform: string, text: string) => {
     setMessages(prev => [...prev, { sender: 'ai', content: '', platform, typing: true }]);
 
@@ -91,12 +80,6 @@ const DemoChat: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Ensure session exists right before invoking (handles slow network)
-      const { data: sess } = await supabase.auth.getSession();
-      if (!sess.session) {
-        await supabase.auth.signInAnonymously();
-      }
-
       const { data, error } = await supabase.functions.invoke('demo-chat', {
         body: {
           message: userMessage,
