@@ -69,7 +69,7 @@ const LandingPage: React.FC = () => {
           </div>
           <div className="hidden md:flex items-center justify-center relative min-w-0">
             <img
-              src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png"
+              src="/lovable-uploads/herd-logo.webp"
               alt="RoboHeard AI model orchestrator logo"
               width={560}
               height={560}
