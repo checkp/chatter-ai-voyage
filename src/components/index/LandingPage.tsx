@@ -10,7 +10,6 @@ import CTASection from './CTASection';
 import ConductorShowcase from './ConductorShowcase';
 import DemoChat from './DemoChat';
 import HackerAngles from './HackerAngles';
-import SheepBubbles from './SheepBubbles';
 import UseCases from './UseCases';
 
 import LandingFooter from '@/components/landing/LandingFooter';
@@ -64,29 +63,18 @@ const LandingPage: React.FC = () => {
 
       <section className="container mx-auto px-4 md:min-h-[calc(100svh-3.5rem)] md:flex md:items-center py-4 md:py-0">
         <div className="w-full grid md:grid-cols-2 md:gap-10 items-center">
-          <div className="min-w-0">
-            <LandingHero />
+          {/* Demo on the left (below the hero on mobile) */}
+          <div className="min-w-0 order-2 md:order-1">
+            <DemoChat />
           </div>
-          <div className="hidden md:flex items-center justify-center relative min-w-0">
-            <img
-              src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png"
-              alt="RoboHeard AI model orchestrator logo"
-              width={560}
-              height={560}
-              {...({ fetchpriority: "high" } as Record<string, string>)}
-              className="w-auto max-w-full max-h-[min(70svh,560px)] object-contain cursor-pointer hover-scale hover:brightness-110 transition-all duration-300"
-              onClick={() => navigate('/auth')}
-            />
-
-            <SheepBubbles />
+          {/* Title on top, text below, on the right */}
+          <div className="min-w-0 order-1 md:order-2">
+            <LandingHero />
           </div>
         </div>
       </section>
 
       <main className="container mx-auto px-4 py-8 md:py-12 space-y-8 md:space-y-12">
-        {/* Demo chat — moved below the fold so the Start button is always visible first */}
-        <DemoChat />
-
         <HackerAngles />
         <ConductorShowcase />
         <UseCases />

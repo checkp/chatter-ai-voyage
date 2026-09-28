@@ -283,7 +283,7 @@ const AuthPage = () => {
           <div className="space-y-8">
             <div className="text-center lg:text-left">
               <img 
-                src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png" 
+                src="/lovable-uploads/herd-logo.webp" 
                 alt="RoboHeard Logo" 
                 className="w-full max-w-xs sm:max-w-sm md:max-w-md h-auto object-contain mx-auto lg:mx-0 cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => window.location.href = '/'}

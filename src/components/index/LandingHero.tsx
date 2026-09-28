@@ -111,7 +111,7 @@ const LandingHero: React.FC = () => {
     <div className="text-center md:text-left max-w-4xl mx-auto md:mx-0">
       {/* Logo only on mobile — sits above everything */}
       <img
-        src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png"
+        src="/lovable-uploads/herd-logo.webp"
         alt="RoboHeard — the frontier AI conductor interface"
         width={140}
         height={140}

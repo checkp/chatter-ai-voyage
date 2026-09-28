@@ -30,7 +30,7 @@ const MobileComingSoon = () => {
 
         <div className="space-y-4">
           <img 
-            src="/lovable-uploads/92b3bb27-34db-484c-846e-a12471753b7e.png" 
+            src="/lovable-uploads/herd-logo.webp" 
             alt="RoboHeard Logo" 
             className="w-32 h-auto mx-auto object-contain opacity-50"
           />
