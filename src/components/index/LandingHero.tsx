@@ -130,10 +130,10 @@ const LandingHero: React.FC = () => {
 
       <h1
         className="font-bold text-foreground mb-3 md:mb-4 leading-tight"
-        style={{ fontSize: 'clamp(1.75rem, 4.5vw + 0.5rem, 3.75rem)' }}
+        style={{ fontSize: 'clamp(1.75rem, 4vw + 0.5rem, 3.5rem)' }}
       >
-        Probe the Latent Space.
-        <span className="text-primary"> Meet the Herd.</span>
+        <span className="block">Probe the Latent Space.</span>
+        <span className="block text-primary">Meet the Herd.</span>
       </h1>
 
       <p
@@ -148,8 +148,7 @@ const LandingHero: React.FC = () => {
         GPT-5 · Claude 4 · Gemini 2.5 · Grok-4 · DeepSeek-R2 · Mistral · Perplexity · Qwen
       </p>
 
-      {/* Core angles — compact hacker-oriented highlights */}
-      <div className="space-y-2.5 mb-5 md:mb-6 max-w-xl mx-auto md:mx-0">
+      {/* Cloud-shaped Start button — dynamically sized to the viewport so it
         {[
           {
             icon: <Radar className="h-4 w-4 text-primary shrink-0 mt-0.5" />,
