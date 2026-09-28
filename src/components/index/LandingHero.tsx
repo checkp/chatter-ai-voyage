@@ -149,8 +149,12 @@ const LandingHero: React.FC = () => {
       </p>
 
       {/* Cloud-shaped Start button — dynamically sized to the viewport so it
-          never gets pushed off-screen on short displays. */}
-      <div className="flex justify-center md:justify-start">
+          never gets pushed off-screen on short displays. The cloud becomes
+          position:fixed at mount, so the container reserves its spot. */}
+      <div
+        className="flex justify-center md:justify-start"
+        style={{ minHeight: 'calc(clamp(150px, 22vh, 240px) * 0.58)' }}
+      >
         <div ref={driftRef} style={{ willChange: 'transform' }}>
           <button
             onClick={handleGetStarted}
