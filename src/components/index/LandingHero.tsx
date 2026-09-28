@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Radar, BrainCog, Columns2 } from 'lucide-react';
 
 const LandingHero: React.FC = () => {
   const driftRef = useRef<HTMLDivElement>(null);
@@ -124,29 +124,37 @@ const LandingHero: React.FC = () => {
       <div className="flex justify-center md:justify-start mb-2">
         <Badge variant="outline" className="text-primary border-primary/20">
           <Sparkles className="mr-2 h-4 w-4" />
-          2026 — Agentic AI, refined
+          For AI tinkerers, researchers &amp; founders
         </Badge>
       </div>
 
       <h1
         className="font-bold text-foreground mb-3 md:mb-4 leading-tight"
-        style={{ fontSize: 'clamp(1.75rem, 4.5vw + 0.5rem, 3.75rem)' }}
+        style={{ fontSize: 'clamp(1.75rem, 4vw + 0.5rem, 3.5rem)' }}
       >
-        Eight Frontier Models,
-        <span className="text-primary"> One Conductor</span>
+        <span className="block">Probe the Latent Space.</span>
+        <span className="block text-primary">Meet the Herd.</span>
       </h1>
 
       <p
-        className="text-muted-foreground mb-4 md:mb-6 leading-relaxed px-2 md:px-0"
+        className="text-muted-foreground mb-3 md:mb-4 leading-relaxed px-2 md:px-0"
         style={{ fontSize: 'clamp(0.95rem, 1.1vw + 0.5rem, 1.15rem)' }}
       >
-        A quiet orchestrator for <strong>GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek-R2, Mistral, Perplexity</strong> and now <strong>Qwen</strong>.
-        Compare answers side by side, run live market research, or let eight minds debate a single question — together.
+        Eight frontier models. Eight distinct worldviews. A playground for AI tinkerers,
+        researchers, and founders to hack model psychology and master agentic visibility.
+      </p>
+
+      <p className="hidden md:block text-xs text-muted-foreground/80 mb-4 tracking-wide">
+        GPT-5 · Claude 4 · Gemini 2.5 · Grok-4 · DeepSeek-R2 · Mistral · Perplexity · Qwen
       </p>
 
       {/* Cloud-shaped Start button — dynamically sized to the viewport so it
-          never gets pushed off-screen on short displays. */}
-      <div className="flex justify-center md:justify-start">
+          never gets pushed off-screen on short displays. The cloud becomes
+          position:fixed at mount, so the container reserves its spot. */}
+      <div
+        className="flex justify-center md:justify-start"
+        style={{ minHeight: 'calc(clamp(150px, 22vh, 240px) * 0.58)' }}
+      >
         <div ref={driftRef} style={{ willChange: 'transform' }}>
           <button
             onClick={handleGetStarted}
@@ -202,6 +210,35 @@ const LandingHero: React.FC = () => {
             75%      { transform: translate(-5px, -4px) rotate(0.5deg); }
           }
         `}</style>
+      </div>
+
+      {/* Core angles — compact hacker-oriented highlights */}
+      <div className="space-y-2.5 mt-5 md:mt-6 max-w-xl mx-auto md:mx-0">
+        {[
+          {
+            icon: <Radar className="h-4 w-4 text-primary shrink-0 mt-0.5" />,
+            title: 'Agentic SEO & Brand Perception',
+            body: 'Research what the AIs think about your product, your site, or your competitors — "What did the robots hear?"',
+          },
+          {
+            icon: <BrainCog className="h-4 w-4 text-primary shrink-0 mt-0.5" />,
+            title: 'Model Psychology & Training Priors',
+            body: 'Explore how training, perspective, and attitude differ across the frontier.',
+          },
+          {
+            icon: <Columns2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />,
+            title: 'Side-by-Side Prompt Diffs',
+            body: 'Compare raw reasoning traces, latency, and hallucinations across models in real time.',
+          },
+        ].map((a) => (
+          <div key={a.title} className="flex items-start gap-2.5">
+            {a.icon}
+            <p className="text-xs sm:text-sm leading-snug">
+              <span className="font-semibold text-foreground">{a.title}</span>
+              <span className="text-muted-foreground"> — {a.body}</span>
+            </p>
+          </div>
+        ))}
       </div>
 
     </div>
