@@ -20,7 +20,7 @@ const hackerAngles = [
     icon: Columns2,
     tag: 'Prompt Diffs',
     title: 'Side-by-Side Prompt Diffs',
-    body: 'Compare raw reasoning traces, latency, and hallucinations across frontier models in real time — same prompt, eight honest answers.'
+    body: 'Compare raw reasoning traces, latency, and hallucinations across frontier models in real time — same prompt, nine honest answers.'
   }
 ];
 
