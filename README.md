@@ -1,6 +1,6 @@
 # RoboHeard
 
-> Agentic AI orchestration. Eight frontier models in one calm workspace — Conductor delegates, Discussion debates, Side-by-Side compares, Image Studio fans out.
+> Agentic AI orchestration. Nine frontier models in one calm workspace — Conductor delegates, Discussion debates, Side-by-Side compares, Image Studio fans out.
 
 **Live:** [roboheard.ai](https://roboheard.ai) · [What's New](https://roboheard.ai/whats-new) · [Features](https://roboheard.ai/features)
 
@@ -21,9 +21,9 @@ This regenerates the auto-blocks below **and** `public/llms.txt` **and** bumps `
 ## Features
 
 <!-- AUTO:FEATURES:START -->
-### Eight Frontier Models — Plus Yours
+### Nine Frontier Models — Plus Yours
 
-Every flagship LLM, in one calm workspace — pick one, compare a few, run all eight in parallel, or bring your own local model.
+Every flagship LLM, in one calm workspace — pick one, compare a few, run all nine in parallel, or bring your own local model.
 
 - **OpenAI GPT-5** — Latest reasoning model from OpenAI, including GPT-5 and GPT-4o variants.
 - **Anthropic Claude 4** — Claude Opus 4 and Sonnet 4 — long-form analysis, careful writing, structured thinking.
@@ -50,7 +50,7 @@ Match the interaction pattern to your task — collaboration, comparison, solo f
 
 ### Agentic Orchestration
 
-Beyond chat — the Conductor turns eight models into one coordinated system.
+Beyond chat — the Conductor turns nine models into one coordinated system.
 
 - **Task Delegation** — Conductor analyses your query and routes sub-tasks to the best-suited specialists.
 - **Cross-Model Reasoning** — Combines distinct lenses — analytical, creative, multilingual, real-time — into a single answer.
@@ -82,7 +82,7 @@ Grounded answers with citations — not confident guesses.
 One brief, several visual minds. Render once, pick the result that fits.
 
 - **7 Image Models in Parallel** — DALL·E 3, GPT-Image-1, Gemini 2.5 Flash, Gemini 3 Pro, Grok Aurora, Qwen Wanx, Pollinations FLUX.
-- **Conductor Image Synthesis** — Eight chat agents propose visual angles, the Conductor merges them into one master prompt before rendering.
+- **Conductor Image Synthesis** — Nine chat agents propose visual angles, the Conductor merges them into one master prompt before rendering.
 - **Pollinations FLUX** — Open-source FLUX renderer included at just 10t per image.
 - **Tiny Cost Preview** — Live credit estimate appears under the prompt — no popup pickers interrupting flow.
 - **Resilient Gateway** — Auto-fallback to direct providers when the Lovable Gateway returns 402/429/5xx.

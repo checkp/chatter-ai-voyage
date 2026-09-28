@@ -15,7 +15,7 @@ const CTASection: React.FC = () => {
       </h2>
       <p className="text-base md:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
         Free to start, no credit card. Bring a real problem — research, a draft, a decision — and watch
-        eight frontier models work it through together.
+        nine frontier models work it through together.
       </p>
       <Button
         size="lg"

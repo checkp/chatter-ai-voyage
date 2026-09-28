@@ -124,7 +124,7 @@ const LandingHero: React.FC = () => {
       <div className="flex justify-center md:justify-start mb-2">
         <Badge variant="outline" className="text-primary border-primary/20">
           <Sparkles className="mr-2 h-4 w-4" />
-          For AI tinkerers, researchers &amp; founders
+          For SEO hackers, AI researchers &amp; founders
         </Badge>
       </div>
 
@@ -132,7 +132,7 @@ const LandingHero: React.FC = () => {
         className="font-bold text-foreground mb-3 md:mb-4 leading-tight"
         style={{ fontSize: 'clamp(1.75rem, 4vw + 0.5rem, 3.5rem)' }}
       >
-        <span className="block">Probe the Latent Space.</span>
+        <span className="block">What Did the Robots Hear?</span>
         <span className="block text-primary">Meet the Herd.</span>
       </h1>
 
@@ -140,8 +140,8 @@ const LandingHero: React.FC = () => {
         className="text-muted-foreground mb-3 md:mb-4 leading-relaxed px-2 md:px-0"
         style={{ fontSize: 'clamp(0.95rem, 1.1vw + 0.5rem, 1.15rem)' }}
       >
-        Eight frontier models. Eight distinct worldviews. A playground for AI tinkerers,
-        researchers, and founders to hack model psychology and master agentic visibility.
+        Nine frontier models. Nine distinct worldviews. A playground for SEO hackers,
+        AI researchers, and founders to probe model psychology and master agentic visibility.
       </p>
 
 
