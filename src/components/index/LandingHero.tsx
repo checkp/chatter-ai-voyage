@@ -115,7 +115,7 @@ const LandingHero: React.FC = () => {
         alt="RoboHeard — the frontier AI conductor interface"
         width={140}
         height={140}
-        fetchPriority="high"
+        {...({ fetchpriority: "high" } as Record<string, string>)}
         className="md:hidden w-full max-w-[140px] h-auto object-contain mx-auto mb-3 cursor-pointer hover:opacity-80 transition-opacity"
         onClick={() => window.location.href = '/auth'}
       />

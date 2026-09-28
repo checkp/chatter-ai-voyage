@@ -73,7 +73,7 @@ const LandingPage: React.FC = () => {
               alt="RoboHeard AI model orchestrator logo"
               width={560}
               height={560}
-              fetchPriority="high"
+              {...({ fetchpriority: "high" } as Record<string, string>)}
               className="w-auto max-w-full max-h-[min(70svh,560px)] object-contain cursor-pointer hover-scale hover:brightness-110 transition-all duration-300"
               onClick={() => navigate('/auth')}
             />
