@@ -47,7 +47,7 @@ interface UploadItem {
 interface ChatInputProps {
   input: string;
   setInput: (value: string) => void;
-  handleSend: (attachments?: Attachment[]) => void;
+  handleSend: (attachments?: Attachment[], textOverride?: string) => void;
   handleStop?: () => void;
   isLoadingResponse: boolean;
   isPending: boolean;
@@ -146,7 +146,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       return;
     }
     if (textInlines) setInput(finalText);
-    handleSend(attachments.length > 0 ? attachments : undefined);
+    handleSend(attachments.length > 0 ? attachments : undefined, textInlines ? finalText : undefined);
     setAttachments([]);
     setCapabilities({});
   };
