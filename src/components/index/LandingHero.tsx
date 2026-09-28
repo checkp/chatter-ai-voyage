@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Radar, BrainCog, Columns2 } from 'lucide-react';
 
 const LandingHero: React.FC = () => {
   const driftRef = useRef<HTMLDivElement>(null);
