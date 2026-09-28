@@ -18,8 +18,8 @@ export interface FeatureCategory {
 export const featureCategories: FeatureCategory[] = [
   {
     id: "models",
-    name: "Eight Frontier Models — Plus Yours",
-    blurb: "Every flagship LLM, in one calm workspace — pick one, compare a few, run all eight in parallel, or bring your own local model.",
+    name: "Nine Frontier Models — Plus Yours",
+    blurb: "Every flagship LLM, in one calm workspace — pick one, compare a few, run all nine in parallel, or bring your own local model.",
     features: [
       { title: "OpenAI GPT-5", description: "Latest reasoning model from OpenAI, including GPT-5 and GPT-4o variants." },
       { title: "Anthropic Claude 4", description: "Claude Opus 4 and Sonnet 4 — long-form analysis, careful writing, structured thinking." },
@@ -51,7 +51,7 @@ export const featureCategories: FeatureCategory[] = [
   {
     id: "orchestration",
     name: "Agentic Orchestration",
-    blurb: "Beyond chat — the Conductor turns eight models into one coordinated system.",
+    blurb: "Beyond chat — the Conductor turns nine models into one coordinated system.",
     features: [
       { title: "Task Delegation", description: "Conductor analyses your query and routes sub-tasks to the best-suited specialists." },
       { title: "Cross-Model Reasoning", description: "Combines distinct lenses — analytical, creative, multilingual, real-time — into a single answer." },
@@ -89,7 +89,7 @@ export const featureCategories: FeatureCategory[] = [
     blurb: "One brief, several visual minds. Render once, pick the result that fits.",
     features: [
       { title: "7 Image Models in Parallel", description: "DALL·E 3, GPT-Image-1, Gemini 2.5 Flash, Gemini 3 Pro, Grok Aurora, Qwen Wanx, Pollinations FLUX." },
-      { title: "Conductor Image Synthesis", description: "Eight chat agents propose visual angles, the Conductor merges them into one master prompt before rendering." },
+      { title: "Conductor Image Synthesis", description: "Nine chat agents propose visual angles, the Conductor merges them into one master prompt before rendering." },
       { title: "Pollinations FLUX", description: "Open-source FLUX renderer included at just 10t per image." },
       { title: "Tiny Cost Preview", description: "Live credit estimate appears under the prompt — no popup pickers interrupting flow." },
       { title: "Resilient Gateway", description: "Auto-fallback to direct providers when the Lovable Gateway returns 402/429/5xx." }

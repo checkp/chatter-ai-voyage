@@ -1,6 +1,6 @@
 # RoboHeard
 
-> Agentic AI orchestration. Eight frontier models in one calm workspace — Conductor delegates, Discussion debates, Side-by-Side compares, Image Studio fans out.
+> Agentic AI orchestration. Nine frontier models in one calm workspace — Conductor delegates, Discussion debates, Side-by-Side compares, Image Studio fans out.
 
 **Live:** [roboheard.ai](https://roboheard.ai) · [What's New](https://roboheard.ai/whats-new) · [Features](https://roboheard.ai/features)
 
