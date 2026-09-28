@@ -116,8 +116,8 @@ const LandingHero: React.FC = () => {
         width={800}
         height={800}
         {...({ fetchpriority: "high" } as Record<string, string>)}
-        className="mx-auto mb-4 md:mb-5 w-auto h-auto max-w-full object-contain cursor-pointer hover:scale-[1.02] transition-transform duration-300"
-        style={{ maxHeight: 'clamp(170px, 30vh, 300px)' }}
+        className="mx-auto mb-3 md:mb-4 w-auto h-auto max-w-full object-contain cursor-pointer hover:scale-[1.02] transition-transform duration-300"
+        style={{ maxHeight: 'clamp(160px, 27vh, 290px)' }}
         onClick={() => window.location.href = '/auth'}
       />
 
@@ -130,7 +130,7 @@ const LandingHero: React.FC = () => {
 
       <h1
         className="font-bold text-foreground mb-3 md:mb-4 leading-tight"
-        style={{ fontSize: 'clamp(1.75rem, 4vw + 0.5rem, 3.25rem)' }}
+        style={{ fontSize: 'clamp(1.75rem, 4vw + 0.5rem, 3rem)' }}
       >
         <span className="block">Ask Nine Robots One Question.</span>
         <span className="block text-primary">Watch the Herd Disagree.</span>
