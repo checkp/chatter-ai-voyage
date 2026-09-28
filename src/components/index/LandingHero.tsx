@@ -149,34 +149,6 @@ const LandingHero: React.FC = () => {
       </p>
 
       {/* Cloud-shaped Start button — dynamically sized to the viewport so it
-        {[
-          {
-            icon: <Radar className="h-4 w-4 text-primary shrink-0 mt-0.5" />,
-            title: 'Agentic SEO & Brand Perception',
-            body: 'Research what the AIs think about your product, your site, or your competitors — "What did the robots hear?"',
-          },
-          {
-            icon: <BrainCog className="h-4 w-4 text-primary shrink-0 mt-0.5" />,
-            title: 'Model Psychology & Training Priors',
-            body: 'Explore how training, perspective, and attitude differ across the frontier.',
-          },
-          {
-            icon: <Columns2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />,
-            title: 'Side-by-Side Prompt Diffs',
-            body: 'Compare raw reasoning traces, latency, and hallucinations across models in real time.',
-          },
-        ].map((a) => (
-          <div key={a.title} className="flex items-start gap-2.5">
-            {a.icon}
-            <p className="text-xs sm:text-sm leading-snug">
-              <span className="font-semibold text-foreground">{a.title}</span>
-              <span className="text-muted-foreground"> — {a.body}</span>
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* Cloud-shaped Start button — dynamically sized to the viewport so it
           never gets pushed off-screen on short displays. */}
       <div className="flex justify-center md:justify-start">
         <div ref={driftRef} style={{ willChange: 'transform' }}>
