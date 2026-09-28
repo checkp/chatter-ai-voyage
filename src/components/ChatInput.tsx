@@ -145,7 +145,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
       setCapabilities({});
       return;
     }
-    if (textInlines) setInput(finalText);
     handleSend(attachments.length > 0 ? attachments : undefined, textInlines ? finalText : undefined);
     setAttachments([]);
     setCapabilities({});
