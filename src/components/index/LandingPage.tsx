@@ -9,6 +9,7 @@ import AITestimonials from './AITestimonials';
 import CTASection from './CTASection';
 import ConductorShowcase from './ConductorShowcase';
 import DemoChat from './DemoChat';
+import HackerAngles from './HackerAngles';
 import SheepBubbles from './SheepBubbles';
 import UseCases from './UseCases';
 
@@ -86,6 +87,7 @@ const LandingPage: React.FC = () => {
         {/* Demo chat — moved below the fold so the Start button is always visible first */}
         <DemoChat />
 
+        <HackerAngles />
         <ConductorShowcase />
         <UseCases />
         <FeaturesGrid />
