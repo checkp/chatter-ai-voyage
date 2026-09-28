@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 
 
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,21 +9,21 @@ import { ActivityLogProvider } from "@/contexts/ActivityLogContext";
 import { FunThemeProvider } from "@/contexts/FunThemeContext";
 import Index from "./pages/Index";
 import Landing from "./pages/Landing";
-import NotFound from "./pages/NotFound";
-import Success from "./pages/Success";
-import Purchase from "./pages/Purchase";
-import ImageGenerationPage from "./pages/ImageGeneration";
-import AuthPage from "./components/AuthPage";
-import Help from "./pages/Help";
-import Features from "./pages/Features";
-import WhatsNew from "./pages/WhatsNew";
-import Terms from "./pages/Terms";
-import OAuthConsent from "./pages/OAuthConsent";
-import McpSetup from "./pages/McpSetup";
-import Tools from "./pages/Tools";
-import ApiAccess from "./pages/ApiAccess";
-import Coordination from "./pages/Coordination";
-import MeshModels from "./pages/MeshModels";
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Success = lazy(() => import("./pages/Success"));
+const Purchase = lazy(() => import("./pages/Purchase"));
+const ImageGenerationPage = lazy(() => import("./pages/ImageGeneration"));
+const AuthPage = lazy(() => import("./components/AuthPage"));
+const Help = lazy(() => import("./pages/Help"));
+const Features = lazy(() => import("./pages/Features"));
+const WhatsNew = lazy(() => import("./pages/WhatsNew"));
+const Terms = lazy(() => import("./pages/Terms"));
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
+const McpSetup = lazy(() => import("./pages/McpSetup"));
+const Tools = lazy(() => import("./pages/Tools"));
+const ApiAccess = lazy(() => import("./pages/ApiAccess"));
+const Coordination = lazy(() => import("./pages/Coordination"));
+const MeshModels = lazy(() => import("./pages/MeshModels"));
 
 import Analytics from "./components/Analytics";
 import { loadAIModelsFromDB } from "@/config/aiModels";
@@ -41,6 +42,7 @@ const App = () => (
         
         <BrowserRouter>
           <Analytics />
+          <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/landing" element={<Landing />} />
@@ -61,6 +63,7 @@ const App = () => (
 
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
       </FunThemeProvider>
