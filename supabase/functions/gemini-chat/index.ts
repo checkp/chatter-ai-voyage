@@ -40,7 +40,7 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = "gemini-3.6-flash", attachments, capabilities = {} , max_output_tokens } = await req.json();
+    const { messages, model = "gemini-3.8-flash", attachments, capabilities = {} , max_output_tokens } = await req.json();
     const outBudget = Math.min(Math.max(Number(max_output_tokens) || 8192, 256), 32000);
     const user_id = user.id;
     const resolvedModel = LEGACY_MODEL_MAP[model] ?? model;

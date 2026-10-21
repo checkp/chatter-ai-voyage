@@ -83,7 +83,7 @@ async function callOpenAI(message: string, systemPrompt: string): Promise<string
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
+      model: "gpt-6-luna",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: message },
@@ -106,7 +106,7 @@ async function callClaude(message: string, systemPrompt: string): Promise<string
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-5-5",
       max_tokens: MAX_TOKENS,
       system: systemPrompt,
       messages: [{ role: "user", content: message }],
@@ -123,7 +123,7 @@ async function callDeepSeek(message: string, systemPrompt: string): Promise<stri
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "deepseek-chat",
+      model: "deepseek-flash",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: message },
