@@ -1,0 +1,1 @@
+- Build mode full-stack projects are stored as a single marker-delimited bundle string (src/lib/fullstack.ts) so versioning, diffs and persistence stay identical to single-file artifacts; the `rh` Python runtime is shared verbatim between the Pyodide preview and the exported server so both behave the same.
