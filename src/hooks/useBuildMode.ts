@@ -346,14 +346,14 @@ export const useBuildMode = (
 
   /** Manual edits from the code editor become a new revision authored by the user. */
   const saveManualEdit = useCallback(
-    async (code: string, editLang: ArtifactLang) => {
-      if (!activeChatId || (code === latest?.code && editLang === latest?.lang)) return;
+    async (code: string, editLang: ArtifactLang, chatId: string | null = activeChatId) => {
+      if (!chatId || (code === latest?.code && editLang === latest?.lang)) return;
       await insertMessage({
         content: JSON.stringify({ code, lang: editLang, author: 'you', role: 'implement' }),
         sender: 'ai',
         platform: ARTIFACT_PLATFORM,
-      });
-      queryClient.invalidateQueries({ queryKey: ['messages', activeChatId] });
+      }, chatId);
+      queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
       toast.success('Saved a new revision', { duration: 2000 });
     },
     [activeChatId, insertMessage, latest, queryClient],

@@ -299,7 +299,7 @@ export const resolvePage = (files: ProjectFile[], from: string, href: string): s
 };
 
 /** One page as a standalone document: local CSS/JS inlined, API bridge injected. */
-export const renderPage = (files: ProjectFile[], path: string): string => {
+export const renderPage = (files: ProjectFile[], path: string, query = ''): string => {
   const page = files.find(f => f.path === path);
   if (!page) return `<!doctype html><body style="font-family:system-ui;padding:2rem">Page not found: ${path}</body>`;
   let html = page.content;
@@ -311,9 +311,21 @@ export const renderPage = (files: ProjectFile[], path: string): string => {
     const f = resolveAsset(files, path, src);
     return f ? `<script${a}${b}>\n${f.content.replace(/<\/script/gi, '<\\/script')}\n</script>` : tag;
   });
+  // srcdoc iframes have no real URL, so page params (model.html?slug=…) arrive
+  // through this global instead of location.search.
+  const shim = `<script>window.__RH_QUERY__=${JSON.stringify(query)};</script>` + BRIDGE_SHIM;
   return /<head[^>]*>/i.test(html)
-    ? html.replace(/<head[^>]*>/i, m => m + '\n' + BRIDGE_SHIM)
-    : BRIDGE_SHIM + '\n' + html;
+    ? html.replace(/<head[^>]*>/i, m => m + '\n' + shim)
+    : shim + '\n' + html;
+};
+
+/** Split a page href into its path and query (for in-preview navigation). */
+export const splitHref = (href: string) => {
+  const hashless = href.split('#')[0];
+  const i = hashless.indexOf('?');
+  return i === -1
+    ? { path: hashless, query: '' }
+    : { path: hashless.slice(0, i), query: hashless.slice(i + 1) };
 };
 
 /* ----------------------------------------------------------------- export */
@@ -471,6 +483,552 @@ def test_add_and_list():
 <body>
   <h1>Nothing built yet</h1>
   <p>Describe a full-stack app — pages, API and database — and the agents will build it.</p>
+</body>
+</html>`,
+  },
+]);
+
+/* --------------------------------------------------------- herd template */
+
+/**
+ * "Herd backend" — a ready-made full-stack project: a models page, model
+ * details, chat history and a small admin backend over the nine herd models.
+ * Loadable from Build mode as a starting point for iteration.
+ */
+export const STARTER_HERD = serializeBundle([
+  {
+    path: 'db/schema.sql',
+    content: `CREATE TABLE IF NOT EXISTS models (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  slug TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  tier TEXT NOT NULL DEFAULT 'frontier',
+  context_k INTEGER NOT NULL DEFAULT 128,
+  input_cost REAL NOT NULL DEFAULT 0,
+  output_cost REAL NOT NULL DEFAULT 0,
+  enabled INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS chats (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  model_id INTEGER NOT NULL REFERENCES models(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  chat_id INTEGER NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+  role TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+INSERT OR IGNORE INTO models (slug, name, provider, tier, context_k, input_cost, output_cost) VALUES
+  ('gpt-5', 'GPT-5', 'OpenAI', 'frontier', 400, 1.25, 10.0),
+  ('claude-4', 'Claude 4', 'Anthropic', 'frontier', 200, 3.0, 15.0),
+  ('gemini-2.5', 'Gemini 2.5 Pro', 'Google', 'frontier', 1000, 1.25, 10.0),
+  ('grok-4', 'Grok 4', 'xAI', 'frontier', 256, 3.0, 15.0),
+  ('deepseek-r2', 'DeepSeek R2', 'DeepSeek', 'reasoning', 128, 0.55, 2.19),
+  ('mistral-large', 'Mistral Large', 'Mistral', 'frontier', 128, 2.0, 6.0),
+  ('sonar', 'Perplexity Sonar', 'Perplexity', 'search', 127, 1.0, 1.0),
+  ('qwen-max', 'Qwen Max', 'Alibaba', 'frontier', 128, 1.6, 6.4),
+  ('nim-llama', 'Llama 3.3 70B (NIM)', 'NVIDIA', 'open', 128, 0.35, 0.4);`,
+  },
+  {
+    path: 'backend/app.py',
+    content: `from rh import get, post, patch, delete, query, one, execute, HTTPError, client
+
+
+def row_model(r):
+    return {
+        "slug": r["slug"], "name": r["name"], "provider": r["provider"],
+        "tier": r["tier"], "context_k": r["context_k"],
+        "input_cost": r["input_cost"], "output_cost": r["output_cost"],
+        "enabled": bool(r["enabled"]),
+    }
+
+
+@get("/api/models")
+def list_models(req):
+    if req.query.get("enabled") in ("1", "true"):
+        rows = query("SELECT * FROM models WHERE enabled = 1 ORDER BY provider, name")
+    else:
+        rows = query("SELECT * FROM models ORDER BY provider, name")
+    return [row_model(r) for r in rows]
+
+
+@get("/api/models/<slug>")
+def model_detail(req):
+    r = one("SELECT * FROM models WHERE slug = ?", (req.params["slug"],))
+    if not r:
+        raise HTTPError(404, "unknown model")
+    chats = one("SELECT COUNT(*) AS n FROM chats WHERE model_id = ?", (r["id"],))
+    return dict(row_model(r), chat_count=chats["n"])
+
+
+@patch("/api/models/<slug>")
+def update_model(req):
+    r = one("SELECT * FROM models WHERE slug = ?", (req.params["slug"],))
+    if not r:
+        raise HTTPError(404, "unknown model")
+    body = req.json or {}
+    if "enabled" in body:
+        execute("UPDATE models SET enabled = ? WHERE id = ?", (1 if body["enabled"] else 0, r["id"]))
+    if str(body.get("name") or "").strip():
+        execute("UPDATE models SET name = ? WHERE id = ?", (str(body["name"]).strip(), r["id"]))
+    return model_detail(req)
+
+
+@get("/api/chats")
+def list_chats(req):
+    return query(
+        "SELECT c.id, c.title, c.created_at, m.slug AS model_slug, m.name AS model_name,"
+        " (SELECT COUNT(*) FROM messages WHERE chat_id = c.id) AS message_count"
+        " FROM chats c JOIN models m ON m.id = c.model_id ORDER BY c.id DESC"
+    )
+
+
+@post("/api/chats")
+def create_chat(req):
+    body = req.json or {}
+    title = str(body.get("title") or "").strip()
+    if not title:
+        raise HTTPError(400, "title is required")
+    model = one("SELECT * FROM models WHERE slug = ?", (body.get("model_slug"),))
+    if not model:
+        raise HTTPError(404, "unknown model")
+    if not model["enabled"]:
+        raise HTTPError(400, "model is disabled")
+    new_id = execute("INSERT INTO chats (title, model_id) VALUES (?, ?)", (title, model["id"]))
+    return {"id": new_id, "title": title, "model_slug": model["slug"]}, 201
+
+
+@get("/api/chats/<cid>")
+def chat_detail(req):
+    c = one(
+        "SELECT c.id, c.title, c.created_at, m.slug AS model_slug, m.name AS model_name"
+        " FROM chats c JOIN models m ON m.id = c.model_id WHERE c.id = ?",
+        (req.params["cid"],),
+    )
+    if not c:
+        raise HTTPError(404, "chat not found")
+    c["messages"] = query(
+        "SELECT id, role, content, created_at FROM messages WHERE chat_id = ? ORDER BY id", (c["id"],))
+    return c
+
+
+@post("/api/chats/<cid>/messages")
+def add_message(req):
+    c = one("SELECT id FROM chats WHERE id = ?", (req.params["cid"],))
+    if not c:
+        raise HTTPError(404, "chat not found")
+    body = req.json or {}
+    role = body.get("role")
+    content = str(body.get("content") or "").strip()
+    if role not in ("user", "assistant", "system"):
+        raise HTTPError(400, "role must be user, assistant or system")
+    if not content:
+        raise HTTPError(400, "content is required")
+    new_id = execute(
+        "INSERT INTO messages (chat_id, role, content) VALUES (?, ?, ?)", (c["id"], role, content))
+    return {"id": new_id, "chat_id": c["id"], "role": role, "content": content}, 201
+
+
+@delete("/api/chats/<cid>")
+def delete_chat(req):
+    c = one("SELECT id FROM chats WHERE id = ?", (req.params["cid"],))
+    if not c:
+        raise HTTPError(404, "chat not found")
+    execute("DELETE FROM chats WHERE id = ?", (c["id"],))
+    return None, 204
+
+
+@get("/api/admin/stats")
+def admin_stats(req):
+    return {
+        "models": one("SELECT COUNT(*) AS n FROM models")["n"],
+        "models_enabled": one("SELECT COUNT(*) AS n FROM models WHERE enabled = 1")["n"],
+        "chats": one("SELECT COUNT(*) AS n FROM chats")["n"],
+        "messages": one("SELECT COUNT(*) AS n FROM messages")["n"],
+        "per_model": query(
+            "SELECT m.slug, m.name, m.enabled,"
+            " (SELECT COUNT(*) FROM chats c WHERE c.model_id = m.id) AS chats,"
+            " (SELECT COUNT(*) FROM messages msg JOIN chats c2 ON c2.id = msg.chat_id"
+            "  WHERE c2.model_id = m.id) AS messages"
+            " FROM models m ORDER BY messages DESC, chats DESC"
+        ),
+    }
+
+
+def test_models_seeded_with_nine():
+    r = client.get("/api/models")
+    assert r.status == 200
+    assert len(r.json) == 9, "the herd has nine models"
+
+
+def test_model_detail_and_404():
+    r = client.get("/api/models/gpt-5")
+    assert r.status == 200 and r.json["provider"] == "OpenAI"
+    assert r.json["chat_count"] == 0
+    assert client.get("/api/models/nope").status == 404
+
+
+def test_chat_lifecycle():
+    created = client.post("/api/chats", {"title": "probe", "model_slug": "grok-4"})
+    assert created.status == 201
+    cid = created.json["id"]
+    msg = client.post("/api/chats/%s/messages" % cid, {"role": "user", "content": "hello herd"})
+    assert msg.status == 201
+    detail = client.get("/api/chats/%s" % cid)
+    assert detail.json["messages"][0]["content"] == "hello herd"
+    assert client.delete("/api/chats/%s" % cid).status == 204
+    assert client.get("/api/chats/%s" % cid).status == 404
+
+
+def test_validation_errors():
+    assert client.post("/api/chats", {"title": "", "model_slug": "grok-4"}).status == 400
+    assert client.post("/api/chats", {"title": "x", "model_slug": "nope"}).status == 404
+    cid = client.post("/api/chats", {"title": "v", "model_slug": "gpt-5"}).json["id"]
+    assert client.post("/api/chats/%s/messages" % cid, {"role": "robot", "content": "x"}).status == 400
+    assert client.post("/api/chats/%s/messages" % cid, {"role": "user", "content": " "}).status == 400
+
+
+def test_disabled_model_refuses_chats():
+    assert client.patch("/api/models/qwen-max", {"enabled": False}).json["enabled"] is False
+    r = client.post("/api/chats", {"title": "x", "model_slug": "qwen-max"})
+    assert r.status == 400 and "disabled" in r.json["error"]
+    enabled_only = client.get("/api/models?enabled=1").json
+    assert all(m["enabled"] for m in enabled_only) and len(enabled_only) == 8
+
+
+def test_admin_stats_counts():
+    cid = client.post("/api/chats", {"title": "s", "model_slug": "sonar"}).json["id"]
+    client.post("/api/chats/%s/messages" % cid, {"role": "user", "content": "hi"})
+    stats = client.get("/api/admin/stats").json
+    assert stats["models"] == 9 and stats["chats"] == 1 and stats["messages"] == 1
+    sonar = [m for m in stats["per_model"] if m["slug"] == "sonar"][0]
+    assert sonar["chats"] == 1 and sonar["messages"] == 1`,
+  },
+  {
+    path: 'frontend/style.css',
+    content: `:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  font-family: system-ui, sans-serif; margin: 0; background: #0d1117; color: #e6edf3;
+  min-height: 100vh;
+}
+a { color: #7ee0a3; text-decoration: none; }
+a:hover { text-decoration: underline; }
+header {
+  display: flex; align-items: center; gap: 1rem; padding: .8rem 1.2rem;
+  border-bottom: 1px solid #21262d; background: #010409; position: sticky; top: 0;
+}
+header .brand { font-weight: 700; color: #e6edf3; }
+header nav { display: flex; gap: .9rem; font-size: .85rem; }
+main { max-width: 56rem; margin: 0 auto; padding: 1.5rem 1.2rem 3rem; }
+h1 { font-size: 1.5rem; margin: .2rem 0 1rem; }
+.muted { color: #8b949e; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: .8rem; }
+.card {
+  border: 1px solid #21262d; border-radius: .6rem; padding: .9rem 1rem;
+  background: #0d1117; display: block; color: inherit;
+}
+.card:hover { border-color: #7ee0a3; text-decoration: none; }
+.card h3 { margin: 0 0 .3rem; font-size: 1rem; }
+.badge {
+  display: inline-block; font-size: .68rem; padding: .1rem .45rem; border-radius: 1rem;
+  border: 1px solid #30363d; color: #8b949e; margin-right: .3rem;
+}
+.dot { display: inline-block; width: .5rem; height: .5rem; border-radius: 50%; margin-right: .3rem; }
+.dot.on { background: #3fb950; } .dot.off { background: #f85149; }
+button, input, select {
+  font: inherit; border-radius: .4rem; border: 1px solid #30363d;
+  background: #0d1117; color: #e6edf3; padding: .4rem .7rem;
+}
+button { cursor: pointer; background: #21262d; }
+button:hover { border-color: #7ee0a3; }
+button.danger:hover { border-color: #f85149; color: #f85149; }
+form.row { display: flex; gap: .5rem; margin: 1rem 0; flex-wrap: wrap; }
+form.row input { flex: 1; min-width: 12rem; }
+table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+th, td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid #21262d; }
+th { color: #8b949e; font-weight: 600; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: .8rem; margin-bottom: 1.2rem; }
+.stat { border: 1px solid #21262d; border-radius: .6rem; padding: .8rem 1rem; }
+.stat b { display: block; font-size: 1.4rem; }
+.msg { border-left: 3px solid #30363d; padding: .3rem .8rem; margin: .5rem 0; }
+.msg.user { border-color: #7ee0a3; }
+.msg.assistant { border-color: #58a6ff; }
+.msg .role { font-size: .7rem; text-transform: uppercase; color: #8b949e; }
+.err { color: #f85149; }
+.chat-head { display: flex; align-items: center; gap: .6rem; }`,
+  },
+  {
+    path: 'frontend/app.js',
+    content: `// Shared helpers for the Herd pages.
+function qs() {
+  return new URLSearchParams(window.__RH_QUERY__ || window.location.search);
+}
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+async function api(path, opts) {
+  opts = opts || {};
+  if (opts.body) {
+    opts.headers = { 'Content-Type': 'application/json' };
+    opts.body = JSON.stringify(opts.body);
+  }
+  var r = await fetch(path, opts);
+  if (r.status === 204) return null;
+  var data = await r.json();
+  if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+  return data;
+}
+function money(n) { return '$' + Number(n).toFixed(2); }`,
+  },
+  {
+    path: 'frontend/index.html',
+    content: `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Herd — Models</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <span class="brand">🐑 The Herd</span>
+    <nav>
+      <a href="index.html">Models</a>
+      <a href="history.html">Chat history</a>
+      <a href="admin.html">Admin</a>
+    </nav>
+  </header>
+  <main>
+    <h1>Models</h1>
+    <p class="muted">Nine frontier models, one herd. Pick one to see details or start a chat.</p>
+    <div id="list" class="grid">Loading…</div>
+  </main>
+  <script src="app.js"></script>
+  <script>
+    async function load() {
+      var list = document.getElementById('list');
+      try {
+        var models = await api('/api/models');
+        list.innerHTML = models.map(function (m) {
+          return '<a class="card" href="model.html?slug=' + encodeURIComponent(m.slug) + '">'
+            + '<h3><span class="dot ' + (m.enabled ? 'on' : 'off') + '"></span>' + esc(m.name) + '</h3>'
+            + '<span class="badge">' + esc(m.provider) + '</span>'
+            + '<span class="badge">' + esc(m.tier) + '</span>'
+            + '<p class="muted">' + m.context_k + 'k context · ' + money(m.input_cost) + ' / ' + money(m.output_cost) + ' per 1M tok</p>'
+            + '</a>';
+        }).join('');
+      } catch (e) {
+        list.innerHTML = '<p class="err">' + esc(e.message) + '</p>';
+      }
+    }
+    load();
+  </script>
+</body>
+</html>`,
+  },
+  {
+    path: 'frontend/model.html',
+    content: `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Herd — Model</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <span class="brand">🐑 The Herd</span>
+    <nav>
+      <a href="index.html">Models</a>
+      <a href="history.html">Chat history</a>
+      <a href="admin.html">Admin</a>
+    </nav>
+  </header>
+  <main>
+    <div id="detail">Loading…</div>
+    <form class="row" id="newchat" hidden>
+      <input id="title" placeholder="Name the new chat…" required />
+      <button type="submit">Start chat</button>
+    </form>
+    <p id="msg" class="err"></p>
+  </main>
+  <script src="app.js"></script>
+  <script>
+    var slug = qs().get('slug');
+    async function load() {
+      var el = document.getElementById('detail');
+      if (!slug) { el.innerHTML = '<p class="err">No model selected.</p>'; return; }
+      try {
+        var m = await api('/api/models/' + encodeURIComponent(slug));
+        el.innerHTML = '<h1><span class="dot ' + (m.enabled ? 'on' : 'off') + '"></span>' + esc(m.name) + '</h1>'
+          + '<p><span class="badge">' + esc(m.provider) + '</span><span class="badge">' + esc(m.tier) + '</span>'
+          + '<span class="badge">' + (m.enabled ? 'enabled' : 'disabled') + '</span></p>'
+          + '<table>'
+          + '<tr><th>Context window</th><td>' + m.context_k + 'k tokens</td></tr>'
+          + '<tr><th>Input cost</th><td>' + money(m.input_cost) + ' / 1M tokens</td></tr>'
+          + '<tr><th>Output cost</th><td>' + money(m.output_cost) + ' / 1M tokens</td></tr>'
+          + '<tr><th>Chats with this model</th><td>' + m.chat_count + '</td></tr>'
+          + '</table>';
+        document.getElementById('newchat').hidden = !m.enabled;
+      } catch (e) {
+        el.innerHTML = '<p class="err">' + esc(e.message) + '</p>';
+      }
+    }
+    document.getElementById('newchat').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var out = document.getElementById('msg');
+      out.textContent = '';
+      try {
+        await api('/api/chats', { method: 'POST', body: { title: document.getElementById('title').value, model_slug: slug } });
+        window.location.href = 'history.html';
+      } catch (err) { out.textContent = err.message; }
+    });
+    load();
+  </script>
+</body>
+</html>`,
+  },
+  {
+    path: 'frontend/history.html',
+    content: `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Herd — Chat history</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <span class="brand">🐑 The Herd</span>
+    <nav>
+      <a href="index.html">Models</a>
+      <a href="history.html">Chat history</a>
+      <a href="admin.html">Admin</a>
+    </nav>
+  </header>
+  <main>
+    <h1>Chat history</h1>
+    <div id="chats">Loading…</div>
+  </main>
+  <script src="app.js"></script>
+  <script>
+    async function openChat(id, box) {
+      box.innerHTML = 'Loading…';
+      try {
+        var c = await api('/api/chats/' + id);
+        box.innerHTML = '<div class="chat-head"><h3>' + esc(c.title) + '</h3>'
+          + '<span class="badge">' + esc(c.model_name) + '</span></div>'
+          + (c.messages.length
+            ? c.messages.map(function (m) {
+                return '<div class="msg ' + esc(m.role) + '"><span class="role">' + esc(m.role) + '</span><br>' + esc(m.content) + '</div>';
+              }).join('')
+            : '<p class="muted">No messages yet.</p>');
+      } catch (e) { box.innerHTML = '<p class="err">' + esc(e.message) + '</p>'; }
+    }
+    async function load() {
+      var list = document.getElementById('chats');
+      try {
+        var chats = await api('/api/chats');
+        if (!chats.length) { list.innerHTML = '<p class="muted">No chats yet — start one from a model page.</p>'; return; }
+        list.innerHTML = '';
+        chats.forEach(function (c) {
+          var card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = '<div class="chat-head"><h3>' + esc(c.title) + '</h3>'
+            + '<span class="badge">' + esc(c.model_name) + '</span>'
+            + '<span class="muted">' + c.message_count + ' messages</span>'
+            + '<button class="danger" style="margin-left:auto">Delete</button></div>'
+            + '<div class="body" hidden></div>';
+          var body = card.querySelector('.body');
+          card.querySelector('h3').style.cursor = 'pointer';
+          card.querySelector('h3').addEventListener('click', function () {
+            body.hidden = !body.hidden;
+            if (!body.hidden) openChat(c.id, body);
+          });
+          card.querySelector('button').addEventListener('click', async function () {
+            await api('/api/chats/' + c.id, { method: 'DELETE' });
+            load();
+          });
+          list.appendChild(card);
+        });
+      } catch (e) { list.innerHTML = '<p class="err">' + esc(e.message) + '</p>'; }
+    }
+    load();
+  </script>
+</body>
+</html>`,
+  },
+  {
+    path: 'frontend/admin.html',
+    content: `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Herd — Admin</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <span class="brand">🐑 The Herd</span>
+    <nav>
+      <a href="index.html">Models</a>
+      <a href="history.html">Chat history</a>
+      <a href="admin.html">Admin</a>
+    </nav>
+  </header>
+  <main>
+    <h1>Backend admin</h1>
+    <div id="stats" class="stats">Loading…</div>
+    <h2>Per-model usage</h2>
+    <div id="models">Loading…</div>
+  </main>
+  <script src="app.js"></script>
+  <script>
+    async function toggle(slug, enabled) {
+      await api('/api/models/' + encodeURIComponent(slug), { method: 'PATCH', body: { enabled: enabled } });
+      load();
+    }
+    async function load() {
+      try {
+        var s = await api('/api/admin/stats');
+        document.getElementById('stats').innerHTML =
+          '<div class="stat"><b>' + s.models + '</b>models</div>'
+          + '<div class="stat"><b>' + s.models_enabled + '</b>enabled</div>'
+          + '<div class="stat"><b>' + s.chats + '</b>chats</div>'
+          + '<div class="stat"><b>' + s.messages + '</b>messages</div>';
+        document.getElementById('models').innerHTML = '<table>'
+          + '<tr><th>Model</th><th>Status</th><th>Chats</th><th>Messages</th><th></th></tr>'
+          + s.per_model.map(function (m) {
+            return '<tr><td>' + esc(m.name) + '</td>'
+              + '<td><span class="dot ' + (m.enabled ? 'on' : 'off') + '"></span>' + (m.enabled ? 'enabled' : 'disabled') + '</td>'
+              + '<td>' + m.chats + '</td><td>' + m.messages + '</td>'
+              + '<td><button data-slug="' + esc(m.slug) + '" data-enabled="' + (m.enabled ? '0' : '1') + '">'
+              + (m.enabled ? 'Disable' : 'Enable') + '</button></td></tr>';
+          }).join('') + '</table>';
+        document.querySelectorAll('#models button').forEach(function (b) {
+          b.addEventListener('click', function () { toggle(b.dataset.slug, b.dataset.enabled === '1'); });
+        });
+      } catch (e) {
+        document.getElementById('stats').innerHTML = '<p class="err">' + esc(e.message) + '</p>';
+      }
+    }
+    load();
+  </script>
 </body>
 </html>`,
   },
