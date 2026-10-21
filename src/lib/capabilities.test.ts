@@ -140,10 +140,10 @@ describe('resolveCapabilitiesForPlatform', () => {
 
   it('drops capabilities the selected model cannot do', () => {
     setPendingCapabilities({ think: true, search: true, deep_research: true, code_exec: true }, { sticky: true });
-    // grok-code-fast-1 declares all advanced flags false.
-    expect(resolveCapabilitiesForPlatform('grok', 'grok-code-fast-1')).toEqual({});
-    // deepseek-chat only supports think.
-    expect(resolveCapabilitiesForPlatform('deepseek', 'deepseek-chat')).toEqual({ think: true });
+    // qwen3-vl-plus declares all advanced flags false.
+    expect(resolveCapabilitiesForPlatform('qwen', 'qwen3-vl-plus')).toEqual({});
+    // deepseek-flash only supports think.
+    expect(resolveCapabilitiesForPlatform('deepseek', 'deepseek-flash')).toEqual({ think: true });
   });
 });
 
