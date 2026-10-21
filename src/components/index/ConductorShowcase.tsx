@@ -15,7 +15,7 @@ const ConductorShowcase: React.FC = () => {
     {
       icon: Users,
       title: "Cross-Model Reasoning",
-      description: "GPT-5's reasoning, Claude 4's analysis, DeepSeek-R2's depth and Qwen's multilingual lens combine into answers no single model can produce."
+      description: "GPT-6's reasoning, Claude 5.5's analysis, DeepSeek V4's depth and Qwen's multilingual lens combine into answers no single model can produce."
     },
     {
       icon: Target,
@@ -32,12 +32,12 @@ const ConductorShowcase: React.FC = () => {
   const aiExperiences = [
     {
       scenario: "Multi-Model Code Review",
-      description: "Submit a PR and let GPT-5 catch logic bugs, Claude 4 flag security issues, DeepSeek-R2 suggest performance optimizations, while the Conductor prioritises the fixes.",
+      description: "Submit a PR and let GPT-6 catch logic bugs, Claude 5.5 flag security issues, DeepSeek V4 suggest performance optimizations, while the Conductor prioritises the fixes.",
       badge: "Engineering"
     },
     {
       scenario: "Market Research",
-      description: "Ask a market question — Perplexity pulls live citations, Gemini 2.5 reads the long-form sources, Qwen adds regional nuance, and the Conductor returns a sourced brief.",
+      description: "Ask a market question — Perplexity pulls live citations, Gemini 4 reads the long-form sources, Qwen adds regional nuance, and the Conductor returns a sourced brief.",
       badge: "Research"
     },
     {
