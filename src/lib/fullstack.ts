@@ -299,7 +299,7 @@ export const resolvePage = (files: ProjectFile[], from: string, href: string): s
 };
 
 /** One page as a standalone document: local CSS/JS inlined, API bridge injected. */
-export const renderPage = (files: ProjectFile[], path: string): string => {
+export const renderPage = (files: ProjectFile[], path: string, query = ''): string => {
   const page = files.find(f => f.path === path);
   if (!page) return `<!doctype html><body style="font-family:system-ui;padding:2rem">Page not found: ${path}</body>`;
   let html = page.content;
@@ -311,9 +311,21 @@ export const renderPage = (files: ProjectFile[], path: string): string => {
     const f = resolveAsset(files, path, src);
     return f ? `<script${a}${b}>\n${f.content.replace(/<\/script/gi, '<\\/script')}\n</script>` : tag;
   });
+  // srcdoc iframes have no real URL, so page params (model.html?slug=…) arrive
+  // through this global instead of location.search.
+  const shim = `<script>window.__RH_QUERY__=${JSON.stringify(query)};</script>` + BRIDGE_SHIM;
   return /<head[^>]*>/i.test(html)
-    ? html.replace(/<head[^>]*>/i, m => m + '\n' + BRIDGE_SHIM)
-    : BRIDGE_SHIM + '\n' + html;
+    ? html.replace(/<head[^>]*>/i, m => m + '\n' + shim)
+    : shim + '\n' + html;
+};
+
+/** Split a page href into its path and query (for in-preview navigation). */
+export const splitHref = (href: string) => {
+  const hashless = href.split('#')[0];
+  const i = hashless.indexOf('?');
+  return i === -1
+    ? { path: hashless, query: '' }
+    : { path: hashless.slice(0, i), query: hashless.slice(i + 1) };
 };
 
 /* ----------------------------------------------------------------- export */
