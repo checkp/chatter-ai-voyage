@@ -20,6 +20,9 @@ import {
   type TestReport,
 } from '@/lib/buildHarness';
 import { collapseContext, diffLines, toSplitRows } from '@/lib/artifactDiff';
+import FullstackStage from '@/components/build/FullstackStage';
+import { FullstackSession } from '@/lib/fullstackSession';
+import { buildZip, parseBundle, projectParts, renderPage } from '@/lib/fullstack';
 import ConsolePane, { type ConsoleLine } from '@/components/build/ConsolePane';
 import type { ArtifactVersion, VerifyFn } from '@/hooks/useBuildMode';
 import type { AIPlatform } from '@/types/chat';
@@ -167,6 +170,18 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
         setReport(missing);
         return missing;
       }
+      if (testLang === 'fullstack') {
+        push('system', '— full-stack tests —');
+        const session = new FullstackSession((stream, text) => push(stream, text));
+        try {
+          const full = await session.verify(source);
+          setReport(full);
+          push('system', summarise(full));
+          return full;
+        } finally {
+          session.terminate();
+        }
+      }
       if (testLang === 'html') {
         const html = await runHtmlTests(source);
         setReport(html);
@@ -223,7 +238,16 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
   const agentName = (id: string | null) =>
     id === 'you' ? 'you' : platforms.find(p => p.id === id)?.name ?? id ?? 'agent';
 
-  const download = () => {
+  const download = async () => {
+    if (activeLang === 'fullstack') {
+      const url = URL.createObjectURL(await buildZip(parseBundle(code)));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'roboheard-project.zip';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      return;
+    }
     const isPy = activeLang === 'python';
     const url = URL.createObjectURL(new Blob([code], { type: isPy ? 'text/x-python' : 'text/html' }));
     const a = document.createElement('a');
@@ -236,6 +260,13 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
   const openInTab = () => {
     const win = window.open('', '_blank', 'noopener');
     if (!win) return;
+    if (activeLang === 'fullstack') {
+      const files = parseBundle(code);
+      const entry = projectParts(files).pages[0];
+      win.document.write(entry ? renderPage(files, entry) : '<p>No pages yet</p>');
+      win.document.close();
+      return;
+    }
     win.document.write(activeLang === 'python' ? `<pre>${code.replace(/[<&]/g, c => (c === '<' ? '&lt;' : '&amp;'))}</pre>` : code);
     win.document.close();
   };
@@ -244,7 +275,7 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
     <div className="flex h-full flex-col overflow-hidden bg-secondary/30">
       <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5">
         <span className="text-xs font-semibold text-muted-foreground">
-          {activeLang === 'python' ? 'Python' : 'Artifact'}
+          {activeLang === 'python' ? 'Python' : activeLang === 'fullstack' ? 'Full-stack' : 'Artifact'}
         </span>
 
         {versions.length > 0 && (
@@ -376,7 +407,7 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={openInTab} title="Open in new tab">
             <ExternalLink className="h-3.5 w-3.5" />
           </Button>
-          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={download} title="Download">
+          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={download} title={activeLang === 'fullstack' ? 'Download project (ZIP)' : 'Download'}>
             <Download className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -385,7 +416,14 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
       <ResizablePanelGroup direction="vertical" className="min-h-0 flex-1">
         {/* Top half — the artifact itself */}
         <ResizablePanel defaultSize={58} minSize={20} className="min-h-0">
-          {activeLang === 'python' ? (
+          {activeLang === 'fullstack' ? (
+            <FullstackStage
+              key={`${selected?.id ?? 'starter'}-${reloadKey}`}
+              code={code}
+              narrow={narrow}
+              onLog={push}
+            />
+          ) : activeLang === 'python' ? (
             <div className="h-full overflow-y-auto p-3">
               {images.length > 0 && (
                 <div className="mb-3 grid gap-3">
@@ -617,7 +655,7 @@ const ArtifactPanel: React.FC<ArtifactPanelProps> = ({
               ) : report.missing ? (
                 <p className="text-xs text-muted-foreground">
                   This revision ships no tests, so nothing could be verified. Ask the agents for a test suite —
-                  {activeLang === 'python' ? ' module-level `test_*` functions.' : ' `RH.test(name, fn)` registrations.'}
+                  {activeLang === 'python' ? ' module-level `test_*` functions.' : activeLang === 'fullstack' ? ' backend `test_*` functions and page `RH.test(name, fn)` checks.' : ' `RH.test(name, fn)` registrations.'}
                 </p>
               ) : (
                 <div className="space-y-1.5">
