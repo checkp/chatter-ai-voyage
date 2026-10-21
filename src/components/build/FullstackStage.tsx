@@ -5,7 +5,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Database, Eraser, Globe, Loader2, RefreshCw } from 'lucide-react';
-import { parseBundle, projectParts, renderPage, resolvePage } from '@/lib/fullstack';
+import { parseBundle, projectParts, renderPage, resolvePage, splitHref } from '@/lib/fullstack';
 import { FullstackSession, type TableSnapshot } from '@/lib/fullstackSession';
 import type { ApiRequest } from '@/lib/buildHarness';
 
@@ -22,6 +22,7 @@ const FullstackStage: React.FC<Props> = ({ code, narrow, onLog }) => {
   const files = useMemo(() => parseBundle(code), [code]);
   const { pages, schema } = useMemo(() => projectParts(files), [files]);
   const [page, setPage] = useState('frontend/index.html');
+  const [pageQuery, setPageQuery] = useState('');
   const [view, setView] = useState<'app' | 'data'>('app');
   const [status, setStatus] = useState<'booting' | 'ready' | 'error'>('booting');
   const [bootError, setBootError] = useState<string | null>(null);
@@ -74,15 +75,19 @@ const FullstackStage: React.FC<Props> = ({ code, narrow, onLog }) => {
         }]);
       } else if (typeof data?.__rhNav === 'string') {
         const next = resolvePage(files, page, data.__rhNav);
-        if (next) setPage(next);
-        else logRef.current?.('system', `No page for link "${data.__rhNav}"`);
+        if (next) {
+          setPageQuery(splitHref(data.__rhNav).query);
+          setPage(next);
+        } else {
+          logRef.current?.('system', `No page for link "${data.__rhNav}"`);
+        }
       }
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
   }, [files, page]);
 
-  const srcDoc = useMemo(() => renderPage(files, page), [files, page]);
+  const srcDoc = useMemo(() => renderPage(files, page, pageQuery), [files, page, pageQuery]);
   const tableNames = Object.keys(tables);
 
   return (
@@ -97,7 +102,7 @@ const FullstackStage: React.FC<Props> = ({ code, narrow, onLog }) => {
           </Button>
         </div>
         {view === 'app' && pages.length > 0 && (
-          <Select value={page} onValueChange={setPage}>
+          <Select value={page} onValueChange={(p) => { setPageQuery(''); setPage(p); }}>
             <SelectTrigger className="h-7 w-[170px] text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               {pages.map(p => (
