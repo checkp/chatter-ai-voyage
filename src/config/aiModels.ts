@@ -237,7 +237,7 @@ export const modelSupports = (modelId: string | undefined, capability: string): 
   if (capability === 'vision') {
     // Best-effort heuristic for ids we don't yet have META for.
     const id = modelId.toLowerCase();
-    if (/(vision|vl|gpt-4o|gpt-5|gpt-6|claude-(fable|opus|sonnet|haiku)|gemini|pixtral|mistral-(medium|small|large)-[34]|grok-4|qwen3\.[78])/ .test(id.replace(/\s/g, ''))) {
+    if (/(vision|vl|gpt-4o|gpt-5|gpt-6|claude-(fable|opus|sonnet|haiku)|gemini|pixtral|mistral-(medium|small|large)-[34]|grok-4|qwen3\.[78])/.test(id)) {
       return true;
     }
   }
