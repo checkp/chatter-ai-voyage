@@ -25,7 +25,7 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    const { messages, model = 'gpt-5.6-terra', attachments, capabilities = {} , max_output_tokens } = await req.json();
+    const { messages, model = 'gpt-6.1-sol', attachments, capabilities = {} , max_output_tokens } = await req.json();
     const outBudget = Math.min(Math.max(Number(max_output_tokens) || 4096, 256), 32000);
     const user_id = user.id;
 

@@ -25,14 +25,26 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    let { messages, model = 'deepseek-chat', capabilities = {} , max_output_tokens } = await req.json();
+    let { messages, model = 'deepseek-flash', capabilities = {} , max_output_tokens } = await req.json();
     const outBudget = Math.min(Math.max(Number(max_output_tokens) || 4096, 256), 32000);
     const user_id = user.id;
 
-    // Honor "think" / "deep_research" by switching to the reasoner variant.
-    if ((capabilities.think || capabilities.deep_research) && model === 'deepseek-chat') {
-      console.log('[deepseek] switching to deepseek-reasoner for advanced reasoning');
-      model = 'deepseek-reasoner';
+    // Legacy aliases were discontinued; route them to the current Flash build.
+    const modelAliases: Record<string, string> = {
+      'deepseek-chat': 'deepseek-flash',
+      'deepseek-reasoner': 'deepseek-v4-pro',
+      'deepseek-v4-flash': 'deepseek-flash',
+      'deepseek-v4-flash-vision-exp': 'deepseek-flash',
+    };
+    if (modelAliases[model]) {
+      console.log(`[deepseek] remapping ${model} -> ${modelAliases[model]}`);
+      model = modelAliases[model];
+    }
+
+    // Honor "think" / "deep_research" by switching to the Pro (reasoning) tier.
+    if ((capabilities.think || capabilities.deep_research) && model === 'deepseek-flash') {
+      console.log('[deepseek] switching to deepseek-v4-pro for advanced reasoning');
+      model = 'deepseek-v4-pro';
     }
     
     // Check token balance - create if doesn't exist

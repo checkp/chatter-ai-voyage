@@ -46,20 +46,24 @@ serve(async (req) => {
 
     console.log('User authenticated successfully:', user.id)
 
-    let { messages, model = 'claude-sonnet-5', attachments, capabilities = {} , max_output_tokens } = await req.json()
+    let { messages, model = 'claude-sonnet-5-5', attachments, capabilities = {} , max_output_tokens } = await req.json()
     const outBudget = Math.min(Math.max(Number(max_output_tokens) || 4096, 256), 32000);
 
     // Normalize legacy / invalid Claude model ids to current Anthropic ids
     const modelAliases: Record<string, string> = {
-      'claude-haiku-4-20250514': 'claude-haiku-4-5',
-      'claude-haiku-4': 'claude-haiku-4-5',
-      'claude-3-5-haiku-20241022': 'claude-haiku-4-5',
-      'claude-3-5-sonnet-20241022': 'claude-sonnet-5',
-      'claude-sonnet-4-20250514': 'claude-sonnet-5',
-      'claude-sonnet-4-5': 'claude-sonnet-5',
-      'claude-3-opus-20240229': 'claude-opus-5',
-      'claude-opus-4-20250514': 'claude-opus-5',
-      'claude-opus-4-5': 'claude-opus-5',
+      'claude-haiku-4-20250514': 'claude-haiku-5-5',
+      'claude-haiku-4': 'claude-haiku-5-5',
+      'claude-haiku-4-5': 'claude-haiku-5-5',
+      'claude-3-5-haiku-20241022': 'claude-haiku-5-5',
+      'claude-3-5-sonnet-20241022': 'claude-sonnet-5-5',
+      'claude-sonnet-4-20250514': 'claude-sonnet-5-5',
+      'claude-sonnet-4-5': 'claude-sonnet-5-5',
+      'claude-sonnet-5': 'claude-sonnet-5-5',
+      'claude-3-opus-20240229': 'claude-opus-5-5',
+      'claude-opus-4-20250514': 'claude-opus-5-5',
+      'claude-opus-4-5': 'claude-opus-5-5',
+      'claude-opus-5': 'claude-opus-5-5',
+      'claude-fable-5': 'claude-fable-5-1',
     };
     if (modelAliases[model]) {
       console.log(`Remapping model ${model} -> ${modelAliases[model]}`);
