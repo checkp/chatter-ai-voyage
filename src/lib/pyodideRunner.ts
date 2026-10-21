@@ -77,7 +77,13 @@ async function run(id, code, mode) {
     packages = Object.keys(py.loadedPackages || {}).filter((p) => !before.has(p));
 
     let value;
-    if (mode === 'eval') {
+    if (mode === 'raw') {
+      const result = await py.runPythonAsync(code);
+      if (result !== undefined && result !== null) {
+        value = String(result);
+        if (result && typeof result.destroy === 'function') result.destroy();
+      }
+    } else if (mode === 'eval') {
       const result = await py.runPythonAsync(code);
       if (result !== undefined && result !== null) {
         value = String(py.globals.get('repr')(result));
@@ -173,7 +179,7 @@ export class PyodideRunner {
     this.ensure().postMessage({ type: 'boot' });
   }
 
-  run(code: string, mode: 'exec' | 'eval' = 'exec') {
+  run(code: string, mode: 'exec' | 'eval' | 'raw' = 'exec') {
     const worker = this.ensure();
     const id = ++this.seq;
     this.capture = '';
