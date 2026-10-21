@@ -527,15 +527,15 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 
 INSERT OR IGNORE INTO models (slug, name, provider, tier, context_k, input_cost, output_cost) VALUES
-  ('gpt-5', 'GPT-5', 'OpenAI', 'frontier', 400, 1.25, 10.0),
-  ('claude-4', 'Claude 4', 'Anthropic', 'frontier', 200, 3.0, 15.0),
-  ('gemini-2.5', 'Gemini 2.5 Pro', 'Google', 'frontier', 1000, 1.25, 10.0),
-  ('grok-4', 'Grok 4', 'xAI', 'frontier', 256, 3.0, 15.0),
-  ('deepseek-r2', 'DeepSeek R2', 'DeepSeek', 'reasoning', 128, 0.55, 2.19),
-  ('mistral-large', 'Mistral Large', 'Mistral', 'frontier', 128, 2.0, 6.0),
+  ('gpt-6.1-sol', 'GPT-6.1 Sol', 'OpenAI', 'frontier', 1050, 2.0, 10.0),
+  ('claude-sonnet-5-5', 'Claude Sonnet 5.5', 'Anthropic', 'frontier', 1000, 2.0, 10.0),
+  ('gemini-4-argon', 'Gemini 4 Argon', 'Google', 'frontier', 1000, 2.0, 10.0),
+  ('grok-4.7', 'Grok 4.7', 'xAI', 'frontier', 500, 2.0, 6.0),
+  ('deepseek-flash', 'DeepSeek V4.1 Flash', 'DeepSeek', 'reasoning', 1000, 0.28, 0.42),
+  ('mistral-large-4', 'Mistral Large 4', 'Mistral', 'frontier', 1000, 0.68, 2.09),
   ('sonar', 'Perplexity Sonar', 'Perplexity', 'search', 127, 1.0, 1.0),
-  ('qwen-max', 'Qwen Max', 'Alibaba', 'frontier', 128, 1.6, 6.4),
-  ('nim-llama', 'Llama 3.3 70B (NIM)', 'NVIDIA', 'open', 128, 0.35, 0.4);`,
+  ('qwen3.8-max', 'Qwen3.8 Max', 'Alibaba', 'frontier', 1000, 1.6, 6.4),
+  ('nim-nemotron-ultra', 'Nemotron 3 Ultra 550B', 'NVIDIA', 'open', 131, 0.9, 2.5);`,
   },
   {
     path: 'backend/app.py',
