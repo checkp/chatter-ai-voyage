@@ -92,9 +92,11 @@ const META: Record<string, Meta> = {
   'sonar-reasoning-pro':  { name: 'Sonar Reasoning Pro', description: 'Multi-step chain-of-thought with search',    maxTokens: 128000, capabilities: ['text','reasoning','search','citations','analysis'],    speed: 'slow',   advanced: { think: true, search: true, deep_research: false, code_exec: false } },
   'sonar-deep-research':  { name: 'Sonar Deep Research', description: 'Exhaustive multi-source research reports',   maxTokens: 128000, capabilities: ['text','reasoning','search','citations','analysis'],    speed: 'slow',   advanced: { think: true, search: true, deep_research: true, code_exec: false } },
 
-  // ── Qwen (Alibaba DashScope) ──
+  // ── Qwen (Alibaba DashScope; 3.8 family is current) ──
   'qwen3.8-max':   { name: 'Qwen3.8 Max',   description: 'Alibaba flagship MoE, native vision-language', maxTokens: 1000000, capabilities: ['text','vision','reasoning','coding','multilingual'], speed: 'medium', advanced: { think: true, search: true, deep_research: false, code_exec: true } },
-  'qwen3.6-plus':  { name: 'Qwen3.6 Plus',  description: 'Mid-tier Qwen with optional thinking',         maxTokens: 131072,  capabilities: ['text','reasoning','multilingual'],                  speed: 'fast',   advanced: { think: true, search: false, deep_research: false, code_exec: true } },
+  'qwen3.7-plus':  { name: 'Qwen3.7 Plus',  description: 'Mid-tier Qwen with optional thinking',         maxTokens: 131072,  capabilities: ['text','reasoning','multilingual'],                  speed: 'fast',   advanced: { think: true, search: false, deep_research: false, code_exec: true } },
+  'qwen3.8-flash': { name: 'Qwen3.8 Flash', description: 'Fast, low-cost Qwen 3.8',                      maxTokens: 1000000, capabilities: ['text','reasoning','multilingual'],                  speed: 'fast',   advanced: { think: true, search: false, deep_research: false, code_exec: true } },
+  'qwen3.6-plus':  { name: 'Qwen3.6 Plus',  description: 'Legacy, superseded by Qwen3.7 Plus',           maxTokens: 131072,  capabilities: ['text','reasoning','multilingual'],                  speed: 'fast',   advanced: { think: true, search: false, deep_research: false, code_exec: true } },
   'qwen3-vl-plus': { name: 'Qwen3 VL Plus', description: 'Qwen vision-language specialist',              maxTokens: 131072,  capabilities: ['text','vision','reasoning','multilingual'],         speed: 'medium', advanced: NONE },
   'qwen-turbo':    { name: 'Qwen Turbo',    description: 'Fast & cost-effective Qwen',                   maxTokens: 1000000, capabilities: ['text','multilingual'],                              speed: 'fast',   advanced: NONE },
   'qwen3-max':     { name: 'Qwen3 Max',     description: 'Legacy Qwen3 flagship',                        maxTokens: 32000,   capabilities: ['text','reasoning','coding','multilingual'],         speed: 'slow',   advanced: { think: true, search: false, deep_research: false, code_exec: false } },
@@ -141,11 +143,11 @@ const EXCLUDED_MODELS = new Set(['dall-e-2','dall-e-3','gpt-image-1']);
 
 // Preferred default per platform when no DB hint exists.
 const PREFERRED_DEFAULTS: Record<string, string> = {
-  openai:     'gpt-5.6-terra',
-  anthropic:  'claude-sonnet-5',
-  deepseek:   'deepseek-chat',
-  grok:       'grok-4.3',
-  google:     'gemini-3.6-flash',
+  openai:     'gpt-6.1-sol',
+  anthropic:  'claude-sonnet-5-5',
+  deepseek:   'deepseek-flash',
+  grok:       'grok-4.7',
+  google:     'gemini-3.8-flash',
   mistral:    'mistral-medium-3.5',
   perplexity: 'sonar-pro',
   qwen:       'qwen3.8-max',
@@ -235,7 +237,7 @@ export const modelSupports = (modelId: string | undefined, capability: string): 
   if (capability === 'vision') {
     // Best-effort heuristic for ids we don't yet have META for.
     const id = modelId.toLowerCase();
-    if (/(vision|vl|gpt-4o|gpt-5|claude-(fable|opus|sonnet|haiku)|gemini|pixtral|mistral-(medium|small|large)-[34]|grok-4|qwen3\.8)/.test(id)) {
+    if (/(vision|vl|gpt-4o|gpt-5|gpt-6|claude-(fable|opus|sonnet|haiku)|gemini|pixtral|mistral-(medium|small|large)-[34]|grok-4|qwen3\.[78])/ .test(id.replace(/\s/g, ''))) {
       return true;
     }
   }
@@ -254,12 +256,12 @@ registerModelAdvancedLookup(getModelAdvancedCapabilities);
 
 /** Convenience: which providers can accept image attachments at all (any model). */
 export const PLATFORM_VISION_DEFAULT_MODEL: Record<string, string> = {
-  openai: 'gpt-5.6-terra',
-  anthropic: 'claude-sonnet-5',
-  google: 'gemini-3.6-flash',
-  grok: 'grok-4.3',
+  openai: 'gpt-6.1-sol',
+  anthropic: 'claude-sonnet-5-5',
+  google: 'gemini-3.8-flash',
+  grok: 'grok-4.7',
   mistral: 'mistral-medium-3.5',
-  qwen: 'qwen3-vl-plus',
+  qwen: 'qwen3.8-max',
   nvidia: 'nvidia/nemotron-nano-12b-v2-vl',
 };
 
