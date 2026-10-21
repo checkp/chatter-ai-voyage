@@ -71,7 +71,7 @@ describe('herd starter project', () => {
 
   it('seeds exactly nine models', () => {
     const schema = projectParts(files).schema;
-    expect(schema.match(/\('[a-z0-9-]+', '/g)).toHaveLength(9);
+    expect(schema.match(/\('[a-z0-9.-]+', '/g)).toHaveLength(9);
   });
 
   it('covers the asked-for routes and backend tests', () => {
