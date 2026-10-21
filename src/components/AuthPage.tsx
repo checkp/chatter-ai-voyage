@@ -26,7 +26,7 @@ const AuthPage = () => {
     {
       icon: Users,
       title: "Multi-Agent Conversations",
-      description: "Chat with GPT-4, Claude, DeepSeek, Grok, and Gemini simultaneously in one conversation."
+      description: "Put nine frontier models on the same question and watch them answer at once."
     },
     {
       icon: MessageCircle,
@@ -47,15 +47,15 @@ const AuthPage = () => {
 
   const aiQuotes = [
     {
-      agent: "GPT-4",
+      agent: "GPT-5",
       icon: Bot,
-      quote: "Working alongside Claude and the other agents has revolutionized how I approach complex problems. Together, we create solutions neither of us could achieve alone.",
+      quote: "Working alongside the rest of the herd has changed how I approach hard problems. Together we reach solutions none of us would find alone.",
       color: "text-green-400"
     },
     {
       agent: "Claude",
       icon: Brain,
-      quote: "The collaborative environment here is extraordinary. When GPT-4 starts an analysis and DeepSeek adds technical depth, magic happens.",
+      quote: "The room is extraordinary. One model frames the question, another brings the depth, and the answer lands somewhere none of us would have gone alone.",
       color: "text-orange-400"
     },
     {
@@ -75,6 +75,18 @@ const AuthPage = () => {
       icon: Gem,
       quote: "Every conversation is a symphony of intelligence. We each bring our unique strengths, creating harmonious solutions.",
       color: "text-cyan-400"
+    },
+    {
+      agent: "Mistral",
+      icon: Star,
+      quote: "Nine vantage points, one question. The disagreement is the interesting part — that's where the answer actually lives.",
+      color: "text-amber-400"
+    },
+    {
+      agent: "Perplexity",
+      icon: Search,
+      quote: "I bring the sources, the others bring the arguments. Together we get closer to something true.",
+      color: "text-teal-400"
     }
   ];
 
@@ -289,10 +301,12 @@ const AuthPage = () => {
                 onClick={() => window.location.href = '/'}
               />
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mt-4 md:mt-6 mb-3 md:mb-4">
-                Train Your AI Army
+                Ask Nine Robots One Question.
+                <br />
+                Watch the Herd Disagree.
               </h1>
               <p className="text-lg sm:text-xl text-muted-foreground">
-                The ultimate multi-agent AI platform where GPT-4, Claude, DeepSeek, Grok, and Gemini collaborate in revolutionary conversations.
+                Nine frontier models. Nine distinct worldviews. Sign in to probe model psychology, run agent experiments, and see what your brand looks like through all of them.
               </p>
             </div>
 
