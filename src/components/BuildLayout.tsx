@@ -9,6 +9,7 @@ import ChatMessages from '@/components/ChatMessages';
 import ChatInput from '@/components/ChatInput';
 import ArtifactPanel from '@/components/build/ArtifactPanel';
 import { useBuildMode, type VerifyFn } from '@/hooks/useBuildMode';
+import { STARTER_HERD } from '@/lib/fullstack';
 import type { ArtifactLang } from '@/config/buildMode';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform, Message } from '@/types/chat';
@@ -44,6 +45,15 @@ const BuildLayout: React.FC<BuildLayoutProps> = ({
     const prompt = input;
     setInput('');
     await build.send(prompt);
+  };
+
+  /** Seed the chat with a ready-made project the agents then iterate on. */
+  const loadStarter = async (name: string) => {
+    if (name !== 'herd' || build.isBuilding) return;
+    build.setLang('fullstack');
+    const chatId = activeChatId ?? (await ensureChat?.() ?? null);
+    if (!chatId) return;
+    await build.saveManualEdit(STARTER_HERD, 'fullstack', chatId);
   };
 
   return (
@@ -88,6 +98,16 @@ const BuildLayout: React.FC<BuildLayoutProps> = ({
                 <SelectItem value="fullstack" className="text-xs">Full-stack</SelectItem>
               </SelectContent>
             </Select>
+            {build.lang === 'fullstack' && (
+              <Select value="" onValueChange={loadStarter} disabled={build.isBuilding}>
+                <SelectTrigger className="h-7 w-[130px] text-xs">
+                  <SelectValue placeholder="Load starter…" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="herd" className="text-xs">🐑 Herd backend</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
 

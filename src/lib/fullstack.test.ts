@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  STARTER_FULLSTACK, exportFiles, parseBundle, projectParts, renderPage, resolvePage, serializeBundle,
+  STARTER_FULLSTACK, STARTER_HERD, exportFiles, parseBundle, projectParts, renderPage,
+  resolvePage, serializeBundle, splitHref,
 } from '@/lib/fullstack';
 import { extractArtifact } from '@/config/buildMode';
 
@@ -52,5 +53,52 @@ describe('full-stack bundle', () => {
     expect(out.lang).toBe('fullstack');
     expect(parseBundle(out.code!).length).toBe(3);
     expect(out.notes).toBe('Added notes.');
+  });
+});
+
+describe('herd starter project', () => {
+  const files = parseBundle(STARTER_HERD);
+
+  it('ships schema, backend and the four pages', () => {
+    expect(files.map(f => f.path)).toEqual([
+      'db/schema.sql', 'backend/app.py', 'frontend/style.css', 'frontend/app.js',
+      'frontend/index.html', 'frontend/model.html', 'frontend/history.html', 'frontend/admin.html',
+    ]);
+    const p = projectParts(files);
+    expect(p.schema).toContain('CREATE TABLE IF NOT EXISTS models');
+    expect(p.pages).toHaveLength(4);
+  });
+
+  it('seeds exactly nine models', () => {
+    const schema = projectParts(files).schema;
+    expect(schema.match(/\('[a-z0-9-]+', '/g)).toHaveLength(9);
+  });
+
+  it('covers the asked-for routes and backend tests', () => {
+    const app = files.find(f => f.path === 'backend/app.py')!.content;
+    for (const route of [
+      '@get("/api/models")', '@get("/api/models/<slug>")', '@patch("/api/models/<slug>")',
+      '@get("/api/chats")', '@post("/api/chats")', '@get("/api/chats/<cid>")',
+      '@post("/api/chats/<cid>/messages")', '@delete("/api/chats/<cid>")', '@get("/api/admin/stats")',
+    ]) expect(app).toContain(route);
+    expect(app.match(/^def test_/gm)!.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it('links model cards to the details page with a slug query', () => {
+    const index = files.find(f => f.path === 'frontend/index.html')!.content;
+    expect(index).toContain('model.html?slug=');
+    expect(resolvePage(files, 'frontend/index.html', 'model.html?slug=gpt-5')).toBe('frontend/model.html');
+  });
+
+  it('passes the navigation query into the rendered page', () => {
+    const html = renderPage(files, 'frontend/model.html', 'slug=gpt-5');
+    expect(html).toContain('window.__RH_QUERY__="slug=gpt-5"');
+    expect(html).toContain('__rhApi');
+  });
+
+  it('splits hrefs into path and query', () => {
+    expect(splitHref('model.html?slug=gpt-5')).toEqual({ path: 'model.html', query: 'slug=gpt-5' });
+    expect(splitHref('history.html')).toEqual({ path: 'history.html', query: '' });
+    expect(splitHref('a.html?x=1#top')).toEqual({ path: 'a.html', query: 'x=1' });
   });
 });
