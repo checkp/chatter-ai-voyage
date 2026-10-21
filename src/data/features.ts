@@ -21,14 +21,14 @@ export const featureCategories: FeatureCategory[] = [
     name: "Nine Frontier Models — Plus Yours",
     blurb: "Every flagship LLM, in one calm workspace — pick one, compare a few, run all nine in parallel, or bring your own local model.",
     features: [
-      { title: "OpenAI GPT-5", description: "Latest reasoning model from OpenAI, including GPT-5 and GPT-4o variants." },
-      { title: "Anthropic Claude 4", description: "Claude Opus 4 and Sonnet 4 — long-form analysis, careful writing, structured thinking." },
-      { title: "Google Gemini 2.5", description: "Gemini 2.5 Pro and Flash with million-token context for long documents." },
-      { title: "xAI Grok-4", description: "Grok 4 and Grok 4 Fast — sharp, current, opinionated." },
-      { title: "DeepSeek R2", description: "Open-source reasoning depth at a fraction of the cost." },
-      { title: "Mistral Large", description: "Mistral Large, Medium, Small and Codestral for multilingual and coding work." },
+      { title: "OpenAI GPT-6", description: "GPT-6 Astra, 6.1 Sol and 6 Luna — OpenAI's frontier reasoning and coding family." },
+      { title: "Anthropic Claude 5.5", description: "Claude Fable 5.1, Opus 5.5, Sonnet 5.5 and Haiku 5.5 — long-form analysis, careful writing, structured thinking." },
+      { title: "Google Gemini 4", description: "Gemini 4 Argon and 3.8 Flash with million-token context for long documents." },
+      { title: "xAI Grok 4.7", description: "Grok 4.7, 4.6 and Grok Build — sharp, current, opinionated." },
+      { title: "DeepSeek V4", description: "DeepSeek V4.1 Flash and V4 Pro — open-weight reasoning depth at a fraction of the cost." },
+      { title: "Mistral Large 4", description: "Mistral Large 4, Medium 3.5, Small 4 and Codestral for multilingual and coding work." },
       { title: "Perplexity Sonar", description: "Sonar Pro and Sonar Reasoning Pro with live web search and source citations." },
-      { title: "Alibaba Qwen", description: "Qwen Max, Plus, Turbo and Qwen3-Max via DashScope — strong multilingual reasoning." },
+      { title: "Alibaba Qwen3.8", description: "Qwen3.8 Max, Qwen3.7 Plus and Qwen3.8 Flash via DashScope — strong multilingual reasoning." },
       { title: "Local Models", description: "Add any model running in LM Studio or Ollama as a Local agent — private, offline-capable, and a flat 1 token per message.", tag: "New" }
     ]
   },
@@ -66,9 +66,9 @@ export const featureCategories: FeatureCategory[] = [
     name: "Advanced AI Capabilities",
     blurb: "Per-message superpowers — toggle in the composer or let the Conductor assign them per agent.",
     features: [
-      { title: "Think (Extended Reasoning)", description: "Higher reasoning budgets across OpenAI, Claude, Gemini, Grok, DeepSeek-Reasoner, and Sonar Reasoning Pro.", tag: "new" },
+      { title: "Think (Extended Reasoning)", description: "Higher reasoning budgets across OpenAI, Claude, Gemini, Grok, DeepSeek V4 Pro, and Sonar Reasoning Pro.", tag: "new" },
       { title: "Search (Live Web)", description: "Provider-native web grounding — OpenAI web_search, Claude web_search, Gemini google_search, Grok search, always-on Perplexity.", tag: "new" },
-      { title: "Deep Research", description: "Auto-swap to flagship research tiers: gpt-5, opus-4, gemini-2.5-pro, grok-4-heavy, sonar-deep-research, qwen-max.", tag: "new" },
+      { title: "Deep Research", description: "Auto-swap to flagship research tiers: gpt-6-astra, claude-fable-5-1, gemini-4-argon, deepseek-v4-pro, sonar-deep-research, qwen3.8-max.", tag: "new" },
       { title: "Code Execution", description: "Sandboxed code tools on OpenAI (code_interpreter), Claude (code_execution_20250522), and Gemini (code_execution).", tag: "new" },
       { title: "Conductor-Assigned", description: "Conductor can emit per-agent capability hints — the right tools fire on the right specialist automatically." }
     ]
@@ -79,7 +79,7 @@ export const featureCategories: FeatureCategory[] = [
     blurb: "Grounded answers with citations — not confident guesses.",
     features: [
       { title: "Live Web Search", description: "Perplexity Sonar pulls fresh sources in real time and includes inline citations." },
-      { title: "Long-Document Analysis", description: "Gemini 2.5's million-token context reads entire reports, papers, and transcripts at once." },
+      { title: "Long-Document Analysis", description: "Gemini 4's million-token context reads entire reports, papers, and transcripts at once." },
       { title: "Cross-Model Fact Checking", description: "Other agents review Perplexity's claims so you don't take a single source on trust." },
       { title: "Sourced Briefs", description: "Conductor returns balanced, link-backed summaries instead of opinion." }
     ]

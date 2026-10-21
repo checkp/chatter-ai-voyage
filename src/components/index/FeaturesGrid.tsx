@@ -27,7 +27,7 @@ const features = [
   {
     icon: Bot,
     title: "8 Frontier Models",
-    description: "GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek-R2, Mistral, Perplexity and Qwen — every flagship in one calm interface."
+    description: "GPT-6, Claude 5.5, Gemini 4, Grok 4.7, DeepSeek V4, Mistral, Perplexity and Qwen — every flagship in one calm interface."
   },
   {
     icon: Wand2,
