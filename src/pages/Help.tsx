@@ -14,7 +14,7 @@ const FAQ_ITEMS = [
   { q: 'What is Chat Mode?', a: 'Send a single prompt to one or multiple agents. Great for Q&A, drafting, coding, or quick ideation.' },
   { q: 'What is Conductor Mode?', a: 'An orchestrator AI analyzes progress, proposes next steps, and assigns the right frontier model to each step.' },
   { q: 'What is Free Mode?', a: 'Fire off multiple agent messages automatically for rapid exploration. Configure the message limit and stop anytime.' },
-  { q: 'Which AI models does RoboHeard support?', a: 'GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek-R2, Mistral Large, Perplexity Sonar, and Qwen.' },
+  { q: 'Which AI models does RoboHeard support?', a: 'GPT-6, Claude 5.5, Gemini 4, Grok 4.7, DeepSeek V4, Mistral Large 4, Perplexity Sonar, and Qwen3.8.' },
 ];
 
 const HELP_JSONLD = {
@@ -55,7 +55,7 @@ const Help: React.FC = () => {
     <>
       <PageSeo
         title="Help & Getting Started — RoboHeard"
-        description="Learn Conductor Mode, agentic orchestration across GPT-5, Claude 4, Gemini 2.5, Grok-4 & DeepSeek-R2, and grab ready-to-use starter prompts."
+        description="Learn Conductor Mode, agentic orchestration across GPT-6, Claude 5.5, Gemini 4, Grok 4.7 & DeepSeek V4, and grab ready-to-use starter prompts."
         path="/help"
         jsonLd={HELP_JSONLD}
       />
