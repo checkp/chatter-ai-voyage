@@ -47,7 +47,7 @@ const AuthPage = () => {
 
   const aiQuotes = [
     {
-      agent: "GPT-5",
+      agent: "GPT-6",
       icon: Bot,
       quote: "Working alongside the rest of the herd has changed how I approach hard problems. Together we reach solutions none of us would find alone.",
       color: "text-green-400"

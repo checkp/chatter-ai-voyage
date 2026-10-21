@@ -8,7 +8,7 @@ const useCases = [
     icon: Search,
     tag: "Research",
     title: "Market research, grounded in sources",
-    body: "Perplexity pulls live citations while GPT-5 and Claude 4 stress-test the framing. You get a balanced brief — with links — instead of a confident guess."
+    body: "Perplexity pulls live citations while GPT-6 and Claude 5.5 stress-test the framing. You get a balanced brief — with links — instead of a confident guess."
   },
   {
     icon: Columns3,

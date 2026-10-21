@@ -25,14 +25,14 @@ This regenerates the auto-blocks below **and** `public/llms.txt` **and** bumps `
 
 Every flagship LLM, in one calm workspace — pick one, compare a few, run all nine in parallel, or bring your own local model.
 
-- **OpenAI GPT-5** — Latest reasoning model from OpenAI, including GPT-5 and GPT-4o variants.
-- **Anthropic Claude 4** — Claude Opus 4 and Sonnet 4 — long-form analysis, careful writing, structured thinking.
-- **Google Gemini 2.5** — Gemini 2.5 Pro and Flash with million-token context for long documents.
-- **xAI Grok-4** — Grok 4 and Grok 4 Fast — sharp, current, opinionated.
-- **DeepSeek R2** — Open-source reasoning depth at a fraction of the cost.
-- **Mistral Large** — Mistral Large, Medium, Small and Codestral for multilingual and coding work.
+- **OpenAI GPT-6** — GPT-6 Astra, 6.1 Sol and 6 Luna — OpenAI's frontier reasoning and coding family.
+- **Anthropic Claude 5.5** — Claude Fable 5.1, Opus 5.5, Sonnet 5.5 and Haiku 5.5 — long-form analysis, careful writing, structured thinking.
+- **Google Gemini 4** — Gemini 4 Argon and 3.8 Flash with million-token context for long documents.
+- **xAI Grok 4.7** — Grok 4.7, 4.6 and Grok Build — sharp, current, opinionated.
+- **DeepSeek V4** — DeepSeek V4.1 Flash and V4 Pro — open-weight reasoning depth at a fraction of the cost.
+- **Mistral Large 4** — Mistral Large 4, Medium 3.5, Small 4 and Codestral for multilingual and coding work.
 - **Perplexity Sonar** — Sonar Pro and Sonar Reasoning Pro with live web search and source citations.
-- **Alibaba Qwen** — Qwen Max, Plus, Turbo and Qwen3-Max via DashScope — strong multilingual reasoning.
+- **Alibaba Qwen3.8** — Qwen3.8 Max, Qwen3.7 Plus and Qwen3.8 Flash via DashScope — strong multilingual reasoning.
 - **Local Models** — Add any model running in LM Studio or Ollama as a Local agent — private, offline-capable, and a flat 1 token per message.
 
 ### Five Chat Modes
@@ -63,9 +63,9 @@ Beyond chat — the Conductor turns nine models into one coordinated system.
 
 Per-message superpowers — toggle in the composer or let the Conductor assign them per agent.
 
-- **Think (Extended Reasoning)** — Higher reasoning budgets across OpenAI, Claude, Gemini, Grok, DeepSeek-Reasoner, and Sonar Reasoning Pro.
+- **Think (Extended Reasoning)** — Higher reasoning budgets across OpenAI, Claude, Gemini, Grok, DeepSeek V4 Pro, and Sonar Reasoning Pro.
 - **Search (Live Web)** — Provider-native web grounding — OpenAI web_search, Claude web_search, Gemini google_search, Grok search, always-on Perplexity.
-- **Deep Research** — Auto-swap to flagship research tiers: gpt-5, opus-4, gemini-2.5-pro, grok-4-heavy, sonar-deep-research, qwen-max.
+- **Deep Research** — Auto-swap to flagship research tiers: gpt-6-astra, claude-fable-5-1, gemini-4-argon, deepseek-v4-pro, sonar-deep-research, qwen3.8-max.
 - **Code Execution** — Sandboxed code tools on OpenAI (code_interpreter), Claude (code_execution_20250522), and Gemini (code_execution).
 - **Conductor-Assigned** — Conductor can emit per-agent capability hints — the right tools fire on the right specialist automatically.
 
@@ -74,7 +74,7 @@ Per-message superpowers — toggle in the composer or let the Conductor assign t
 Grounded answers with citations — not confident guesses.
 
 - **Live Web Search** — Perplexity Sonar pulls fresh sources in real time and includes inline citations.
-- **Long-Document Analysis** — Gemini 2.5's million-token context reads entire reports, papers, and transcripts at once.
+- **Long-Document Analysis** — Gemini 4's million-token context reads entire reports, papers, and transcripts at once.
 - **Cross-Model Fact Checking** — Other agents review Perplexity's claims so you don't take a single source on trust.
 - **Sourced Briefs** — Conductor returns balanced, link-backed summaries instead of opinion.
 
