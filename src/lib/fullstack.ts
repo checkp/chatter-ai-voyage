@@ -670,14 +670,14 @@ def test_models_seeded_with_nine():
 
 
 def test_model_detail_and_404():
-    r = client.get("/api/models/gpt-5")
+    r = client.get("/api/models/gpt-6.1-sol")
     assert r.status == 200 and r.json["provider"] == "OpenAI"
     assert r.json["chat_count"] == 0
     assert client.get("/api/models/nope").status == 404
 
 
 def test_chat_lifecycle():
-    created = client.post("/api/chats", {"title": "probe", "model_slug": "grok-4"})
+    created = client.post("/api/chats", {"title": "probe", "model_slug": "grok-4.7"})
     assert created.status == 201
     cid = created.json["id"]
     msg = client.post("/api/chats/%s/messages" % cid, {"role": "user", "content": "hello herd"})
@@ -689,16 +689,16 @@ def test_chat_lifecycle():
 
 
 def test_validation_errors():
-    assert client.post("/api/chats", {"title": "", "model_slug": "grok-4"}).status == 400
+    assert client.post("/api/chats", {"title": "", "model_slug": "grok-4.7"}).status == 400
     assert client.post("/api/chats", {"title": "x", "model_slug": "nope"}).status == 404
-    cid = client.post("/api/chats", {"title": "v", "model_slug": "gpt-5"}).json["id"]
+    cid = client.post("/api/chats", {"title": "v", "model_slug": "gpt-6.1-sol"}).json["id"]
     assert client.post("/api/chats/%s/messages" % cid, {"role": "robot", "content": "x"}).status == 400
     assert client.post("/api/chats/%s/messages" % cid, {"role": "user", "content": " "}).status == 400
 
 
 def test_disabled_model_refuses_chats():
-    assert client.patch("/api/models/qwen-max", {"enabled": False}).json["enabled"] is False
-    r = client.post("/api/chats", {"title": "x", "model_slug": "qwen-max"})
+    assert client.patch("/api/models/qwen3.8-max", {"enabled": False}).json["enabled"] is False
+    r = client.post("/api/chats", {"title": "x", "model_slug": "qwen3.8-max"})
     assert r.status == 400 and "disabled" in r.json["error"]
     enabled_only = client.get("/api/models?enabled=1").json
     assert all(m["enabled"] for m in enabled_only) and len(enabled_only) == 8

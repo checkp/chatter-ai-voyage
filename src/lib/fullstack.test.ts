@@ -87,12 +87,12 @@ describe('herd starter project', () => {
   it('links model cards to the details page with a slug query', () => {
     const index = files.find(f => f.path === 'frontend/index.html')!.content;
     expect(index).toContain('model.html?slug=');
-    expect(resolvePage(files, 'frontend/index.html', 'model.html?slug=gpt-5')).toBe('frontend/model.html');
+    expect(resolvePage(files, 'frontend/index.html', 'model.html?slug=gpt-6.1-sol')).toBe('frontend/model.html');
   });
 
   it('passes the navigation query into the rendered page', () => {
-    const html = renderPage(files, 'frontend/model.html', 'slug=gpt-5');
-    expect(html).toContain('window.__RH_QUERY__="slug=gpt-5"');
+    const html = renderPage(files, 'frontend/model.html', 'slug=gpt-6.1-sol');
+    expect(html).toContain('window.__RH_QUERY__="slug=gpt-6.1-sol"');
     expect(html).toContain('__rhApi');
   });
 
