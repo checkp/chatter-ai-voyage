@@ -78,13 +78,14 @@ const BuildLayout: React.FC<BuildLayoutProps> = ({
               </SelectContent>
             </Select>
             <span className="text-xs font-semibold text-muted-foreground">Target</span>
-            <Select value={build.lang} onValueChange={(v) => build.setLang(v as 'html' | 'python')}>
-              <SelectTrigger className="h-7 w-[130px] text-xs">
+            <Select value={build.lang} onValueChange={(v) => build.setLang(v as ArtifactLang)}>
+              <SelectTrigger className="h-7 w-[140px] text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="html" className="text-xs">Web app</SelectItem>
                 <SelectItem value="python" className="text-xs">Python</SelectItem>
+                <SelectItem value="fullstack" className="text-xs">Full-stack</SelectItem>
               </SelectContent>
             </Select>
           </div>

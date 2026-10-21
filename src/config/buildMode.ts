@@ -5,7 +5,9 @@
 
 export const ARTIFACT_PLATFORM = 'artifact_panel';
 
-export type ArtifactLang = 'html' | 'python';
+import { STARTER_FULLSTACK, isBundle } from '@/lib/fullstack';
+
+export type ArtifactLang = 'html' | 'python' | 'fullstack';
 
 /** Stage in the compound-engineering pipeline. */
 export type BuildRole = 'plan' | 'implement' | 'test' | 'review';
@@ -48,7 +50,7 @@ def test_placeholder():
 `;
 
 export const starterCode = (lang: ArtifactLang) =>
-  lang === 'python' ? STARTER_PYTHON : STARTER_HTML;
+  lang === 'python' ? STARTER_PYTHON : lang === 'fullstack' ? STARTER_FULLSTACK : STARTER_HTML;
 
 /* ------------------------------------------------------------- test harness */
 
@@ -81,6 +83,28 @@ const PYTHON_RULES = `1. Reply with a COMPLETE, runnable Python script inside a 
 5. Preserve everything that already works, including existing tests. Apply only the change that was asked for, plus obvious fixes. Keep the script self-contained and readable, with logic in small pure functions so it is testable.
 
 ${PYTHON_TEST_CONTRACT}`;
+
+const FULLSTACK_TEST_CONTRACT = `Testing contract (non-negotiable — this is a TDD harness, it really runs):
+- Backend: module-level \`test_*\` functions in backend/app.py using the in-process client: \`r = client.post('/api/items', {"name": "x"})\`, then assert on \`r.status\` and \`r.json\`. The database is reset to a fresh copy of the schema before EVERY test, so each test seeds its own data.
+- Frontend: pages may register \`RH.test('name', async () => { ... })\` (guard with \`if (window.RH)\`). Pages talk to the REAL backend during tests, so test the full loop: fill a form, click, await the fetch, assert the rendered DOM. Helpers: \`RH.assert\`, \`RH.assertEqual\`. Poll briefly for async UI updates instead of fixed sleeps.
+- Deterministic, offline, fast. Cover every acceptance criterion plus edge cases (validation errors, 404s, empty lists).`;
+
+const FULLSTACK_RULES = `1. Reply with the COMPLETE project inside ONE \`\`\`project fenced block. Inside it, start every file with a marker line exactly like \`=== file: backend/app.py ===\`, followed by the file's full contents. Always return EVERY file, even unchanged ones. No partial diffs, no placeholders, no nested code fences.
+2. Layout:
+   - \`db/schema.sql\` — SQLite schema. Use \`CREATE TABLE IF NOT EXISTS\`; seed rows with \`INSERT OR IGNORE\` if needed.
+   - \`backend/app.py\` — API routes in Python 3, standard library only. Import from the provided runtime: \`from rh import get, post, put, patch, delete, query, one, execute, HTTPError, client\`. Routes: \`@get("/api/items/<id>")\` on \`def handler(req)\`; \`req.params\`, \`req.query\`, \`req.json\`. Return a dict/list (200), \`(body, status)\`, or \`raise HTTPError(404, "not found")\`. DB: \`query(sql, params)\` → list of dicts, \`one(...)\` → dict or None, \`execute(...)\` → lastrowid. Always use \`?\` parameters, never string-format SQL. All routes live under \`/api/\`. Extra helper modules may go in \`backend/<name>.py\`. Do NOT write backend/rh.py.
+   - \`frontend/*.html\` — one file per page (\`index.html\` is the entry). Optional shared \`frontend/style.css\` / \`frontend/app.js\` linked with relative \`<link href="style.css">\` / \`<script src="app.js"></script>\`. Pages call the backend with \`fetch('/api/...')\` and link to each other with relative hrefs like \`about.html\`. No build step, no frameworks that need bundling.
+3. The project runs in two places with the same code: an in-browser preview (Pyodide + in-memory SQLite) and a downloaded copy served by \`python server.py\`. So: no third-party Python packages, no threads, no network calls from the backend, no secrets.
+4. Preserve everything that already works, including existing tests. Apply only the change that was asked for, plus obvious fixes. Keep pages polished, accessible and mobile-friendly; show loading and error states for API calls.
+
+${FULLSTACK_TEST_CONTRACT}`;
+
+const RULES: Record<ArtifactLang, string> = {
+  html: HTML_RULES, python: PYTHON_RULES, fullstack: FULLSTACK_RULES,
+};
+const CONTRACT: Record<ArtifactLang, string> = {
+  html: HTML_TEST_CONTRACT, python: PYTHON_TEST_CONTRACT, fullstack: FULLSTACK_TEST_CONTRACT,
+};
 
 /* ------------------------------------------------------------------- roles */
 
@@ -123,9 +147,9 @@ export interface BuildContext {
 export const buildInstructions = ({
   agentName, role, lang, currentCode, plan, harness,
 }: BuildContext) => {
-  const thing = lang === 'python' ? 'Python program' : 'web app';
+  const thing = lang === 'python' ? 'Python program' : lang === 'fullstack' ? 'full-stack project (frontend pages + Python API routes + SQLite schema)' : 'web app';
   const artifactBlock = currentCode
-    ? `Current version (iterate on THIS exact ${lang === 'python' ? 'script' : 'document'}):\n\`\`\`${lang}\n${currentCode}\n\`\`\``
+    ? `Current version (iterate on THIS exact ${lang === 'python' ? 'script' : lang === 'fullstack' ? 'project' : 'document'}):\n\`\`\`${lang === 'fullstack' ? 'project' : lang}\n${currentCode}\n\`\`\``
     : `There is nothing yet — this is the first version.`;
 
   const parts = [
@@ -134,9 +158,9 @@ export const buildInstructions = ({
   ];
 
   if (role !== 'plan') {
-    parts.push(`Hard rules:\n${lang === 'python' ? PYTHON_RULES : HTML_RULES}`);
+    parts.push(`Hard rules:\n${RULES[lang]}`);
   } else {
-    parts.push(lang === 'python' ? PYTHON_TEST_CONTRACT : HTML_TEST_CONTRACT);
+    parts.push(CONTRACT[lang]);
   }
 
   if (plan) parts.push(`Build plan for this round (from the orchestrator — follow it):\n${plan}`);
@@ -156,13 +180,25 @@ export const extractArtifact = (
   reply: string,
   preferred: ArtifactLang = 'html',
 ): { code: string | null; lang: ArtifactLang; notes: string } => {
+  if (preferred === 'fullstack') {
+    let code = fenceFor(reply, ['project', 'fullstack']);
+    if (!code && isBundle(reply)) {
+      const start = reply.search(/^=== file: /m);
+      code = reply.slice(start).replace(/```\s*$/, '').trim();
+    }
+    if (code && isBundle(code)) {
+      const notes = reply.replace(/```[\s\S]*?```/g, '').replace(/^=== file: [\s\S]*/m, '').trim();
+      return { code, lang: 'fullstack', notes };
+    }
+  }
+
   const pythonBlock = fenceFor(reply, ['python', 'py']);
   const htmlBlock = fenceFor(reply, ['html']);
 
   let lang: ArtifactLang = preferred;
   let code: string | null = null;
 
-  if (preferred === 'python') {
+  if (preferred === 'python' || preferred === 'fullstack') {
     code = pythonBlock ?? htmlBlock;
     lang = pythonBlock ? 'python' : htmlBlock ? 'html' : 'python';
   } else {

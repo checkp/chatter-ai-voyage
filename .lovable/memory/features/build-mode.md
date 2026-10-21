@@ -6,3 +6,8 @@
 - Packages come from `loadPackagesFromImports` (bundled wheels only, no network in the script).
 - matplotlib figures are captured automatically after each run (`_rh_capture_figures()` → base64 PNGs); agents must NOT call `plt.show()`/`savefig`.
 - Artifact panel is a vertical split: artifact stage on top (iframe for HTML, output+figures for Python), code browser + console tabs below.
+
+## Full-stack target (v2.15)
+- `lang: 'fullstack'` artifact = one bundle string with `=== file: path ===` markers (db/*.sql, backend/app.py + helpers, frontend/*.html/css/js). Agents reply in one ```project block, always every file.
+- Same `rh` Python runtime (routes + sqlite3) runs in Pyodide for preview and in the exported ZIP (`server.py`, `run_tests.py`, stdlib only).
+- Preview iframe fetches to /api and page links are bridged to the host via postMessage; DB reset before each backend test.

@@ -73,7 +73,7 @@ export const useBuildMode = (
             const parsed = JSON.parse(m.content);
             if (parsed && typeof parsed.code === 'string') {
               code = parsed.code;
-              vLang = parsed.lang === 'python' ? 'python' : 'html';
+              vLang = parsed.lang === 'python' || parsed.lang === 'fullstack' ? parsed.lang : 'html';
               author = parsed.author ?? null;
               role = parsed.role ?? null;
               tests = parsed.tests ?? null;

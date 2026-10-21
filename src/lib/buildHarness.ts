@@ -37,8 +37,14 @@ export const summarise = (report: TestReport | null | undefined): string => {
   return `${report.passed}/${report.total} passing${report.failed ? ` · ${report.failed} failing` : ''}`;
 };
 
-export const hasTests = (code: string, lang: ArtifactLang): boolean =>
-  lang === 'python' ? /^\s*def\s+test_\w+\s*\(/m.test(code) : /RH\.test\s*\(/.test(code);
+export const hasTests = (code: string, lang: ArtifactLang): boolean => {
+  const py = /^\s*def\s+test_\w+\s*\(/m.test(code);
+  const html = /RH\.test\s*\(/.test(code);
+  return lang === 'python' ? py : lang === 'fullstack' ? py || html : html;
+};
+
+export interface ApiRequest { id: number; method: string; url: string; body: string | null }
+export type ApiHandler = (req: ApiRequest) => Promise<{ status: number; body: unknown }>;
 
 /** Failing cases rendered for a model prompt. */
 export const failureDigest = (report: TestReport): string => {
@@ -144,7 +150,7 @@ export const instrumentHtml = (code: string): string => {
 };
 
 /** Run an HTML artifact's suite inside a throwaway sandboxed iframe. */
-export const runHtmlTests = (code: string, timeoutMs = 12000): Promise<TestReport> =>
+export const runHtmlTests = (code: string, timeoutMs = 12000, onApi?: ApiHandler): Promise<TestReport> =>
   new Promise(resolve => {
     const started = Date.now();
     const frame = document.createElement('iframe');
@@ -165,6 +171,13 @@ export const runHtmlTests = (code: string, timeoutMs = 12000): Promise<TestRepor
       if (event.source !== frame.contentWindow) return;
       const data = event.data;
       if (!data || typeof data !== 'object') return;
+      if (data.__rhApi && onApi) {
+        const req = data.__rhApi as ApiRequest;
+        onApi(req)
+          .catch(e => ({ status: 500, body: { error: e instanceof Error ? e.message : String(e) } }))
+          .then(r => frame.contentWindow?.postMessage({ __rhApiReply: { id: req.id, ...r } }, '*'));
+        return;
+      }
       if (Array.isArray(data.__rhTests)) {
         const cases = data.__rhTests as TestCase[];
         const passed = cases.filter(c => c.ok).length;
