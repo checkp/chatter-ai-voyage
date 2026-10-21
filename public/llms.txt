@@ -1,6 +1,6 @@
 # RoboHeard
 
-> Agentic AI orchestration platform. Conductor Mode delegates, debates, and synthesizes responses across GPT-5, Claude 4, Gemini 2.5, Grok-4, DeepSeek-R2, Mistral Large, Perplexity Sonar, and Qwen in real time.
+> Agentic AI orchestration platform. Conductor Mode delegates, debates, and synthesizes responses across GPT-6, Claude 5.5, Gemini 4, Grok 4.7, DeepSeek V4, Mistral Large 4, Perplexity Sonar, and Qwen3.8 in real time.
 
 RoboHeard lets you chat with eight frontier AI models at once, orchestrate them with a Conductor agent that plans and delegates work, or compare answers side-by-side. Free Mode runs autonomous multi-agent debates; the Image Studio fans a single prompt across DALL·E, Gemini, Grok, Qwen Wanx, and Pollinations FLUX.
 
