@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      automation_state: {
+        Row: {
+          job: string
+          last_run_at: string | null
+          lease_expires_at: string | null
+          pause_reason: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          job: string
+          last_run_at?: string | null
+          lease_expires_at?: string | null
+          pause_reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          job?: string
+          last_run_at?: string | null
+          lease_expires_at?: string | null
+          pause_reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           chat_mode: string
@@ -415,6 +442,39 @@ export type Database = {
           platform?: string
           tokens_per_message?: number
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      model_update_reports: {
+        Row: {
+          added: Json
+          copy_hints: Json
+          created_at: string
+          errors: Json
+          id: string
+          ran_at: string
+          retired: Json
+          updated: Json
+        }
+        Insert: {
+          added?: Json
+          copy_hints?: Json
+          created_at?: string
+          errors?: Json
+          id?: string
+          ran_at?: string
+          retired?: Json
+          updated?: Json
+        }
+        Update: {
+          added?: Json
+          copy_hints?: Json
+          created_at?: string
+          errors?: Json
+          id?: string
+          ran_at?: string
+          retired?: Json
+          updated?: Json
         }
         Relationships: []
       }
