@@ -10,7 +10,7 @@ interface InMsg { sender: 'user' | 'ai'; content: string; platform?: string }
 
 function cleanTitle(raw: string): string {
   let t = (raw || '').trim();
-  t = t.replace(/^["'`“”‘’\s]+|["'`“”‘’\s\.\!\?]+$/g, '');
+  t = t.replace(/^["'`“”‘’\s]+|["'`“”‘’\s.!?]+$/g, '');
   t = t.replace(/\s+/g, ' ');
   if (t.length > 60) t = t.substring(0, 60).trimEnd() + '…';
   return t;

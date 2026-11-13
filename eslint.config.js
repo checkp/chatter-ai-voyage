@@ -5,7 +5,10 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  {
+    // agent-mcp/index.ts is bundled by the @lovable.dev/mcp-js Vite plugin and regenerated on every dev/build run.
+    ignores: ["dist", "supabase/functions/agent-mcp/index.ts"],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

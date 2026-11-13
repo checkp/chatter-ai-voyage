@@ -1,6 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { callHubTool, CLOUD_MESH_ID, HubNode, HubModelEntry } from '@/lib/hub/client';
+import { callHubTool, CLOUD_MESH_ID, HubNode, HubAgent, HubRepoFocus, HubModelEntry } from '@/lib/hub/client';
+
+/** A node row as returned by the hub_nodes table, before JSON columns are normalised. */
+type HubNodeRow = Omit<HubNode, 'agents' | 'repo_focus' | 'models'> & {
+  agents: unknown;
+  repo_focus: unknown;
+  models: unknown;
+};
+
+interface HubPresenceNode {
+  mesh_id: string;
+  name?: string;
+  host?: string;
+  models?: HubModelEntry[];
+}
 
 /**
  * Live list of connected mesh nodes (hub_nodes + realtime), plus the synthetic
@@ -18,12 +32,12 @@ export const useHubNodes = (includeCloud = true) => {
       .select('mesh_id, name, host, version, agents, repo_focus, models, last_seen')
       .order('last_seen', { ascending: false });
     setNodes(
-      ((data ?? []) as any[]).map((n) => ({
+      ((data ?? []) as HubNodeRow[]).map((n) => ({
         ...n,
-        agents: Array.isArray(n.agents) ? n.agents : [],
-        repo_focus: Array.isArray(n.repo_focus) ? n.repo_focus : [],
-        models: Array.isArray(n.models) ? n.models : [],
-      })) as HubNode[],
+        agents: Array.isArray(n.agents) ? (n.agents as HubAgent[]) : [],
+        repo_focus: Array.isArray(n.repo_focus) ? (n.repo_focus as HubRepoFocus[]) : [],
+        models: Array.isArray(n.models) ? (n.models as HubModelEntry[]) : [],
+      })),
     );
     setLoading(false);
   }, []);
@@ -51,7 +65,7 @@ export const useHubNodes = (includeCloud = true) => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await callHubTool<{ nodes: any[] }>('hub_presence', {});
+        const res = await callHubTool<{ nodes: HubPresenceNode[] }>('hub_presence', {});
         const cloud = (res?.nodes ?? []).find((n) => n.mesh_id === CLOUD_MESH_ID);
         if (!cancelled && cloud) {
           setCloudNode({

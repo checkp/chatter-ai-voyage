@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { TokenPackage } from '@/types/tokens';
+import { errorMessage } from '@/components/errorMessage';
 
 const AdminTokenPackages: React.FC = () => {
   const queryClient = useQueryClient();
@@ -38,8 +39,8 @@ const AdminTokenPackages: React.FC = () => {
       toast.success(`Updated ${pkg.name}`);
       queryClient.invalidateQueries({ queryKey: ['admin-token-packages'] });
       queryClient.invalidateQueries({ queryKey: ['token-packages'] });
-    } catch (e: any) {
-      toast.error('Failed to save: ' + e.message);
+    } catch (e: unknown) {
+      toast.error('Failed to save: ' + errorMessage(e));
     } finally {
       setSavingId(null);
     }

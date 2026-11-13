@@ -14,7 +14,9 @@ import ConductorLayout from '@/components/ConductorLayout';
 import BuildLayout from '@/components/BuildLayout';
 import { useMultiImageGeneration } from '@/hooks/useMultiImageGeneration';
 import { IMAGE_PANEL_PLATFORM } from '@/config/imageModels';
-import type { AIPlatform, ChatMode } from '@/types/chat';
+import type { AIPlatform, ChatMode, Message } from '@/types/chat';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { CreateChatMutation, PendingMutation } from './types';
 
 interface MainContentProps {
   activeTab: string;
@@ -22,31 +24,31 @@ interface MainContentProps {
   activeChatMode: ChatMode;
   isolatedMode: boolean;
   platforms: AIPlatform[];
-  messages: any;
+  messages: Message[] | undefined;
   isLoadingMessages: boolean;
   isLoadingResponse: boolean;
   transformedStatuses: Record<string, 'thinking' | 'responding' | 'completed' | 'error'>;
   togglePlatform: (platformId: string) => void;
-  scrollAreaRef: React.RefObject<any>;
+  scrollAreaRef: React.RefObject<HTMLDivElement | null>;
   messagesEndRef: React.RefObject<HTMLDivElement>;
   activeChatId: string | null;
   input: string;
   setInput: (input: string) => void;
   handleSend: (activeChatId: string | null, attachments?: import('@/types/chat').Attachment[], textOverride?: string) => void;
   handleStop: () => void;
-  sendMessageMutation: any;
+  sendMessageMutation: PendingMutation;
   canStop: boolean;
   getPendingCount: () => number;
   isFreeMode: boolean;
   isFreeModeRunning: boolean;
   handleSendAndStartConversation: () => void;
-  createChatMutation?: any;
+  createChatMutation?: CreateChatMutation;
   // Conductor mode props
-  conductorMessages?: any;
+  conductorMessages?: Message[];
   conductorAgent?: string;
   onConductorAgentChange?: (agent: string) => void;
   handleConductorSend?: (message: string) => void;
-  user?: any;
+  user?: SupabaseUser;
 }
 
 const MainContent: React.FC<MainContentProps> = ({

@@ -35,9 +35,9 @@ serve(async (req) => {
         if (messages[i].role === 'user') {
           const textPart = { type: 'text', text: messages[i].content };
           const imageParts = attachments
-            .filter((a: any) => typeof a?.dataUrl === 'string' && a.dataUrl.startsWith('data:image/'))
+            .filter((a: { dataUrl?: unknown } | null) => typeof a?.dataUrl === 'string' && a.dataUrl.startsWith('data:image/'))
             .slice(0, 4)
-            .map((a: any) => ({ type: 'image_url', image_url: a.dataUrl }));
+            .map((a: { dataUrl: string }) => ({ type: 'image_url', image_url: a.dataUrl }));
           messages[i] = { role: 'user', content: [textPart, ...imageParts] };
           break;
         }
@@ -45,12 +45,13 @@ serve(async (req) => {
     }
     
     
-    let { data: tokenData, error: tokenError } = await supabaseClient
+    const { data: initialTokenData, error: tokenError } = await supabaseClient
       .from('user_tokens')
       .select('balance, total_consumed')
       .eq('user_id', user_id)
       .single();
 
+    let tokenData = initialTokenData;
     if (tokenError || !tokenData) {
       const { data: newTokenData, error: createError } = await supabaseClient
         .from('user_tokens')

@@ -160,7 +160,7 @@ export const useChats = (user: SupabaseUser | null) => {
       }
 
       toast.success('Chat deleted successfully');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to delete chat:', error);
       toast.error('Failed to delete chat');
     }
@@ -227,7 +227,7 @@ export const useChats = (user: SupabaseUser | null) => {
       }
       
       console.log('saveConversation - All data saved successfully');
-    } catch (error: any) {
+    } catch (error) {
       console.error('saveConversation - Failed to save conversation:', error);
       throw error;
     }
@@ -282,7 +282,7 @@ export const useChats = (user: SupabaseUser | null) => {
       if (validConversations.length > 0 && !activeChat) {
         setActiveChat(validConversations[0].id);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to load conversations:', error);
       toast.error('Failed to load conversations');
     }

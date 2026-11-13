@@ -26,16 +26,18 @@ type Theme = {
 const isHsl = (s: unknown): s is string =>
   typeof s === "string" && /^hsl\(\s*\d{1,3}\s+\d{1,3}%\s+\d{1,3}%\s*\)$/.test(s.trim());
 
-function validate(t: any): Theme | null {
-  if (!t || typeof t !== "object") return null;
+function validate(input: unknown): Theme | null {
+  if (!input || typeof input !== "object") return null;
+  const t = input as Record<string, unknown>;
   const ok =
     typeof t.vibe === "string" && t.vibe.length <= 60 &&
     isHsl(t.bg) && isHsl(t.userBubbleBg) && isHsl(t.userBubbleFg) &&
     isHsl(t.aiBubbleBg) && isHsl(t.aiBubbleFg) && isHsl(t.accent) &&
-    FONTS.includes(t.headingFont) && FONTS.includes(t.bodyFont) &&
+    (FONTS as readonly unknown[]).includes(t.headingFont) &&
+    (FONTS as readonly unknown[]).includes(t.bodyFont) &&
     typeof t.radius === "number" && t.radius >= 4 && t.radius <= 28 &&
-    SHADOWS.includes(t.shadow);
-  return ok ? (t as Theme) : null;
+    (SHADOWS as readonly unknown[]).includes(t.shadow);
+  return ok ? (t as unknown as Theme) : null;
 }
 
 serve(async (req) => {
@@ -59,7 +61,7 @@ serve(async (req) => {
 
     const trimmed = recentMessages
       .slice(-6)
-      .map((m: any) => ({
+      .map((m: { sender?: string; content?: unknown }) => ({
         role: m.sender === "user" ? "user" : "assistant",
         content: String(m.content || "").slice(0, 600),
       }));
@@ -135,7 +137,7 @@ Schema:
         const content = data?.choices?.[0]?.message?.content;
         if (!content) throw new Error("empty_content");
 
-        let parsed: any;
+        let parsed: unknown;
         try { parsed = JSON.parse(content); } catch { throw new Error("invalid_json"); }
 
         const theme = validate(parsed);

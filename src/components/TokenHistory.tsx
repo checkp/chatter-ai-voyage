@@ -7,6 +7,21 @@ import { Coins, TrendingUp, TrendingDown, Gift, Settings } from 'lucide-react';
 import { useTokens } from '@/hooks/useTokens';
 import { formatDistanceToNow } from 'date-fns';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { Json } from '@/integrations/supabase/types';
+
+/** Usage details stored in a token transaction's metadata JSON. */
+interface TransactionMetadata {
+  model?: string;
+  platform?: string;
+  total_tokens?: number;
+  api_cost_dollars?: number;
+  api_cost_per_1k_tokens?: number;
+}
+
+const asTxMeta = (metadata: Json): TransactionMetadata =>
+  typeof metadata === 'object' && metadata !== null && !Array.isArray(metadata)
+    ? (metadata as TransactionMetadata)
+    : {};
 
 interface TokenHistoryProps {
   user: SupabaseUser;
@@ -135,20 +150,20 @@ const TokenHistory: React.FC<TokenHistoryProps> = ({ user }) => {
                         </div>
                         {transaction.metadata && (
                           <div className="text-xs text-muted-foreground space-y-1">
-                            {transaction.metadata.model && (
-                              <div>Model: {transaction.metadata.model}</div>
+                            {asTxMeta(transaction.metadata).model && (
+                              <div>Model: {asTxMeta(transaction.metadata).model}</div>
                             )}
-                            {transaction.metadata.platform && (
-                              <div>Platform: {transaction.metadata.platform}</div>
+                            {asTxMeta(transaction.metadata).platform && (
+                              <div>Platform: {asTxMeta(transaction.metadata).platform}</div>
                             )}
-                            {transaction.metadata.total_tokens && (
-                              <div>API Tokens: {transaction.metadata.total_tokens.toLocaleString()}</div>
+                            {asTxMeta(transaction.metadata).total_tokens && (
+                              <div>API Tokens: {asTxMeta(transaction.metadata).total_tokens.toLocaleString()}</div>
                             )}
-                            {transaction.metadata.api_cost_dollars && (
-                              <div>API Cost: ${transaction.metadata.api_cost_dollars.toFixed(4)}</div>
+                            {asTxMeta(transaction.metadata).api_cost_dollars && (
+                              <div>API Cost: ${asTxMeta(transaction.metadata).api_cost_dollars.toFixed(4)}</div>
                             )}
-                            {transaction.metadata.api_cost_per_1k_tokens && (
-                              <div>Rate: ${transaction.metadata.api_cost_per_1k_tokens}/1k tokens</div>
+                            {asTxMeta(transaction.metadata).api_cost_per_1k_tokens && (
+                              <div>Rate: ${asTxMeta(transaction.metadata).api_cost_per_1k_tokens}/1k tokens</div>
                             )}
                           </div>
                         )}

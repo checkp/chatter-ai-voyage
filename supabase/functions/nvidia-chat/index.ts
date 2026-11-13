@@ -57,7 +57,7 @@ serve(async (req) => {
           const textPart = { type: "text", text: messages[i].content };
           const mediaParts = attachments
             .slice(0, 6)
-            .map((a: any) => {
+            .map((a: { dataUrl?: unknown } | null) => {
               if (typeof a?.dataUrl !== "string") return null;
               if (a.dataUrl.startsWith("data:image/")) {
                 return { type: "image_url", image_url: { url: a.dataUrl } };
@@ -72,12 +72,13 @@ serve(async (req) => {
     }
 
     // Token balance — create initial row if missing.
-    let { data: tokenData, error: tokenError } = await supabaseClient
+    const { data: initialTokenData, error: tokenError } = await supabaseClient
       .from("user_tokens")
       .select("balance, total_consumed")
       .eq("user_id", user_id)
       .single();
 
+    let tokenData = initialTokenData;
     if (tokenError || !tokenData) {
       const { data: newTokenData, error: createError } = await supabaseClient
         .from("user_tokens")

@@ -51,9 +51,24 @@ export class InsufficientTokensError extends Error {
  * Throws `InsufficientTokensError` if the user lacks balance (caller should
  * return HTTP 402). Throws a generic Error on DB failure.
  */
+/** Structural subset of the Supabase client used here (rpc + insert). */
+export interface ChargeSupabaseClient {
+  rpc(
+    fn: string,
+    args: Record<string, unknown>,
+  ): PromiseLike<{ data: unknown; error: { message: string } | null }>;
+  from(table: string): {
+    insert(values: Record<string, unknown>): PromiseLike<{ error: { message: string } | null }>;
+  };
+}
+
+interface DeductRow {
+  new_balance?: number;
+  newBalance?: number;
+}
+
 export async function chargeUser(
-  // deno-lint-ignore no-explicit-any
-  supabase: any,
+  supabase: ChargeSupabaseClient,
   userId: string,
   opts: ChargeOpts,
 ): Promise<ChargeResult> {
@@ -65,7 +80,7 @@ export async function chargeUser(
   });
 
   if (error) throw new Error(`token deduction failed: ${error.message}`);
-  const row = Array.isArray(data) ? data[0] : data;
+  const row = (Array.isArray(data) ? data[0] : data) as DeductRow | null | undefined;
   if (!row) throw new InsufficientTokensError(tokensCharged);
 
   const newBalance = row.new_balance ?? row.newBalance ?? 0;

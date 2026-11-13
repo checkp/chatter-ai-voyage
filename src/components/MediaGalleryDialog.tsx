@@ -64,7 +64,7 @@ const MediaGalleryDialog: React.FC<Props> = ({ open, onOpenChange, user, onOpenC
                 onChange={(e) => setQuery(e.target.value)}
                 className="flex-1"
               />
-              <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
+              <Tabs value={filter} onValueChange={(v) => setFilter(v as 'all' | MediaKind)}>
                 <TabsList>
                   <TabsTrigger value="all">All</TabsTrigger>
                   <TabsTrigger value="generated">Generated</TabsTrigger>

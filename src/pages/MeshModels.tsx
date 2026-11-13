@@ -19,6 +19,7 @@ import {
   displayName,
   isOnline,
 } from '@/lib/hub/client';
+import { errorMessage } from '@/components/errorMessage';
 
 interface Selectable {
   key: string;
@@ -192,8 +193,8 @@ const MeshModels: React.FC = () => {
             .maybeSingle();
           if (data) setJobs((prev) => ({ ...prev, [data.id]: data as HubJob }));
         }
-      } catch (e: any) {
-        toast.error(`${item.model}: ${e?.message ?? 'failed'}`);
+      } catch (e: unknown) {
+        toast.error(`${item.model}: ${errorMessage(e) ?? 'failed'}`);
       }
       created.push(entry);
     }
@@ -218,10 +219,10 @@ const MeshModels: React.FC = () => {
   const statusBadge = (r: RunEntry) => {
     const job = jobFor(r);
     const status = job?.status ?? 'queued';
-    const variant =
+    const variant: 'secondary' | 'destructive' | 'outline' =
       status === 'done' ? 'secondary' : status === 'error' ? 'destructive' : 'outline';
     return (
-      <Badge variant={variant as any} className="text-[10px] py-0">
+      <Badge variant={variant} className="text-[10px] py-0">
         {status} · {elapsed(r)}s
       </Badge>
     );

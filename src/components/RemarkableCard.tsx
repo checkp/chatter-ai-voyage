@@ -24,15 +24,22 @@ type Note = {
 
 type Status = { connected: boolean; connected_at: string | null; last_sync_at: string | null };
 
-const call = async (payload: Record<string, unknown>) => {
+type SyncResult = { up_to_date?: boolean; changed?: number; removed?: number; unchanged?: number };
+type UrlResult = { url?: string };
+
+const call = async <T = unknown>(payload: Record<string, unknown>): Promise<T> => {
   const { data, error } = await supabase.functions.invoke('remarkable', { body: payload });
   if (error) {
     let details = error.message;
-    try { details = await (error as any).context?.text?.() ?? details; } catch { /* noop */ }
+    try {
+      const context = (error as { context?: { text?: () => Promise<string> } }).context;
+      details = (await context?.text?.()) ?? details;
+    } catch { /* keep the original error message when the body cannot be read */ }
     throw new Error(details);
   }
-  if ((data as any)?.error) throw new Error((data as any).error);
-  return data as any;
+  const body = data as { error?: string } | null;
+  if (body?.error) throw new Error(body.error);
+  return data as T;
 };
 
 const RemarkableCard = () => {
@@ -54,7 +61,7 @@ const RemarkableCard = () => {
   useEffect(() => {
     (async () => {
       try {
-        setStatus(await call({ action: 'status' }));
+        setStatus(await call<Status>({ action: 'status' }));
         await loadNotes();
       } catch (e) {
         toast.error(e instanceof Error ? e.message : 'Could not load reMarkable status');
@@ -81,7 +88,7 @@ const RemarkableCard = () => {
     try {
       await call({ action: 'pair', code: code.trim() });
       setCode('');
-      setStatus(await call({ action: 'status' }));
+      setStatus(await call<Status>({ action: 'status' }));
       toast.success('Tablet connected');
       await sync();
     } catch (e) {
@@ -94,9 +101,9 @@ const RemarkableCard = () => {
   const sync = async (force = false) => {
     setBusy(force ? 'resync' : 'sync');
     try {
-      const res = await call({ action: 'sync', force });
+      const res = await call<SyncResult>({ action: 'sync', force });
       await loadNotes();
-      setStatus(await call({ action: 'status' }));
+      setStatus(await call<Status>({ action: 'status' }));
       if (res.up_to_date) {
         toast.success('Already up to date');
       } else {
@@ -131,7 +138,7 @@ const RemarkableCard = () => {
   const fetchPdf = async (docId: string) => {
     setBusy(`pdf:${docId}`);
     try {
-      const res = await call({ action: 'fetch_pdf', doc_id: docId });
+      const res = await call<UrlResult>({ action: 'fetch_pdf', doc_id: docId });
       await loadNotes();
       if (res.url) window.open(res.url, '_blank', 'noopener');
       toast.success('PDF fetched');
@@ -145,7 +152,7 @@ const RemarkableCard = () => {
   const openPdf = async (docId: string) => {
     setBusy(`open:${docId}`);
     try {
-      const res = await call({ action: 'signed_url', doc_id: docId });
+      const res = await call<UrlResult>({ action: 'signed_url', doc_id: docId });
       if (res.url) window.open(res.url, '_blank', 'noopener');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Could not open PDF');

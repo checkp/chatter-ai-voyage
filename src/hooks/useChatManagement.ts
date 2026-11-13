@@ -3,9 +3,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { Chat, Message, ChatMode } from '@/types/chat';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { Attachment, Chat, Message, ChatMode } from '@/types/chat';
 
-export const useChatManagement = (user: any) => {
+export const useChatManagement = (user: SupabaseUser | null) => {
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [activeChatMode, setActiveChatMode] = useState<ChatMode>('discussion');
   const [isolatedMode, setIsolatedMode] = useState<boolean>(false);
@@ -49,7 +50,7 @@ export const useChatManagement = (user: any) => {
       }));
 
       return transformedChats;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to fetch chats:', error);
       throw error;
     }
@@ -95,9 +96,9 @@ export const useChatManagement = (user: any) => {
         created_at: msg.created_at,
         conversation_id: msg.conversation_id,
         timestamp: new Date(msg.created_at),
-        attachments: Array.isArray((msg as any).attachments) ? (msg as any).attachments : [],
+        attachments: Array.isArray(msg.attachments) ? (msg.attachments as unknown as Attachment[]) : [],
       }));
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to fetch messages:', error);
       throw error;
     }
@@ -143,7 +144,7 @@ export const useChatManagement = (user: any) => {
       setActiveChatMode(newChat.chat_mode || 'discussion');
       setIsolatedMode(newChat.isolated_mode || false);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       console.error('Failed to create chat:', error);
       toast.error('Failed to create chat');
     }
@@ -177,7 +178,7 @@ export const useChatManagement = (user: any) => {
       
       toast.success(`Chat view changed to ${updatedChat.chat_mode}`);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       console.error('Failed to update chat mode:', error);
       toast.error('Failed to update chat view');
     }
@@ -211,7 +212,7 @@ export const useChatManagement = (user: any) => {
       
       toast.success(`Isolated mode ${updatedChat.isolated_mode ? 'enabled' : 'disabled'}`);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       console.error('Failed to update isolated mode:', error);
       toast.error('Failed to update isolated mode');
     }
@@ -245,7 +246,7 @@ export const useChatManagement = (user: any) => {
       }
       toast.success('Chat deleted successfully');
     },
-    onError: (error: any) => {
+    onError: (error) => {
       console.error('Failed to delete chat:', error);
       toast.error('Failed to delete chat');
     }

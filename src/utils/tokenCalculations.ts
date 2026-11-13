@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { TokenBalance } from '@/types/tokens';
+import type { AIPlatform } from '@/types/chat';
 
 // Check if user has sufficient tokens
 export const checkTokenBalance = async (
@@ -14,7 +15,7 @@ export const checkTokenBalance = async (
 };
 
 // Calculate token cost for enabled platforms
-export const calculateTokenCost = async (enabledPlatforms: any[]): Promise<number> => {
+export const calculateTokenCost = async (enabledPlatforms: AIPlatform[]): Promise<number> => {
   if (!enabledPlatforms.length) return 0;
 
   const { data: pricing, error } = await supabase

@@ -18,6 +18,11 @@ const IMAGE_USD: Record<string, { platform: string; bySize: Record<string, numbe
   'gemini-pro-image': { platform: 'google', bySize: {}, default: 0.040 },
   'grok-aurora':      { platform: 'xai',    bySize: {}, default: 0.030 },
 };
+interface GeminiImagePart {
+  inlineData?: { data?: string };
+  inline_data?: { data?: string };
+}
+
 function imageCostUsd(model: string, size: string): { platform: string; usd: number } {
   const entry = IMAGE_USD[model] ?? IMAGE_USD['dall-e-3'];
   return { platform: entry.platform, usd: entry.bySize[size] ?? entry.default };
@@ -75,7 +80,7 @@ async function generateWithGemini(prompt: string, model: string): Promise<Uint8A
 
   const data = await response.json();
   const parts = data.candidates?.[0]?.content?.parts ?? [];
-  const imagePart = parts.find((part: any) => part.inlineData?.data || part.inline_data?.data);
+  const imagePart = parts.find((part: GeminiImagePart) => part.inlineData?.data || part.inline_data?.data);
   const b64 = imagePart?.inlineData?.data ?? imagePart?.inline_data?.data;
   if (!b64) throw new Error('No image returned from Gemini');
   return Uint8Array.from(atob(b64), c => c.charCodeAt(0));

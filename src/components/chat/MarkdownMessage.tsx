@@ -20,9 +20,9 @@ const schema = {
   ],
   attributes: {
     ...defaultSchema.attributes,
-    span: [...((defaultSchema.attributes as any)?.span || []), ['style', /^(color|background|background-color|font-style|font-weight|text-decoration|font-family|letter-spacing|text-transform|padding|border-radius|border|opacity):[^;]+;?\s*$/i]],
-    div: [...((defaultSchema.attributes as any)?.div || []), ['style', /^(color|background|background-color|padding|border|border-radius|text-align|opacity):[^;]+;?\s*$/i]],
-    '*': [...((defaultSchema.attributes as any)?.['*'] || []), 'className', 'id'],
+    span: [...(defaultSchema.attributes?.span || []), ['style', /^(color|background|background-color|font-style|font-weight|text-decoration|font-family|letter-spacing|text-transform|padding|border-radius|border|opacity):[^;]+;?\s*$/i]],
+    div: [...(defaultSchema.attributes?.div || []), ['style', /^(color|background|background-color|padding|border|border-radius|text-align|opacity):[^;]+;?\s*$/i]],
+    '*': [...(defaultSchema.attributes?.['*'] || []), 'className', 'id'],
   },
 };
 

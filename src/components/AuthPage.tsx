@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Mail, Lock, Eye, EyeOff, Github, Bot, Brain, Search, Zap, Gem, Users, MessageCircle, Grid3X3, Star, Quote } from 'lucide-react';
+import { errorMessage } from '@/components/errorMessage';
 
 const AuthPage = () => {
   const [searchParams] = useSearchParams();
@@ -200,9 +201,9 @@ const AuthPage = () => {
           }, 500);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Auth error:', error);
-      toast.error(error.message || 'An error occurred during authentication');
+      toast.error(errorMessage(error) || 'An error occurred during authentication');
     } finally {
       setLoading(false);
     }
@@ -238,9 +239,9 @@ const AuthPage = () => {
           console.warn('gtag login event failed:', e);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Google auth error:', error);
-      toast.error(error.message || 'An error occurred with Google authentication');
+      toast.error(errorMessage(error) || 'An error occurred with Google authentication');
       setLoading(false);
     }
   };
@@ -275,9 +276,9 @@ const AuthPage = () => {
           console.warn('gtag login event failed:', e);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('GitHub auth error:', error);
-      toast.error(error.message || 'An error occurred with GitHub authentication');
+      toast.error(errorMessage(error) || 'An error occurred with GitHub authentication');
       setLoading(false);
     }
   };

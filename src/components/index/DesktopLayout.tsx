@@ -15,16 +15,17 @@ import { useTour } from '@/hooks/useTour';
 import { changelog } from '@/data/changelog';
 import MainContent from './MainContent';
 import MeshLiveStrip from './MeshLiveStrip';
-import type { DesktopInterfaceProps } from './types';
+import type { DesktopInterfaceProps, ConductorStateView } from './types';
+import type { Message } from '@/types/chat';
 
 const CHANGELOG_STORAGE_KEY = 'roboheard_last_seen_changelog';
 
 interface DesktopLayoutProps extends DesktopInterfaceProps {
-  conductorState: any;
+  conductorState: ConductorStateView;
   onStartConductor: () => void;
   onStopConductor: () => void;
   onRequestConductorDirection: () => Promise<void>;
-  conductorMessages: any;
+  conductorMessages: Message[] | undefined;
   conductorAgent: string;
   onConductorAgentChange: (agent: string) => void;
   handleConductorSend: (message: string) => Promise<void>;

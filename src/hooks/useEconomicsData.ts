@@ -1,13 +1,17 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
+
+/** Loose view of a transaction's metadata JSON; every field is validated where it is read. */
+type TxMetadata = Record<string, unknown>;
 
 export type EconomicsRange = '7d' | '30d' | '90d' | 'all';
 
 interface TxRow {
   transaction_type: string;
   amount: number;
-  metadata: any;
+  metadata: Json;
   created_at: string;
   user_id: string | null;
   description: string | null;
@@ -133,7 +137,7 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
     queryFn: async () => {
       const { data, error } = await supabase.from('user_tokens').select('balance');
       if (error) throw error;
-      return (data || []).reduce((s: number, r: any) => s + (r.balance || 0), 0);
+      return (data || []).reduce((s: number, r) => s + (r.balance || 0), 0);
     },
     staleTime: 60_000,
     refetchOnWindowFocus: false,
@@ -143,7 +147,7 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
     queryKey: ['economics-demo-usage', range],
     queryFn: async () => {
       const sinceDate = since ? since.slice(0, 10) : '1970-01-01';
-      let daily = supabase
+      const daily = supabase
         .from('demo_daily_usage')
         .select('day, total_calls')
         .gte('day', sinceDate)
@@ -159,8 +163,8 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
       if (usersErr) throw usersErr;
 
       const todayStr = new Date().toISOString().slice(0, 10);
-      const totalCalls = (dailyData || []).reduce((s, r: any) => s + (r.total_calls || 0), 0);
-      const today = (dailyData || []).find((r: any) => r.day === todayStr)?.total_calls || 0;
+      const totalCalls = (dailyData || []).reduce((s, r) => s + (r.total_calls || 0), 0);
+      const today = (dailyData || []).find((r) => r.day === todayStr)?.total_calls || 0;
       const days = (dailyData || []).length || 1;
       return {
         totalCalls,
@@ -215,7 +219,7 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
     }> = [];
 
     for (const t of txs) {
-      const meta = (t.metadata || {}) as any;
+      const meta = (t.metadata || {}) as TxMetadata;
       if (t.transaction_type === 'purchase') {
         let cents = Number(meta.price_cents) || 0;
         if (!cents && typeof meta.amount_paid === 'string') {
@@ -228,7 +232,7 @@ export function useEconomicsData(range: EconomicsRange = '30d') {
         }
         revenueCents += cents;
         tokensSold += t.amount;
-        const pkgId = meta.package_id || null;
+        const pkgId = meta.package_id ? String(meta.package_id) : null;
         const key = pkgId
           ? `id:${pkgId}`
           : `match:${cents}:${t.amount}`;

@@ -33,6 +33,11 @@ const IMAGE_MODELS: Record<string, { provider: "openai" | "gemini" | "grok" | "q
 // 8 gateway calls × ~$0.0006 each (Gemini 2.5 Flash, ~500 in/out tokens).
 const ORCHESTRATION_USD = 0.005;
 
+interface GeminiImagePart {
+  inlineData?: { data?: string };
+  inline_data?: { data?: string };
+}
+
 async function callOpenAIChat(systemPrompt: string, userPrompt: string): Promise<string> {
   const key = Deno.env.get("OPENAI_API_KEY");
   if (!key) throw new Error("OPENAI_API_KEY not set");
@@ -120,7 +125,7 @@ async function generateWithGemini(prompt: string, model: string): Promise<Uint8A
   if (!r.ok) throw new Error(`Gemini image ${r.status}: ${await r.text()}`);
   const d = await r.json();
   const parts = d.candidates?.[0]?.content?.parts ?? [];
-  const imagePart = parts.find((part: any) => part.inlineData?.data || part.inline_data?.data);
+  const imagePart = parts.find((part: GeminiImagePart) => part.inlineData?.data || part.inline_data?.data);
   const b64 = imagePart?.inlineData?.data ?? imagePart?.inline_data?.data;
   if (!b64) throw new Error("No image returned from Gemini");
   return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
@@ -190,7 +195,7 @@ async function generateWithQwen(prompt: string): Promise<Uint8Array> {
     const status = pd.output?.task_status;
     if (status === "SUCCEEDED") {
       imageUrl =
-        pd.output?.choices?.[0]?.message?.content?.find((item: any) => item?.type === "image")?.image ??
+        pd.output?.choices?.[0]?.message?.content?.find((item: { type?: string; image?: string } | null) => item?.type === "image")?.image ??
         pd.output?.results?.[0]?.url ??
         pd.output?.result_url ??
         pd.output?.image_url;

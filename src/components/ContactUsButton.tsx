@@ -42,7 +42,7 @@ const ContactUsButton = () => {
       setMessage('');
       setEmail('');
       setIsOpen(false);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to send message:', error);
       toast.error('Failed to send message. Please try again later.');
     } finally {

@@ -28,12 +28,13 @@ serve(async (req) => {
     const outBudget = Math.min(Math.max(Number(max_output_tokens) || 4096, 256), 32000);
     const user_id = user.id;
 
-    let { data: tokenData, error: tokenError } = await supabaseClient
+    const { data: initialTokenData, error: tokenError } = await supabaseClient
       .from('user_tokens')
       .select('balance, total_consumed')
       .eq('user_id', user_id)
       .single();
 
+    let tokenData = initialTokenData;
     if (tokenError || !tokenData) {
       const { data: newTokenData, error: createError } = await supabaseClient
         .from('user_tokens')

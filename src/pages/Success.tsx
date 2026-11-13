@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { errorMessage } from '@/components/errorMessage';
 
 const Success = () => {
   const [searchParams] = useSearchParams();
@@ -116,10 +117,10 @@ const Success = () => {
             }
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Payment processing error:', error);
-        setError(error.message);
-        toast.error('Failed to process payment: ' + error.message);
+        setError(errorMessage(error) ?? null);
+        toast.error('Failed to process payment: ' + errorMessage(error));
       } finally {
         if (!shouldRetry && !isCompleted) {
           setIsProcessing(false);

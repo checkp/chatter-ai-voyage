@@ -52,7 +52,7 @@ serve(async (req) => {
             if (!r.ok) return null;
             const j = await r.json();
             const models = (j.data ?? [])
-              .map((m: any) => m.id)
+              .map((m: { id: string }) => m.id)
               .filter((m: string) => !/embed/i.test(m)); // embedding models can't chat
             return models.length ? { id, name: p.name, models } : null;
           } catch (_) {

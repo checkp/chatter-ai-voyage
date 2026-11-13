@@ -188,7 +188,7 @@ const AdminEconomics: React.FC = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {demoStats.daily.slice(0, 14).map((d: any) => (
+                      {demoStats.daily.slice(0, 14).map((d) => (
                         <TableRow key={d.day}>
                           <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{d.day}</TableCell>
                           <TableCell className="text-right">{num(d.total_calls)}</TableCell>

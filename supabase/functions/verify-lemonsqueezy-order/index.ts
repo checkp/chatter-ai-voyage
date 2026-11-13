@@ -8,6 +8,22 @@ const corsHeaders = {
 
 const LS_STORE_ID = "399091";
 
+interface LsCheckoutCustom {
+  user_id?: string;
+  package_id?: string;
+}
+
+interface LsOrder {
+  id: string;
+  attributes?: {
+    status?: string;
+    total_formatted?: string;
+    currency?: string;
+    first_order_item?: { checkout_data?: { custom?: LsCheckoutCustom } };
+    checkout_data?: { custom?: LsCheckoutCustom };
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -98,7 +114,7 @@ serve(async (req) => {
     }
 
     // Find newest paid order whose custom data matches this user + package
-    const matchedOrder = (ordersJson.data || []).find((o: any) => {
+    const matchedOrder = (ordersJson.data || []).find((o: LsOrder) => {
       const status = o?.attributes?.status;
       if (status !== "paid") return false;
       const c = o?.attributes?.first_order_item?.checkout_data?.custom

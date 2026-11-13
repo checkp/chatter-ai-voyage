@@ -10,6 +10,20 @@ const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const EMBED_MODEL = "openai/text-embedding-3-small";
 const DIMS = 1536;
 
+interface MessageRow {
+  id: string;
+  conversation_id: string;
+  content: string;
+}
+
+interface EmbeddingRow {
+  user_id: string;
+  conversation_id: string;
+  message_id: string;
+  content: string;
+  embedding: number[];
+}
+
 async function embed(text: string): Promise<number[]> {
   const res = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
     method: "POST",
@@ -27,7 +41,7 @@ async function embed(text: string): Promise<number[]> {
     const t = await res.text();
     throw new Error(`Embedding failed: ${res.status} ${t}`);
   }
-  const data = await res.json();
+  const data: { data: { embedding: number[] }[] } = await res.json();
   return data.data[0].embedding;
 }
 
@@ -70,11 +84,11 @@ serve(async (req) => {
 
       const allowedConvs = new Set(
         (convs ?? [])
-          .filter((c: any) => c.user_id === user.id && c.shared_context_enabled !== false)
-          .map((c: any) => c.id)
+          .filter((c: { id: string; user_id: string; shared_context_enabled?: boolean | null }) => c.user_id === user.id && c.shared_context_enabled !== false)
+          .map((c: { id: string }) => c.id)
       );
 
-      const rows: any[] = [];
+      const rows: EmbeddingRow[] = [];
       for (const it of items) {
         if (!allowedConvs.has(it.conversation_id)) continue;
         if (!it.content || it.content.trim().length < 4) continue;
@@ -116,15 +130,15 @@ serve(async (req) => {
 
     if (mErr) throw mErr;
 
-    const ids = (msgs ?? []).map((m: any) => m.id);
+    const ids = (msgs ?? []).map((m: MessageRow) => m.id);
     const { data: existing } = await admin
       .from("message_embeddings")
       .select("message_id")
       .in("message_id", ids);
-    const have = new Set((existing ?? []).map((e: any) => e.message_id));
+    const have = new Set((existing ?? []).map((e: { message_id: string }) => e.message_id));
 
-    const todo = (msgs ?? []).filter((m: any) => !have.has(m.id) && m.content?.trim().length >= 4);
-    const rows: any[] = [];
+    const todo = (msgs ?? []).filter((m: MessageRow) => !have.has(m.id) && m.content?.trim().length >= 4);
+    const rows: EmbeddingRow[] = [];
     for (const m of todo) {
       try {
         const vec = await embed(m.content);

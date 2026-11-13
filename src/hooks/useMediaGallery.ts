@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { IMAGE_PANEL_PLATFORM, type ImagePanelData } from '@/config/imageModels';
+import type { Attachment } from '@/types/chat';
 
 export type MediaKind = 'generated' | 'uploaded';
 
@@ -23,8 +24,16 @@ export interface ChatMediaGroup {
   items: MediaItem[];
 }
 
-const isImageAttachment = (a: any) =>
-  a && typeof a === 'object' && typeof a.mimeType === 'string' && a.mimeType.startsWith('image/') && typeof a.dataUrl === 'string';
+/** Item while it is being collected: `_fileName` is the storage path used to re-sign its URL. */
+type MediaItemDraft = MediaItem & { _fileName?: string };
+
+type DraftGroup = Omit<ChatMediaGroup, 'items'> & { items: MediaItemDraft[] };
+
+const isImageAttachment = (a: unknown): a is Attachment => {
+  if (!a || typeof a !== 'object') return false;
+  const { mimeType, dataUrl } = a as Partial<Attachment>;
+  return typeof mimeType === 'string' && mimeType.startsWith('image/') && typeof dataUrl === 'string';
+};
 
 export const useMediaGallery = (user: SupabaseUser | null) => {
   return useQuery<ChatMediaGroup[]>({
@@ -42,12 +51,12 @@ export const useMediaGallery = (user: SupabaseUser | null) => {
         supabase.from('generated_images').select('*').eq('user_id', user.id),
       ]);
 
-      const convMap = new Map<string, { title: string; updatedAt: string }>();
-      (convs || []).forEach((c: any) =>
+      const convMap = new Map<string, { title: string; updatedAt: string | null }>();
+      (convs || []).forEach((c) =>
         convMap.set(c.id, { title: c.title || 'Untitled chat', updatedAt: c.updated_at || c.created_at }),
       );
 
-      const groups = new Map<string, ChatMediaGroup>();
+      const groups = new Map<string, DraftGroup>();
       const ensure = (chatId: string) => {
         if (!groups.has(chatId)) {
           const meta = convMap.get(chatId);
@@ -62,10 +71,11 @@ export const useMediaGallery = (user: SupabaseUser | null) => {
       };
 
       // Uploaded attachments + generated image panels from messages
-      (msgs || []).forEach((m: any) => {
+      (msgs || []).forEach((m) => {
         if (!convMap.has(m.conversation_id)) return; // only user's chats
-        if (m.sender === 'user' && Array.isArray(m.attachments)) {
-          m.attachments.filter(isImageAttachment).forEach((a: any, i: number) => {
+        const attachments: unknown = m.attachments;
+        if (m.sender === 'user' && Array.isArray(attachments)) {
+          attachments.filter(isImageAttachment).forEach((a, i) => {
             ensure(m.conversation_id).items.push({
               id: `${m.id}-att-${i}`,
               kind: 'uploaded',
@@ -91,7 +101,7 @@ export const useMediaGallery = (user: SupabaseUser | null) => {
                   createdAt: m.created_at,
                   chatId: m.conversation_id,
                   // stash filename for re-signing below
-                  ...(img.fileName ? { _fileName: img.fileName } as any : {}),
+                  ...(img.fileName ? { _fileName: img.fileName } : {}),
                 });
               }
             });
@@ -99,11 +109,10 @@ export const useMediaGallery = (user: SupabaseUser | null) => {
             /* ignore */
           }
         }
-
       });
 
       // Legacy generated_images
-      (gen || []).forEach((g: any) => {
+      (gen || []).forEach((g) => {
         const chatId = '__standalone__';
         if (!groups.has(chatId)) {
           groups.set(chatId, {
@@ -114,7 +123,7 @@ export const useMediaGallery = (user: SupabaseUser | null) => {
           });
         }
         const group = groups.get(chatId)!;
-        if (group.items.some((it) => (it as any)._fileName === g.file_name)) return;
+        if (group.items.some((it) => it._fileName === g.file_name)) return;
         group.items.push({
           id: `gen-${g.id}`,
           kind: 'generated',
@@ -124,7 +133,7 @@ export const useMediaGallery = (user: SupabaseUser | null) => {
           model: g.model_used,
           createdAt: g.created_at,
           chatId,
-          ...({ _fileName: g.file_name } as any),
+          _fileName: g.file_name,
         });
       });
 
@@ -134,12 +143,12 @@ export const useMediaGallery = (user: SupabaseUser | null) => {
         const m = u.match(/\/generated-images\/(.+?)(\?|$)/);
         return m ? decodeURIComponent(m[1]) : null;
       };
-      const allItems: MediaItem[] = [];
+      const allItems: MediaItemDraft[] = [];
       groups.forEach((g) => allItems.push(...g.items));
       await Promise.all(
         allItems.map(async (it) => {
           if (it.kind !== 'generated') return;
-          const path = (it as any)._fileName || extractPath(it.url);
+          const path = it._fileName || extractPath(it.url);
           if (!path) return;
           const { data: signed } = await supabase.storage
             .from('generated-images')
@@ -159,4 +168,3 @@ export const useMediaGallery = (user: SupabaseUser | null) => {
     },
   });
 };
-

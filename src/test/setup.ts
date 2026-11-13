@@ -15,8 +15,9 @@ Object.defineProperty(window, "matchMedia", {
 });
 
 // Radix uses ResizeObserver / pointer APIs that jsdom lacks.
-if (!(globalThis as any).ResizeObserver) {
-  (globalThis as any).ResizeObserver = class {
+const globalWithObserver = globalThis as typeof globalThis & { ResizeObserver?: unknown };
+if (!globalWithObserver.ResizeObserver) {
+  globalWithObserver.ResizeObserver = class {
     observe() {}
     unobserve() {}
     disconnect() {}

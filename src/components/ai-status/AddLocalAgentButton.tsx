@@ -6,6 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { fetchLocalModels, type LocalProvider } from '@/services/aiApiService';
 import { prettifyModelName } from '@/lib/prettifyModelName';
 import type { AIPlatform } from '@/types/chat';
+import { errorMessage } from '@/components/errorMessage';
 
 interface AddLocalAgentButtonProps {
   localPlatform?: AIPlatform;
@@ -40,8 +41,8 @@ const AddLocalAgentButton: React.FC<AddLocalAgentButtonProps> = ({ localPlatform
     setError(null);
     try {
       setProviders(await fetchLocalModels());
-    } catch (e: any) {
-      setError(e?.message || 'Failed to reach local providers');
+    } catch (e: unknown) {
+      setError(errorMessage(e) || 'Failed to reach local providers');
       setProviders(null);
     } finally {
       setLoading(false);

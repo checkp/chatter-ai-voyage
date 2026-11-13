@@ -4,7 +4,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
-import type { AIPlatform, Message, ChatMode, Attachment } from '@/types/chat';
+import type { AIPlatform, Chat, Message, ChatMode, Attachment } from '@/types/chat';
+import type { Json } from '@/integrations/supabase/types';
 import { generateChatId } from '@/utils/chatUtils';
 import { useTokens } from '@/hooks/useTokens';
 import { useActivityLog } from '@/contexts/ActivityLogContext';
@@ -77,7 +78,7 @@ export const useMessageHandling = (
           content: userMessageObj.content,
           sender: userMessageObj.sender,
           created_at: userMessageObj.created_at,
-          attachments: (userMessageObj.attachments || []) as any,
+          attachments: (userMessageObj.attachments || []) as Json,
         });
 
       if (userMsgError) {
@@ -205,7 +206,7 @@ export const useMessageHandling = (
       // Trigger only when the title is still "New Chat" AND we have enough
       // context (>= 2 user messages, OR 1 user + at least 1 AI reply).
       try {
-        const chats = queryClient.getQueryData(['chats', user.id]) as any[] | undefined;
+        const chats = queryClient.getQueryData(['chats', user.id]) as Chat[] | undefined;
         const currentChat = chats?.find(c => c.id === chatId);
         if (currentChat && currentChat.title === 'New Chat') {
           const allMsgs = (queryClient.getQueryData(['messages', chatId]) as Message[]) || [];
@@ -232,7 +233,7 @@ export const useMessageHandling = (
                 .eq('user_id', user.id)
                 .eq('title', 'New Chat');
               if (!updErr) {
-                queryClient.setQueryData(['chats', user.id], (old: any[] = []) =>
+                queryClient.setQueryData(['chats', user.id], (old: Chat[] = []) =>
                   old.map(c => (c.id === chatId ? { ...c, title: newTitle } : c))
                 );
               }
@@ -257,7 +258,7 @@ export const useMessageHandling = (
       setCanStop(false);
       setActiveAIStatuses({});
     },
-    onError: (error: any) => {
+    onError: (error) => {
       console.error('=== SEND MESSAGE MUTATION ERROR ===', error);
       setIsLoadingResponse(false);
       setCanStop(false);
@@ -311,7 +312,7 @@ export const useMessageHandling = (
         id: generateChatId(),
         content: message,
         sender: 'user',
-        platform: null as any,
+        platform: null,
         created_at: new Date().toISOString(),
         conversation_id: chatId,
         timestamp: new Date(),
