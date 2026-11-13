@@ -40,14 +40,14 @@ const AdminModelPricing: React.FC = () => {
         body: {},
       });
       if (error) throw error;
-      return data;
+      return data as { created?: number; updated?: number } | null;
     },
-    onSuccess: (res: any) => {
+    onSuccess: (res) => {
       toast.success(`Pricing synced (created: ${res?.created ?? 0}, updated: ${res?.updated ?? 0})`);
       queryClient.invalidateQueries({ queryKey: ['model-pricing'] });
       refetch();
     },
-    onError: (err: any) => {
+    onError: (err) => {
       console.error('Sync pricing failed', err);
       toast.error(err?.message || 'Failed to sync model pricing');
     },

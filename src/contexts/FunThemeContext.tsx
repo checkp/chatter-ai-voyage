@@ -80,7 +80,7 @@ export const FunThemeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (error) { console.warn("fun theme error", error); return; }
-      const theme = (data as any)?.theme as FunTheme | undefined;
+      const theme = (data as { theme?: FunTheme } | null)?.theme;
       if (!theme) return;
       const safe = sanitizeTheme(theme);
       setState((s) => ({ ...s, theme: safe, count: s.count + 1 }));

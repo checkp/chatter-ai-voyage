@@ -25,7 +25,7 @@ interface TokenTransactionMetadata {
   price_cents?: number;
   platform?: string;
   model?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface UserWithTokens {
@@ -152,7 +152,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ user }) => {
       toast.success(`User ${!currentIsAdmin ? 'promoted to' : 'removed from'} admin`);
       refetchUsers();
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating user admin status:', error);
       toast.error('Failed to update user admin status');
     }

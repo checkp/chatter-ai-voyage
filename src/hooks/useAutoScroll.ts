@@ -4,7 +4,7 @@ import { useRef, useEffect } from 'react';
  * Auto-scrolls a container to the bottom when messages change.
  * Returns a ref to place at the end of the messages list.
  */
-export const useAutoScroll = (dependencies: any[]) => {
+export const useAutoScroll = (dependencies: unknown[]) => {
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

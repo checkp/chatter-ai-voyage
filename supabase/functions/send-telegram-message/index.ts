@@ -59,8 +59,8 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Strip Markdown control chars to avoid Telegram parser issues / injection
-    const safeEmail = (email || 'Not provided').replace(/[`*_\[\]]/g, '');
-    const safeMessage = message.replace(/[`*_\[\]]/g, '');
+    const safeEmail = (email || 'Not provided').replace(/[`*_[\]]/g, '');
+    const safeMessage = message.replace(/[`*_[\]]/g, '');
 
     const telegramMessage = `🔔 *New Contact Form Submission*
 
@@ -93,7 +93,7 @@ ${safeMessage}
       { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in send-telegram-message function:', error);
     return new Response(
       JSON.stringify({ error: 'Failed to send message' }),

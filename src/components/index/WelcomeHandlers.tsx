@@ -4,12 +4,12 @@ import WelcomeScreen from '@/components/WelcomeScreen';
 import { useAuth } from '@/hooks/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import { seedProfileDemo } from '@/utils/profileDemo';
-import type { ChatMode } from '@/types/chat';
+import type { Chat, ChatMode } from '@/types/chat';
 
 interface WelcomeHandlersProps {
   completeOnboarding: () => Promise<void>;
   skipOnboarding: () => Promise<void>;
-  chats: any[] | undefined;
+  chats: Chat[] | undefined;
   handleCreateChat: (chatMode?: ChatMode) => void;
   setActiveChatId?: (id: string) => void;
 }

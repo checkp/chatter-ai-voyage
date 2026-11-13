@@ -3,6 +3,23 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { ImagePanelData } from '@/config/imageModels';
 
+/** Response body of the multi-image-generate edge function. */
+interface MultiImageResponse {
+  error?: string;
+  masterPrompt: string;
+  proposals: ImagePanelData['proposals'];
+  images: ImagePanelData['images'];
+  tokensUsed: number;
+}
+
+/** Reads `context.error` from a Supabase functions error, when the server provided one. */
+const getContextErrorMessage = (err: unknown): string | undefined => {
+  if (typeof err !== 'object' || err === null || !('context' in err)) return undefined;
+  const ctx = err.context;
+  if (typeof ctx !== 'object' || ctx === null || !('error' in ctx)) return undefined;
+  return typeof ctx.error === 'string' ? ctx.error : undefined;
+};
+
 export const useMultiImageGeneration = () => {
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -15,13 +32,13 @@ export const useMultiImageGeneration = () => {
         return null;
       }
 
-      const { data, error } = await supabase.functions.invoke('multi-image-generate', {
+      const { data, error } = await supabase.functions.invoke<MultiImageResponse>('multi-image-generate', {
         body: { userPrompt, models },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
       if (error) {
-        const msg = (error as any).context?.error ?? error.message ?? 'Image generation failed';
+        const msg = getContextErrorMessage(error) ?? error.message ?? 'Image generation failed';
         toast.error(msg);
         return null;
       }
@@ -30,7 +47,9 @@ export const useMultiImageGeneration = () => {
         return null;
       }
 
-      const successful = data.images.filter((i: any) => i.success).length;
+      if (!data) throw new Error('Image generation failed');
+
+      const successful = data.images.filter((i) => i.success).length;
       toast.success(`Generated ${successful}/${data.images.length} images · ${data.tokensUsed}t`);
 
       return {
@@ -39,9 +58,10 @@ export const useMultiImageGeneration = () => {
         proposals: data.proposals,
         images: data.images,
       };
-    } catch (e: any) {
+    } catch (e) {
       console.error('multi-image generation error:', e);
-      toast.error(e?.message || 'Image generation failed');
+      const message = e instanceof Error ? e.message : undefined;
+      toast.error(message || 'Image generation failed');
       return null;
     } finally {
       setIsGenerating(false);

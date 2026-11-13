@@ -22,9 +22,10 @@ export const handleSignOut = async () => {
     
     // Force page redirect for clean state
     window.location.href = '/auth';
-  } catch (error: any) {
+  } catch (error) {
     console.error('handleSignOut: Unexpected error:', error);
-    toast.error('Error signing out: ' + error.message);
+    const message = error instanceof Error ? error.message : String(error);
+    toast.error('Error signing out: ' + message);
     // Still redirect even if there's an error
     window.location.href = '/auth';
   }

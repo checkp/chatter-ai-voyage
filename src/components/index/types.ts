@@ -1,6 +1,25 @@
 
 import type { Chat, ChatMode, AIPlatform, Message } from '@/types/chat';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { useConductor } from '@/hooks/useConductor';
+
+/** Conductor state as returned by `useConductor`. */
+export type ConductorStateView = ReturnType<typeof useConductor>['conductorState'];
+
+/** Minimal shape of a TanStack `useMutation` result that the index components use. */
+export interface CreateChatMutation {
+  isPending: boolean;
+  mutateAsync: (vars: {
+    title: string;
+    chatMode?: ChatMode;
+    isolatedMode?: boolean;
+  }) => Promise<{ id: string } | null | undefined>;
+}
+
+/** Minimal shape of the send-message mutation: only its pending flag is read by the layouts. */
+export interface PendingMutation {
+  isPending: boolean;
+}
 
 export interface DesktopInterfaceProps {
   chats: Chat[] | undefined;
@@ -9,7 +28,7 @@ export interface DesktopInterfaceProps {
   setActiveChatId: (id: string | null) => void;
   handleCreateChat: () => void;
   handleDeleteChat: (chatId: string) => void;
-  createChatMutation: any;
+  createChatMutation: CreateChatMutation;
   messages: Message[] | undefined;
   isLoadingMessages: boolean;
   isLoadingResponse: boolean;
@@ -34,14 +53,14 @@ export interface DesktopInterfaceProps {
   togglePlatform: (platformId: string) => void;
   selectLocalModel: (model: string | null) => void;
   transformedStatuses: Record<string, 'thinking' | 'responding' | 'completed' | 'error'>;
-  currentChatWithMessages: any;
-  scrollAreaRef: React.RefObject<any>;
+  currentChatWithMessages: (Chat & { messages: Message[] }) | null;
+  scrollAreaRef: React.RefObject<HTMLDivElement | null>;
   messagesEndRef: React.RefObject<HTMLDivElement>;
   input: string;
   setInput: (input: string) => void;
   handleSend: (activeChatId: string | null) => void;
   handleStop: () => void;
-  sendMessageMutation: any;
+  sendMessageMutation: PendingMutation;
   canStop: boolean;
   getPendingCount: () => number;
   handleSendAndStartConversation: () => void;

@@ -2,6 +2,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
+interface GeminiPart {
+  text?: string;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -49,11 +53,12 @@ serve(async (req) => {
       console.log(`Resolved Gemini model ${model} to ${resolvedModel}`);
     }
     
-    let { data: tokenData, error: tokenError } = await supabaseClient
+    const { data: initialTokenData, error: tokenError } = await supabaseClient
       .from("user_tokens")
       .select("balance, total_consumed")
       .eq("user_id", user_id)
       .single();
+    let tokenData = initialTokenData;
 
     if (tokenError || !tokenData) {
       console.log("Creating initial token balance for user:", user_id);
@@ -106,7 +111,7 @@ serve(async (req) => {
       throw new Error("Google API key not configured");
     }
 
-    const geminiMessages = messages.map((msg: any) => ({
+    const geminiMessages: { role: string; parts: Record<string, unknown>[] }[] = messages.map((msg: { role?: string; content: string }) => ({
       role: msg.role === "assistant" ? "model" : "user",
       parts: [{ text: msg.content }],
     }));
@@ -117,7 +122,7 @@ serve(async (req) => {
         if (geminiMessages[i].role === "user") {
           const mediaParts = attachments
             .slice(0, 6)
-            .map((a: any) => {
+            .map((a: { dataUrl?: unknown } | null) => {
               if (typeof a?.dataUrl !== 'string') return null;
               const m = /^data:([^;]+);base64,(.+)$/.exec(a.dataUrl);
               if (!m) return null;
@@ -127,7 +132,7 @@ serve(async (req) => {
               }
               return null;
             })
-            .filter(Boolean);
+            .filter((p): p is Record<string, unknown> => p !== null);
           geminiMessages[i].parts.push(...mediaParts);
           break;
         }
@@ -142,7 +147,7 @@ serve(async (req) => {
       generationConfig.thinkingConfig = { thinkingBudget: 8000 };
       console.log('[gemini] enabling thinking');
     }
-    const geminiTools: any[] = [];
+    const geminiTools: Record<string, unknown>[] = [];
     if (capabilities.search || capabilities.deep_research) {
       geminiTools.push({ google_search: {} });
       console.log('[gemini] enabling google_search');
@@ -176,7 +181,7 @@ serve(async (req) => {
     // With tools (search/code_execution) parts may include executableCode /
     // codeExecutionResult / groundingMetadata. Concatenate all text parts.
     const parts = data_response.candidates?.[0]?.content?.parts ?? [];
-    const textParts = parts.filter((p: any) => typeof p?.text === 'string').map((p: any) => p.text);
+    const textParts = parts.filter((p: GeminiPart) => typeof p?.text === 'string').map((p: GeminiPart) => p.text);
     const content = textParts.join('\n\n');
 
     if (!content) {
@@ -184,7 +189,7 @@ serve(async (req) => {
     }
 
     const apiCostPer1kTokens = pricingData?.api_cost_per_1k_tokens || 0.001;
-    const estimatedTokens = Math.ceil((messages.reduce((acc: number, msg: any) => acc + msg.content.length, 0) + content.length) / 4);
+    const estimatedTokens = Math.ceil((messages.reduce((acc: number, msg: { content: string }) => acc + msg.content.length, 0) + content.length) / 4);
     const actualApiCost = (estimatedTokens / 1000) * apiCostPer1kTokens;
     const tokensToDeduct = Math.max(1, Math.ceil((actualApiCost * 1.20) / 0.001));
 
@@ -226,7 +231,7 @@ serve(async (req) => {
       status: 200,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Gemini function error:", error);
     return new Response(JSON.stringify({ error: 'Request failed' }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

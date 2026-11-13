@@ -164,7 +164,13 @@ let loadPromise: Promise<void> | null = null;
 let loaded = false;
 const listeners = new Set<() => void>();
 
-const notify = () => listeners.forEach(fn => { try { fn(); } catch {} });
+const notify = () => listeners.forEach(fn => {
+  try {
+    fn();
+  } catch {
+    // A failing listener must not stop the remaining listeners from being notified.
+  }
+});
 
 const humanizeName = (id: string) => id.split(/[-_]/).map(s => s[0]?.toUpperCase() + s.slice(1)).join(' ');
 

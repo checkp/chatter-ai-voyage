@@ -38,7 +38,7 @@ serve(async (req) => {
           const textPart = { type: 'text', text: messages[i].content };
           const mediaParts = attachments
             .slice(0, 6)
-            .map((a: any) => {
+            .map((a: { dataUrl?: unknown; name?: string } | null) => {
               if (typeof a?.dataUrl !== 'string') return null;
               if (a.dataUrl.startsWith('data:image/')) {
                 return { type: 'image_url', image_url: { url: a.dataUrl } };
@@ -56,12 +56,13 @@ serve(async (req) => {
     }
     
     // Check token balance - create if doesn't exist
-    let { data: tokenData, error: tokenError } = await supabaseClient
+    const { data: initialTokenData, error: tokenError } = await supabaseClient
       .from('user_tokens')
       .select('balance, total_consumed')
       .eq('user_id', user_id)
       .single();
 
+    let tokenData = initialTokenData;
     if (tokenError || !tokenData) {
       console.log('Creating initial token balance for user:', user_id);
       // Create initial token balance
@@ -125,7 +126,7 @@ serve(async (req) => {
       reqBody.reasoning_effort = 'high';
       console.log('[openai] enabling reasoning_effort=high');
     }
-    const tools: any[] = [];
+    const tools: Record<string, unknown>[] = [];
     if (capabilities.search || capabilities.deep_research) {
       tools.push({ type: 'web_search' });
       console.log('[openai] enabling web_search tool');

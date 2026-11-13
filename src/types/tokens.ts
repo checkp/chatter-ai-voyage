@@ -1,3 +1,4 @@
+import type { Json } from '@/integrations/supabase/types';
 
 export interface TokenBalance {
   balance: number;
@@ -11,7 +12,7 @@ export interface TokenTransaction {
   amount: number;
   balance_after: number;
   description: string;
-  metadata: any;
+  metadata: Json;
   created_at: string;
 }
 

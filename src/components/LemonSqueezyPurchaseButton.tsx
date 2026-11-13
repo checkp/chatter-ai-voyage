@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { errorMessage } from '@/components/errorMessage';
 
 interface Props {
   packageId: string;
@@ -78,9 +79,9 @@ const LemonSqueezyPurchaseButton: React.FC<Props> = ({
       } else {
         throw new Error('No checkout URL returned');
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Lemon Squeezy purchase error:', e);
-      toast.error('Checkout failed: ' + e.message);
+      toast.error('Checkout failed: ' + errorMessage(e));
       setIsLoading(false);
     }
   };

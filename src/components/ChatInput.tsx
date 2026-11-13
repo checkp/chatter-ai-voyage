@@ -14,6 +14,9 @@ import { isImageGenerationIntent } from '@/utils/intentDetection';
 import { IMAGE_MODEL_OPTIONS, PROMPT_COLLAB_COST } from '@/config/imageModels';
 import { setPendingCapabilities, type Capabilities } from '@/lib/capabilities';
 import type { Attachment } from '@/types/chat';
+
+/** Attachment whose extracted text content is inlined into the outgoing message. */
+type TextAttachment = Attachment & { textContent?: string };
 import { toast } from 'sonner';
 
 const DEFAULT_IMAGE_MODELS = IMAGE_MODEL_OPTIONS.map(m => m.id);
@@ -134,8 +137,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
     // Inline text-file contents so every provider sees them.
     const textInlines = attachments
-      .filter(a => (a as any).textContent)
-      .map(a => `\n\n--- attached file: ${a.name} ---\n${(a as any).textContent}\n--- end ${a.name} ---`)
+      .filter(a => (a as TextAttachment).textContent)
+      .map(a => `\n\n--- attached file: ${a.name} ---\n${(a as TextAttachment).textContent}\n--- end ${a.name} ---`)
       .join('');
     const finalText = input + textInlines;
 

@@ -15,9 +15,9 @@ export function isLocalAgentSupported(): boolean {
 
   // Prefer the modern UA-Client-Hints API when available — it reports
   // Chromium presence without the usual UA-string ambiguity.
-  const uaData = (navigator as any).userAgentData;
+  const uaData = (navigator as Navigator & { userAgentData?: { brands?: { brand: string }[] } }).userAgentData;
   if (uaData?.brands?.length) {
-    return uaData.brands.some((b: { brand: string }) =>
+    return uaData.brands.some((b) =>
       /Chromium|Google Chrome|Microsoft Edge|Opera|Brave/i.test(b.brand),
     );
   }

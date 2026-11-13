@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { TablesInsert } from '@/integrations/supabase/types';
+import { errorMessage } from '@/components/errorMessage';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -62,7 +64,7 @@ const AgentSettings = () => {
 
   const [hasLoaded, setHasLoaded] = useState(false);
 
-  const debounceTimers = useRef<Record<string, any>>({});
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const loadSettings = useCallback(async () => {
     if (hasLoaded) return;
@@ -106,15 +108,15 @@ const AgentSettings = () => {
       setSelectedModels(modelsMap);
       setEnabledPlatforms(enabledMap);
       setCustomInstructions(instructionsMap);
-      setGlobalPrompt((profile as any)?.custom_system_prompt ?? DEFAULT_GLOBAL_SYSTEM_PROMPT);
+      setGlobalPrompt(profile?.custom_system_prompt ?? DEFAULT_GLOBAL_SYSTEM_PROMPT);
       setConductorPrompt(
-        (profile as any)?.custom_conductor_prompt ?? DEFAULT_CONDUCTOR_PROMPT
+        profile?.custom_conductor_prompt ?? DEFAULT_CONDUCTOR_PROMPT
       );
 
       setHasLoaded(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to load agent settings:', error);
-      toast.error('Failed to load agent settings: ' + error.message);
+      toast.error('Failed to load agent settings: ' + errorMessage(error));
     }
   }, [hasLoaded]);
 
@@ -128,7 +130,7 @@ const AgentSettings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      const updateData: any = {
+      const updateData: TablesInsert<'user_agent_settings'> = {
         user_id: user.id,
         platform,
         updated_at: new Date().toISOString(),
@@ -143,9 +145,9 @@ const AgentSettings = () => {
 
       if (error) throw error;
       toast.success('Saved');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to save:', error);
-      toast.error('Failed to save: ' + error.message);
+      toast.error('Failed to save: ' + errorMessage(error));
     }
   };
 
@@ -193,8 +195,8 @@ const AgentSettings = () => {
           .eq('id', user.id);
         if (error) throw error;
         toast.success('Global prompt saved');
-      } catch (error: any) {
-        toast.error('Failed to save: ' + error.message);
+      } catch (error: unknown) {
+        toast.error('Failed to save: ' + errorMessage(error));
       }
     }, 800);
   }, []);
@@ -212,8 +214,8 @@ const AgentSettings = () => {
           .eq('id', user.id);
         if (error) throw error;
         toast.success('Conductor prompt saved');
-      } catch (error: any) {
-        toast.error('Failed to save: ' + error.message);
+      } catch (error: unknown) {
+        toast.error('Failed to save: ' + errorMessage(error));
       }
     }, 800);
   }, []);

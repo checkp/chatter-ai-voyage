@@ -2,6 +2,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+interface ClaudeContentBlock {
+  type?: string;
+  text?: string;
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -46,7 +51,8 @@ serve(async (req) => {
 
     console.log('User authenticated successfully:', user.id)
 
-    let { messages, model = 'claude-sonnet-5-5', attachments, capabilities = {} , max_output_tokens } = await req.json()
+    const { messages, attachments, capabilities = {}, max_output_tokens, model: requestedModel = 'claude-sonnet-5-5' } = await req.json()
+    let model: string = requestedModel;
     const outBudget = Math.min(Math.max(Number(max_output_tokens) || 4096, 256), 32000);
 
     // Normalize legacy / invalid Claude model ids to current Anthropic ids
@@ -79,7 +85,7 @@ serve(async (req) => {
           const textPart = { type: 'text', text: messages[i].content };
           const mediaParts = attachments
             .slice(0, 6)
-            .map((a: any) => {
+            .map((a: { dataUrl?: unknown } | null) => {
               if (typeof a?.dataUrl !== 'string') return null;
               const imgMatch = /^data:(image\/[a-zA-Z+.-]+);base64,(.+)$/.exec(a.dataUrl);
               if (imgMatch) {
@@ -99,11 +105,12 @@ serve(async (req) => {
     }
 
     // Check token balance - create if doesn't exist
-    let { data: tokenData, error: tokenError } = await supabaseClient
+    const { data: initialTokenData, error: tokenError } = await supabaseClient
       .from('user_tokens')
       .select('balance, total_consumed')
       .eq('user_id', user_id)
       .single();
+    let tokenData = initialTokenData;
 
     if (tokenError || !tokenData) {
       console.log('Creating initial token balance for user:', user_id);
@@ -173,7 +180,7 @@ serve(async (req) => {
       reqBody.max_tokens = Math.max(outBudget, 12000);
       console.log('[claude] enabling extended thinking');
     }
-    const tools: any[] = [];
+    const tools: Record<string, unknown>[] = [];
     if (capabilities.search || capabilities.deep_research) {
       tools.push({ type: 'web_search_20250305', name: 'web_search' });
       console.log('[claude] enabling web_search tool');
@@ -257,8 +264,8 @@ serve(async (req) => {
     // blocks (thinking, tool_use, text). Concatenate text-type blocks; surface
     // tool_result text where available.
     const textBlocks = (data.content || [])
-      .filter((b: any) => b?.type === 'text' && typeof b.text === 'string')
-      .map((b: any) => b.text);
+      .filter((b: ClaudeContentBlock) => b?.type === 'text' && typeof b.text === 'string')
+      .map((b: ClaudeContentBlock) => b.text);
     const finalText = textBlocks.length > 0 ? textBlocks.join('\n\n') : (data.content?.[0]?.text ?? '');
 
     return new Response(

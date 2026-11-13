@@ -10,6 +10,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface RawModel {
+  id?: unknown;
+  name?: unknown;
+  model?: unknown;
+  display_name?: unknown;
+}
+
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
@@ -64,7 +71,7 @@ serve(async (req) => {
 
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 5000);
-    let payload: any;
+    let payload: { data?: RawModel[]; models?: RawModel[] } | undefined;
     try {
       const res = await fetch(`${base}/models`, { signal: ctrl.signal });
       if (!res.ok) {
@@ -77,7 +84,7 @@ serve(async (req) => {
       clearTimeout(timer);
     }
 
-    const rawList: any[] = Array.isArray(payload?.data)
+    const rawList: RawModel[] = Array.isArray(payload?.data)
       ? payload.data
       : Array.isArray(payload?.models)
       ? payload.models

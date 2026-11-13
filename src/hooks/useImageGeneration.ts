@@ -86,7 +86,7 @@ export const useImageGeneration = (user: SupabaseUser | null) => {
       queryClient.invalidateQueries({ queryKey: ['generated-images', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['tokens', user?.id] });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       console.error('Image generation error:', error);
       if (error.message.includes('Insufficient tokens')) {
         toast.error('Insufficient tokens for image generation');

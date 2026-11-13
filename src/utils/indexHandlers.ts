@@ -1,18 +1,31 @@
 
-import type { ChatMode } from '@/types/chat';
+import type { AIPlatform, ChatMode, Message } from '@/types/chat';
+
+/** Minimal shape of a react-query mutation used by the index handlers. */
+interface MutationLike<TVariables> {
+  mutate: (variables: TVariables) => unknown;
+}
+
+type CallAIAPI = (platform: AIPlatform, messages: Message[], enabledPlatforms: AIPlatform[]) => Promise<string>;
+type SendSingleAgentMessage = (chatId: string, message: string, platformId: string) => Promise<void>;
 
 export const createIndexHandlers = (
-  deleteChatMutation: any,
-  createChatMutation: any,
-  updateChatModeMutation: any,
-  updateIsolatedModeMutation: any,
-  sendSingleAgentMessage: any,
+  deleteChatMutation: MutationLike<string>,
+  createChatMutation: MutationLike<{ title: string; chatMode: ChatMode }>,
+  updateChatModeMutation: MutationLike<{ chatId: string; chatMode: ChatMode }>,
+  updateIsolatedModeMutation: MutationLike<{ chatId: string; isolatedMode: boolean }>,
+  sendSingleAgentMessage: SendSingleAgentMessage,
   activeChatId: string | null,
   isMobile: boolean,
-  platforms: any[],
-  callAIAPI: any,
-  startFreeMode: any,
-  handleSend: any,
+  platforms: AIPlatform[],
+  callAIAPI: CallAIAPI,
+  startFreeMode: (
+    activeChatId: string | null,
+    platforms: AIPlatform[],
+    callAIAPI: CallAIAPI,
+    sendSingleAgentMessage: SendSingleAgentMessage,
+  ) => unknown,
+  handleSend: (activeChatId: string | null) => unknown,
   input: string
 ) => {
   const handleDeleteChat = (chatId: string) => {

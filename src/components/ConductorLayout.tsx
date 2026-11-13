@@ -5,6 +5,7 @@ import ConductorOnboarding from '@/components/conductor/ConductorOnboarding';
 import ConductorPane from '@/components/conductor/ConductorPane';
 import AgentPane from '@/components/conductor/AgentPane';
 import { useConductorOnboarding } from '@/hooks/useConductorOnboarding';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface ConductorLayoutProps {
   conductorMessages: Message[];
@@ -16,7 +17,7 @@ interface ConductorLayoutProps {
   onConductorSend?: (message: string) => void;
   onAgentSend?: (message: string) => void;
   onGenerateImages?: (prompt: string, models: string[]) => void;
-  user?: any;
+  user?: SupabaseUser;
 }
 
 const ConductorLayout: React.FC<ConductorLayoutProps> = ({

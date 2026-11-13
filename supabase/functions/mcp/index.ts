@@ -732,10 +732,10 @@ async function toolWebSearch(_ctx: AuthCtx, args: Record<string, unknown>) {
     return_related_questions: false,
     max_tokens: 1500,
   };
-  if (recency) (body as any).search_recency_filter = recency;
-  if (mode && mode !== "web") (body as any).search_mode = mode;
-  if (domains && domains.length > 0) (body as any).search_domain_filter = domains;
-  if (maxResults) (body as any).web_search_options = { search_context_size: maxResults >= 12 ? "high" : maxResults >= 6 ? "medium" : "low" };
+  if (recency) body.search_recency_filter = recency;
+  if (mode && mode !== "web") body.search_mode = mode;
+  if (domains && domains.length > 0) body.search_domain_filter = domains;
+  if (maxResults) body.web_search_options = { search_context_size: maxResults >= 12 ? "high" : maxResults >= 6 ? "medium" : "low" };
 
   const res = await fetch("https://api.perplexity.ai/chat/completions", {
     method: "POST",

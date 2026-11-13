@@ -27,7 +27,7 @@ export const useConductorMode = (
       .eq('id', user.id)
       .maybeSingle()
       .then(({ data }) => {
-        setConductorSystemPrompt((data as any)?.custom_conductor_prompt ?? null);
+        setConductorSystemPrompt((data as { custom_conductor_prompt?: string | null } | null)?.custom_conductor_prompt ?? null);
       });
   }, [user]);
 

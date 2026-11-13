@@ -274,9 +274,10 @@ const probeProvider = async (
     const r = await fetch(`${p.baseUrl}/models`, { signal: ctrl.signal });
     clearTimeout(t);
     if (!r.ok) return null;
-    const j = await r.json();
-    const models: string[] = (j.data ?? j.models ?? [])
-      .map((m: any) => m.id ?? m.name ?? m.model)
+    const j: { data?: unknown; models?: unknown } = await r.json();
+    const list = (j.data ?? j.models ?? []) as Array<{ id?: unknown; name?: unknown; model?: unknown }>;
+    const models: string[] = list
+      .map((m) => m.id ?? m.name ?? m.model)
       .filter((id: unknown): id is string => typeof id === 'string' && !/embed/i.test(id));
     return models.length ? { ...p, models } : null;
   } catch {

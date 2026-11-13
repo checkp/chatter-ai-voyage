@@ -157,22 +157,23 @@ export const SHADOW_MAP = {
 export function themeToCssVars(t: FunTheme): React.CSSProperties {
   // Page foreground should be readable against page bg.
   const pageFg = ensureReadable(t.aiBubbleFg, t.bg, 4.5);
-  return {
+  const cssVars: Record<string, string> = {
     background: t.bg,
     color: pageFg,
     fontFamily: FUN_FONTS[t.bodyFont],
-    ["--fun-page-bg" as any]: t.bg,
-    ["--fun-page-fg" as any]: pageFg,
-    ["--fun-user-bg" as any]: t.userBubbleBg,
-    ["--fun-user-fg" as any]: t.userBubbleFg,
-    ["--fun-ai-bg" as any]: t.aiBubbleBg,
-    ["--fun-ai-fg" as any]: t.aiBubbleFg,
-    ["--fun-accent" as any]: t.accent,
-    ["--fun-radius" as any]: `${t.radius}px`,
-    ["--fun-shadow" as any]: SHADOW_MAP[t.shadow],
-    ["--fun-font-heading" as any]: FUN_FONTS[t.headingFont],
-    ["--fun-font-body" as any]: FUN_FONTS[t.bodyFont],
-  } as React.CSSProperties;
+    "--fun-page-bg": t.bg,
+    "--fun-page-fg": pageFg,
+    "--fun-user-bg": t.userBubbleBg,
+    "--fun-user-fg": t.userBubbleFg,
+    "--fun-ai-bg": t.aiBubbleBg,
+    "--fun-ai-fg": t.aiBubbleFg,
+    "--fun-accent": t.accent,
+    "--fun-radius": `${t.radius}px`,
+    "--fun-shadow": SHADOW_MAP[t.shadow],
+    "--fun-font-heading": FUN_FONTS[t.headingFont],
+    "--fun-font-body": FUN_FONTS[t.bodyFont],
+  };
+  return cssVars as React.CSSProperties;
 }
 
 export const FUN_THEME_CAP = 40;

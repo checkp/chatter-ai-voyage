@@ -60,7 +60,7 @@ serve(async (req) => {
 
     const recentUserText = (msgs ?? [])
       .reverse()
-      .map((m: any) => `- ${m.content?.slice(0, 400) ?? ""}`)
+      .map((m: { content?: string | null }) => `- ${m.content?.slice(0, 400) ?? ""}`)
       .join("\n")
       .slice(0, 6000);
 

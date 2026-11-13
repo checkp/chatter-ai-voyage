@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -60,7 +60,7 @@ async function refreshUserToken(deviceToken: string): Promise<{ token: string; e
   return { token: text, expiresAt: new Date(expMs).toISOString() };
 }
 
-async function getUserToken(admin: any, userId: string) {
+async function getUserToken(admin: SupabaseClient, userId: string) {
   const { data: conn } = await admin
     .from("remarkable_connections")
     .select("device_token, user_token, user_token_expires_at")
@@ -122,8 +122,17 @@ async function readRoot(token: string) {
  * Resolve metadata for the given index entries only.
  * Entries whose hash matches the cached one are never fetched.
  */
+interface RemarkableDoc {
+  doc_id: string;
+  doc_hash: string;
+  name: string;
+  parent_id: string | null;
+  doc_type: string;
+  modified_at: string | null;
+}
+
 async function fetchDocs(entries: IndexEntry[], token: string) {
-  const results: any[] = [];
+  const results: RemarkableDoc[] = [];
   const queue = [...entries];
   const CONCURRENCY = 8;
 
@@ -265,7 +274,7 @@ serve(async (req) => {
           .select("pdf_path")
           .eq("user_id", userId)
           .not("pdf_path", "is", null);
-        const paths = (notes ?? []).map((n: any) => n.pdf_path).filter(Boolean);
+        const paths = (notes ?? []).map((n: { pdf_path: string | null }) => n.pdf_path).filter(Boolean);
         if (paths.length) await admin.storage.from(BUCKET).remove(paths);
         await admin.from("remarkable_notes").delete().eq("user_id", userId);
         return json({ connected: false });
@@ -304,7 +313,7 @@ serve(async (req) => {
           .select("doc_id, doc_hash")
           .eq("user_id", userId);
         const cachedHashes = new Map<string, string | null>(
-          (cached ?? []).map((r: any) => [r.doc_id, r.doc_hash]),
+          (cached ?? []).map((r: { doc_id: string; doc_hash: string | null }) => [r.doc_id, r.doc_hash]),
         );
 
         const changedEntries = force
@@ -337,7 +346,7 @@ serve(async (req) => {
             .eq("user_id", userId)
             .in("doc_id", goneIds)
             .not("pdf_path", "is", null);
-          const paths = (gone ?? []).map((n: any) => n.pdf_path).filter(Boolean);
+          const paths = (gone ?? []).map((n: { pdf_path: string | null }) => n.pdf_path).filter(Boolean);
           if (paths.length) await admin.storage.from(BUCKET).remove(paths);
           await admin
             .from("remarkable_notes")

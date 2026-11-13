@@ -25,7 +25,8 @@ serve(async (req) => {
 
     if (!user?.id) throw new Error("User not authenticated");
 
-    let { messages, model = 'deepseek-flash', capabilities = {} , max_output_tokens } = await req.json();
+    const { messages, capabilities = {}, max_output_tokens, model: requestedModel = 'deepseek-flash' } = await req.json();
+    let model: string = requestedModel;
     const outBudget = Math.min(Math.max(Number(max_output_tokens) || 4096, 256), 32000);
     const user_id = user.id;
 
@@ -48,11 +49,12 @@ serve(async (req) => {
     }
     
     // Check token balance - create if doesn't exist
-    let { data: tokenData, error: tokenError } = await supabaseClient
+    const { data: initialTokenData, error: tokenError } = await supabaseClient
       .from('user_tokens')
       .select('balance, total_consumed')
       .eq('user_id', user_id)
       .single();
+    let tokenData = initialTokenData;
 
     if (tokenError || !tokenData) {
       console.log('Creating initial token balance for user:', user_id);

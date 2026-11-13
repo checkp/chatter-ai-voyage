@@ -1,6 +1,9 @@
 import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
-import type { AIPlatform } from '@/types/chat';
+import type { AIPlatform, Message } from '@/types/chat';
+
+type CallAIAPI = (platform: AIPlatform, messages: Message[], enabledPlatforms: AIPlatform[]) => Promise<string>;
+type SendSingleAgentMessage = (chatId: string, message: string, platformId: string) => Promise<void>;
 
 export const useFreeMode = () => {
   const [isFreeMode, setIsFreeMode] = useState(false);
@@ -12,8 +15,8 @@ export const useFreeMode = () => {
   const startFreeMode = useCallback(async (
     activeChatId: string | null,
     platforms: AIPlatform[],
-    callAIAPI: any,
-    sendSingleAgentMessage: any
+    callAIAPI: CallAIAPI,
+    sendSingleAgentMessage: SendSingleAgentMessage
   ) => {
     if (!activeChatId) {
       toast.error('Please select a chat to start conversation mode');
@@ -55,8 +58,8 @@ export const useFreeMode = () => {
   const runFreeModeConversation = async (
     chatId: string,
     enabledPlatforms: AIPlatform[],
-    callAIAPI: any,
-    sendSingleAgentMessage: any
+    callAIAPI: CallAIAPI,
+    sendSingleAgentMessage: SendSingleAgentMessage
   ) => {
     let currentMessageCount = 0;
     let currentPlatformIndex = 0;

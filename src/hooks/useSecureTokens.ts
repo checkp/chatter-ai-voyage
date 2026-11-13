@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { Json } from '@/integrations/supabase/types';
 
 interface TokenBalance {
   balance: number;
@@ -17,7 +18,7 @@ interface TokenTransaction {
   amount: number;
   balance_after: number;
   description: string;
-  metadata: any;
+  metadata: Json;
   created_at: string;
 }
 
@@ -97,10 +98,12 @@ export const useSecureTokens = (user: SupabaseUser | null) => {
       const timeDiff = Date.now() - new Date(latestTransaction.created_at).getTime();
       
       // If there's a recent large deduction without a corresponding API call, flag it
+      const metadata = latestTransaction.metadata;
+      const hasPlatform = typeof metadata === 'object' && metadata !== null && !Array.isArray(metadata) && Boolean(metadata.platform);
       if (timeDiff < 60000 && // Within last minute
           latestTransaction.transaction_type === 'consumption' && 
           Math.abs(latestTransaction.amount) > 100 && // Large deduction
-          !latestTransaction.metadata?.platform) { // No platform metadata
+          !hasPlatform) { // No platform metadata
         console.warn('Suspicious token transaction detected:', latestTransaction);
         toast.warning('Unusual token activity detected. Please review your account.');
       }

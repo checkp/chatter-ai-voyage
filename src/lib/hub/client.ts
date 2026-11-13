@@ -64,7 +64,7 @@ export const CLOUD_MESH_ID = 'roboheard';
 let rpcId = 0;
 
 /** Call an MCP tool with the current Supabase session JWT. */
-export async function callHubTool<T = any>(
+export async function callHubTool<T = unknown>(
   name: string,
   args: Record<string, unknown> = {},
 ): Promise<T> {
@@ -119,7 +119,9 @@ export function relativeTime(iso: string): string {
   return `${Math.floor(secs / 86400)}d ago`;
 }
 
-export function displayName(user: { email?: string | null; user_metadata?: any } | null): string {
+export function displayName(user: { email?: string | null; user_metadata?: Record<string, unknown> } | null): string {
   if (!user) return 'you';
-  return user.user_metadata?.full_name || user.email?.split('@')[0] || 'you';
+  const fullName = user.user_metadata?.full_name;
+  if (typeof fullName === 'string' && fullName) return fullName;
+  return user.email?.split('@')[0] || 'you';
 }

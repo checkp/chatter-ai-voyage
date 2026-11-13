@@ -1,9 +1,11 @@
 
 import { useEffect, useMemo } from 'react';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { Message } from '@/types/chat';
 
 export const useScrollEffects = (
   activeTab: string,
-  messages: any[] | undefined,
+  messages: Message[] | undefined,
   isLoadingMessages: boolean,
   activeChatId: string | null,
   lastScrollPosition: number | null,
@@ -15,7 +17,7 @@ export const useScrollEffects = (
   scrollToBottomImmediate: () => void,
   previousMessageCountRef: React.MutableRefObject<number>,
   previousActiveTabRef: React.MutableRefObject<string>,
-  user: any,
+  user: SupabaseUser | null,
   reloadSettings: () => void
 ) => {
   // Set up scroll listener when chat tab is active

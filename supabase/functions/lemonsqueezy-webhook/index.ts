@@ -30,6 +30,17 @@ async function verifySignature(rawBody: string, signature: string, secret: strin
   }
 }
 
+interface LemonSqueezyEvent {
+  meta?: {
+    event_name?: string;
+    custom_data?: { user_id?: string; package_id?: string };
+  };
+  data?: {
+    id?: string;
+    attributes?: { status?: string; total_formatted?: string; currency?: string };
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -48,7 +59,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: "Invalid signature" }), { status: 401, headers: corsHeaders });
   }
 
-  let event: any;
+  let event: LemonSqueezyEvent | undefined;
   try {
     event = JSON.parse(rawBody);
   } catch {

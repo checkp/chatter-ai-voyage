@@ -7,7 +7,7 @@ import { useConductorMode } from '@/hooks/useConductorMode';
 import { generateChatId } from '@/utils/chatUtils';
 import { useActivityLog } from '@/contexts/ActivityLogContext';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
-import type { AIPlatform, Message, ChatMode } from '@/types/chat';
+import type { AIPlatform, Message, ChatMode, Attachment } from '@/types/chat';
 
 interface ConductorHooksProps {
   user: SupabaseUser;
@@ -103,13 +103,17 @@ export const useConductorHooks = ({
 
       console.log('Found conductor messages:', data?.length || 0);
 
-      return data?.map(msg => ({
-        ...msg,
-        sender: msg.sender as 'user' | 'ai',
-        platform: msg.platform || undefined,
-        timestamp: new Date(msg.created_at),
-        attachments: (Array.isArray((msg as any).attachments) ? (msg as any).attachments : []) as any,
-      })) as any[] || [];
+      const rows: Message[] = (data ?? []).map(msg => {
+        const rawAttachments: unknown = (msg as { attachments?: unknown }).attachments;
+        return {
+          ...msg,
+          sender: msg.sender as 'user' | 'ai',
+          platform: msg.platform || undefined,
+          timestamp: new Date(msg.created_at),
+          attachments: Array.isArray(rawAttachments) ? (rawAttachments as Attachment[]) : [],
+        };
+      });
+      return rows;
     },
     enabled: !!conductorConversationId && activeChatMode === 'conductor'
   });

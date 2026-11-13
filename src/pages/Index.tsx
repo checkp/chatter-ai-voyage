@@ -9,6 +9,14 @@ import IndexLayout from '@/components/index/IndexLayout';
 import FloatingActivityConsole from '@/components/FloatingActivityConsole';
 import { supabase } from '@/integrations/supabase/client';
 
+/** Shape of a demo message kept in localStorage before sign-in. */
+interface StoredDemoMessage {
+  content?: string;
+  typing?: boolean;
+  sender?: string;
+  platform?: string | null;
+}
+
 const Index = () => {
   // Initialize all hooks
   const hooks = useIndexHooks();
@@ -88,7 +96,7 @@ const Index = () => {
       if (!stored) return;
       
       try {
-        const demoMessages = JSON.parse(stored);
+        const demoMessages = JSON.parse(stored) as StoredDemoMessage[];
         localStorage.removeItem('demo_conversation');
         
         const { data: conv, error: convError } = await supabase
@@ -100,8 +108,8 @@ const Index = () => {
         if (convError || !conv) return;
 
         const messagesToInsert = demoMessages
-          .filter((m: any) => m.content && !m.typing)
-          .map((m: any) => ({
+          .filter(m => m.content && !m.typing)
+          .map(m => ({
             conversation_id: conv.id,
             content: m.content,
             sender: m.sender === 'user' ? 'user' : 'ai',

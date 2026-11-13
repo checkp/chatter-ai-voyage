@@ -1,11 +1,12 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface AgentReply {
   platform: string;
   content: string;
 }
 
-function gatherSignals(user: any) {
+function gatherSignals(user: SupabaseUser | null) {
   const now = new Date();
   const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   return {
@@ -14,7 +15,7 @@ function gatherSignals(user: any) {
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     hour: now.getHours(),
     weekday: weekdays[now.getDay()],
-    platform: (navigator as any).userAgentData?.platform || navigator.platform,
+    platform: (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform || navigator.platform,
     userAgent: navigator.userAgent,
     screen: { w: window.screen.width, h: window.screen.height, dpr: window.devicePixelRatio || 1 },
     viewport: { w: window.innerWidth, h: window.innerHeight },
@@ -30,7 +31,7 @@ function gatherSignals(user: any) {
  * profiling the user from the metadata available right after signup.
  * Returns the new conversation id, or null on failure.
  */
-export async function seedProfileDemo(user: any): Promise<string | null> {
+export async function seedProfileDemo(user: SupabaseUser | null): Promise<string | null> {
   if (!user) return null;
 
   try {

@@ -58,7 +58,13 @@ const modelListeners = new Set<() => void>();
 export const setActiveAgentModels = (map: Record<string, string>) => {
   const changed = JSON.stringify(map) !== JSON.stringify(activeAgentModels);
   activeAgentModels = { ...map };
-  if (changed) modelListeners.forEach(fn => { try { fn(); } catch {} });
+  if (changed) modelListeners.forEach(fn => {
+    try {
+      fn();
+    } catch {
+      // A failing listener must not stop the remaining listeners from being notified.
+    }
+  });
 };
 
 export const getActiveAgentModels = (): Record<string, string> => ({ ...activeAgentModels });

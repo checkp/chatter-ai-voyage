@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { AIPlatform, Message, ChatMode } from '@/types/chat';
+import type { TablesInsert } from '@/integrations/supabase/types';
 import { callOpenAI, callDeepSeek, callClaudeAPI, callGrokAPI, callGeminiAPI, callMistralAPI, callPerplexityAPI, callQwenAPI, callNvidiaAPI, callLocalAPI } from '@/services/aiApiService';
 import { getDefaultModel, getModelConfig, modelSupports } from '@/config/aiModels';
 import { setActiveAgentModels } from '@/lib/capabilities';
@@ -182,7 +183,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
           .maybeSingle(),
       ]);
 
-      globalSystemPromptRef.current = (profile as any)?.custom_system_prompt || '';
+      globalSystemPromptRef.current = profile?.custom_system_prompt || '';
 
       if (error) {
         console.error('Error loading agent settings, will retry:', error);
@@ -199,7 +200,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
         return;
       }
 
-      const settingsMap = new Map((settings || []).map((setting: any) => [
+      const settingsMap = new Map((settings || []).map((setting) => [
         setting.platform,
         {
           enabled: setting.enabled,
@@ -207,7 +208,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
           displayOrder: setting.display_order,
           customInstructions: setting.custom_instructions || '',
         },
-      ]));
+      ] as const));
       
       setPlatforms(prev => prev.map(platform => {
         const savedSetting = settingsMap.get(platform.id);
@@ -231,7 +232,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
       lastUserIdRef.current = user.id;
       retryCountRef.current = 0;
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to load agent settings, will retry:', error);
       scheduleRetry();
     } finally {
@@ -251,7 +252,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
     }
 
     try {
-      const updateData: any = {
+      const updateData: TablesInsert<'user_agent_settings'> = {
         user_id: user.id,
         platform: platformId,
         enabled: enabled,
@@ -279,7 +280,7 @@ export const usePlatforms = (user: SupabaseUser | null) => {
         console.error('Error saving agent setting:', error);
         toast.error('Failed to save agent setting');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to save agent setting:', error);
       toast.error('Failed to save agent setting');
     }
